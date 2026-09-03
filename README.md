@@ -138,8 +138,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     (migración 009; comandos Crear/Actualizar/Archivar/Reordenar; seed al crear
     hogar), selector de categoría + detalle al registrar movimiento, pantalla
     Ajustes → Categorías, `GET /usuarios/me` con `preferencias`.
-  - [ ] 15d+ — presupuesto por rubro (`GAPS.md` G16/G23), gráficos, tabs,
-    traducción de enums, plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
+  - [x] **15d** — presupuesto por rubro: `presupuesto_linea` (migración 010,
+    `GAPS.md` G26), comando `DefinirLineasPresupuesto`, `desviacion` con desglose
+    `porRubro` + `sinClasificar`, pantalla editor de rubros + barra de
+    distribución apilada en el detalle del presupuesto.
+  - [ ] 15e+ — tabs y header nativo, traducción de enums, gráficos SVG,
+    plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
@@ -149,7 +153,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 83 e2e
+cd api && npm run test:all   # 20 unitarios + 90 e2e
 cd app && npx tsc --noEmit
 ```
 

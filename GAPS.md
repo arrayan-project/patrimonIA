@@ -426,3 +426,34 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
     Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
+
+### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)
+- **Qué falta**: el Presupuesto (Agregado K) solo compara totales de
+  ingreso/gasto/ahorro (`ingresos_esperados`, `gastos_esperados`,
+  `ahorro_esperado`). No hay forma de fijar cuánto se espera por categoría
+  (Mercado, Servicios…), que era el punto abierto de G15 ("asignaciones
+  esperadas") y lo pedido en `UI_UX_BACKLOG.md` C3. Ningún doc lo modela.
+- **Decisión (sesión 2026-09-03)**:
+  - Tabla `presupuesto_linea(id, presupuesto_id, categoria_id, monto_esperado ≥ 0)`
+    con `UNIQUE (presupuesto_id, categoria_id)` y `ON DELETE CASCADE` desde
+    `presupuesto`. Migración 010. Es **configuración**, no hecho económico → su
+    historial vive solo en `auditoria` (DATABASE_DESIGN §125, Principio C); no
+    participa de la reconstrucción histórica (Sección V).
+  - Comando **`DefinirLineasPresupuesto`** (`{ presupuestoId, lineas: [{ categoriaId,
+    montoEsperado }] }`): **reemplaza el conjunto completo** de líneas — una sola
+    entrada de auditoría con `valor_anterior` / `valor_posterior`. Un rubro con
+    monto 0 se elimina. Se rechaza si el presupuesto está `CERRADO`.
+  - **Categorías permitidas**: FAMILIAR → las del hogar del presupuesto;
+    INDIVIDUAL (sin `hogar_id`) → las de cualquier hogar donde el actor sea
+    miembro ACTIVA (en el caso normal de un hogar por usuario, es inequívoco).
+    Solo categorías `ACTIVA`.
+  - La proyección `desviacion_presupuestaria` gana `porRubro[]` (esperado vs. real
+    de cada categoría dentro del período, más los rubros con movimiento real pero
+    sin línea, con esperado 0) y `sinClasificar` (ingreso/gasto real del período
+    sin `categoria_id`). El "real" de un rubro usa los eventos INGRESO/GASTO del
+    mismo alcance y período que el total (G16), sin tipo de cambio.
+  - `GET /presupuestos/:id/lineas` para el editor (líneas + nombre/color de la
+    categoría).
+- **Para decidir**: ¿la suma de las líneas de gasto debería cuadrar con
+  `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
+  (cierra del todo G15)?

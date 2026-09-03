@@ -64,6 +64,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `009_categoria_movimiento.sql` — tabla `categoria_movimiento` (del hogar) +
   `evento_financiero.glosa` + `evento_financiero.categoria_id` (GAPS.md
   G22/G23). Ya incluida en `init/01_schema.sql`.
+- `010_presupuesto_linea.sql` — tabla `presupuesto_linea` (monto esperado por
+  categoría dentro de un presupuesto — presupuesto por rubro, GAPS.md G26). Ya
+  incluida en `init/01_schema.sql`.
 
 ## Estado
 

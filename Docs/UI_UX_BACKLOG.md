@@ -63,7 +63,7 @@ vio el elemento, se asumió que falló.)
 |---|------|------|-----------|
 | C1 | **Glosa / detalle** en `evento_financiero` ("pago internet marzo") — migración + campo en el comando + UI | 🔴 | P1 |
 | C2 | **Categorías de movimiento** (Mercado, Servicios, Sueldo…) — tabla + sección de administración + selector al registrar | 🔴 | P1 |
-| C3 | **Presupuesto por categoría** — montos esperados por rubro, `desviacion_presupuestaria` por rubro (extiende G15) | 🔴 | P1 |
+| C3 | ✅ 15d — `presupuesto_linea` (migr. 010, GAPS G26), comando `DefinirLineasPresupuesto`, `desviacion` con `porRubro` + `sinClasificar`, editor de rubros + barra de distribución en el detalle | 🔴 | P1 |
 | C4 | **Plantillas / movimientos recurrentes** — registrar "el gasto de siempre" en 2 toques (depende de C1+C2) | 🔴 | P2 |
 | C5 | **Etiquetas** (0..N por movimiento, transversales) — fase posterior | 🔴 | P3 |
 | C6 | **Agrupaciones de elementos patrimoniales** (carpeta "Inversiones" para tus cuentas — REQUISITES §D) — fase posterior | 🔴 | P3 |
@@ -274,7 +274,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15a~~ ✅ | A1 (auto-refresh al enfocar), A2 (pull-to-refresh), A5 (Idempotency-Key en altas), A6 (401 → logout). A3 completo queda para 15b. | — |
 | ~~15b~~ ✅ | B1 (`DateField`), B2 (campo fecha en Registrar movimiento/ajuste/Valorizar), B3 (`MoneyField`), E1 (`ToastProvider`/`useToast`), E2 (`confirmar()` en acciones destructivas), E3 (`Button variant="danger"`), + `fechaLegible()`. Pendiente de B: B4 selector dropdown, B5 `tipo` picker, B6 moneda, B7 buscador de elementos, B8 co-propietarios. | — |
 | ~~15c~~ ✅ | C1 (glosa en `evento_financiero`), C2 (tabla `categoria_movimiento` del hogar + comandos Crear/Actualizar/Archivar/Reordenar + seed de 11 al crear hogar + selector al registrar), pantalla Ajustes → Categorías, `GET /usuarios/me` devuelve `preferencias`. Migración 009. Pendiente de C: C3 (presupuesto por rubro → 15d), C4/C5/C6 (plantillas, etiquetas, agrupaciones → 15h). | GAPS G22, G23, G25 |
-| **15d** | 🔴 C3 (presupuesto por categoría) + reportes de distribución por rubro (gráfico dona) | 15c |
+| ~~15d~~ ✅ | 🔴 C3 — `presupuesto_linea` (migr. 010, GAPS G26) + `DefinirLineasPresupuesto` + `GET /presupuestos/:id/lineas` + `desviacion.porRubro`/`sinClasificar`; app: pantalla `PresupuestoRubros` (editor) + sección "Por rubro" con barra de distribución apilada (`BarraDistribucion`) en el detalle. La dona SVG real queda para 15g. | 15c |
 | **15e** | D1–D3 (tabs, header nativo, jerarquía del dashboard) + Ajustes como tab | — |
 | **15f** | F1–F3 (traducir enums, fechas legibles, montos) + G1–G2 (design tokens, iconos) | — |
 | **15g** | G3–G4 (gráficos, tarjeta resumen) + J1–J2 (onboarding) | 15c, 15d |
