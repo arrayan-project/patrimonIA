@@ -115,7 +115,6 @@ export function AgregarElementoScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar elemento" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }

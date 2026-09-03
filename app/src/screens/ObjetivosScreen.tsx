@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, LinkButton, MoneyField, ProgressBar, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, MoneyField, ProgressBar, Screen, Title } from '../ui';
 
 export function ObjetivosScreen() {
   const { token } = useSession();
@@ -82,7 +82,6 @@ export function ObjetivosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

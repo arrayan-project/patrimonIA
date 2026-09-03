@@ -103,7 +103,6 @@ export function MovimientoProgramadoDetalleScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -162,12 +161,11 @@ export function MovimientoProgramadoDetalleScreen() {
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Cancelar movimiento" onPress={ejecutar} loading={busy} disabled={motivo.trim().length < 3} />
-          <LinkButton title="Volver" onPress={() => setModo(null)} />
+          <LinkButton title="Descartar" onPress={() => setModo(null)} />
         </View>
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

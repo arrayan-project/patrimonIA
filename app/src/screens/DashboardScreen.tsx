@@ -13,7 +13,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, SelectRow, Title } from '../ui';
+import { Button, colors, ErrorText, Field, MenuLink, Row, Screen, SelectRow, Title } from '../ui';
 
 export function DashboardScreen() {
   const { token, usuario } = useSession();
@@ -197,27 +197,16 @@ export function DashboardScreen() {
         )}
       </View>
 
+      {noLeidas > 0 && (
+        <MenuLink
+          title="Notificaciones"
+          subtitle={`${noLeidas} sin leer`}
+          badge={noLeidas}
+          onPress={() => nav.go('Notificaciones')}
+        />
+      )}
+
       <ErrorText>{error}</ErrorText>
-      <LinkButton
-        title={noLeidas > 0 ? `Notificaciones (${noLeidas})` : 'Notificaciones'}
-        onPress={() => nav.go('Notificaciones')}
-      />
-      <LinkButton
-        title="Patrimonio del hogar"
-        onPress={() => nav.go('HogarConsolidado', { hogarId: hogar.id })}
-      />
-      <LinkButton title="Evolución de mi patrimonio" onPress={() => nav.go('EvolucionPatrimonio')} />
-      <LinkButton title="Objetivos financieros" onPress={() => nav.go('Objetivos')} />
-      <LinkButton title="Presupuestos" onPress={() => nav.go('Presupuestos')} />
-      <LinkButton
-        title="Movimientos programados"
-        onPress={() => nav.go('MovimientosProgramados')}
-      />
-      <LinkButton
-        title="Gestionar hogar"
-        onPress={() => nav.go('GestionHogar', { hogarId: hogar.id })}
-      />
-      <LinkButton title="Ajustes" onPress={() => nav.go('Ajustes')} />
     </Screen>
   );
 }

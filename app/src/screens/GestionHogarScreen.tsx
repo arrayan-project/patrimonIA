@@ -39,7 +39,7 @@ export function GestionHogarScreen() {
     setError('');
     try {
       await fn();
-      if (salir) nav.reset('Dashboard');
+      if (salir) nav.reset('Tabs');
       else await cargar();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -53,7 +53,6 @@ export function GestionHogarScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -166,7 +165,6 @@ export function GestionHogarScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
       <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
     </Screen>
   );

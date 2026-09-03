@@ -71,7 +71,6 @@ export function ObjetivoDetalleScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -153,7 +152,6 @@ export function ObjetivoDetalleScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

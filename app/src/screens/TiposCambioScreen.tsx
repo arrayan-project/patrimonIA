@@ -107,7 +107,6 @@ export function TiposCambioScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

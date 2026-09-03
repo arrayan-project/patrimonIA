@@ -97,7 +97,6 @@ export function RegistrarAjusteScreen() {
         loading={loading}
         disabled={motivo.trim().length < 3 || !(Number(magnitud) > 0)}
       />
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }

@@ -136,7 +136,6 @@ export function MovimientosProgramadosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

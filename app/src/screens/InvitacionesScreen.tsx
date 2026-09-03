@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Paragraph, Screen, Title } from '../ui';
 
 export function InvitacionesScreen() {
   const { token } = useSession();
@@ -31,7 +31,7 @@ export function InvitacionesScreen() {
     setError('');
     try {
       await api.post<MembresiaDTO>('/comandos/AceptarInvitacion', { invitacionId: id }, token);
-      nav.reset('Dashboard');
+      nav.reset('Tabs');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
       setActuando(null);
@@ -80,7 +80,6 @@ export function InvitacionesScreen() {
           </View>
         ))
       )}
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }

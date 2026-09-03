@@ -151,7 +151,6 @@ export function PresupuestosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

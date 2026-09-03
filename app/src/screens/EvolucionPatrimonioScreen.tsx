@@ -4,7 +4,7 @@ import { api, ApiError, type VariacionPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, DateField, ErrorText, fechaLegible, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title } from '../ui';
 
 export function EvolucionPatrimonioScreen() {
   const { token } = useSession();
@@ -72,8 +72,6 @@ export function EvolucionPatrimonioScreen() {
           )}
         </View>
       )}
-
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

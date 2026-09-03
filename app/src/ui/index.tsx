@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -15,6 +15,7 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HeaderHeightContext } from '@react-navigation/elements';
 
 // ── Helpers de formato ──────────────────────────────────────────────────────
 
@@ -59,6 +60,8 @@ export function Screen({
   onRefresh?: () => void | Promise<void>;
 }) {
   const insets = useSafeAreaInsets();
+  // Si hay header nativo de navegación, él cubre el área segura superior.
+  const conHeader = useContext(HeaderHeightContext) != null;
   const [refrescando, setRefrescando] = useState(false);
 
   const alRefrescar = async () => {
@@ -75,7 +78,10 @@ export function Screen({
       style={styles.screen}
       contentContainerStyle={[
         styles.screenContent,
-        { paddingTop: 24 + insets.top, paddingBottom: 24 + insets.bottom },
+        {
+          paddingTop: conHeader ? 16 : 24 + insets.top,
+          paddingBottom: 24 + (conHeader ? insets.bottom : 0),
+        },
       ]}
       keyboardShouldPersistTaps="handled"
       refreshControl={
@@ -363,6 +369,42 @@ export function LinkButton({ title, onPress }: { title: string; onPress: () => v
   );
 }
 
+/** Fila de menú: título + subtítulo opcional + chevron. Para las pantallas "hub". */
+export function MenuLink({
+  title,
+  subtitle,
+  badge,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: number;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuLink, pressed && styles.buttonPressed]}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={styles.menuLinkTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.menuLinkSub}>{subtitle}</Text> : null}
+      </View>
+      {badge ? (
+        <View style={styles.menuBadge}>
+          <Text style={styles.menuBadgeText}>{badge}</Text>
+        </View>
+      ) : null}
+      <Text style={styles.menuChevron}>›</Text>
+    </Pressable>
+  );
+}
+
+/** Encabezado de grupo dentro de una pantalla hub. */
+export function GroupLabel({ children }: { children: ReactNode }) {
+  return <Text style={styles.groupLabel}>{children}</Text>;
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   screenContent: { paddingHorizontal: 24, gap: 16, flexGrow: 1 },
@@ -445,4 +487,34 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   punto: { width: 10, height: 10, borderRadius: 5 },
+  menuLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  menuLinkTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  menuLinkSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  menuChevron: { fontSize: 22, color: colors.muted },
+  menuBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  menuBadgeText: { color: colors.primaryText, fontSize: 12, fontWeight: '700' },
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.muted,
+    marginTop: 8,
+    textTransform: 'uppercase',
+  },
 });

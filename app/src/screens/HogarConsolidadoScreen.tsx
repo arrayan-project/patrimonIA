@@ -10,7 +10,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { colors, ErrorText, LinkButton, ProgressBar, Row, Screen, Title } from '../ui';
+import { colors, ErrorText, ProgressBar, Row, Screen, Title } from '../ui';
 
 export function HogarConsolidadoScreen() {
   const { token } = useSession();
@@ -42,7 +42,6 @@ export function HogarConsolidadoScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -125,7 +124,6 @@ export function HogarConsolidadoScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

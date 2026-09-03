@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
-import { Button, DateField, ErrorText, LinkButton, MoneyField, Paragraph, Screen, Title } from '../ui';
+import { Button, DateField, ErrorText, MoneyField, Paragraph, Screen, Title } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
@@ -62,7 +62,6 @@ export function ValorizarScreen() {
         loading={loading}
         disabled={!(Number(valorNuevo) >= 0 && valorNuevo.trim() !== '')}
       />
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }

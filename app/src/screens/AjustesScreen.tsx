@@ -1,30 +1,43 @@
-import { StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { colors, LinkButton, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { Button, GroupLabel, MenuLink, Screen, Title } from '../ui';
 
 export function AjustesScreen() {
   const nav = useNav();
   const { cerrarSesion } = useAuth();
 
+  const salir = async () => {
+    if (await confirmar('Cerrar sesión', 'Tendrás que volver a iniciar sesión.', 'Cerrar sesión')) {
+      cerrarSesion();
+    }
+  };
+
   return (
     <Screen>
       <Title>Ajustes</Title>
 
-      <Text style={styles.grupo}>Cuenta</Text>
-      <LinkButton title="Mi perfil" onPress={() => nav.go('Perfil')} />
+      <GroupLabel>Cuenta</GroupLabel>
+      <MenuLink
+        title="Mi perfil"
+        subtitle="Nombre y datos de la cuenta"
+        onPress={() => nav.go('Perfil')}
+      />
 
-      <Text style={styles.grupo}>Hogar</Text>
-      <LinkButton title="Categorías de movimiento" onPress={() => nav.go('Categorias')} />
-      <LinkButton title="Tipos de cambio" onPress={() => nav.go('TiposCambio')} />
+      <GroupLabel>Hogar</GroupLabel>
+      <MenuLink
+        title="Categorías de movimiento"
+        subtitle="Rubros para clasificar ingresos y gastos"
+        onPress={() => nav.go('Categorias')}
+      />
+      <MenuLink
+        title="Tipos de cambio"
+        subtitle="Tasas para convertir entre monedas"
+        onPress={() => nav.go('TiposCambio')}
+      />
 
-      <Text style={styles.grupo}>Sesión</Text>
-      <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
-      <LinkButton title="Volver" onPress={nav.back} />
+      <GroupLabel>Sesión</GroupLabel>
+      <Button title="Cerrar sesión" variant="danger" onPress={salir} />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  grupo: { fontSize: 12, fontWeight: '700', color: colors.muted, marginTop: 12, textTransform: 'uppercase' },
-});

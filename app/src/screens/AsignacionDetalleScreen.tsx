@@ -72,7 +72,6 @@ export function AsignacionDetalleScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -175,7 +174,6 @@ export function AsignacionDetalleScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

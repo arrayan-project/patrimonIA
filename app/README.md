@@ -145,6 +145,19 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   push token y lo registra en `/usuarios/me/dispositivos-push` (null en web /
   simulador / Expo Go — necesita un development build + `projectId` de EAS).
 
+### Fase 15 — UI / UX (`Docs/UI_UX_BACKLOG.md`)
+
+- **15a–15c**: auto-refresh al enfocar, pull-to-refresh, `Idempotency-Key`,
+  `DateField` / `MoneyField` / `ToastProvider` / `confirmar()`, glosa y
+  categorías de movimiento, pantalla Ajustes.
+- **15d**: presupuesto por rubro (`PresupuestoRubros` + sección "Por rubro").
+- **15e — navegación**: barra de **tabs inferior** (`@react-navigation/bottom-tabs`)
+  con Inicio · Movimientos · Objetivos · Hogar · Ajustes; cada tab es la raíz de
+  su navegación y las pantallas de detalle/formulario se apilan encima con
+  **header nativo** (título + botón atrás) — se quitaron los enlaces "Volver".
+  `MovimientosScreen` y `HogarScreen` son hubs (`MenuLink` / `GroupLabel`); el
+  Dashboard queda con patrimonio + elementos + acciones frecuentes.
+
 ### Decisiones aún provisionales
 
 - "Registrar movimiento" solo lista tus propios elementos como destino; para

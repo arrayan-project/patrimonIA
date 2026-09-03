@@ -5,7 +5,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, LinkButton, Paragraph, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title } from '../ui';
 
 export function PerfilScreen() {
   const { token } = useSession();
@@ -91,7 +91,6 @@ export function PerfilScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

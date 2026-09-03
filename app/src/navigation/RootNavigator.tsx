@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { colors } from '../ui';
@@ -12,6 +13,8 @@ import { BienvenidaScreen } from '../screens/BienvenidaScreen';
 import { CrearHogarScreen } from '../screens/CrearHogarScreen';
 import { InvitacionesScreen } from '../screens/InvitacionesScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
+import { MovimientosScreen } from '../screens/MovimientosScreen';
+import { HogarScreen } from '../screens/HogarScreen';
 import { AgregarElementoScreen } from '../screens/AgregarElementoScreen';
 import { RegistrarMovimientoScreen } from '../screens/RegistrarMovimientoScreen';
 import { ElementoDetalleScreen } from '../screens/ElementoDetalleScreen';
@@ -39,6 +42,7 @@ import { AjustesScreen } from '../screens/AjustesScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function Cargando() {
   return (
@@ -48,11 +52,88 @@ function Cargando() {
   );
 }
 
-const PANTALLAS_APP: [string, React.ComponentType][] = [
-  ['Bienvenida', BienvenidaScreen],
+const icono = (glifo: string) => {
+  const Icono = ({ color }: { color: string }) => (
+    <Text style={{ fontSize: 20, color, opacity: color === colors.primary ? 1 : 0.7 }}>{glifo}</Text>
+  );
+  Icono.displayName = `TabIcon(${glifo})`;
+  return Icono;
+};
+
+/** Barra de tabs inferior — la navegación principal de la app con hogar. */
+function Tabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border },
+      }}
+    >
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ tabBarLabel: 'Inicio', tabBarIcon: icono('🏠') }}
+      />
+      <Tab.Screen
+        name="Movimientos"
+        component={MovimientosScreen}
+        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('💸') }}
+      />
+      <Tab.Screen
+        name="Objetivos"
+        component={ObjetivosScreen}
+        options={{ tabBarLabel: 'Objetivos', tabBarIcon: icono('🎯') }}
+      />
+      <Tab.Screen
+        name="Hogar"
+        component={HogarScreen}
+        options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('🏡') }}
+      />
+      <Tab.Screen
+        name="Ajustes"
+        component={AjustesScreen}
+        options={{ tabBarLabel: 'Ajustes', tabBarIcon: icono('⚙️') }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+/** Título del header nativo por ruta (las que no lo definen usan el nombre). */
+const TITULOS: Record<string, string> = {
+  Bienvenida: 'Bienvenido',
+  CrearHogar: 'Crear hogar',
+  Invitaciones: 'Invitaciones',
+  AgregarElemento: 'Agregar elemento',
+  RegistrarMovimiento: 'Registrar movimiento',
+  ElementoDetalle: 'Detalle',
+  MovimientoDetalle: 'Movimiento',
+  Valorizar: 'Valorizar',
+  ValorizacionDetalle: 'Valorización',
+  RegistrarAjuste: 'Registrar ajuste',
+  AjusteDetalle: 'Ajuste',
+  EditarElemento: 'Editar elemento',
+  GestionHogar: 'Gestionar hogar',
+  Perfil: 'Mi perfil',
+  ObjetivoDetalle: 'Objetivo',
+  AsignacionDetalle: 'Asignación',
+  Presupuestos: 'Presupuestos',
+  PresupuestoDetalle: 'Presupuesto',
+  PresupuestoRubros: 'Presupuesto por rubro',
+  MovimientosProgramados: 'Movimientos programados',
+  MovimientoProgramadoDetalle: 'Movimiento programado',
+  EvolucionPatrimonio: 'Evolución de mi patrimonio',
+  HogarConsolidado: 'Patrimonio del hogar',
+  Notificaciones: 'Notificaciones',
+  TiposCambio: 'Tipos de cambio',
+  Categorias: 'Categorías de movimiento',
+};
+
+/** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
+const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['CrearHogar', CrearHogarScreen],
   ['Invitaciones', InvitacionesScreen],
-  ['Dashboard', DashboardScreen],
   ['AgregarElemento', AgregarElementoScreen],
   ['RegistrarMovimiento', RegistrarMovimientoScreen],
   ['ElementoDetalle', ElementoDetalleScreen],
@@ -64,7 +145,6 @@ const PANTALLAS_APP: [string, React.ComponentType][] = [
   ['EditarElemento', EditarElementoScreen],
   ['GestionHogar', GestionHogarScreen],
   ['Perfil', PerfilScreen],
-  ['Objetivos', ObjetivosScreen],
   ['ObjetivoDetalle', ObjetivoDetalleScreen],
   ['AsignacionDetalle', AsignacionDetalleScreen],
   ['Presupuestos', PresupuestosScreen],
@@ -76,13 +156,12 @@ const PANTALLAS_APP: [string, React.ComponentType][] = [
   ['HogarConsolidado', HogarConsolidadoScreen],
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
-  ['Ajustes', AjustesScreen],
   ['Categorias', CategoriasScreen],
 ];
 
 export function RootNavigator() {
   const { session, cargando } = useAuth();
-  const [inicial, setInicial] = useState<'Dashboard' | 'Bienvenida' | null>(null);
+  const [inicial, setInicial] = useState<'Tabs' | 'Bienvenida' | null>(null);
 
   useEffect(() => {
     if (!session) {
@@ -92,7 +171,7 @@ export function RootNavigator() {
     let vivo = true;
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', session.token)
-      .then((h) => vivo && setInicial(h.length > 0 ? 'Dashboard' : 'Bienvenida'))
+      .then((h) => vivo && setInicial(h.length > 0 ? 'Tabs' : 'Bienvenida'))
       .catch((e: unknown) => vivo && setInicial(e instanceof ApiError ? 'Bienvenida' : 'Bienvenida'));
     return () => {
       vivo = false;
@@ -104,18 +183,37 @@ export function RootNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
+        screenOptions={{
+          headerShown: true,
+          headerBackButtonDisplayMode: 'minimal',
+          headerTintColor: colors.primary,
+          headerTitleStyle: { color: colors.text },
+          contentStyle: { backgroundColor: colors.bg },
+        }}
         initialRouteName={session ? (inicial ?? 'Bienvenida') : 'Registro'}
       >
         {!session ? (
           <>
-            <Stack.Screen name="Registro" component={RegistroScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Registro" component={RegistroScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           </>
         ) : (
-          PANTALLAS_APP.map(([name, Comp]) => (
-            <Stack.Screen key={name} name={name} component={Comp} />
-          ))
+          <>
+            <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="Bienvenida"
+              component={BienvenidaScreen}
+              options={{ headerShown: false }}
+            />
+            {PANTALLAS_STACK.map(([name, Comp]) => (
+              <Stack.Screen
+                key={name}
+                name={name}
+                component={Comp}
+                options={{ title: TITULOS[name] ?? name }}
+              />
+            ))}
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

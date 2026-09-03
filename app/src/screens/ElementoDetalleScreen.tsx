@@ -14,7 +14,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, fechaLegible, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, fechaLegible, Row, Screen, Title } from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
@@ -95,7 +95,6 @@ export function ElementoDetalleScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -277,7 +276,6 @@ export function ElementoDetalleScreen() {
         variant="secondary"
         onPress={() => nav.go('EditarElemento', { elementoId })}
       />
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

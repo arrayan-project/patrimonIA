@@ -3,7 +3,7 @@ import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { Button, ErrorText, Field, Paragraph, Screen, Title } from '../ui';
 
 export function CrearHogarScreen() {
   const { token } = useSession();
@@ -24,7 +24,7 @@ export function CrearHogarScreen() {
         key,
       );
       // "usuario = Administrador" es resultado automático del comando.
-      nav.reset('Dashboard', { hogarId: hogar.id });
+      nav.reset('Tabs');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
@@ -47,7 +47,6 @@ export function CrearHogarScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button title="Crear hogar" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }

@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, LinkButton, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Screen, Title } from '../ui';
 
 export function NotificacionesScreen() {
   const { token } = useSession();
@@ -72,7 +72,6 @@ export function NotificacionesScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

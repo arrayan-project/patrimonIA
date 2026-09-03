@@ -80,7 +80,6 @@ export function ValorizacionDetalleScreen() {
       <Screen>
         <ErrorText>{error}</ErrorText>
         {!error && <ActivityIndicator color={colors.primary} />}
-        <LinkButton title="Volver" onPress={nav.back} />
       </Screen>
     );
   }
@@ -136,7 +135,6 @@ export function ValorizacionDetalleScreen() {
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
-      <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );
 }

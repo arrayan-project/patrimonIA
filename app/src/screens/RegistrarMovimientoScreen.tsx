@@ -198,7 +198,6 @@ export function RegistrarMovimientoScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar" onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
-      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );
 }
