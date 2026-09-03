@@ -161,6 +161,40 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Por qué**: CONVERSION necesita tipo de cambio (ver G7); PRESTAMO se cruza con
   Deuda/Crédito (Flujo 4, y el vacío G1). Ambos son ciclos verticales aparte.
 
+### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"
+- **Qué falta**: el esquema de `presupuesto` no tiene columna de propiedad, pero
+  AS #49 audita "usuario/hogar" y `tipo` INDIVIDUAL/FAMILIAR implica dueños
+  distintos. Además el input de AS #49 menciona "asignaciones esperadas" y el
+  esquema no tiene esa columna (solo `ingresos_esperados`, `gastos_esperados`,
+  `ahorro_esperado`).
+- **Decisión (propiedad)**: migración `002_presupuesto_propietario.sql` agrega
+  `usuario_id` (creador, siempre) y `hogar_id` (solo FAMILIAR), con CHECK
+  `FAMILIAR ⇒ hogar_id NOT NULL` / `INDIVIDUAL ⇒ hogar_id NULL`. Misma línea que
+  la 001. INDIVIDUAL → solo el dueño; FAMILIAR → cualquier miembro ACTIVA del hogar.
+- **Decisión ("asignaciones esperadas")**: se **omite** — no hay columna y no se
+  inventa una (BUILD_INSTRUCTIONS §4). El presupuesto cubre ingresos/gastos/ahorro.
+- **Para decidir**: ¿agregar `asignaciones_esperadas` (monto agregado) o una tabla
+  hija presupuesto_linea por asignación esperada?
+
+### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)
+- **Qué falta**: DATABASE_DESIGN §12 define la proyección como "comparación entre
+  montos esperados y reales agregados desde `evento_financiero` en el período"
+  sin precisar qué eventos entran ni cómo se maneja la moneda.
+- **Decisión provisional (Fase 6)**:
+  - **Período**: `[fecha_inicio, fecha_fin]` del presupuesto (para PERIODICO se
+    derivan del intervalo; para ESPECIFICO son las declaradas — si faltan, sin
+    filtro temporal).
+  - **Alcance**: eventos con impacto sobre un elemento de un propietario dentro
+    del alcance — el dueño (INDIVIDUAL) o los miembros ACTIVA del hogar (FAMILIAR).
+  - **Agregación**: `real.ingresos = Σ monto` de eventos INGRESO;
+    `real.gastos = Σ monto` de eventos GASTO; `real.ahorro = ingresos − gastos`.
+    TRANSFERENCIA/CONVERSION/PRESTAMO no cuentan. Eventos anulados se excluyen.
+  - **Moneda**: se suman los montos tal cual, sin tipo de cambio (ver G7). El
+    presupuesto no tiene moneda propia.
+- **Para decidir**: ¿presupuesto con moneda?, ¿ahorro real desde reservas/objetivos
+  en vez de ingresos−gastos?, ¿excluir transferencias entre elementos del alcance
+  ya está bien así?
+
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN

@@ -43,6 +43,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `001_objetivo_asignacion_propietario.sql` — columna `usuario_id` en
   `objetivo_financiero` y `asignacion` (GAPS.md G13). Ya incluida en
   `init/01_schema.sql`.
+- `002_presupuesto_propietario.sql` — columnas `usuario_id` / `hogar_id` +
+  CHECK `ck_presupuesto_propietario` en `presupuesto` (GAPS.md G15). Ya incluida
+  en `init/01_schema.sql`.
 
 ## Estado
 

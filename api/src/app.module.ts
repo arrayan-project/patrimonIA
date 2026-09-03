@@ -11,6 +11,7 @@ import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
 import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
 import { PlanificacionModule } from './planificacion/planificacion.module.js';
+import { PresupuestoModule } from './presupuesto/presupuesto.module.js';
 import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
 
 @Module({
@@ -27,6 +28,7 @@ import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
     ValorizacionModule,
     AjustePatrimonialModule,
     PlanificacionModule,
+    PresupuestoModule,
     ProyeccionesModule,
   ],
 })

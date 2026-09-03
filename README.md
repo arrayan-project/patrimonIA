@@ -57,11 +57,16 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] **5c** — Flujo 5: Objetivo (#30-#33) + Asignación (#23-#26) + Reserva
     (#27-#29) + proyección progreso + políticas "Completar objetivo" /
     "Consumir reserva". Migración 001 (columna `usuario_id`).
-- [ ] Fase 6 — se define al cerrar Fase 5 (BUILD_INSTRUCTIONS §3).
+- [x] **Fase 6 — Presupuesto (Agregado K, AS #49–#52)**:
+  - [x] Backend: CrearPresupuesto, ActualizarDatosPresupuesto, CerrarPresupuesto
+    (solo específicos), EliminarPresupuesto + proyección `desviacion_presupuestaria`
+    (presupuestado vs. real, en vivo). Migración 002 (`usuario_id` / `hogar_id`).
+    e2e en verde.
+  - [ ] Móvil: pendiente.
+- [ ] Fase 7 — se define al cerrar Fase 6 (BUILD_INSTRUCTIONS §3).
 
-**Cobertura de los 52 Application Services**: 42 implementados (#1–#12, #17–#46).
-Faltan 10: Movimiento Programado (#13–#16), Deuda/Crédito (#47/#48),
-Presupuesto (#49–#52).
+**Cobertura de los 52 Application Services**: 46 implementados (#1–#12, #17–#46,
+#49–#52). Faltan 6: Movimiento Programado (#13–#16), Deuda/Crédito (#47/#48).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

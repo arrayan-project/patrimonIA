@@ -264,16 +264,25 @@ CREATE TABLE presupuesto (
     ahorro_esperado      NUMERIC(18,2),
     estado               TEXT CHECK (estado IN ('ACTIVO', 'CERRADO')),
                          -- NULL cuando periodicidad = 'PERIODICO' (vigencia por calendario)
+    usuario_id           UUID REFERENCES usuario(id),  -- migración 002: creador (GAPS.md G15)
+    hogar_id             UUID REFERENCES hogar(id),    -- migración 002: solo si tipo = FAMILIAR
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     -- Invariante: estado solo tiene sentido para presupuestos ESPECIFICOs
     CONSTRAINT ck_estado_periodicidad CHECK (
         (periodicidad = 'PERIODICO' AND estado IS NULL)
         OR (periodicidad = 'ESPECIFICO')
+    ),
+    -- Invariante (migración 002): FAMILIAR lleva hogar; INDIVIDUAL no
+    CONSTRAINT ck_presupuesto_propietario CHECK (
+        (tipo = 'FAMILIAR'   AND hogar_id IS NOT NULL)
+        OR (tipo = 'INDIVIDUAL' AND hogar_id IS NULL)
     )
 );
 
-CREATE INDEX ix_presupuesto_tipo ON presupuesto (tipo);
+CREATE INDEX ix_presupuesto_tipo    ON presupuesto (tipo);
+CREATE INDEX ix_presupuesto_usuario ON presupuesto (usuario_id);
+CREATE INDEX ix_presupuesto_hogar   ON presupuesto (hogar_id);
 
 -- ============================================================================
 -- 11. Auditoría (Sección U)
