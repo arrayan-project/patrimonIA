@@ -162,8 +162,9 @@ export function DateField({
 }
 
 /**
- * Campo de monto: muestra el número con separador de miles mientras se escribe,
- * y entrega el valor numérico "limpio" (string sin puntos, con `.` decimal).
+ * Campo de monto. `value` es el número canónico (solo dígitos, opcional `.`
+ * decimal — ej. "8000000" o "8000000.5"); se muestra formateado es-CL
+ * ("8.000.000" / "8.000,50"). `onChange` recibe siempre el canónico.
  */
 export function MoneyField({
   label,
@@ -174,19 +175,25 @@ export function MoneyField({
 }: {
   label: string;
   value: string;
-  onChange: (limpio: string) => void;
+  onChange: (canonico: string) => void;
   moneda?: string;
   placeholder?: string;
 }) {
   const [entero, dec] = value.split('.');
   const display =
-    value === '' ? '' : agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
+    value === ''
+      ? ''
+      : agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
 
   const alEscribir = (t: string) => {
-    // deja solo dígitos y una coma/punto decimal
-    let limpio = t.replace(/[^\d.,]/g, '').replace(/,/g, '.');
-    const partes = limpio.split('.');
-    limpio = partes[0] + (partes.length > 1 ? '.' + partes.slice(1).join('').slice(0, 2) : '');
+    // El texto viene con formato de display: '.' = miles, ',' = decimal.
+    let limpio = t.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+    const i = limpio.indexOf('.');
+    if (i !== -1) {
+      // una sola coma decimal, máx. 2 dígitos
+      limpio = limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '').slice(0, 2);
+    }
+    limpio = limpio.replace(/^0+(?=\d)/, ''); // sin ceros a la izquierda
     onChange(limpio);
   };
 
