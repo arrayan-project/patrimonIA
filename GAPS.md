@@ -486,3 +486,26 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
 - **Para decidir**: ¿la suma de las líneas de gasto debería cuadrar con
   `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
   (cierra del todo G15)?
+
+### G27 — Reportes financieros por período (Fase 16)
+- **Qué falta**: no había forma de ver "mis gastos de marzo" ni "el año 2026". El
+  desglose por rubro solo vivía dentro del detalle de un presupuesto; la lista de
+  movimientos solo se veía por elemento o en `GET /hogares/:id/eventos-financieros`
+  (sin filtro de fecha ni categoría).
+- **Decisión (sesión 2026-09-03)**: **proyección de lectura**, no dominio. No
+  inventa reglas ni comandos — agrega los `evento_financiero` que ya existen.
+  Módulo `src/reporte/` (no @Global).
+  - `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios|hogar&hogarId=`
+    → `{ periodo, alcance, porMoneda: [{moneda, ingresos, gastos, balance}],
+    porRubro: [{categoriaId|null, nombre, color, tipo, total}], movimientos: [...] }`.
+  - `GET /usuarios/me/resumen-anual?anio=&alcance=&hogarId=` → 12 baldes
+    `{mes, porMoneda}`.
+  - **Alcance**: `mios` = eventos que impactan mis elementos; `hogar` = los de
+    todos los miembros ACTIVA (exige ser miembro).
+  - **Correcciones**: se colapsan igual que `eventosDelHogar` — `monto` es el neto
+    tras las correcciones vivas (`monto` del raíz + Σ deltas).
+  - **Sin conversión de moneda** (G7/G16): `porRubro.total` suma montos crudos;
+    `porMoneda` da el desglose exacto. Solo INGRESO/GASTO (transferencias y
+    conversiones no cuentan). Eventos anulados fuera.
+- **Para decidir**: ¿comparación automática con el período anterior en el
+  endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).

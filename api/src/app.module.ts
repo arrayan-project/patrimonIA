@@ -22,6 +22,7 @@ import { PlanificacionModule } from './planificacion/planificacion.module.js';
 import { PlantillaMovimientoModule } from './plantilla-movimiento/plantilla-movimiento.module.js';
 import { PresupuestoModule } from './presupuesto/presupuesto.module.js';
 import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
+import { ReporteModule } from './reporte/reporte.module.js';
 import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
 
 @Module({
@@ -47,6 +48,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     PlantillaMovimientoModule,
     PresupuestoModule,
     ProyeccionesModule,
+    ReporteModule,
     TipoCambioModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor }],
