@@ -385,11 +385,18 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
     hereda las del original. `GET /usuarios/me/etiquetas`. El DTO de evento gana
     `etiquetaIds: string[]`. **No** entra en el presupuesto (un gasto con 3
     etiquetas ¿a qué rubro imputa?).
-  - **Agrupación de elementos patrimoniales** (REQUISITES §D: "Inversiones"
-    agrupando Fintual/APV/Fondo) — concepto aparte: carpetas de visualización
-    para tus cuentas/activos. Tabla `agrupacion_elemento` + pertenencia, personal,
-    fase posterior. **No** se confunde con Asignación (Agregado H, que reserva
-    valor con un propósito: "Vacaciones", "Matrícula").
+  - **Agrupación de elementos patrimoniales** (Fase 15j; REQUISITES §D:
+    "Inversiones" agrupando Fintual/APV/Fondo) — carpetas de VISUALIZACIÓN
+    personales. Tablas `agrupacion_elemento` (personal, `UNIQUE(usuario_id,
+    nombre)`, color/orden) + `agrupacion_miembro` (`elemento_id` **PK** → un
+    elemento en a lo sumo UNA agrupación; ambas FK `ON DELETE CASCADE`).
+    Migración 013. **No** afecta la consolidación, la reconstrucción ni el valor
+    — solo la vista. **No** se confunde con Asignación (Agregado H, que reserva
+    valor con un propósito). Comandos `CrearAgrupacion`, `ActualizarAgrupacion`,
+    `EliminarAgrupacion` (los elementos quedan sin agrupar), y
+    `DefinirElementosAgrupacion` (reemplaza el conjunto; un elemento que estaba
+    en otra agrupación se mueve a esta). `GET /usuarios/me/agrupaciones`. En la
+    app agrupa la lista de "Elementos" del Inicio.
 - **Presupuesto por categoría** — nueva tabla `presupuesto_linea(presupuesto_id,
   categoria_id, monto_esperado)`; `desviacion_presupuestaria` se calcula también
   por rubro. Extiende G15 (que dejó "asignaciones esperadas" fuera).

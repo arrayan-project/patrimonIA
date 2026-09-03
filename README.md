@@ -164,8 +164,14 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     (migración 012, `GAPS.md` G23), comandos Crear/Actualizar/Eliminar/
     EtiquetarEvento, `RegistrarEventoFinanciero.etiquetaIds`; app: pantalla
     Etiquetas, chips al registrar y en el detalle del movimiento.
-  - [ ] 15j+ — agrupaciones de elementos, montos contables, design tokens
-    completos, onboarding.
+  - [x] **15j** — agrupaciones de elementos: `agrupacion_elemento` +
+    `agrupacion_miembro` (migración 013, `GAPS.md` G23), comandos Crear/
+    Actualizar/Eliminar/DefinirElementosAgrupacion; app: pantalla Agrupaciones
+    y la lista de "Elementos" del Inicio agrupada por carpeta. Bloque C del
+    backlog cerrado (glosa, categorías, presupuesto por rubro, plantillas,
+    etiquetas, agrupaciones).
+  - [ ] 15k+ — montos contables, design tokens completos, onboarding, selector
+    de tipo de elemento, buscadores en pickers.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
@@ -175,7 +181,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 103 e2e
+cd api && npm run test:all   # 20 unitarios + 108 e2e
 cd app && npx tsc --noEmit
 ```
 
