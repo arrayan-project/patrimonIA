@@ -18,6 +18,7 @@ import {
   colors,
   colorCategoria,
   ErrorText,
+  etiqueta,
   Field,
   fechaLegible,
   LinkButton,
@@ -120,18 +121,19 @@ export function PresupuestoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>
-        Presupuesto {p.tipo.toLowerCase()}
-      </Title>
+      <Title>Presupuesto {etiqueta(p.tipo).toLowerCase()}</Title>
 
       <View style={styles.card}>
-        <Row left="Periodicidad" right={p.periodicidad} />
-        {p.intervalo && <Row left="Intervalo" right={p.intervalo} />}
+        <Row left="Periodicidad" right={etiqueta(p.periodicidad)} />
+        {p.intervalo && <Row left="Intervalo" right={etiqueta(p.intervalo)} />}
         <Row
           left="Período"
           right={`${p.fechaInicio ? fechaLegible(p.fechaInicio) : '—'} → ${p.fechaFin ? fechaLegible(p.fechaFin) : '—'}`}
         />
-        <Row left="Estado" right={p.estado ?? (p.vigente ? 'vigente (calendario)' : 'fuera de vigencia')} />
+        <Row
+          left="Estado"
+          right={p.estado ? etiqueta(p.estado) : p.vigente ? 'Vigente (calendario)' : 'Fuera de vigencia'}
+        />
       </View>
 
       <View style={styles.card}>

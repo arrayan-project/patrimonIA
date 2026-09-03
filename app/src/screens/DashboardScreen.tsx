@@ -13,7 +13,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, MenuLink, Row, Screen, SelectRow, Title } from '../ui';
+import { Button, colors, ErrorText, etiqueta, Field, MenuLink, Row, Screen, SelectRow, Title } from '../ui';
 
 export function DashboardScreen() {
   const { token, usuario } = useSession();
@@ -159,7 +159,7 @@ export function DashboardScreen() {
           >
             <View>
               <Text style={styles.elementoNombre}>{el.nombre}</Text>
-              <Text style={styles.muted}>{el.categoriaFuncional}</Text>
+              <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
             </View>
             <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
           </Pressable>
@@ -175,7 +175,7 @@ export function DashboardScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Miembros del hogar</Text>
         {hogar.miembros?.map((m) => (
-          <Row key={m.usuarioId} left={m.nombre} right={m.rol} />
+          <Row key={m.usuarioId} left={m.nombre} right={etiqueta(m.rol)} />
         ))}
         {esAdmin && (
           <View style={{ gap: 8, marginTop: 8 }}>

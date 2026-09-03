@@ -104,8 +104,8 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| F1 | **Traducir/formatear los enums** mostrados en crudo: `LIQUIDEZ`, `EN_PROGRESO`, `ADMINISTRADOR`, `PENDIENTE`, `MATERIALIZADO`, `CONVERSION`, `cuenta_corriente` — el usuario ve SCREAMING_SNAKE_CASE | 🟡 | P1 |
-| F2 | **Fechas legibles** — `2026-03-15` → "15 mar 2026" / "hace 3 días" | 🟡 | P2 |
+| F1 | ✅ 15f — `src/labels.ts` (`etiqueta()` + `humanizar()` de fallback) traduce todos los enums del dominio; `Segmented` formatea las opciones por defecto; aplicado en las ~12 pantallas que mostraban valores crudos | 🟡 | P1 |
+| F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
 | F3 | **Montos negativos / deudas** — `money()` antepone `-`; para deudas: color rojo + "debes" o paréntesis contables | 🟡 | P2 |
 | F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
 | F5 | **Ayuda contextual** compacta en vez de `Paragraph` largos que explican el modelo de dominio en cada form | 🟡 | P2 |
@@ -276,7 +276,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15c~~ ✅ | C1 (glosa en `evento_financiero`), C2 (tabla `categoria_movimiento` del hogar + comandos Crear/Actualizar/Archivar/Reordenar + seed de 11 al crear hogar + selector al registrar), pantalla Ajustes → Categorías, `GET /usuarios/me` devuelve `preferencias`. Migración 009. Pendiente de C: C3 (presupuesto por rubro → 15d), C4/C5/C6 (plantillas, etiquetas, agrupaciones → 15h). | GAPS G22, G23, G25 |
 | ~~15d~~ ✅ | 🔴 C3 — `presupuesto_linea` (migr. 010, GAPS G26) + `DefinirLineasPresupuesto` + `GET /presupuestos/:id/lineas` + `desviacion.porRubro`/`sinClasificar`; app: pantalla `PresupuestoRubros` (editor) + sección "Por rubro" con barra de distribución apilada (`BarraDistribucion`) en el detalle. La dona SVG real queda para 15g. | 15c |
 | ~~15e~~ ✅ | D1 (tabs inferiores: Inicio·Movimientos·Objetivos·Hogar·Ajustes) + D2 (header nativo, sin `LinkButton "Volver"`) + D3 (jerarquía del dashboard: hubs `MovimientosScreen`/`HogarScreen`, `MenuLink`/`GroupLabel`). `@react-navigation/bottom-tabs`. Faltan de D: D4 (FAB), D5 (deep-link notificación), D6 (breadcrumb). | — |
-| **15f** | F1–F3 (traducir enums, fechas legibles, montos) + G1–G2 (design tokens, iconos) | — |
+| ~~15f~~ ✅ | F1 (`src/labels.ts` — `etiqueta()`/`humanizar()`, `Segmented` autoformatea, ~12 pantallas) + F2 parcial (`fechaRelativa()` en notificaciones). Pendiente: F3 (montos/deudas contables), G1 (design tokens completos), G2 (iconos reales — necesita `@expo/vector-icons`) → 15g. | 15e |
 | **15g** | G3–G4 (gráficos, tarjeta resumen) + J1–J2 (onboarding) | 15c, 15d |
 | **15h** | 🔴 C4 (plantillas), C5 (etiquetas), C6 (agrupaciones) + B7, B8, H1–H5 | 15c |
 

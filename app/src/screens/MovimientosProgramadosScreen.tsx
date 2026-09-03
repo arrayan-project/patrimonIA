@@ -16,6 +16,7 @@ import {
   colors,
   DateField,
   ErrorText,
+  etiqueta,
   Field,
   fechaLegible,
   LinkButton,
@@ -105,7 +106,7 @@ export function MovimientosProgramadosScreen() {
           >
             <View style={styles.head}>
               <Text style={styles.nombre}>{money(m.montoPlanificado, m.moneda)}</Text>
-              <Text style={styles.estado}>{m.estado}</Text>
+              <Text style={styles.estado}>{etiqueta(m.estado)}</Text>
             </View>
             <Text style={styles.muted}>Programado para {fechaLegible(m.fechaProgramada)}</Text>
             {m.observaciones ? <Text style={styles.muted}>{m.observaciones}</Text> : null}

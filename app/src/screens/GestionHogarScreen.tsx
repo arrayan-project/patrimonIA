@@ -6,7 +6,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title } from '../ui';
 
 export function GestionHogarScreen() {
   const { token, usuario } = useSession();
@@ -89,7 +89,7 @@ export function GestionHogarScreen() {
         <Text style={styles.sectionTitle}>Miembros</Text>
         {hogar.miembros?.map((m) => (
           <View key={m.usuarioId} style={styles.miembro}>
-            <Row left={m.nombre} right={m.rol} />
+            <Row left={m.nombre} right={etiqueta(m.rol)} />
             {soyAdmin && m.usuarioId !== usuario.id && (
               <View style={styles.acciones}>
                 <Button

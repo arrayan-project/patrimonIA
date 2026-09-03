@@ -11,6 +11,7 @@ import {
   colors,
   DateField,
   ErrorText,
+  etiqueta,
   LinkButton,
   MoneyField,
   Screen,
@@ -102,10 +103,11 @@ export function PresupuestosScreen() {
           >
             <View style={styles.head}>
               <Text style={styles.nombre}>
-                {p.tipo} · {p.periodicidad === 'PERIODICO' ? p.intervalo : 'específico'}
+                {etiqueta(p.tipo)} ·{' '}
+                {p.periodicidad === 'PERIODICO' ? etiqueta(p.intervalo ?? '') : 'Específico'}
               </Text>
               <Text style={styles.estado}>
-                {p.estado ?? (p.vigente ? 'vigente' : 'fuera de vigencia')}
+                {p.estado ? etiqueta(p.estado) : p.vigente ? 'Vigente' : 'Fuera de vigencia'}
               </Text>
             </View>
             <Text style={styles.muted}>

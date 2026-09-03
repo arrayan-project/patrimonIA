@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, fechaRelativa, Screen, Title } from '../ui';
 
 export function NotificacionesScreen() {
   const { token } = useSession();
@@ -63,7 +63,7 @@ export function NotificacionesScreen() {
               <Text style={styles.titulo}>{n.titulo}</Text>
               <Text style={styles.cuerpo}>{n.cuerpo}</Text>
               <Text style={styles.muted}>
-                {n.createdAt.slice(0, 10)}
+                {fechaRelativa(n.createdAt)}
                 {!n.leida ? ' · nueva (toca para marcar leída)' : ''}
               </Text>
             </Pressable>

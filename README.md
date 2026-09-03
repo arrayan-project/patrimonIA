@@ -146,7 +146,11 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     Objetivos · Hogar · Ajustes), header nativo con botón atrás en las pantallas
     apiladas (se quitaron los enlaces "Volver"), Dashboard jerarquizado con hubs
     `Movimientos` / `Hogar`. `@react-navigation/bottom-tabs`.
-  - [ ] 15f+ — traducción de enums, design tokens, gráficos SVG,
+  - [x] **15f** — textos: `src/labels.ts` (`etiqueta()` + `humanizar()`)
+    traduce los enums del dominio (`LIQUIDEZ` → "Liquidez", `EN_PROGRESO` →
+    "En progreso", `cuenta_corriente` → "Cuenta corriente"…); `Segmented`
+    formatea sus opciones; `fechaRelativa()` en notificaciones.
+  - [ ] 15g+ — design tokens + iconos, gráficos SVG, montos contables,
     plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).

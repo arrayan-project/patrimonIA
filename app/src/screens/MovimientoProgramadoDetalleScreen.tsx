@@ -12,6 +12,7 @@ import {
   colors,
   DateField,
   ErrorText,
+  etiqueta,
   Field,
   fechaLegible,
   LinkButton,
@@ -115,7 +116,7 @@ export function MovimientoProgramadoDetalleScreen() {
       <Text style={styles.monto}>{money(m.montoPlanificado, m.moneda)}</Text>
 
       <View style={styles.card}>
-        <Row left="Estado" right={m.estado} />
+        <Row left="Estado" right={etiqueta(m.estado)} />
         <Row left="Fecha programada" right={fechaLegible(m.fechaProgramada)} />
         {m.observaciones ? <Row left="Observaciones" right={m.observaciones} /> : null}
         {m.eventoFinancieroId ? <Row left="Evento generado" right={m.eventoFinancieroId.slice(0, 8)} /> : null}

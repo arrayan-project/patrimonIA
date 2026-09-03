@@ -14,7 +14,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, fechaLegible, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, etiqueta, Field, fechaLegible, Row, Screen, Title } from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
@@ -105,11 +105,11 @@ export function ElementoDetalleScreen() {
       <Text style={styles.valor}>{money(elemento.valorVigente, elemento.moneda)}</Text>
 
       <View style={styles.card}>
-        <Row left="Categoría" right={elemento.categoriaFuncional} />
-        <Row left="Tipo" right={elemento.tipo} />
-        <Row left="Ámbito" right={elemento.ambito} />
-        <Row left="Visibilidad" right={elemento.visibilidad} />
-        <Row left="Estado" right={elemento.estado} />
+        <Row left="Categoría" right={etiqueta(elemento.categoriaFuncional)} />
+        <Row left="Tipo" right={etiqueta(elemento.tipo)} />
+        <Row left="Ámbito" right={etiqueta(elemento.ambito)} />
+        <Row left="Visibilidad" right={etiqueta(elemento.visibilidad)} />
+        <Row left="Estado" right={etiqueta(elemento.estado)} />
       </View>
 
       {(esDeuda || esCredito) && (
@@ -155,7 +155,7 @@ export function ElementoDetalleScreen() {
         ) : (
           eventos.map((ev) => {
             const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
-            const etiqueta = ev.anulado
+            const sufijo = ev.anulado
               ? 'anulado'
               : ev.correccionDeId
                 ? 'corrección'
@@ -170,9 +170,11 @@ export function ElementoDetalleScreen() {
               >
                 <View>
                   <Text style={[styles.movTipo, ev.anulado && styles.tachado]}>
-                    {ev.glosa || ev.tipo}
+                    {ev.glosa || etiqueta(ev.tipo)}
                   </Text>
-                  <Text style={styles.muted}>{ev.glosa ? `${ev.tipo} · ${etiqueta}` : etiqueta}</Text>
+                  <Text style={styles.muted}>
+                    {ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
+                  </Text>
                 </View>
                 <Text
                   style={[

@@ -10,7 +10,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { colors, ErrorText, ProgressBar, Row, Screen, Title } from '../ui';
+import { colors, ErrorText, etiqueta, ProgressBar, Row, Screen, Title } from '../ui';
 
 export function HogarConsolidadoScreen() {
   const { token } = useSession();
@@ -84,7 +84,7 @@ export function HogarConsolidadoScreen() {
                 {metricas.distribucionPorActivo.map((d) => (
                   <Row
                     key={d.categoria}
-                    left={d.categoria}
+                    left={etiqueta(d.categoria)}
                     right={`${money(d.valor, pm.moneda)} · ${d.porcentaje}%`}
                   />
                 ))}
@@ -96,7 +96,7 @@ export function HogarConsolidadoScreen() {
                 {metricas.distribucionPorPasivo.map((d) => (
                   <Row
                     key={d.categoria}
-                    left={d.categoria}
+                    left={etiqueta(d.categoria)}
                     right={`${money(d.valor, pm.moneda)} · ${d.porcentaje}%`}
                   />
                 ))}

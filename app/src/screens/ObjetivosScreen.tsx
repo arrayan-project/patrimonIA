@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, MoneyField, ProgressBar, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, etiqueta, Field, MoneyField, ProgressBar, Screen, Title } from '../ui';
 
 export function ObjetivosScreen() {
   const { token } = useSession();
@@ -64,7 +64,7 @@ export function ObjetivosScreen() {
           >
             <View style={styles.head}>
               <Text style={styles.nombre}>{o.nombre}</Text>
-              <Text style={styles.estado}>{o.estado}</Text>
+              <Text style={styles.estado}>{etiqueta(o.estado)}</Text>
             </View>
             <ProgressBar pct={o.progresoPorcentaje} />
             <Text style={styles.muted}>

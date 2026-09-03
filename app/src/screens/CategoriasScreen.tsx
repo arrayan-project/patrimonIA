@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, LinkButton, Screen, Segmented, Title } from '../ui';
+import { Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Title } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -121,7 +121,7 @@ export function CategoriasScreen() {
                 <View style={styles.fila}>
                   <View>
                     <Text style={styles.nombre}>{c.nombre}</Text>
-                    <Text style={styles.muted}>{c.tipoAplicable.toLowerCase()}</Text>
+                    <Text style={styles.muted}>{etiqueta(c.tipoAplicable)}</Text>
                   </View>
                   <View style={styles.filaBotones}>
                     <Pressable hitSlop={8} onPress={() => mover(i, -1)}>

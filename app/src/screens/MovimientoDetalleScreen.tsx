@@ -17,6 +17,7 @@ import {
   Button,
   colors,
   ErrorText,
+  etiqueta,
   Field,
   fechaLegible,
   LinkButton,
@@ -120,7 +121,7 @@ export function MovimientoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>{evento.tipo}</Title>
+      <Title>{evento.glosa || etiqueta(evento.tipo)}</Title>
       <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
 
       <View style={styles.card}>

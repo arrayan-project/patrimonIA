@@ -14,6 +14,7 @@ import {
   Button,
   colors,
   ErrorText,
+  etiqueta,
   Field,
   LinkButton,
   ProgressBar,
@@ -81,7 +82,7 @@ export function ObjetivoDetalleScreen() {
       <ProgressBar pct={obj.progresoPorcentaje} />
       <Text style={styles.muted}>
         {money(obj.progreso, 'CLP')} de {money(obj.montoObjetivo, 'CLP')} · {obj.progresoPorcentaje}% ·{' '}
-        {obj.estado}
+        {etiqueta(obj.estado)}
       </Text>
 
       <View style={styles.card}>

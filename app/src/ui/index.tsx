@@ -16,6 +16,9 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
+import { etiqueta } from '../labels';
+
+export { etiqueta, humanizar } from '../labels';
 
 // ── Helpers de formato ──────────────────────────────────────────────────────
 
@@ -31,6 +34,22 @@ export function fechaLegible(iso: string): string {
   if (!m) return iso;
   const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   return `${Number(m[3])} ${meses[Number(m[2]) - 1]} ${m[1]}`;
+}
+
+/**
+ * Fecha en lenguaje natural para lo reciente ("hoy", "ayer", "hace 3 días"),
+ * y `fechaLegible()` para lo que queda más lejos. Acepta ISO date o datetime.
+ */
+export function fechaRelativa(iso: string): string {
+  const d = new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dias = Math.round((Date.now() - d.getTime()) / 86_400_000);
+  if (dias === 0) return 'hoy';
+  if (dias === 1) return 'ayer';
+  if (dias === -1) return 'mañana';
+  if (dias > 1 && dias < 7) return `hace ${dias} días`;
+  if (dias < -1 && dias > -7) return `en ${-dias} días`;
+  return fechaLegible(iso.slice(0, 10));
 }
 
 function agruparMiles(entero: string): string {
@@ -259,11 +278,14 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  formatearOpcion = etiqueta,
 }: {
   label?: string;
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
+  /** Cómo se muestra cada opción (por defecto, la etiqueta legible del enum). */
+  formatearOpcion?: (v: T) => string;
 }) {
   return (
     <View style={styles.field}>
@@ -276,7 +298,7 @@ export function Segmented<T extends string>({
             style={[styles.segment, value === opt && styles.segmentActive]}
           >
             <Text style={[styles.segmentText, value === opt && styles.segmentTextActive]}>
-              {opt}
+              {formatearOpcion(opt)}
             </Text>
           </Pressable>
         ))}
