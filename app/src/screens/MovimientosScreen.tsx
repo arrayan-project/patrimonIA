@@ -14,12 +14,12 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import {
-  Button,
   colorCategoria,
   colors,
   EmptyState,
   ErrorText,
   etiqueta,
+  FAB,
   fechaLegible,
   MoneyText,
   Screen,
@@ -130,7 +130,10 @@ export function MovimientosScreen() {
   const gastosRubro = (resumen?.porRubro ?? []).filter((r) => r.tipo === 'GASTO' && r.total > 0);
 
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      fab={<FAB icon="add" onPress={() => nav.go('RegistrarMovimiento')} />}
+    >
       <Title>Movimientos</Title>
 
       <View style={styles.selectorFila}>
@@ -265,7 +268,6 @@ export function MovimientosScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
     </Screen>
   );
 }

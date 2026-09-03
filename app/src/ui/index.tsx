@@ -94,9 +94,12 @@ export const sombra = {
 export function Screen({
   children,
   onRefresh,
+  fab,
 }: {
   children: ReactNode;
   onRefresh?: () => void | Promise<void>;
+  /** Botón flotante fijo (no scrollea) abajo a la derecha. */
+  fab?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   // Si hay header nativo de navegación, él cubre el área segura superior.
@@ -123,7 +126,7 @@ export function Screen({
           styles.screenContent,
           {
             paddingTop: conHeader ? 16 : 24 + insets.top,
-            paddingBottom: 24 + (conHeader ? insets.bottom : 0),
+            paddingBottom: 24 + (conHeader ? insets.bottom : 0) + (fab ? 72 : 0),
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -136,7 +139,31 @@ export function Screen({
       >
         {children}
       </ScrollView>
+      {fab ? (
+        <View
+          style={[
+            styles.fabWrap,
+            // en pantallas de tab (sin header) hay que despejar la barra inferior
+            { bottom: insets.bottom + (conHeader ? 20 : 72) },
+          ]}
+        >
+          {fab}
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
+  );
+}
+
+/** Botón de acción flotante. Se pasa a `<Screen fab={...}>`. */
+export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
+      accessibilityRole="button"
+    >
+      <Ionicons name={icon} size={26} color={colors.primaryText} />
+    </Pressable>
   );
 }
 
@@ -696,6 +723,17 @@ export function EmptyState({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.fondo },
   screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
+  fabWrap: { position: 'absolute', right: 20 },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...sombra,
+    elevation: 6,
+  },
   card: {
     backgroundColor: colors.bg,
     borderRadius: 14,

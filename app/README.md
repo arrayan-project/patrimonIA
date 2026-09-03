@@ -217,6 +217,18 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 - Chevron en las filas tocables (Inicio, detalle de elemento, Movimientos);
   puntos de color por agrupación en la lista del Inicio (`colorCategoria`).
 
+### Fase 18 — Acciones y explicaciones
+
+- **`FAB`** (`ui/index.tsx`) + prop `<Screen fab={...}>`: botón flotante fijo
+  abajo a la derecha (despeja la barra de tabs). "+" para "Registrar
+  movimiento" en Inicio y Movimientos.
+- **`EditarElementoScreen`**: nuevo toggle "¿Cuenta en el patrimonio del
+  hogar?" → `CambiarParticipacionEnConsolidacion`; la visibilidad ahora lleva
+  su `Ayuda`.
+- **`AgregarElementoScreen`**: `Ayuda` bajo el selector de categoría funcional
+  con el ejemplo de la opción elegida.
+- `MoneyText` en el patrimonio neto del Inicio (rojo si negativo).
+
 ### Decisiones aún provisionales
 
 - "Registrar movimiento" solo lista tus propios elementos como destino; para

@@ -22,7 +22,9 @@ import {
   EmptyState,
   ErrorText,
   etiqueta,
+  FAB,
   MenuLink,
+  MoneyText,
   Screen,
   SelectRow,
   Title,
@@ -156,7 +158,14 @@ export function DashboardScreen() {
   );
 
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      fab={
+        elementos.length > 0 ? (
+          <FAB icon="add" onPress={() => nav.go('RegistrarMovimiento')} />
+        ) : undefined
+      }
+    >
       <Title>{hogar.nombre}</Title>
 
       {!onbOculto && (
@@ -196,7 +205,7 @@ export function DashboardScreen() {
             const v = variacion?.porMoneda.find((x) => x.moneda === m.moneda);
             return (
               <View key={m.moneda} style={styles.resumen}>
-                <Text style={styles.resumenNeto}>{money(m.patrimonio, m.moneda)}</Text>
+                <MoneyText monto={m.patrimonio} moneda={m.moneda} style={styles.resumenNeto} />
                 <View style={styles.resumenFila}>
                   <Text style={styles.muted}>Líquido {money(m.valorLiquido, m.moneda)}</Text>
                   {v && v.variacion !== 0 && (
@@ -306,7 +315,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   muted: { fontSize: 13, color: colors.muted },
   resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
-  resumenNeto: { fontSize: 24, fontWeight: '800', color: colors.text },
+  resumenNeto: { fontSize: 24, fontWeight: '800' },
   resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
   grupoHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   grupoPunto: { width: 8, height: 8, borderRadius: 4 },

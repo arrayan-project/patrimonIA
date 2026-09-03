@@ -80,7 +80,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | D1 | ✅ 15e / refinado en Fase 16 — tabs **Inicio · Movimientos · Planificar · Hogar · Ajustes** (Movimientos = vista mensual/anual real; Planificar = ex-Objetivos + presupuestos/programados/plantillas) | 🟡 | P1 |
 | D2 | ✅ 15e — **header nativo** (título + atrás) en las ~24 pantallas apiladas; se borraron los 38 `LinkButton "Volver"`; `Screen` detecta el header (`HeaderHeightContext`) y ajusta el padding superior | 🟡 | P1 |
 | D3 | ✅ 15e — Dashboard queda con patrimonio + elementos + acciones; el resto se repartió en los hubs `MovimientosScreen` / `HogarScreen` y en `AjustesScreen` (con `MenuLink` / `GroupLabel`) | 🟡 | P1 |
-| D4 | **FAB "+"** global para "registrar movimiento" / "agregar elemento" | 🟡 | P2 |
+| D4 | ✅ 18 — componente `FAB` + prop `<Screen fab={...}>` (botón fijo, despeja la barra de tabs); "+" para "Registrar movimiento" en Inicio y Movimientos | 🟡 | P2 |
 | D5 | ✅ 15l — tocar una notificación abre la entidad (`OBJETIVO_FINANCIERO`→detalle, `ASIGNACION`→detalle, `INVITACION`→Invitaciones, `EVENTO_FINANCIERO`→detalle) | 🟡 | P2 |
 | D6 | **Contexto / breadcrumb** en pantallas de detalle (a qué elemento/hogar pertenece lo que editas) | 🟡 | P2 |
 
@@ -106,7 +106,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 |---|------|------|-----------|
 | F1 | ✅ 15f — `src/labels.ts` (`etiqueta()` + `humanizar()` de fallback) traduce todos los enums del dominio; `Segmented` formatea las opciones por defecto; aplicado en las ~12 pantallas que mostraban valores crudos | 🟡 | P1 |
 | F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
-| F3 | ⚠️ 15k parcial — componente `MoneyText` (rojo para negativos, opción `contable` con paréntesis); aplicado al valor destacado del detalle de elemento. Falta extenderlo a más listas/pantallas | 🟡 | P2 |
+| F3 | ⚠️ 15k/18 parcial — `MoneyText` (rojo para negativos) en el valor destacado del detalle de elemento y en el patrimonio neto del Inicio. Falta: listas de movimientos, consolidado del hogar | 🟡 | P2 |
 | F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
 | F5 | ✅ 17 — componente `Ayuda` (ícono info + texto sobre fondo azul tenue); reemplazó los `Paragraph`/`Text` explicativos en Objetivos, Asignación, Presupuestos, Categorías, Etiquetas, Agrupaciones, Plantillas, Movimientos programados | 🟡 | P2 |
 | F6 | Infra de i18n (aunque sea es-CL única al inicio) para no tener strings hardcodeados por toda la app | 🟡 | P3 |
@@ -135,7 +135,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | H2 | **No perder lo escrito** al navegar atrás por accidente (confirmar descarte) | 🟡 | P2 |
 | H3 | **Validación en vivo** (monto > 0, moneda coincide con el elemento) con mensajes junto al campo | 🟡 | P2 |
 | H4 | **Transferencia a otro miembro del hogar** — hoy la UI dice "hay que conocer el id de su elemento"; debería listar los elementos visibles de co-miembros (cruza con G6) | 🟡 | P2 |
-| H5 | **Editar más campos del elemento** — `ActualizarDatosElemento` solo expone nombre y tipo; `CambiarVisibilidad` y `CambiarParticipacionConsolidacion` están enterrados | 🟡 | P2 |
+| H5 | ✅ 18 — `EditarElementoScreen` ya tenía visibilidad; se agregó "¿Cuenta en el patrimonio del hogar?" (`CambiarParticipacionEnConsolidacion`), ambos con caja `Ayuda` | 🟡 | P2 |
 
 ---
 
@@ -153,7 +153,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
 | J1 | ✅ 15l — card "Primeros pasos" en el Dashboard (agregar cuenta → registrar movimiento → crear objetivo), cada paso navega y se tacha solo; se oculta al completar los 3 o con "Ocultar" (recordado en secure-store por usuario) | 🟡 | P2 |
-| J2 | **Explicar categoría funcional** con ejemplos en el momento de elegir, no en un párrafo aparte | 🟡 | P2 |
+| J2 | ✅ 18 — caja `Ayuda` bajo el selector de categoría funcional en "Agregar elemento", con el ejemplo del valor elegido (Liquidez / Reserva / Inversión / Activo / Deuda / Crédito) | 🟡 | P2 |
 
 ---
 
@@ -285,7 +285,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15k~~ ✅ | Controles de entrada: componente `Select` (hoja modal + "Otro…") → B4 (categoría funcional), B5 (`tipo` de elemento con presets), B6 (moneda ISO); B9 (`KeyboardAvoidingView` en `Screen`); F3 parcial (`MoneyText` rojo/contable en el detalle de elemento). | — |
 | ~~15l~~ ✅ | Pulido: iconos en `MenuLink` (G2, todos los hubs); `EmptyState` en las 8 listas principales (E4); deep-link desde notificaciones (D5); card "Primeros pasos" en el Dashboard (J1). | — |
 | ~~16~~ ✅ | **Reportes financieros + reorg de tabs** (GAPS G27): backend `resumen-financiero` / `resumen-anual` (agrega los `evento_financiero` existentes, alcance mios/hogar); app: tab **Movimientos** = vista mensual/anual (‹ mes/año ›, dona de gastos por rubro, lista, barras anuales, toggle Míos/Hogar), nueva tab **Planificar**, Dashboard sin miembros/invitar, categorías del hogar → tab Hogar. `GraficoBarras` en `charts.tsx`. | 15 |
-| ~~17~~ ✅ | **Sistema visual + ayuda contextual**: `colors.fondo` (página gris suave) + `colors.info` + `sombra`; sweep de `styles.card` (fondo blanco + `borderRadius: 14`) en 26 pantallas → las tarjetas resaltan; componente `Card` (chevron "ver más" + `franja` de color) usado en las listas de Objetivos/Presupuestos/Mov. programados; chevron en las filas tocables (Inicio, detalle de elemento, Movimientos); puntos de color por agrupación en el Inicio; componente `Ayuda` (F5) en 8 pantallas. Pendiente suelto: B7, B8, H1–H5, F3 completo, G1 (tipografía/espaciado, `<Card>` en todos lados), J2, E5–E7, D4 (FAB), D6. | 16 |
+| ~~17~~ ✅ | **Sistema visual + ayuda contextual**: `colors.fondo` (página gris suave) + `colors.info` + `sombra`; sweep de `styles.card` (fondo blanco + `borderRadius: 14`) en 26 pantallas → las tarjetas resaltan; componente `Card` (chevron "ver más" + `franja` de color) usado en las listas de Objetivos/Presupuestos/Mov. programados; chevron en las filas tocables (Inicio, detalle de elemento, Movimientos); puntos de color por agrupación en el Inicio; componente `Ayuda` (F5) en 8 pantallas. | 16 |
+| ~~18~~ ✅ | Acciones y explicaciones: `FAB` (D4) para "Registrar movimiento" en Inicio/Movimientos; H5 (toggle "cuenta en el patrimonio del hogar" en editar elemento); J2 (ayuda de categoría funcional al agregar); visibilidad con ayuda; F3 en el patrimonio neto del Inicio. Pendiente suelto: B7, B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5–E7, D6, gráfico de avance de objetivos. | 17 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

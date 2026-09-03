@@ -5,6 +5,7 @@ import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   ErrorText,
   Field,
@@ -97,6 +98,19 @@ export function AgregarElementoScreen() {
         options={OPC_CATEGORIA}
         onChange={(c) => onCategoria(c as (typeof CATEGORIAS)[number])}
       />
+      <Ayuda>
+        {categoria === 'LIQUIDEZ'
+          ? 'Liquidez: efectivo y cuentas de uso diario.'
+          : categoria === 'RESERVA'
+            ? 'Reserva: fondo de emergencia, plata que guardas pero no gastas.'
+            : categoria === 'INVERSION'
+              ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
+              : categoria === 'ACTIVO'
+                ? 'Activo: bienes como un inmueble o un vehículo.'
+                : categoria === 'DEUDA'
+                  ? 'Deuda: lo que debes (un crédito, un préstamo). Resta a tu patrimonio.'
+                  : 'Crédito por cobrar: lo que alguien te debe. Suma a tu patrimonio.'}
+      </Ayuda>
       {esDeudaOCredito ? (
         <>
           <MoneyField

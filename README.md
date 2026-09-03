@@ -198,6 +198,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     de color por agrupación en el Inicio, cajas de ayuda en 8 pantallas
     (objetivos, asignaciones, presupuestos, etiquetas…).
 
+- [x] **Fase 18 — Acciones y explicaciones** (solo app):
+  - [x] `FAB` "+" para "Registrar movimiento" en Inicio y Movimientos.
+  - [x] Editar elemento: toggle "¿Cuenta en el patrimonio del hogar?"
+    (`CambiarParticipacionEnConsolidacion`), visibilidad con ayuda.
+  - [x] "Agregar elemento": explicación de la categoría funcional según la
+    opción elegida. Patrimonio neto en rojo si es negativo.
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
 La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y

@@ -5,7 +5,18 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, Paragraph, Screen, Segmented, Select, Title } from '../ui';
+import {
+  Ayuda,
+  Button,
+  colors,
+  ErrorText,
+  Field,
+  Paragraph,
+  Screen,
+  Segmented,
+  Select,
+  Title,
+} from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
 const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
@@ -22,6 +33,7 @@ export function EditarElementoScreen() {
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
   const [visibilidad, setVisibilidad] = useState<(typeof VIS)[number]>('PRIVADA');
+  const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,6 +46,7 @@ export function EditarElementoScreen() {
         setNombre(e.nombre);
         setTipo(e.tipo);
         setVisibilidad(e.visibilidad as (typeof VIS)[number]);
+        setEnConsolidacion(e.participaConsolidacion ? 'Sí' : 'No');
       })
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error'));
   }, [elementoId, token]);
@@ -90,6 +103,10 @@ export function EditarElementoScreen() {
       {activo && (
         <View style={styles.card}>
           <Segmented label="Visibilidad" options={VIS} value={visibilidad} onChange={setVisibilidad} />
+          <Ayuda>
+            Privada: solo tú la ves. Compartida / Familiar: los miembros de tu
+            hogar ven este elemento en las vistas del hogar.
+          </Ayuda>
           <Button
             title="Cambiar visibilidad"
             variant="secondary"
@@ -103,6 +120,35 @@ export function EditarElementoScreen() {
               )
             }
             loading={busy}
+          />
+        </View>
+      )}
+
+      {activo && (
+        <View style={styles.card}>
+          <Segmented
+            label="¿Cuenta en el patrimonio del hogar?"
+            options={['No', 'Sí'] as const}
+            value={enConsolidacion}
+            onChange={setEnConsolidacion}
+          />
+          <Ayuda>
+            Si está en "Sí", este elemento suma en "Patrimonio del hogar" (la
+            vista consolidada de todos los miembros).
+          </Ayuda>
+          <Button
+            title="Guardar"
+            variant="secondary"
+            loading={busy}
+            onPress={() =>
+              run(() =>
+                api.post(
+                  '/comandos/CambiarParticipacionEnConsolidacion',
+                  { elementoId, participa: enConsolidacion === 'Sí' },
+                  token,
+                ),
+              )
+            }
           />
         </View>
       )}
