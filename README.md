@@ -62,7 +62,8 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     (solo específicos), EliminarPresupuesto + proyección `desviacion_presupuestaria`
     (presupuestado vs. real, en vivo). Migración 002 (`usuario_id` / `hogar_id`).
     e2e en verde.
-  - [ ] Móvil: pendiente.
+  - [x] Móvil: pantalla Presupuestos (lista + alta) y detalle con la
+    comparación presupuestado-vs-real y acciones Editar / Cerrar / Eliminar.
 - [ ] Fase 7 — se define al cerrar Fase 6 (BUILD_INSTRUCTIONS §3).
 
 **Cobertura de los 52 Application Services**: 46 implementados (#1–#12, #17–#46,

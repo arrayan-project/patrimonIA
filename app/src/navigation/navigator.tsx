@@ -24,7 +24,9 @@ export type RouteName =
   | 'Perfil'
   | 'Objetivos'
   | 'ObjetivoDetalle'
-  | 'AsignacionDetalle';
+  | 'AsignacionDetalle'
+  | 'Presupuestos'
+  | 'PresupuestoDetalle';
 
 export interface Route {
   name: RouteName;

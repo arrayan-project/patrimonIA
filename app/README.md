@@ -80,6 +80,13 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Dashboard → Objetivos financieros | lista + crear; detalle con barra de progreso, asignaciones, estado |
 | Detalle de asignación | reservas activas, crear/liberar reserva, eliminar asignación |
 
+### Fase 6 — Presupuesto
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Presupuestos | `GET /presupuestos` · `POST /comandos/CrearPresupuesto` |
+| Detalle de presupuesto | `GET /presupuestos/:id` · `GET /presupuestos/:id/desviacion` · `ActualizarDatosPresupuesto` / `CerrarPresupuesto` / `EliminarPresupuesto` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

@@ -21,6 +21,8 @@ import { PerfilScreen } from './screens/PerfilScreen';
 import { ObjetivosScreen } from './screens/ObjetivosScreen';
 import { ObjetivoDetalleScreen } from './screens/ObjetivoDetalleScreen';
 import { AsignacionDetalleScreen } from './screens/AsignacionDetalleScreen';
+import { PresupuestosScreen } from './screens/PresupuestosScreen';
+import { PresupuestoDetalleScreen } from './screens/PresupuestoDetalleScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -60,6 +62,10 @@ function Routes() {
       return <ObjetivoDetalleScreen />;
     case 'AsignacionDetalle':
       return <AsignacionDetalleScreen />;
+    case 'Presupuestos':
+      return <PresupuestosScreen />;
+    case 'PresupuestoDetalle':
+      return <PresupuestoDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }

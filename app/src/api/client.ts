@@ -185,3 +185,28 @@ export interface AsignacionDTO {
   createdAt: string;
   reservas?: ReservaDTO[];
 }
+
+export interface PresupuestoDTO {
+  id: string;
+  tipo: 'INDIVIDUAL' | 'FAMILIAR';
+  periodicidad: 'PERIODICO' | 'ESPECIFICO';
+  intervalo: string | null;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  ingresosEsperados: number | null;
+  gastosEsperados: number | null;
+  ahorroEsperado: number | null;
+  estado: string | null;
+  usuarioId: string | null;
+  hogarId: string | null;
+  vigente: boolean;
+  createdAt: string;
+}
+
+export interface DesviacionPresupuestariaDTO {
+  presupuestoId: string;
+  periodo: { desde: string | null; hasta: string | null };
+  esperado: { ingresos: number; gastos: number; ahorro: number };
+  real: { ingresos: number; gastos: number; ahorro: number };
+  desviacion: { ingresos: number; gastos: number; ahorro: number };
+}
