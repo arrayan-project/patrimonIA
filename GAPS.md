@@ -329,3 +329,93 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Por qué es aceptable**: API_DESIGN § "Resumen de cobertura" dice que las
   consultas "no se cuentan 1:1 contra ningún catálogo... se diseñaron según
   necesidad de UI/dashboard razonable". No es un comando ni una regla nueva.
+
+---
+
+## Detectados en la revisión de UI/UX (Fase 15)
+
+Ver `Docs/UI_UX_BACKLOG.md` para el backlog completo de UI/UX. Estos son los
+vacíos que requieren **decisión de dominio + migración** antes de ser UI.
+
+### G22 — Glosa / detalle en el movimiento financiero
+- **Qué falta**: `evento_financiero` solo tiene `tipo, monto, moneda, fecha`. No
+  hay dónde escribir "pago internet marzo". Ni los 6 docs lo contemplan
+  (AS #5 menciona "comentarios" como tipo de información de visibilidad, pero no
+  se modeló). Sin esto, el historial de movimientos es ilegible.
+- **Opciones**:
+  - (a) `evento_financiero.glosa TEXT NULL` — texto libre corto (≤140), opcional.
+    Inmutable como el resto del evento (se corrige anulando + registrando, o se
+    permite editar solo la glosa por ser texto no económico).
+  - (b) tabla `comentario` polimórfica (evento / elemento / …) — más potente,
+    alinea con AS #5, pero es un agregado nuevo.
+- **Recomendación**: (a) para empezar. Migración 009. `RegistrarEventoFinanciero`
+  y `CorregirEventoFinanciero` aceptan `glosa?`. Es configuración/anotación, no
+  hecho económico → no participa de la reconstrucción histórica (Sección V).
+- **Para decidir**: ¿la glosa se puede editar sin anular el evento?
+
+### G23 — Categorización de movimientos: categoría vs. etiqueta
+- **Qué falta**: no hay forma de clasificar un gasto/ingreso ("Mercado",
+  "Servicios", "Sueldo"). El presupuesto (Agregado K) solo compara totales de
+  ingreso/gasto, no por rubro. No hay registro rápido de gastos recurrentes.
+- **Distinción** (pedida explícitamente por el usuario):
+  | | Categoría | Etiqueta |
+  |---|---|---|
+  | Cardinalidad | 0..1 por movimiento | 0..N por movimiento |
+  | Naturaleza | taxonomía excluyente | transversal, acumulativa |
+  | Jerarquía | sí (padre/hijo, 2 niveles) | plana |
+  | Presupuesto | base natural del rubro | ambiguo con solapamiento |
+  | Alcance | vocabulario del hogar | personal |
+  | Ejemplos | Mercado, Transporte, Salud, Vivienda, Sueldo | #reembolsable, #viaje-2026 |
+- **Recomendación**: **ambas con roles distintos; la categoría es la columna
+  vertebral**.
+  - **Categoría** — tabla `categoria_movimiento(id, hogar_id, nombre,
+    tipo_aplicable ENUM(INGRESO,GASTO,AMBOS), categoria_padre_id?, color?, icono?,
+    orden, estado ENUM(ACTIVA,ARCHIVADA))`. `evento_financiero.categoria_id` NULL
+    FK. Al crear el hogar se siembra un set inicial editable (~10 rubros). No se
+    borra si tiene eventos → se archiva. Comandos `CrearCategoriaMovimiento`,
+    `ActualizarCategoriaMovimiento`, `ArchivarCategoriaMovimiento`,
+    `ReordenarCategoriasMovimiento`.
+  - **Etiqueta** — tabla `etiqueta` + `evento_etiqueta` (N:M), personal, fase
+    posterior.
+  - **Agrupación de elementos patrimoniales** (REQUISITES §D: "Inversiones"
+    agrupando Fintual/APV/Fondo) — concepto aparte: carpetas de visualización
+    para tus cuentas/activos. Tabla `agrupacion_elemento` + pertenencia, personal,
+    fase posterior. **No** se confunde con Asignación (Agregado H, que reserva
+    valor con un propósito: "Vacaciones", "Matrícula").
+- **Presupuesto por categoría** — nueva tabla `presupuesto_linea(presupuesto_id,
+  categoria_id, monto_esperado)`; `desviacion_presupuestaria` se calcula también
+  por rubro. Extiende G15 (que dejó "asignaciones esperadas" fuera).
+- **Todo esto es configuración**, no hecho económico → historial solo en
+  auditoría (DATABASE_DESIGN §125, Principio C).
+- **Para decidir**: ¿categorías del hogar o personales? ¿jerarquía de 1 o 2
+  niveles? ¿categoría obligatoria en el gasto o siempre opcional?
+
+### G24 — Plantillas / movimientos recurrentes rápidos
+- **Qué falta**: registrar "el gasto de siempre" (internet, arriendo) en 2 toques.
+  Distinto de **Movimiento Programado** (#13–#16, que es un movimiento futuro
+  concreto con fecha): una plantilla es un molde reutilizable sin fecha.
+- **Depende de** G23 (categoría) y G22 (glosa).
+- **Opción**: tabla `plantilla_movimiento(usuario_id, nombre, tipo, monto?,
+  elemento_id?, categoria_id?, glosa?)` + comando de alta desde un evento
+  existente ("guardar como plantilla"). Fase posterior.
+
+### G25 — Sección de Ajustes / preferencias de visualización
+- **Qué falta**: un lugar para administrar de forma granular lo que se muestra —
+  categorías, etiquetas, agrupaciones, formato de fecha, secciones visibles del
+  dashboard, tema, densidad, moneda de despliegue preferida, tipos de elemento
+  sugeridos.
+- **Estado actual**: `usuario.preferencias JSONB` **ya existe** en el esquema
+  (DATABASE_DESIGN §87) y `ActualizarDatosUsuario` (#44) ya la acepta (reemplazo
+  del objeto completo). DDD Sección B lista "Preferencias globales" como
+  responsabilidad del Usuario. **Falta el lado de lectura**: `toUsuarioDTO` /
+  `GET /usuarios/me` **no devuelven `preferencias`** hoy.
+- **Recomendación**:
+  - Exponer `preferencias` en `GET /usuarios/me` y darle forma (esquema de
+    preferencias conocido, con defaults en el cliente).
+  - Preferencias **personales** → `usuario.preferencias`. Config **del hogar**
+    (categorías, moneda de consolidación, tipos de elemento sugeridos) → tabla
+    propia o `hogar` (hoy `hogar` solo tiene `nombre` + `moneda_consolidacion`).
+  - Pantalla **Ajustes** con sub-secciones: Perfil · Categorías · Etiquetas ·
+    Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
+- **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
+  ¿`hogar.configuracion JSONB` o tablas normalizadas?

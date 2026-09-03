@@ -127,10 +127,15 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `ExpoPushSender`, G20). Falta solo el captcha y un development build para el
     push real.
 
+- [ ] **Fase 15 — UI / UX** (backlog en `Docs/UI_UX_BACKLOG.md`):
+  auto-refresh y UI optimista, date pickers, glosa + categorías de movimiento
+  (🔴 migración, `GAPS.md` G22–G24), presupuesto por rubro, sección de Ajustes
+  + `usuario.preferencias` (`GAPS.md` G25), tabs, traducción de enums, gráficos.
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
-Modelo de dominio cerrado; deuda técnica de Fase 14 saldada. Lo que queda son
-integraciones externas (captcha, proveedor de email, EAS para push) — la
-estructura está lista para colgarlas. Ver `GAPS.md`.
+Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
+La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y
+preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 
 ## Tests
 
