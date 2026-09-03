@@ -8,7 +8,7 @@ H='content-type: application/json'
 py() { python3 -c "import sys,json;print(json.load(sys.stdin)$1)"; }
 
 docker exec patrimonia-postgres psql -U patrimonia -d patrimonia -c \
-  "TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, movimiento_programado RESTART IDENTITY CASCADE" >/dev/null
+  "TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, movimiento_programado, notificacion, idempotencia, tipo_cambio RESTART IDENTITY CASCADE" >/dev/null
 
 curl -s -XPOST "$B/comandos/RegistrarUsuario" -H "$H" \
   -d '{"email":"demo@patrimonia.cl","nombre":"Demo","password":"demo1234"}' >/dev/null
@@ -48,6 +48,9 @@ curl -s -XPOST "$B/comandos/CrearPresupuesto" -H "$A" -H "$H" \
 
 curl -s -XPOST "$B/comandos/CrearMovimientoProgramado" -H "$A" -H "$H" \
   -d "{\"montoPlanificado\":1200000,\"moneda\":\"CLP\",\"fechaProgramada\":\"2020-01-05\",\"elementoDestinoId\":\"$CC\",\"observaciones\":\"sueldo\"}" >/dev/null
+
+curl -s -XPOST "$B/comandos/RegistrarTipoCambio" -H "$A" -H "$H" \
+  -d '{"monedaOrigen":"USD","monedaDestino":"CLP","tasa":950}' >/dev/null
 
 echo "✓ Datos demo listos — usuario: demo@patrimonia.cl / demo1234"
 echo "  Casa Demo · Cuenta Corriente (gasto corregido) · Departamento (95M→110M)"
