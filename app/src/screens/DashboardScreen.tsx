@@ -22,6 +22,7 @@ export function DashboardScreen() {
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
+  const [noLeidas, setNoLeidas] = useState(0);
   const [email, setEmail] = useState('');
   const [invitando, setInvitando] = useState(false);
   const [aviso, setAviso] = useState('');
@@ -42,6 +43,15 @@ export function DashboardScreen() {
       setHogar(h);
       setPatrimonio(p);
       setElementos(els);
+      try {
+        const { noLeidas: n } = await api.get<{ noLeidas: number }>(
+          '/usuarios/me/notificaciones/no-leidas',
+          token,
+        );
+        setNoLeidas(n);
+      } catch {
+        setNoLeidas(0);
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -148,6 +158,10 @@ export function DashboardScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
+      <LinkButton
+        title={noLeidas > 0 ? `Notificaciones (${noLeidas})` : 'Notificaciones'}
+        onPress={() => nav.go('Notificaciones')}
+      />
       <LinkButton
         title="Patrimonio del hogar"
         onPress={() => nav.go('HogarConsolidado', { hogarId: hogar.id })}

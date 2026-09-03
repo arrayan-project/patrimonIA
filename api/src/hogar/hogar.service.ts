@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { NotificacionService } from '../notificacion/notificacion.service.js';
 import {
   toHogarDTO,
   toInvitacionDTO,
@@ -23,6 +24,7 @@ export class HogarService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly notificaciones: NotificacionService,
   ) {}
 
   // ── Comandos ──────────────────────────────────────────────────────────────
@@ -125,6 +127,15 @@ export class HogarService {
         },
         entidadRelacionadaTipo: 'HOGAR',
         entidadRelacionadaId: input.hogarId,
+      });
+
+      await this.notificaciones.emitir(tx, {
+        usuarioId: invitado.id,
+        tipo: 'INVITACION_RECIBIDA',
+        titulo: 'Te invitaron a un hogar',
+        cuerpo: `Tienes una invitación pendiente para unirte a "${hogar.nombre}".`,
+        entidadTipo: 'INVITACION',
+        entidadId: creada.id,
       });
 
       return creada;

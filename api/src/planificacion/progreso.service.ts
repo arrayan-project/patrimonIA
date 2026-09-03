@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { NotificacionService } from '../notificacion/notificacion.service.js';
 
 /**
  * Proyección progreso_objetivo (DATABASE_DESIGN §12) y política "Completar
@@ -12,6 +13,7 @@ export class ProgresoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly notificaciones: NotificacionService,
   ) {}
 
   /** Suma de reservas ACTIVAS de las asignaciones asociadas al objetivo. */
@@ -86,6 +88,14 @@ export class ProgresoService {
       valorAnterior: { estado: 'EN_PROGRESO' },
       valorPosterior: { estado: 'COMPLETADO', progreso },
       encadenadaDeId: entradaComandoRaizId,
+    });
+    await this.notificaciones.emitir(tx, {
+      usuarioId: objetivo.usuario_id ?? usuarioId,
+      tipo: 'OBJETIVO_COMPLETADO',
+      titulo: 'Objetivo completado',
+      cuerpo: `"${objetivo.nombre}" alcanzó su monto objetivo (${progreso}).`,
+      entidadTipo: 'OBJETIVO_FINANCIERO',
+      entidadId: objetivoId,
     });
   }
 }

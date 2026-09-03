@@ -271,6 +271,7 @@ model usuario {
   invitacion_invitacion_emisor_idTousuario   invitacion[]           @relation("invitacion_emisor_idTousuario")
   invitacion_invitacion_invitado_idTousuario invitacion[]           @relation("invitacion_invitado_idTousuario")
   membresia                                  membresia[]
+  notificacion                               notificacion[]
   objetivo_financiero                        objetivo_financiero[]
   presupuesto                                presupuesto[]
 }
@@ -289,4 +290,20 @@ model valorizacion {
   elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([elemento_id, fecha, created_at], map: "ix_valorizacion_elemento_fecha", where: raw("(anulada = false)"))
+}
+
+model notificacion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuario_id   String   @db.Uuid
+  tipo         String
+  titulo       String
+  cuerpo       String
+  entidad_tipo String?
+  entidad_id   String?  @db.Uuid
+  leida        Boolean  @default(false)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  usuario      usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([usuario_id], map: "ix_notificacion_no_leida", where: raw("(leida = false)"))
+  @@index([usuario_id, created_at(sort: Desc)], map: "ix_notificacion_usuario")
 }

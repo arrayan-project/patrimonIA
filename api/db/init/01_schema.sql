@@ -314,6 +314,27 @@ CREATE INDEX ix_auditoria_fecha ON auditoria (fecha_hora);
 CREATE INDEX ix_auditoria_encadenada ON auditoria (encadenada_de_id) WHERE encadenada_de_id IS NOT NULL;
 
 -- ============================================================================
+-- 12. Notificaciones (migración 005 — infraestructura, NO dominio)
+-- Registro in-app del "se notifica al usuario" del Principio 4. No genera
+-- auditoría, se puede regenerar. El envío push/email queda fuera de alcance.
+-- ============================================================================
+
+CREATE TABLE notificacion (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id     UUID NOT NULL REFERENCES usuario(id),
+    tipo           TEXT NOT NULL,
+    titulo         TEXT NOT NULL,
+    cuerpo         TEXT NOT NULL,
+    entidad_tipo   TEXT,
+    entidad_id     UUID,
+    leida          BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX ix_notificacion_usuario ON notificacion (usuario_id, created_at DESC);
+CREATE INDEX ix_notificacion_no_leida ON notificacion (usuario_id) WHERE leida = FALSE;
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

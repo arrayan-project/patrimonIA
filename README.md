@@ -93,7 +93,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     liquidez, avance de objetivos), `GET /hogares/:id/eventos-financieros` (vista
     colapsada). e2e en verde.
   - [x] Móvil: pantalla "Patrimonio del hogar".
-- [ ] Fase 11 — notificaciones.
+- [x] **Fase 11 — Notificaciones (Principio 4)**:
+  - [x] Backend: tabla `notificacion` (migración 005), emitidas desde las
+    políticas "Completar objetivo" / "Consumir reserva" y desde InvitarMiembro.
+    `GET /usuarios/me/notificaciones(/no-leidas)`, `POST .../:id/leer`,
+    `POST .../leer-todas`. e2e en verde.
+  - [x] Móvil: bandeja de notificaciones con contador en el Dashboard.
+- [ ] Fase 12 — Idempotency-Key + token de pre-registro.
 
 **Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de
 consolidación/métricas del hogar y el subsistema de tipos de cambio (ver GAPS.md

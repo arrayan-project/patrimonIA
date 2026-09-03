@@ -52,6 +52,8 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `004_impacto_fecha.sql` — columna `fecha` (fecha del hecho económico origen)
   en `impacto_patrimonial`, para la reconstrucción histórica (DDD §V, GAPS.md
   G18). Backfill desde los orígenes. Ya incluida en `init/01_schema.sql`.
+- `005_notificacion.sql` — tabla `notificacion` (infraestructura in-app del
+  Principio 4, GAPS.md G20). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

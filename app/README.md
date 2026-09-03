@@ -113,6 +113,12 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 |----------|------------------|
 | Dashboard → Patrimonio del hogar | `GET /hogares/:id/patrimonio-consolidado` · `GET /hogares/:id/metricas` |
 
+### Fase 11 — Notificaciones
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Notificaciones (N) | `GET /usuarios/me/notificaciones` · `POST .../:id/leer` · `POST .../leer-todas` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

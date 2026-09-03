@@ -9,6 +9,7 @@ import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
+import { NotificacionService } from '../notificacion/notificacion.service.js';
 import { derivarValorPendiente } from '../common/deuda.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
@@ -26,6 +27,7 @@ export class EventoFinancieroService {
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
     private readonly progreso: ProgresoService,
+    private readonly notificaciones: NotificacionService,
   ) {}
 
   /**
@@ -112,6 +114,17 @@ export class EventoFinancieroService {
             : {}),
         },
       });
+
+      if (asignacion && reservasConsumidas.length > 0) {
+        await this.notificaciones.emitir(tx, {
+          usuarioId: actorId,
+          tipo: 'RESERVA_CONSUMIDA',
+          titulo: 'Reservas consumidas',
+          cuerpo: `Se marcaron ${reservasConsumidas.length} reserva(s) como consumidas al asociar un movimiento a "${asignacion.nombre}".`,
+          entidadTipo: 'ASIGNACION',
+          entidadId: asignacion.id,
+        });
+      }
 
       if (asignacion?.objetivo_financiero_id) {
         await this.progreso.recalcularYCompletar(

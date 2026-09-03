@@ -278,6 +278,20 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
     correcciones vivas (colapsa el par original+compensatorio).
 - **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
 
+### G20 — Notificaciones (Fase 11)
+- **Qué falta**: el Principio 4 dice "se notifica al usuario como consecuencia"
+  de una política; hasta la Fase 10 eso solo quedaba en `auditoria`. UX_FLOWS
+  marca el envío (push/email) como fuera de alcance del dominio.
+- **Decisión (Fase 11)**: tabla `notificacion` (migración 005) como registro
+  **in-app**. NO es entidad de dominio: no genera auditoría, se puede regenerar.
+  Se emite dentro de la transacción del comando que dispara la política.
+  Generadores actuales: **OBJETIVO_COMPLETADO** (política "Completar objetivo"),
+  **RESERVA_CONSUMIDA** (política "Consumir reserva"), **INVITACION_RECIBIDA**
+  (InvitarMiembro). Endpoints `GET /usuarios/me/notificaciones`,
+  `.../no-leidas`, `POST .../:id/leer`, `POST .../leer-todas`.
+- **Fuera de alcance**: envío real push/email; preferencias de notificación;
+  notificar al emisor cuando aceptan su invitación (se puede agregar).
+
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN

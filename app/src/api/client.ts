@@ -213,6 +213,17 @@ export interface DesviacionPresupuestariaDTO {
   desviacion: { ingresos: number; gastos: number; ahorro: number };
 }
 
+export interface NotificacionDTO {
+  id: string;
+  tipo: string;
+  titulo: string;
+  cuerpo: string;
+  entidadTipo: string | null;
+  entidadId: string | null;
+  leida: boolean;
+  createdAt: string;
+}
+
 export interface PatrimonioConsolidadoDTO {
   hogarId: string;
   monedaConsolidacion: string;
