@@ -4,6 +4,8 @@ services:
   postgres:
     image: postgres:16
     container_name: patrimonia-postgres
+    # Vuelve a levantar sola tras reiniciar el laptop (hasta un `docker compose stop`).
+    restart: unless-stopped
     environment:
       POSTGRES_USER: patrimonia
       POSTGRES_PASSWORD: patrimonia

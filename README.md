@@ -51,15 +51,16 @@ Vacíos y decisiones pendientes: ver `GAPS.md`.
   abortan con un mensaje si detectan una versión vieja. Verifica con `node -v`.
 - Docker (para PostgreSQL local, no requiere Postgres instalado).
 
-## Probar en el teléfono (Expo Go)
+## Probar en el teléfono
 
-1. `nvm use` + `npm run start:dev` en `api/` — verifica `curl localhost:3000/health`.
-2. `nvm use` + `npm start` en `app/` — muestra un QR.
-3. Teléfono en la **misma WiFi**. Firewall: `sudo ufw allow 3000/tcp` y
-   `sudo ufw allow 8081/tcp` (ufw viene activo).
-4. Prueba desde el navegador del teléfono: `http://<IP-del-PC>:3000/health` →
-   JSON. Si eso carga, la app también.
-5. Escanea el QR: Android desde Expo Go; iPhone con la cámara.
-6. Si el router aísla los dispositivos: `npm start -- --tunnel` en `app/`.
+**Guía completa (arrancar desde cero, tras reiniciar el laptop):
+[`Docs/CORRER_EN_LOCAL.md`](Docs/CORRER_EN_LOCAL.md)**
 
-No hay usuario de prueba: la cuenta se crea en la pantalla "Crear cuenta".
+Resumen — dos terminales:
+```bash
+./scripts/db.sh && ./scripts/api.sh   # terminal 1: base de datos + backend
+./scripts/app.sh                      # terminal 2: Expo (muestra el QR)
+./scripts/estado.sh                   # diagnóstico: ¿qué está andando?
+```
+Los scripts eligen Node 22 solos. Firewall (una vez): `sudo ufw allow 3000/tcp`
+y `sudo ufw allow 8081/tcp`. No hay usuario de prueba: se crea en "Crear cuenta".
