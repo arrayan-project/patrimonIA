@@ -4,11 +4,24 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type TipoCambioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  DateField,
+  ErrorText,
+  Field,
+  fechaLegible,
+  LinkButton,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 
 export function TiposCambioScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const [lista, setLista] = useState<TipoCambioDTO[] | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -43,6 +56,7 @@ export function TiposCambioScreen() {
         },
         token,
       );
+      toast.mostrar('Tipo de cambio registrado');
       setTasa('');
       setFecha('');
       await cargar();
@@ -66,7 +80,7 @@ export function TiposCambioScreen() {
         <Field label="Moneda origen" value={origen} onChangeText={setOrigen} maxLength={3} />
         <Field label="Moneda destino" value={destino} onChangeText={setDestino} maxLength={3} />
         <Field label="Tasa" keyboardType="numeric" value={tasa} onChangeText={setTasa} placeholder="950" />
-        <Field label="Vigente desde (YYYY-MM-DD, opcional)" value={fecha} onChangeText={setFecha} placeholder="hoy" />
+        <DateField label="Vigente desde (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
         <Button
           title="Registrar"
           onPress={registrar}
@@ -85,7 +99,7 @@ export function TiposCambioScreen() {
           {lista.map((t) => (
             <Row
               key={t.id}
-              left={`${t.monedaOrigen} → ${t.monedaDestino} · ${t.fechaVigencia}`}
+              left={`${t.monedaOrigen} → ${t.monedaDestino} · ${fechaLegible(t.fechaVigencia)}`}
               right={String(t.tasa)}
             />
           ))}

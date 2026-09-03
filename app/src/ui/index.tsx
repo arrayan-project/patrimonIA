@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -10,7 +11,30 @@ import {
   View,
   type TextInputProps,
 } from 'react-native';
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// ── Helpers de formato ──────────────────────────────────────────────────────
+
+/** Date → 'YYYY-MM-DD' en hora local (no UTC). */
+export function aISO(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** 'YYYY-MM-DD' → "15 mar 2026". Devuelve el string tal cual si no parsea. */
+export function fechaLegible(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  return `${Number(m[3])} ${meses[Number(m[2]) - 1]} ${m[1]}`;
+}
+
+function agruparMiles(entero: string): string {
+  return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 
 export const colors = {
   bg: '#ffffff',
@@ -90,6 +114,97 @@ export function Field({
   );
 }
 
+/**
+ * Campo de fecha con calendario nativo. `value` es 'YYYY-MM-DD' o ''.
+ * En web usa el date picker del navegador.
+ */
+export function DateField({
+  label,
+  value,
+  onChange,
+  optional,
+  placeholder = 'Elegir fecha',
+}: {
+  label: string;
+  value: string;
+  onChange: (iso: string) => void;
+  optional?: boolean;
+  placeholder?: string;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const fecha = value ? new Date(`${value}T00:00:00`) : new Date();
+
+  const alElegir = (e: DateTimePickerEvent, d?: Date) => {
+    setAbierto(false);
+    if (e.type === 'set' && d) onChange(aISO(d));
+  };
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {Platform.OS === 'web' ? (
+        <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
+      ) : (
+        <>
+          <Pressable style={styles.input} onPress={() => setAbierto(true)}>
+            <Text style={{ fontSize: 16, color: value ? colors.text : colors.muted }}>
+              {value ? fechaLegible(value) : placeholder}
+            </Text>
+          </Pressable>
+          {abierto && (
+            <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
+          )}
+        </>
+      )}
+      {optional && value ? <LinkButton title="Quitar fecha" onPress={() => onChange('')} /> : null}
+    </View>
+  );
+}
+
+/**
+ * Campo de monto: muestra el número con separador de miles mientras se escribe,
+ * y entrega el valor numérico "limpio" (string sin puntos, con `.` decimal).
+ */
+export function MoneyField({
+  label,
+  value,
+  onChange,
+  moneda,
+  placeholder = '0',
+}: {
+  label: string;
+  value: string;
+  onChange: (limpio: string) => void;
+  moneda?: string;
+  placeholder?: string;
+}) {
+  const [entero, dec] = value.split('.');
+  const display =
+    value === '' ? '' : agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
+
+  const alEscribir = (t: string) => {
+    // deja solo dígitos y una coma/punto decimal
+    let limpio = t.replace(/[^\d.,]/g, '').replace(/,/g, '.');
+    const partes = limpio.split('.');
+    limpio = partes[0] + (partes.length > 1 ? '.' + partes.slice(1).join('').slice(0, 2) : '');
+    onChange(limpio);
+  };
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{moneda ? `${label} (${moneda})` : label}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={display}
+        onChangeText={alEscribir}
+        placeholder={placeholder}
+        placeholderTextColor={colors.muted}
+      />
+    </View>
+  );
+}
+
 export function Button({
   title,
   onPress,
@@ -100,25 +215,27 @@ export function Button({
   title: string;
   onPress: () => void;
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
 }) {
-  const isSecondary = variant === 'secondary';
+  const outline = variant === 'secondary' || variant === 'danger';
+  const tinte = variant === 'danger' ? colors.danger : colors.primary;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
-        isSecondary && styles.buttonSecondary,
+        variant === 'secondary' && styles.buttonSecondary,
+        variant === 'danger' && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isSecondary ? colors.primary : colors.primaryText} />
+        <ActivityIndicator color={outline ? tinte : colors.primaryText} />
       ) : (
-        <Text style={[styles.buttonText, isSecondary && styles.buttonTextSecondary]}>{title}</Text>
+        <Text style={[styles.buttonText, outline && { color: tinte }]}>{title}</Text>
       )}
     </Pressable>
   );
@@ -230,6 +347,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.primary,
+  },
+  buttonDanger: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.danger,
   },
   buttonDisabled: { opacity: 0.5 },
   buttonPressed: { opacity: 0.85 },

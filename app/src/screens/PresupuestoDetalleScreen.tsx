@@ -10,11 +10,25 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  ErrorText,
+  Field,
+  fechaLegible,
+  LinkButton,
+  MoneyField,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 
 export function PresupuestoDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const presupuestoId = nav.route.params?.presupuestoId as string;
 
   const [p, setP] = useState<PresupuestoDTO | null>(null);
@@ -59,14 +73,21 @@ export function PresupuestoDetalleScreen() {
         if (num(gastos) !== undefined) body.gastosEsperados = num(gastos);
         if (num(ahorro) !== undefined) body.ahorroEsperado = num(ahorro);
         await api.post('/comandos/ActualizarDatosPresupuesto', body, token);
+        toast.mostrar('Guardado');
         setModo(null);
         await cargar();
       } else if (modo === 'cerrar') {
         await api.post('/comandos/CerrarPresupuesto', { presupuestoId, motivo: motivo.trim() }, token);
+        toast.mostrar('Presupuesto cerrado');
         setModo(null);
         await cargar();
       } else {
+        if (!(await confirmar('Eliminar presupuesto', 'Se borra de forma definitiva, junto con su comparación presupuesto-vs-real.', 'Eliminar'))) {
+          setBusy(false);
+          return;
+        }
         await api.post('/comandos/EliminarPresupuesto', { presupuestoId, motivo: motivo.trim() }, token);
+        toast.mostrar('Presupuesto eliminado');
         nav.back();
       }
     } catch (e) {
@@ -98,7 +119,10 @@ export function PresupuestoDetalleScreen() {
       <View style={styles.card}>
         <Row left="Periodicidad" right={p.periodicidad} />
         {p.intervalo && <Row left="Intervalo" right={p.intervalo} />}
-        <Row left="Período" right={`${p.fechaInicio ?? '—'} → ${p.fechaFin ?? '—'}`} />
+        <Row
+          left="Período"
+          right={`${p.fechaInicio ? fechaLegible(p.fechaInicio) : '—'} → ${p.fechaFin ? fechaLegible(p.fechaFin) : '—'}`}
+        />
         <Row left="Estado" right={p.estado ?? (p.vigente ? 'vigente (calendario)' : 'fuera de vigencia')} />
       </View>
 
@@ -125,16 +149,16 @@ export function PresupuestoDetalleScreen() {
           {puedeCerrar && (
             <Button title="Cerrar presupuesto" variant="secondary" onPress={() => setModo('cerrar')} />
           )}
-          <Button title="Eliminar presupuesto" variant="secondary" onPress={() => setModo('eliminar')} />
+          <Button title="Eliminar presupuesto" variant="danger" onPress={() => setModo('eliminar')} />
         </View>
       )}
 
       {modo === 'editar' && (
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Editar montos esperados</Text>
-          <Field label="Ingresos" keyboardType="numeric" value={ingresos} onChangeText={setIngresos} />
-          <Field label="Gastos" keyboardType="numeric" value={gastos} onChangeText={setGastos} />
-          <Field label="Ahorro" keyboardType="numeric" value={ahorro} onChangeText={setAhorro} />
+          <MoneyField label="Ingresos" value={ingresos} onChange={setIngresos} />
+          <MoneyField label="Gastos" value={gastos} onChange={setGastos} />
+          <MoneyField label="Ahorro" value={ahorro} onChange={setAhorro} />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar" onPress={ejecutar} loading={busy} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />

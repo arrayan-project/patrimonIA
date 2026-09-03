@@ -10,12 +10,15 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
 import {
   Button,
   colors,
   ErrorText,
   Field,
   LinkButton,
+  MoneyField,
   Row,
   Screen,
   SelectRow,
@@ -25,6 +28,7 @@ import {
 export function AsignacionDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const asignacionId = nav.route.params?.asignacionId as string;
 
   const [asg, setAsg] = useState<AsignacionDTO | null>(null);
@@ -122,7 +126,7 @@ export function AsignacionDetalleScreen() {
             onPress={() => setOrigenId(el.id)}
           />
         ))}
-        <Field label="Monto a reservar" keyboardType="numeric" value={monto} onChangeText={setMonto} />
+        <MoneyField label="Monto a reservar" value={monto} onChange={setMonto} />
         <Button
           title="Crear reserva"
           loading={busy}
@@ -134,6 +138,7 @@ export function AsignacionDetalleScreen() {
                 { asignacionId, elementoOrigenId: origenId, monto: Number(monto) },
                 token,
               );
+              toast.mostrar('Reserva creada');
               setMonto('');
               setOrigenId(null);
             })
@@ -145,20 +150,27 @@ export function AsignacionDetalleScreen() {
         <Field label="Motivo (liberar / eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         <Button
           title="Eliminar asignación"
-          variant="secondary"
+          variant="danger"
           loading={busy}
           disabled={motivo.trim().length < 3}
-          onPress={() =>
-            run(
-              () =>
-                api.post(
-                  '/comandos/EliminarAsignacion',
-                  { asignacionId, motivo: motivo.trim() },
-                  token,
-                ),
-              true,
+          onPress={async () => {
+            if (
+              !(await confirmar(
+                'Eliminar asignación',
+                'Se eliminan también sus reservas activas. No afecta el patrimonio.',
+                'Eliminar',
+              ))
             )
-          }
+              return;
+            await run(async () => {
+              await api.post(
+                '/comandos/EliminarAsignacion',
+                { asignacionId, motivo: motivo.trim() },
+                token,
+              );
+              toast.mostrar('Asignación eliminada');
+            }, true);
+          }}
         />
       </View>
 

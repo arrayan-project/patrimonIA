@@ -10,11 +10,25 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  DateField,
+  ErrorText,
+  Field,
+  fechaLegible,
+  LinkButton,
+  MoneyField,
+  Screen,
+  SelectRow,
+  Title,
+} from '../ui';
 
 export function MovimientosProgramadosScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const [lista, setLista] = useState<MovimientoProgramadoDTO[] | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
@@ -59,6 +73,7 @@ export function MovimientosProgramadosScreen() {
         },
         token,
       );
+      toast.mostrar('Movimiento programado');
       setMonto('');
       setFecha('');
       setObs('');
@@ -92,7 +107,7 @@ export function MovimientosProgramadosScreen() {
               <Text style={styles.nombre}>{money(m.montoPlanificado, m.moneda)}</Text>
               <Text style={styles.estado}>{m.estado}</Text>
             </View>
-            <Text style={styles.muted}>Programado para {m.fechaProgramada}</Text>
+            <Text style={styles.muted}>Programado para {fechaLegible(m.fechaProgramada)}</Text>
             {m.observaciones ? <Text style={styles.muted}>{m.observaciones}</Text> : null}
           </Pressable>
         ))
@@ -100,8 +115,8 @@ export function MovimientosProgramadosScreen() {
 
       <View style={styles.card}>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
-        <Field label="Monto planificado" keyboardType="numeric" value={monto} onChangeText={setMonto} placeholder="0" />
-        <Field label="Fecha (YYYY-MM-DD)" value={fecha} onChangeText={setFecha} placeholder="2026-10-01" />
+        <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={destino?.moneda} />
+        <DateField label="Fecha" value={fecha} onChange={setFecha} />
         <Text style={styles.label}>Elemento destino</Text>
         {elementos.map((el) => (
           <SelectRow

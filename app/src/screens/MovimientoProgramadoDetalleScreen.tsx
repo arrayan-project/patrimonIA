@@ -5,11 +5,26 @@ import { api, ApiError, type MovimientoProgramadoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  DateField,
+  ErrorText,
+  Field,
+  fechaLegible,
+  LinkButton,
+  MoneyField,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 
 export function MovimientoProgramadoDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const movimientoId = nav.route.params?.movimientoId as string;
 
   const [m, setM] = useState<MovimientoProgramadoDTO | null>(null);
@@ -29,7 +44,7 @@ export function MovimientoProgramadoDetalleScreen() {
       );
       setM(mov);
       setMonto(String(mov.montoPlanificado));
-      setFecha(mov.fechaProgramada);
+      setFecha(mov.fechaProgramada.slice(0, 10));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -44,9 +59,10 @@ export function MovimientoProgramadoDetalleScreen() {
       if (modo === 'editar') {
         await api.post(
           '/comandos/ActualizarMovimientoProgramado',
-          { movimientoId, montoPlanificado: Number(monto), fechaProgramada: fecha.trim() },
+          { movimientoId, montoPlanificado: Number(monto), fechaProgramada: fecha },
           token,
         );
+        toast.mostrar('Guardado');
         setModo(null);
         await cargar();
       } else if (modo === 'materializar') {
@@ -55,18 +71,24 @@ export function MovimientoProgramadoDetalleScreen() {
           {
             movimientoId,
             ...(monto.trim() ? { montoEfectivo: Number(monto) } : {}),
-            ...(fecha.trim() ? { fechaEfectiva: fecha.trim() } : {}),
+            ...(fecha.trim() ? { fechaEfectiva: fecha } : {}),
           },
           token,
         );
+        toast.mostrar('Movimiento materializado');
         setModo(null);
         await cargar();
       } else {
+        if (!(await confirmar('Cancelar movimiento', 'El movimiento programado se cancela y no podrá materializarse.', 'Cancelarlo'))) {
+          setBusy(false);
+          return;
+        }
         await api.post(
           '/comandos/CancelarMovimientoProgramado',
           { movimientoId, motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Movimiento cancelado');
         nav.back();
       }
     } catch (e) {
@@ -95,7 +117,7 @@ export function MovimientoProgramadoDetalleScreen() {
 
       <View style={styles.card}>
         <Row left="Estado" right={m.estado} />
-        <Row left="Fecha programada" right={m.fechaProgramada} />
+        <Row left="Fecha programada" right={fechaLegible(m.fechaProgramada)} />
         {m.observaciones ? <Row left="Observaciones" right={m.observaciones} /> : null}
         {m.eventoFinancieroId ? <Row left="Evento generado" right={m.eventoFinancieroId.slice(0, 8)} /> : null}
       </View>
@@ -104,7 +126,7 @@ export function MovimientoProgramadoDetalleScreen() {
         <View style={{ gap: 8 }}>
           <Button title="Materializar ahora" onPress={() => setModo('materializar')} />
           <Button title="Editar" variant="secondary" onPress={() => setModo('editar')} />
-          <Button title="Cancelar movimiento" variant="secondary" onPress={() => setModo('cancelar')} />
+          <Button title="Cancelar movimiento" variant="danger" onPress={() => setModo('cancelar')} />
         </View>
       )}
 
@@ -113,16 +135,16 @@ export function MovimientoProgramadoDetalleScreen() {
           <Text style={styles.sectionTitle}>
             {modo === 'editar' ? 'Editar movimiento' : 'Materializar'}
           </Text>
-          <Field
+          <MoneyField
             label={modo === 'editar' ? 'Monto planificado' : 'Monto efectivo'}
-            keyboardType="numeric"
             value={monto}
-            onChangeText={setMonto}
+            onChange={setMonto}
+            moneda={m.moneda}
           />
-          <Field
-            label={modo === 'editar' ? 'Fecha programada (YYYY-MM-DD)' : 'Fecha efectiva (YYYY-MM-DD)'}
+          <DateField
+            label={modo === 'editar' ? 'Fecha programada' : 'Fecha efectiva'}
             value={fecha}
-            onChangeText={setFecha}
+            onChange={setFecha}
           />
           <ErrorText>{error}</ErrorText>
           <Button

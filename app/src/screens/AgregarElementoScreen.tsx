@@ -3,13 +3,25 @@ import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Segmented, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  ErrorText,
+  Field,
+  LinkButton,
+  MoneyField,
+  Paragraph,
+  Screen,
+  Segmented,
+  Title,
+} from '../ui';
 
 const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
 
 export function AgregarElementoScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const { key } = useIdempotencyKey();
 
   const [nombre, setNombre] = useState('');
@@ -51,6 +63,7 @@ export function AgregarElementoScreen() {
         token,
         key,
       );
+      toast.mostrar('Elemento agregado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -69,12 +82,11 @@ export function AgregarElementoScreen() {
       <Segmented label="Categoría funcional" options={CATEGORIAS} value={categoria} onChange={onCategoria} />
       {esDeudaOCredito ? (
         <>
-          <Field
+          <MoneyField
             label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
-            keyboardType="numeric"
             value={valorPendiente}
-            onChangeText={setValorPendiente}
-            placeholder="0"
+            onChange={setValorPendiente}
+            moneda={moneda.trim().toUpperCase() || undefined}
           />
           <Paragraph>
             {categoria === 'DEUDA'
@@ -84,12 +96,11 @@ export function AgregarElementoScreen() {
         </>
       ) : (
         <>
-          <Field
+          <MoneyField
             label="Valor inicial"
-            keyboardType="numeric"
             value={valorInicial}
-            onChangeText={setValorInicial}
-            placeholder="0"
+            onChange={setValorInicial}
+            moneda={moneda.trim().toUpperCase() || undefined}
           />
           <Segmented
             label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"

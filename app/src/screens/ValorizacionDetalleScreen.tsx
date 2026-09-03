@@ -5,11 +5,14 @@ import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import { Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
 
 export function ValorizacionDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const valorizacionId = nav.route.params?.valorizacionId as string;
   const elementoId = nav.route.params?.elementoId as string;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
@@ -51,12 +54,18 @@ export function ValorizacionDetalleScreen() {
           { valorizacionId, valorCorrecto: Number(valorCorrecto), motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Valorización corregida');
       } else {
+        if (!(await confirmar('Anular valorización', 'El valor del elemento vuelve al anterior a esta valorización.', 'Anular'))) {
+          setEnviando(false);
+          return;
+        }
         await api.post(
           '/comandos/AnularValorizacion',
           { valorizacionId, motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Valorización anulada');
       }
       nav.back();
     } catch (e) {
@@ -86,7 +95,7 @@ export function ValorizacionDetalleScreen() {
       </Text>
 
       <View style={styles.card}>
-        <Row left="Fecha" right={val.fecha} />
+        <Row left="Fecha" right={fechaLegible(val.fecha)} />
         <Row left="Estado" right={val.anulada ? 'Anulada' : 'Vigente'} />
         {val.correccionDeId && (
           <Text style={styles.nota}>Es la corrección de una valorización anterior.</Text>
@@ -101,14 +110,14 @@ export function ValorizacionDetalleScreen() {
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
           <Button title="Corregir valor" onPress={() => setModo('corregir')} />
-          <Button title="Anular valorización" variant="secondary" onPress={() => setModo('anular')} />
+          <Button title="Anular valorización" variant="danger" onPress={() => setModo('anular')} />
         </View>
       )}
 
       {modo === 'corregir' && (
         <View style={styles.card}>
           <Text style={styles.formTitle}>Corregir valor</Text>
-          <Field label={`Valor correcto (${moneda})`} keyboardType="numeric" value={valorCorrecto} onChangeText={setValorCorrecto} />
+          <MoneyField label="Valor correcto" value={valorCorrecto} onChange={setValorCorrecto} moneda={moneda} />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />

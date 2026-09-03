@@ -5,12 +5,15 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { money } from '../format';
+import { useToast } from '../ui/Toast';
 import {
+  aISO,
   Button,
   colors,
+  DateField,
   ErrorText,
-  Field,
   LinkButton,
+  MoneyField,
   Paragraph,
   Screen,
   Segmented,
@@ -24,11 +27,13 @@ type Tipo = (typeof TIPOS)[number];
 export function RegistrarMovimientoScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const { key } = useIdempotencyKey();
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [tipo, setTipo] = useState<Tipo>('GASTO');
   const [monto, setMonto] = useState('');
+  const [fecha, setFecha] = useState(aISO(new Date()));
   const [origenId, setOrigenId] = useState<string | null>(null);
   const [destinoId, setDestinoId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -59,12 +64,14 @@ export function RegistrarMovimientoScreen() {
           tipo,
           monto: Number(monto),
           moneda: monedaEvento,
+          fecha,
           ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
           ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
         },
         token,
         key,
       );
+      toast.mostrar('Movimiento registrado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -97,7 +104,8 @@ export function RegistrarMovimientoScreen() {
           equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
         </Paragraph>
       )}
-      <Field label="Monto" keyboardType="numeric" value={monto} onChangeText={setMonto} placeholder="0" />
+      <MoneyField label="Monto" value={monto} onChange={setMonto} moneda={monedaEvento} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} />
 
       {necesitaOrigen && (
         <View style={styles.group}>

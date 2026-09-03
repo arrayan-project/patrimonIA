@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { ToastProvider } from './src/ui/Toast';
 
 /**
  * PatrimonIA — gestión de patrimonio familiar.
@@ -10,9 +11,11 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </ToastProvider>
       <StatusBar style="auto" />
     </SafeAreaProvider>
   );

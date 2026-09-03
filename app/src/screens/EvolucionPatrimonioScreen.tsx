@@ -4,7 +4,7 @@ import { api, ApiError, type VariacionPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, DateField, ErrorText, fechaLegible, LinkButton, Row, Screen, Title } from '../ui';
 
 export function EvolucionPatrimonioScreen() {
   const { token } = useSession();
@@ -41,8 +41,8 @@ export function EvolucionPatrimonioScreen() {
         fin, se usa hoy.
       </Text>
 
-      <Field label="Desde (YYYY-MM-DD)" value={desde} onChangeText={setDesde} placeholder="2026-01-01" />
-      <Field label="Hasta (YYYY-MM-DD, opcional)" value={hasta} onChangeText={setHasta} placeholder="hoy" />
+      <DateField label="Desde" value={desde} onChange={setDesde} />
+      <DateField label="Hasta (opcional, por defecto hoy)" value={hasta} onChange={setHasta} optional />
       <Button title="Consultar" onPress={consultar} loading={busy} disabled={!fechaOk(desde)} />
 
       <ErrorText>{error}</ErrorText>
@@ -52,7 +52,7 @@ export function EvolucionPatrimonioScreen() {
       {data && (
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>
-            {data.desde} → {data.hasta}
+            {fechaLegible(data.desde)} → {fechaLegible(data.hasta)}
           </Text>
           {data.porMoneda.length === 0 ? (
             <Text style={styles.muted}>Sin datos en ese período.</Text>

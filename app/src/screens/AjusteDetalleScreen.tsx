@@ -5,11 +5,14 @@ import { api, ApiError, type AjustePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import { Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
 
 export function AjusteDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const ajusteId = nav.route.params?.ajusteId as string;
   const elementoId = nav.route.params?.elementoId as string;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
@@ -51,12 +54,18 @@ export function AjusteDetalleScreen() {
           { ajusteId, nuevoMonto: Number(nuevoMonto), motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Ajuste corregido');
       } else {
+        if (!(await confirmar('Anular ajuste', 'Se revierte el efecto del ajuste sobre el saldo.', 'Anular'))) {
+          setEnviando(false);
+          return;
+        }
         await api.post(
           '/comandos/AnularAjustePatrimonial',
           { ajusteId, motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Ajuste anulado');
       }
       nav.back();
     } catch (e) {
@@ -83,7 +92,7 @@ export function AjusteDetalleScreen() {
       <Title>Ajuste patrimonial</Title>
       <Text style={styles.monto}>{money(ajuste.monto, moneda)}</Text>
       <View style={styles.card}>
-        <Row left="Fecha" right={ajuste.fecha} />
+        <Row left="Fecha" right={fechaLegible(ajuste.fecha)} />
         <Row left="Motivo" right={ajuste.motivo} />
         <Row left="Estado" right={ajuste.anulado ? 'Anulado' : 'Vigente'} />
         {ajuste.correccionDeId && <Text style={styles.nota}>Es la corrección de un ajuste anterior.</Text>}
@@ -92,14 +101,14 @@ export function AjusteDetalleScreen() {
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
           <Button title="Corregir monto" onPress={() => setModo('corregir')} />
-          <Button title="Anular ajuste" variant="secondary" onPress={() => setModo('anular')} />
+          <Button title="Anular ajuste" variant="danger" onPress={() => setModo('anular')} />
         </View>
       )}
 
       {modo === 'corregir' && (
         <View style={styles.card}>
           <Text style={styles.formTitle}>Corregir monto</Text>
-          <Field label={`Monto correcto (${moneda})`} keyboardType="numbers-and-punctuation" value={nuevoMonto} onChangeText={setNuevoMonto} />
+          <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={moneda} />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />

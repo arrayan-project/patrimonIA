@@ -5,11 +5,25 @@ import { api, ApiError, type EventoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  ErrorText,
+  Field,
+  fechaLegible,
+  LinkButton,
+  MoneyField,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 
 export function MovimientoDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const eventoId = nav.route.params?.eventoId as string;
   const elementoId = nav.route.params?.elementoId as string | undefined;
 
@@ -52,12 +66,18 @@ export function MovimientoDetalleScreen() {
           { eventoId, nuevoMonto: Number(nuevoMonto), motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Movimiento corregido');
       } else {
+        if (!(await confirmar('Anular movimiento', 'Se revierte su efecto sobre el saldo. Queda en el historial marcado como anulado.', 'Anular'))) {
+          setEnviando(false);
+          return;
+        }
         await api.post(
           '/comandos/AnularEventoFinanciero',
           { eventoId, motivo: motivo.trim() },
           token,
         );
+        toast.mostrar('Movimiento anulado');
       }
       nav.back();
     } catch (e) {
@@ -87,7 +107,7 @@ export function MovimientoDetalleScreen() {
       <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
 
       <View style={styles.card}>
-        <Row left="Fecha" right={evento.fecha} />
+        <Row left="Fecha" right={fechaLegible(evento.fecha)} />
         {impacto && (
           <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
         )}
@@ -101,14 +121,14 @@ export function MovimientoDetalleScreen() {
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
           <Button title="Corregir monto" onPress={() => setModo('corregir')} />
-          <Button title="Anular movimiento" variant="secondary" onPress={() => setModo('anular')} />
+          <Button title="Anular movimiento" variant="danger" onPress={() => setModo('anular')} />
         </View>
       )}
 
       {modo === 'corregir' && (
         <View style={styles.card}>
           <Text style={styles.formTitle}>Corregir monto</Text>
-          <Field label="Monto correcto" keyboardType="numeric" value={nuevoMonto} onChangeText={setNuevoMonto} />
+          <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={evento.moneda} />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se corrige" autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />

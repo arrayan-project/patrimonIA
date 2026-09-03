@@ -5,11 +5,13 @@ import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, ProgressBar, Screen, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import { Button, colors, ErrorText, Field, LinkButton, MoneyField, ProgressBar, Screen, Title } from '../ui';
 
 export function ObjetivosScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[] | null>(null);
   const [nombre, setNombre] = useState('');
   const [monto, setMonto] = useState('');
@@ -36,6 +38,7 @@ export function ObjetivosScreen() {
         { nombre: nombre.trim(), montoObjetivo: Number(monto) },
         token,
       );
+      toast.mostrar('Objetivo creado');
       setNombre('');
       setMonto('');
       await cargar();
@@ -74,7 +77,7 @@ export function ObjetivosScreen() {
       <View style={styles.card}>
         <Text style={styles.nombre}>Nuevo objetivo</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="Pie vivienda" />
-        <Field label="Monto objetivo" keyboardType="numeric" value={monto} onChangeText={setMonto} placeholder="10000000" />
+        <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} />
         <Button title="Crear objetivo" onPress={crear} loading={busy} disabled={!nombre.trim() || !(Number(monto) > 0)} />
       </View>
 

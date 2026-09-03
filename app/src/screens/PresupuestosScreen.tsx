@@ -5,13 +5,25 @@ import { api, ApiError, type HogarDTO, type PresupuestoDTO } from '../api/client
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Screen, Segmented, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import {
+  Button,
+  colors,
+  DateField,
+  ErrorText,
+  LinkButton,
+  MoneyField,
+  Screen,
+  Segmented,
+  Title,
+} from '../ui';
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
 
 export function PresupuestosScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const [lista, setLista] = useState<PresupuestoDTO[] | null>(null);
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -59,6 +71,7 @@ export function PresupuestosScreen() {
       if (num(gastos) !== undefined) body.gastosEsperados = num(gastos);
       if (num(ahorro) !== undefined) body.ahorroEsperado = num(ahorro);
       await api.post('/comandos/CrearPresupuesto', body, token);
+      toast.mostrar('Presupuesto creado');
       setIngresos('');
       setGastos('');
       setAhorro('');
@@ -122,13 +135,13 @@ export function PresupuestosScreen() {
           <Segmented label="Intervalo" options={INTERVALOS} value={intervalo} onChange={setIntervalo} />
         ) : (
           <>
-            <Field label="Inicio (YYYY-MM-DD, opcional)" value={fechaInicio} onChangeText={setFechaInicio} placeholder="2026-01-01" />
-            <Field label="Fin (YYYY-MM-DD, opcional)" value={fechaFin} onChangeText={setFechaFin} placeholder="2026-12-31" />
+            <DateField label="Inicio (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
+            <DateField label="Fin (opcional)" value={fechaFin} onChange={setFechaFin} optional />
           </>
         )}
-        <Field label="Ingresos esperados" keyboardType="numeric" value={ingresos} onChangeText={setIngresos} placeholder="0" />
-        <Field label="Gastos esperados" keyboardType="numeric" value={gastos} onChangeText={setGastos} placeholder="0" />
-        <Field label="Ahorro esperado" keyboardType="numeric" value={ahorro} onChangeText={setAhorro} placeholder="0" />
+        <MoneyField label="Ingresos esperados" value={ingresos} onChange={setIngresos} />
+        <MoneyField label="Gastos esperados" value={gastos} onChange={setGastos} />
+        <MoneyField label="Ahorro esperado" value={ahorro} onChange={setAhorro} />
         <Button
           title="Crear presupuesto"
           onPress={crear}
