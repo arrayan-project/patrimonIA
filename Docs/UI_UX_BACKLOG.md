@@ -65,7 +65,7 @@ vio el elemento, se asumió que falló.)
 | C2 | **Categorías de movimiento** (Mercado, Servicios, Sueldo…) — tabla + sección de administración + selector al registrar | 🔴 | P1 |
 | C3 | ✅ 15d — `presupuesto_linea` (migr. 010, GAPS G26), comando `DefinirLineasPresupuesto`, `desviacion` con `porRubro` + `sinClasificar`, editor de rubros + barra de distribución en el detalle | 🔴 | P1 |
 | C4 | ✅ 15h — `plantilla_movimiento` (migr. 011, GAPS G24) + comandos Crear/Actualizar/Eliminar + `GET /usuarios/me/plantillas-movimiento`; app: `PlantillasScreen` (CRUD), selector "Desde una plantilla" en "Registrar movimiento", "Guardar como plantilla" en el detalle del movimiento | 🔴 | P2 |
-| C5 | **Etiquetas** (0..N por movimiento, transversales) — fase posterior | 🔴 | P3 |
+| C5 | ✅ 15i — `etiqueta` + `evento_etiqueta` (migr. 012, GAPS G23); comandos Crear/Actualizar/Eliminar/`EtiquetarEvento`; `RegistrarEventoFinanciero` acepta `etiquetaIds`, la corrección las hereda; app: `EtiquetasScreen`, chips al registrar y en el detalle del movimiento (`Chip` en `ui/`) | 🔴 | P3 |
 | C6 | **Agrupaciones de elementos patrimoniales** (carpeta "Inversiones" para tus cuentas — REQUISITES §D) — fase posterior | 🔴 | P3 |
 
 ---
@@ -279,7 +279,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15e~~ ✅ | D1 (tabs inferiores: Inicio·Movimientos·Objetivos·Hogar·Ajustes) + D2 (header nativo, sin `LinkButton "Volver"`) + D3 (jerarquía del dashboard: hubs `MovimientosScreen`/`HogarScreen`, `MenuLink`/`GroupLabel`). `@react-navigation/bottom-tabs`. Faltan de D: D4 (FAB), D5 (deep-link notificación), D6 (breadcrumb). | — |
 | ~~15f~~ ✅ | F1 (`src/labels.ts` — `etiqueta()`/`humanizar()`, `Segmented` autoformatea, ~12 pantallas) + F2 parcial (`fechaRelativa()` en notificaciones). Pendiente: F3 (montos/deudas contables), G1 (design tokens completos), G2 (iconos reales — necesita `@expo/vector-icons`) → 15g. | 15e |
 | ~~15g~~ ✅ | G3 (`react-native-svg` + `src/ui/charts.tsx`: `Dona`, `GraficoLinea`; aplicados en presupuesto por rubro, patrimonio del hogar, evolución + `GET /usuarios/me/serie-patrimonial`) + G4 (tarjeta resumen del Dashboard: neto + líquido + variación 30d) + G2 parcial (Ionicons en las tabs). Pendiente: F3 (montos contables), G1 (tokens completos), J1–J2 (onboarding), gráfico de avance de objetivos → 15h/más adelante. | 15c, 15d |
-| ~~15h~~ ✅ | 🔴 C4 — `plantilla_movimiento` (migr. 011, GAPS G24), comandos Crear/Actualizar/Eliminar, `GET /usuarios/me/plantillas-movimiento`; app: `PlantillasScreen` + "Desde una plantilla" al registrar + "Guardar como plantilla" en el detalle. C5/C6 (etiquetas, agrupaciones) y B7/B8/H1–H5 siguen pendientes → 15i+. | 15c |
+| ~~15h~~ ✅ | 🔴 C4 — `plantilla_movimiento` (migr. 011, GAPS G24), comandos Crear/Actualizar/Eliminar, `GET /usuarios/me/plantillas-movimiento`; app: `PlantillasScreen` + "Desde una plantilla" al registrar + "Guardar como plantilla" en el detalle. | 15c |
+| ~~15i~~ ✅ | 🔴 C5 — `etiqueta` + `evento_etiqueta` (migr. 012, GAPS G23); comandos `CrearEtiqueta`/`ActualizarEtiqueta`/`EliminarEtiqueta`/`EtiquetarEvento`; `RegistrarEventoFinanciero.etiquetaIds`, la corrección las hereda; DTO de evento con `etiquetaIds`. App: `EtiquetasScreen` (Ajustes → Cuenta), componente `Chip`, chips al registrar y en el detalle. Pendiente: C6 (agrupaciones de elementos) → 15j; B7/B8/H1–H5, F3, G1 sueltos. | 15c |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

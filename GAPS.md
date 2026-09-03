@@ -375,8 +375,16 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
     borra si tiene eventos → se archiva. Comandos `CrearCategoriaMovimiento`,
     `ActualizarCategoriaMovimiento`, `ArchivarCategoriaMovimiento`,
     `ReordenarCategoriasMovimiento`.
-  - **Etiqueta** — tabla `etiqueta` + `evento_etiqueta` (N:M), personal, fase
-    posterior.
+  - **Etiqueta** (Fase 15i) — tablas `etiqueta` (personal, `UNIQUE(usuario_id,
+    nombre)`, color opcional) + `evento_etiqueta` (N:M, `ON DELETE CASCADE`).
+    Migración 012. Anotación → historial solo en auditoría; se puede re-etiquetar
+    un movimiento viejo sin anular (no participa de la Sección V). Comandos
+    `CrearEtiqueta`, `ActualizarEtiqueta`, `EliminarEtiqueta` (cascada),
+    `EtiquetarEvento` (reemplaza el conjunto de un movimiento propio no anulado).
+    `RegistrarEventoFinanciero` acepta `etiquetaIds?`; `CorregirEventoFinanciero`
+    hereda las del original. `GET /usuarios/me/etiquetas`. El DTO de evento gana
+    `etiquetaIds: string[]`. **No** entra en el presupuesto (un gasto con 3
+    etiquetas ¿a qué rubro imputa?).
   - **Agrupación de elementos patrimoniales** (REQUISITES §D: "Inversiones"
     agrupando Fintual/APV/Fondo) — concepto aparte: carpetas de visualización
     para tus cuentas/activos. Tabla `agrupacion_elemento` + pertenencia, personal,

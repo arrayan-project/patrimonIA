@@ -160,8 +160,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `GET /usuarios/me/plantillas-movimiento`; app: pantalla Plantillas,
     "Desde una plantilla" al registrar un movimiento y "Guardar como
     plantilla" en el detalle.
-  - [ ] 15i+ — etiquetas y agrupaciones de elementos, montos contables,
-    design tokens completos, onboarding.
+  - [x] **15i** — etiquetas de movimiento: `etiqueta` + `evento_etiqueta`
+    (migración 012, `GAPS.md` G23), comandos Crear/Actualizar/Eliminar/
+    EtiquetarEvento, `RegistrarEventoFinanciero.etiquetaIds`; app: pantalla
+    Etiquetas, chips al registrar y en el detalle del movimiento.
+  - [ ] 15j+ — agrupaciones de elementos, montos contables, design tokens
+    completos, onboarding.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
@@ -171,7 +175,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 99 e2e
+cd api && npm run test:all   # 20 unitarios + 103 e2e
 cd app && npx tsc --noEmit
 ```
 
