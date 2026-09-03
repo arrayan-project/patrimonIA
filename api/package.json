@@ -7,6 +7,10 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
+    "check:node": "node scripts/check-node.mjs",
+    "prestart": "npm run check:node",
+    "prestart:dev": "npm run check:node",
+    "prebuild": "npm run check:node",
     "build": "nest build",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -56,5 +60,8 @@
     "typescript": "^6.0.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.2"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

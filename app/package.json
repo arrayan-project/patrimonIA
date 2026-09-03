@@ -16,10 +16,15 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "check:node": "node scripts/check-node.mjs",
+    "prestart": "npm run check:node",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
+  },
+  "engines": {
+    "node": ">=22.12"
   },
   "private": true
 }

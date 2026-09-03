@@ -45,5 +45,21 @@ Vacíos y decisiones pendientes: ver `GAPS.md`.
 
 ## Requisitos de entorno
 
-- Node 22 (`.nvmrc` en `api/` y `app/`) — el toolchain (NestJS 12, Expo 57) lo exige.
+- **Node 22.12+** — el toolchain (NestJS 12, Prisma 7, Expo 57) lo exige. Con
+  Node 20 el backend arranca y muere sin escuchar nada. En cada carpeta
+  (`api/`, `app/`) corre `nvm use` antes de `npm ...`; los scripts `start`
+  abortan con un mensaje si detectan una versión vieja. Verifica con `node -v`.
 - Docker (para PostgreSQL local, no requiere Postgres instalado).
+
+## Probar en el teléfono (Expo Go)
+
+1. `nvm use` + `npm run start:dev` en `api/` — verifica `curl localhost:3000/health`.
+2. `nvm use` + `npm start` en `app/` — muestra un QR.
+3. Teléfono en la **misma WiFi**. Firewall: `sudo ufw allow 3000/tcp` y
+   `sudo ufw allow 8081/tcp` (ufw viene activo).
+4. Prueba desde el navegador del teléfono: `http://<IP-del-PC>:3000/health` →
+   JSON. Si eso carga, la app también.
+5. Escanea el QR: Android desde Expo Go; iPhone con la cámara.
+6. Si el router aísla los dispositivos: `npm start -- --tunnel` en `app/`.
+
+No hay usuario de prueba: la cuenta se crea en la pantalla "Crear cuenta".
