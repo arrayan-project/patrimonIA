@@ -33,7 +33,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     transacción desde el primer comando. Auth JWT. e2e en verde.
   - [x] Móvil: pantallas Registro / Bienvenida / Crear Hogar / Invitaciones /
     Dashboard. `tsc` + `expo export` limpios; render confirmado en web.
-- [ ] Fase 2 — se define al cerrar Fase 1 (BUILD_INSTRUCTIONS §3).
+- [x] **Fase 2 — Flujo 1 (día a día financiero)**:
+  - [x] Backend: AS #1 RegistrarElementoPatrimonial, #10 RegistrarEventoFinanciero
+    (INGRESO/GASTO/TRANSFERENCIA) + impacto_patrimonial + valor_vigente +
+    proyección patrimonio_individual. e2e en verde.
+  - [x] Móvil: Dashboard con patrimonio + elementos, Agregar elemento, Registrar
+    movimiento, Detalle de elemento.
+- [ ] Fase 3 — se define al cerrar Fase 2 (BUILD_INSTRUCTIONS §3).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

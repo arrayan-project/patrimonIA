@@ -10,7 +10,10 @@ export type RouteName =
   | 'Bienvenida'
   | 'CrearHogar'
   | 'Invitaciones'
-  | 'Dashboard';
+  | 'Dashboard'
+  | 'AgregarElemento'
+  | 'RegistrarMovimiento'
+  | 'ElementoDetalle';
 
 export interface Route {
   name: RouteName;

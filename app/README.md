@@ -44,6 +44,15 @@ sin errores para android y web. La validación con simulador/navegador en vivo
 queda pendiente de un entorno con GUI; el backend está probado end-to-end
 (`../api/test/flujo2-alta-hogar.e2e-spec.ts`) contra los mismos endpoints.
 
+### Fase 2 — Flujo 1 (día a día financiero)
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard (ampliado) | `GET /usuarios/me/patrimonio-individual` · `GET /elementos-patrimoniales?propietario=me` |
+| Agregar elemento | `POST /comandos/RegistrarElementoPatrimonial` |
+| Registrar movimiento | `POST /comandos/RegistrarEventoFinanciero` (INGRESO/GASTO/TRANSFERENCIA) |
+| Detalle de elemento | `GET /elementos-patrimoniales/:id` · `GET /eventos-financieros?elemento=:id` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por
@@ -51,6 +60,8 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 - Sesión (JWT) en memoria — se pierde al reiniciar. La persistencia
   (`expo-secure-store`) llega después.
 - Dashboard muestra el primer hogar; el selector multi-hogar llega después.
+- "Registrar movimiento" solo lista tus propios elementos como destino; para
+  transferir a otra persona hay que conocer el id de su elemento (ver GAPS.md G6).
 
 ## Estructura
 

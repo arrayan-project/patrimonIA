@@ -3,10 +3,13 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type HogarDTO } from './api/client';
 import { useSession } from './auth/AuthContext';
 import { NavProvider, useNav, type RouteName } from './navigation/navigator';
+import { AgregarElementoScreen } from './screens/AgregarElementoScreen';
 import { BienvenidaScreen } from './screens/BienvenidaScreen';
 import { CrearHogarScreen } from './screens/CrearHogarScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
+import { ElementoDetalleScreen } from './screens/ElementoDetalleScreen';
 import { InvitacionesScreen } from './screens/InvitacionesScreen';
+import { RegistrarMovimientoScreen } from './screens/RegistrarMovimientoScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -18,6 +21,12 @@ function Routes() {
       return <InvitacionesScreen />;
     case 'Dashboard':
       return <DashboardScreen />;
+    case 'AgregarElemento':
+      return <AgregarElementoScreen />;
+    case 'RegistrarMovimiento':
+      return <RegistrarMovimientoScreen />;
+    case 'ElementoDetalle':
+      return <ElementoDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }

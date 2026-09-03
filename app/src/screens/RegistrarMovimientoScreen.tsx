@@ -1,0 +1,136 @@
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { api, ApiError, type ElementoPatrimonialDTO, type EventoFinancieroDTO } from '../api/client';
+import { useSession } from '../auth/AuthContext';
+import { useNav } from '../navigation/navigator';
+import { money } from '../format';
+import {
+  Button,
+  colors,
+  ErrorText,
+  Field,
+  LinkButton,
+  Paragraph,
+  Screen,
+  Segmented,
+  SelectRow,
+  Title,
+} from '../ui';
+
+const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
+type Tipo = (typeof TIPOS)[number];
+
+export function RegistrarMovimientoScreen() {
+  const { token } = useSession();
+  const nav = useNav();
+
+  const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
+  const [tipo, setTipo] = useState<Tipo>('GASTO');
+  const [monto, setMonto] = useState('');
+  const [origenId, setOrigenId] = useState<string | null>(null);
+  const [destinoId, setDestinoId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api
+      .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
+      .then(setElementos)
+      .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+  }, [token]);
+
+  const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA';
+  const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA';
+
+  const monedaEvento = useMemo(() => {
+    const ref = elementos?.find((e) => e.id === (necesitaOrigen ? origenId : destinoId));
+    return ref?.moneda ?? 'CLP';
+  }, [elementos, origenId, destinoId, necesitaOrigen]);
+
+  const onSubmit = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await api.post<EventoFinancieroDTO>(
+        '/comandos/RegistrarEventoFinanciero',
+        {
+          tipo,
+          monto: Number(monto),
+          moneda: monedaEvento,
+          ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
+          ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
+        },
+        token,
+      );
+      nav.back();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!elementos) {
+    return (
+      <Screen>
+        <ActivityIndicator color={colors.primary} />
+      </Screen>
+    );
+  }
+
+  const puedeEnviar =
+    Number(monto) > 0 &&
+    (!necesitaOrigen || !!origenId) &&
+    (!necesitaDestino || !!destinoId) &&
+    origenId !== destinoId;
+
+  return (
+    <Screen>
+      <Title>Registrar movimiento</Title>
+      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
+      <Field label="Monto" keyboardType="numeric" value={monto} onChangeText={setMonto} placeholder="0" />
+
+      {necesitaOrigen && (
+        <View style={styles.group}>
+          <Text style={styles.label}>Elemento de origen</Text>
+          {elementos.map((el) => (
+            <SelectRow
+              key={el.id}
+              label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
+              selected={origenId === el.id}
+              onPress={() => setOrigenId(el.id)}
+            />
+          ))}
+        </View>
+      )}
+
+      {necesitaDestino && (
+        <View style={styles.group}>
+          <Text style={styles.label}>Elemento de destino</Text>
+          {elementos.map((el) => (
+            <SelectRow
+              key={el.id}
+              label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
+              selected={destinoId === el.id}
+              onPress={() => setDestinoId(el.id)}
+            />
+          ))}
+          {tipo === 'TRANSFERENCIA' && (
+            <Paragraph>
+              El destino puede ser de otro miembro de tu hogar (Fase 2 solo lista tus elementos).
+            </Paragraph>
+          )}
+        </View>
+      )}
+
+      <ErrorText>{error}</ErrorText>
+      <Button title="Registrar" onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
+      {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  group: { gap: 8 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.text },
+});

@@ -92,3 +92,43 @@ export interface MembresiaDTO {
   rol: string;
   estado: string;
 }
+
+export interface PropietarioDTO {
+  usuarioId: string;
+  nombre?: string;
+  porcentaje: number;
+}
+
+export interface ElementoPatrimonialDTO {
+  id: string;
+  nombre: string;
+  tipo: string;
+  categoriaFuncional: string;
+  ambito: string;
+  valorVigente: number;
+  moneda: string;
+  participaValorLiquido: boolean;
+  participaConsolidacion: boolean;
+  admiteValorizacion: boolean;
+  visibilidad: string;
+  estado: string;
+  createdAt: string;
+  propietarios: PropietarioDTO[];
+}
+
+export interface EventoFinancieroDTO {
+  id: string;
+  tipo: string;
+  monto: number;
+  moneda: string;
+  fecha: string;
+  anulado: boolean;
+  createdAt: string;
+  impactos: { id: string; elementoId: string; monto: number }[];
+}
+
+export interface PatrimonioIndividualDTO {
+  usuarioId: string;
+  elementos: number;
+  porMoneda: { moneda: string; patrimonio: number; valorLiquido: number }[];
+}

@@ -92,6 +92,62 @@ export function Button({
   );
 }
 
+export function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label?: string;
+  options: readonly T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={styles.field}>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
+      <View style={styles.segmented}>
+        {options.map((opt) => (
+          <Pressable
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[styles.segment, value === opt && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, value === opt && styles.segmentTextActive]}>
+              {opt}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function SelectRow({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={[styles.selectRow, selected && styles.selectRowActive]}>
+      <Text style={[styles.selectRowText, selected && styles.selectRowTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function Row({ left, right }: { left: string; right: string }) {
+  return (
+    <View style={styles.dataRow}>
+      <Text style={styles.dataLeft}>{left}</Text>
+      <Text style={styles.dataRight}>{right}</Text>
+    </View>
+  );
+}
+
 export function ErrorText({ children }: { children: ReactNode }) {
   if (!children) return null;
   return <Text style={styles.error}>{children}</Text>;
@@ -140,4 +196,31 @@ const styles = StyleSheet.create({
   buttonTextSecondary: { color: colors.primary },
   error: { color: colors.danger, fontSize: 14 },
   link: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  segment: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  segmentActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  segmentText: { fontSize: 13, color: colors.text, fontWeight: '600' },
+  segmentTextActive: { color: colors.primaryText },
+  selectRow: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+  },
+  selectRowActive: { borderColor: colors.primary, backgroundColor: '#eff6ff' },
+  selectRowText: { fontSize: 15, color: colors.text },
+  selectRowTextActive: { color: colors.primary, fontWeight: '600' },
+  dataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  dataLeft: { fontSize: 14, color: colors.muted },
+  dataRight: { fontSize: 14, color: colors.text, fontWeight: '600' },
 });
