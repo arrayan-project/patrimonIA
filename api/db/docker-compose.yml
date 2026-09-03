@@ -1,0 +1,25 @@
+name: patrimonia-db
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: patrimonia-postgres
+    environment:
+      POSTGRES_USER: patrimonia
+      POSTGRES_PASSWORD: patrimonia
+      POSTGRES_DB: patrimonia
+    ports:
+      - "5432:5432"
+    volumes:
+      - patrimonia_pgdata:/var/lib/postgresql/data
+      # Los scripts de init/ solo corren cuando el volumen está vacío (primer arranque).
+      # Para reaplicar el esquema: docker compose down -v && docker compose up -d
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U patrimonia -d patrimonia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  patrimonia_pgdata:
