@@ -95,6 +95,7 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Dashboard → Movimientos programados | `GET /movimientos-programados` · `POST /comandos/CrearMovimientoProgramado` |
 | Detalle de movimiento programado | `GET /movimientos-programados/:id` · `MaterializarMovimientoProgramado` / `ActualizarMovimientoProgramado` / `CancelarMovimientoProgramado` |
 | Plantillas de movimiento (15h) | `GET /usuarios/me/plantillas-movimiento` · `CrearPlantillaMovimiento` / `ActualizarPlantillaMovimiento` / `EliminarPlantillaMovimiento` |
+| Etiquetas (15i) | `GET /usuarios/me/etiquetas` · `CrearEtiqueta` / `ActualizarEtiqueta` / `EliminarEtiqueta` / `EtiquetarEvento` |
 
 ### Fase 8 — Deuda / Crédito
 
@@ -167,6 +168,9 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   "Desde una plantilla" arriba de "Registrar movimiento"; "Guardar como
   plantilla" en el detalle de un movimiento (deriva origen/destino de los
   impactos). Usar una plantilla solo rellena `RegistrarEventoFinanciero`.
+- **15i — etiquetas**: `EtiquetasScreen` (Ajustes → Cuenta); componente `Chip`;
+  chips seleccionables al registrar un movimiento (`RegistrarEventoFinanciero.
+  etiquetaIds`) y en el detalle ("Editar etiquetas" → `EtiquetarEvento`).
 
 ### Decisiones aún provisionales
 

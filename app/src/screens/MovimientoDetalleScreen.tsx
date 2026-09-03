@@ -5,6 +5,7 @@ import {
   api,
   ApiError,
   type CategoriaMovimientoDTO,
+  type EtiquetaDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
 } from '../api/client';
@@ -15,6 +16,7 @@ import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
   Button,
+  Chip,
   colors,
   ErrorText,
   etiqueta,
@@ -36,13 +38,15 @@ export function MovimientoDetalleScreen() {
 
   const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
+  const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
 
-  const [modo, setModo] = useState<null | 'corregir' | 'anular' | 'plantilla'>(null);
+  const [modo, setModo] = useState<null | 'corregir' | 'anular' | 'plantilla' | 'etiquetas'>(null);
   const [nuevoMonto, setNuevoMonto] = useState('');
   const [motivo, setMotivo] = useState('');
   const [nombrePlantilla, setNombrePlantilla] = useState('');
+  const [etiquetaIds, setEtiquetaIds] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -51,6 +55,10 @@ export function MovimientoDetalleScreen() {
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
       setEvento(ev);
       setNuevoMonto(String(ev.monto));
+      setEtiquetaIds(ev.etiquetaIds);
+      if (etiquetas.length === 0) {
+        setEtiquetas(await api.get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token).catch(() => []));
+      }
       if (ev.categoriaId && categorias.length === 0) {
         const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         if (hs[0]) {
@@ -121,6 +129,21 @@ export function MovimientoDetalleScreen() {
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
   const puedePlantilla = !evento.anulado && evento.tipo !== 'CONVERSION';
 
+  const guardarEtiquetas = async () => {
+    setEnviando(true);
+    setError('');
+    try {
+      await api.post('/comandos/EtiquetarEvento', { eventoId, etiquetaIds }, token);
+      toast.mostrar('Etiquetas actualizadas');
+      setModo(null);
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setEnviando(false);
+    }
+  };
+
   const guardarPlantilla = async () => {
     setEnviando(true);
     setError('');
@@ -167,6 +190,14 @@ export function MovimientoDetalleScreen() {
           <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
         )}
         <Row left="Estado" right={evento.anulado ? 'Anulado' : 'Vigente'} />
+        {evento.etiquetaIds.length > 0 && (
+          <View style={styles.chips}>
+            {evento.etiquetaIds.map((id) => {
+              const e = etiquetas.find((x) => x.id === id);
+              return <Chip key={id} label={e?.nombre ?? '—'} color={e?.color} activo />;
+            })}
+          </View>
+        )}
         {esCorreccion && <Text style={styles.nota}>Es la corrección de un movimiento anterior.</Text>}
         {tieneCorreccion && (
           <Text style={styles.nota}>Este movimiento ya fue corregido — corrige o anula esa corrección.</Text>
@@ -186,9 +217,43 @@ export function MovimientoDetalleScreen() {
               }}
             />
           )}
+          {!evento.anulado && etiquetas.length > 0 && (
+            <Button
+              title="Editar etiquetas"
+              variant="secondary"
+              onPress={() => {
+                setEtiquetaIds(evento.etiquetaIds);
+                setModo('etiquetas');
+              }}
+            />
+          )}
           {accionable && (
             <Button title="Anular movimiento" variant="danger" onPress={() => setModo('anular')} />
           )}
+        </View>
+      )}
+
+      {modo === 'etiquetas' && (
+        <View style={styles.card}>
+          <Text style={styles.formTitle}>Etiquetas</Text>
+          <View style={styles.chips}>
+            {etiquetas.map((e) => (
+              <Chip
+                key={e.id}
+                label={e.nombre}
+                color={e.color}
+                activo={etiquetaIds.includes(e.id)}
+                onPress={() =>
+                  setEtiquetaIds((xs) =>
+                    xs.includes(e.id) ? xs.filter((x) => x !== e.id) : [...xs, e.id],
+                  )
+                }
+              />
+            ))}
+          </View>
+          <ErrorText>{error}</ErrorText>
+          <Button title="Guardar" onPress={guardarEtiquetas} loading={enviando} />
+          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </View>
       )}
 
@@ -248,4 +313,5 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
   formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
 });

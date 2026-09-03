@@ -369,6 +369,32 @@ export function Punto({ color }: { color: string }) {
   return <View style={[styles.punto, { backgroundColor: color }]} />;
 }
 
+/** Etiqueta compacta. Con `onPress` funciona como toggle (borde relleno si `activo`). */
+export function Chip({
+  label,
+  activo,
+  color,
+  onPress,
+}: {
+  label: string;
+  activo?: boolean;
+  color?: string | null;
+  onPress?: () => void;
+}) {
+  const tinte = color ?? colors.primary;
+  const cuerpo = (
+    <View
+      style={[
+        styles.chip,
+        activo ? { backgroundColor: tinte, borderColor: tinte } : { borderColor: colors.border },
+      ]}
+    >
+      <Text style={[styles.chipText, activo && { color: colors.primaryText }]}>{label}</Text>
+    </View>
+  );
+  return onPress ? <Pressable onPress={onPress}>{cuerpo}</Pressable> : cuerpo;
+}
+
 export function Row({ left, right }: { left: string; right: string }) {
   return (
     <View style={styles.dataRow}>
@@ -509,6 +535,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   punto: { width: 10, height: 10, borderRadius: 5 },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  chipText: { fontSize: 13, color: colors.text, fontWeight: '600' },
   menuLink: {
     flexDirection: 'row',
     alignItems: 'center',

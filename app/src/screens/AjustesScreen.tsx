@@ -23,6 +23,11 @@ export function AjustesScreen() {
         subtitle="Nombre y datos de la cuenta"
         onPress={() => nav.go('Perfil')}
       />
+      <MenuLink
+        title="Etiquetas"
+        subtitle="Marcas personales transversales para tus movimientos"
+        onPress={() => nav.go('Etiquetas')}
+      />
 
       <GroupLabel>Hogar</GroupLabel>
       <MenuLink

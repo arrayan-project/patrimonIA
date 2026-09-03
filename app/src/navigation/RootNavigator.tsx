@@ -42,6 +42,7 @@ import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
+import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -132,6 +133,7 @@ const TITULOS: Record<string, string> = {
   Notificaciones: 'Notificaciones',
   TiposCambio: 'Tipos de cambio',
   Categorias: 'Categorías de movimiento',
+  Etiquetas: 'Etiquetas',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -162,6 +164,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
   ['Categorias', CategoriasScreen],
+  ['Etiquetas', EtiquetasScreen],
 ];
 
 export function RootNavigator() {

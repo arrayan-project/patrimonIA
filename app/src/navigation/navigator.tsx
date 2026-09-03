@@ -40,7 +40,8 @@ export type RouteName =
   | 'Notificaciones'
   | 'TiposCambio'
   | 'Ajustes'
-  | 'Categorias';
+  | 'Categorias'
+  | 'Etiquetas';
 
 export interface Route {
   name: string;

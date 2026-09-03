@@ -89,6 +89,12 @@ export interface CategoriaMovimientoDTO {
   estado: 'ACTIVA' | 'ARCHIVADA';
 }
 
+export interface EtiquetaDTO {
+  id: string;
+  nombre: string;
+  color: string | null;
+}
+
 export interface PlantillaMovimientoDTO {
   id: string;
   nombre: string;
@@ -176,6 +182,7 @@ export interface EventoFinancieroDTO {
   correccionDeId: string | null;
   glosa: string | null;
   categoriaId: string | null;
+  etiquetaIds: string[];
   createdAt: string;
   impactos: { id: string; elementoId: string; monto: number }[];
 }

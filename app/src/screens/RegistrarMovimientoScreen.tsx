@@ -5,6 +5,7 @@ import {
   ApiError,
   type CategoriaMovimientoDTO,
   type ElementoPatrimonialDTO,
+  type EtiquetaDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
   type PlantillaMovimientoDTO,
@@ -17,6 +18,7 @@ import { useToast } from '../ui/Toast';
 import {
   aISO,
   Button,
+  Chip,
   colors,
   DateField,
   ErrorText,
@@ -42,6 +44,8 @@ export function RegistrarMovimientoScreen() {
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [plantillas, setPlantillas] = useState<PlantillaMovimientoDTO[]>([]);
+  const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
+  const [etiquetaIds, setEtiquetaIds] = useState<string[]>([]);
   const [tipo, setTipo] = useState<Tipo>('GASTO');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(aISO(new Date()));
@@ -73,7 +77,14 @@ export function RegistrarMovimientoScreen() {
       .get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token)
       .then(setPlantillas)
       .catch(() => setPlantillas([]));
+    api
+      .get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token)
+      .then(setEtiquetas)
+      .catch(() => setEtiquetas([]));
   }, [token]);
+
+  const toggleEtiqueta = (id: string) =>
+    setEtiquetaIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
 
   const aplicarPlantilla = (p: PlantillaMovimientoDTO) => {
     if (p.tipo === 'INGRESO' || p.tipo === 'GASTO' || p.tipo === 'TRANSFERENCIA') setTipo(p.tipo);
@@ -111,6 +122,7 @@ export function RegistrarMovimientoScreen() {
           ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
           ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
           ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
+          ...(etiquetaIds.length ? { etiquetaIds } : {}),
         },
         token,
         key,
@@ -226,6 +238,23 @@ export function RegistrarMovimientoScreen() {
         </View>
       )}
 
+      {etiquetas.length > 0 && (
+        <View style={styles.group}>
+          <Text style={styles.label}>Etiquetas (opcional)</Text>
+          <View style={styles.chips}>
+            {etiquetas.map((e) => (
+              <Chip
+                key={e.id}
+                label={e.nombre}
+                color={e.color}
+                activo={etiquetaIds.includes(e.id)}
+                onPress={() => toggleEtiqueta(e.id)}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar" onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
     </Screen>
@@ -235,4 +264,5 @@ export function RegistrarMovimientoScreen() {
 const styles = StyleSheet.create({
   group: { gap: 8 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
