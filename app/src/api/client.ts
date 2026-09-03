@@ -74,7 +74,19 @@ export interface UsuarioDTO {
   email: string;
   nombre: string;
   estado: string;
+  preferencias: Record<string, unknown> | null;
   createdAt: string;
+}
+
+export interface CategoriaMovimientoDTO {
+  id: string;
+  hogarId: string;
+  nombre: string;
+  tipoAplicable: 'INGRESO' | 'GASTO' | 'AMBOS';
+  color: string | null;
+  icono: string | null;
+  orden: number;
+  estado: 'ACTIVA' | 'ARCHIVADA';
 }
 
 export interface LoginResult {
@@ -149,6 +161,8 @@ export interface EventoFinancieroDTO {
   fecha: string;
   anulado: boolean;
   correccionDeId: string | null;
+  glosa: string | null;
+  categoriaId: string | null;
   createdAt: string;
   impactos: { id: string; elementoId: string; monto: number }[];
 }

@@ -170,8 +170,10 @@ export function ElementoDetalleScreen() {
                 }
               >
                 <View>
-                  <Text style={[styles.movTipo, ev.anulado && styles.tachado]}>{ev.tipo}</Text>
-                  <Text style={styles.muted}>{etiqueta}</Text>
+                  <Text style={[styles.movTipo, ev.anulado && styles.tachado]}>
+                    {ev.glosa || ev.tipo}
+                  </Text>
+                  <Text style={styles.muted}>{ev.glosa ? `${ev.tipo} · ${etiqueta}` : etiqueta}</Text>
                 </View>
                 <Text
                   style={[

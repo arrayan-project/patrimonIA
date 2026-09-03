@@ -1,7 +1,13 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import { api, ApiError, type EventoFinancieroDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type CategoriaMovimientoDTO,
+  type EventoFinancieroDTO,
+  type HogarDTO,
+} from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
@@ -28,6 +34,7 @@ export function MovimientoDetalleScreen() {
   const elementoId = nav.route.params?.elementoId as string | undefined;
 
   const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
+  const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,6 +49,17 @@ export function MovimientoDetalleScreen() {
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
       setEvento(ev);
       setNuevoMonto(String(ev.monto));
+      if (ev.categoriaId && categorias.length === 0) {
+        const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
+        if (hs[0]) {
+          setCategorias(
+            await api.get<CategoriaMovimientoDTO[]>(
+              `/hogares/${hs[0].id}/categorias-movimiento?incluirArchivadas=true`,
+              token,
+            ),
+          );
+        }
+      }
       if (elementoId) {
         const lista = await api.get<EventoFinancieroDTO[]>(
           `/eventos-financieros?elemento=${elementoId}`,
@@ -108,6 +126,13 @@ export function MovimientoDetalleScreen() {
 
       <View style={styles.card}>
         <Row left="Fecha" right={fechaLegible(evento.fecha)} />
+        {evento.glosa ? <Row left="Detalle" right={evento.glosa} /> : null}
+        {evento.categoriaId ? (
+          <Row
+            left="Categoría"
+            right={categorias.find((c) => c.id === evento.categoriaId)?.nombre ?? '—'}
+          />
+        ) : null}
         {impacto && (
           <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
         )}

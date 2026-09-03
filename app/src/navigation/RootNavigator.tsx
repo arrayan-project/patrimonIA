@@ -34,6 +34,8 @@ import { EvolucionPatrimonioScreen } from '../screens/EvolucionPatrimonioScreen'
 import { HogarConsolidadoScreen } from '../screens/HogarConsolidadoScreen';
 import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
+import { AjustesScreen } from '../screens/AjustesScreen';
+import { CategoriasScreen } from '../screens/CategoriasScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -72,6 +74,8 @@ const PANTALLAS_APP: [string, React.ComponentType][] = [
   ['HogarConsolidado', HogarConsolidadoScreen],
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
+  ['Ajustes', AjustesScreen],
+  ['Categorias', CategoriasScreen],
 ];
 
 export function RootNavigator() {

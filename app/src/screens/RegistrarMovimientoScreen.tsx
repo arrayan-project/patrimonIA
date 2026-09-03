@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { api, ApiError, type ElementoPatrimonialDTO, type EventoFinancieroDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type CategoriaMovimientoDTO,
+  type ElementoPatrimonialDTO,
+  type EventoFinancieroDTO,
+  type HogarDTO,
+} from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
@@ -12,6 +19,7 @@ import {
   colors,
   DateField,
   ErrorText,
+  Field,
   LinkButton,
   MoneyField,
   Paragraph,
@@ -31,11 +39,14 @@ export function RegistrarMovimientoScreen() {
   const { key } = useIdempotencyKey();
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
+  const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [tipo, setTipo] = useState<Tipo>('GASTO');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(aISO(new Date()));
   const [origenId, setOrigenId] = useState<string | null>(null);
   const [destinoId, setDestinoId] = useState<string | null>(null);
+  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [glosa, setGlosa] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -44,10 +55,26 @@ export function RegistrarMovimientoScreen() {
       .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
       .then(setElementos)
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+    api
+      .get<HogarDTO[]>('/usuarios/me/hogares', token)
+      .then((hs) =>
+        hs[0]
+          ? api.get<CategoriaMovimientoDTO[]>(
+              `/hogares/${hs[0].id}/categorias-movimiento`,
+              token,
+            )
+          : [],
+      )
+      .then(setCategorias)
+      .catch(() => setCategorias([]));
   }, [token]);
 
   const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
+  const puedeCategorizar = tipo === 'INGRESO' || tipo === 'GASTO';
+  const categoriasAplicables = categorias.filter(
+    (c) => c.tipoAplicable === 'AMBOS' || c.tipoAplicable === tipo,
+  );
 
   const monedaEvento = useMemo(() => {
     const ref = elementos?.find((e) => e.id === (necesitaOrigen ? origenId : destinoId));
@@ -67,6 +94,8 @@ export function RegistrarMovimientoScreen() {
           fecha,
           ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
           ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
+          ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
+          ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
         },
         token,
         key,
@@ -106,6 +135,33 @@ export function RegistrarMovimientoScreen() {
       )}
       <MoneyField label="Monto" value={monto} onChange={setMonto} moneda={monedaEvento} />
       <DateField label="Fecha" value={fecha} onChange={setFecha} />
+      <Field
+        label="Detalle (opcional)"
+        value={glosa}
+        onChangeText={setGlosa}
+        placeholder="p. ej. pago internet marzo"
+        autoCapitalize="sentences"
+        maxLength={140}
+      />
+
+      {puedeCategorizar && categoriasAplicables.length > 0 && (
+        <View style={styles.group}>
+          <Text style={styles.label}>Categoría (opcional)</Text>
+          <SelectRow
+            label="Sin categoría"
+            selected={categoriaId === null}
+            onPress={() => setCategoriaId(null)}
+          />
+          {categoriasAplicables.map((c) => (
+            <SelectRow
+              key={c.id}
+              label={c.nombre}
+              selected={categoriaId === c.id}
+              onPress={() => setCategoriaId(c.id)}
+            />
+          ))}
+        </View>
+      )}
 
       {necesitaOrigen && (
         <View style={styles.group}>
