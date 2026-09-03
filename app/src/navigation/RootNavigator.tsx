@@ -34,6 +34,7 @@ import { PresupuestosScreen } from '../screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from '../screens/PresupuestoDetalleScreen';
 import { PresupuestoRubrosScreen } from '../screens/PresupuestoRubrosScreen';
 import { MovimientosProgramadosScreen } from '../screens/MovimientosProgramadosScreen';
+import { PlantillasScreen } from '../screens/PlantillasScreen';
 import { MovimientoProgramadoDetalleScreen } from '../screens/MovimientoProgramadoDetalleScreen';
 import { EvolucionPatrimonioScreen } from '../screens/EvolucionPatrimonioScreen';
 import { HogarConsolidadoScreen } from '../screens/HogarConsolidadoScreen';
@@ -125,6 +126,7 @@ const TITULOS: Record<string, string> = {
   PresupuestoRubros: 'Presupuesto por rubro',
   MovimientosProgramados: 'Movimientos programados',
   MovimientoProgramadoDetalle: 'Movimiento programado',
+  Plantillas: 'Plantillas de movimiento',
   EvolucionPatrimonio: 'Evolución de mi patrimonio',
   HogarConsolidado: 'Patrimonio del hogar',
   Notificaciones: 'Notificaciones',
@@ -154,6 +156,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['PresupuestoRubros', PresupuestoRubrosScreen],
   ['MovimientosProgramados', MovimientosProgramadosScreen],
   ['MovimientoProgramadoDetalle', MovimientoProgramadoDetalleScreen],
+  ['Plantillas', PlantillasScreen],
   ['EvolucionPatrimonio', EvolucionPatrimonioScreen],
   ['HogarConsolidado', HogarConsolidadoScreen],
   ['Notificaciones', NotificacionesScreen],

@@ -7,6 +7,7 @@ import {
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
+  type PlantillaMovimientoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -40,6 +41,7 @@ export function RegistrarMovimientoScreen() {
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
+  const [plantillas, setPlantillas] = useState<PlantillaMovimientoDTO[]>([]);
   const [tipo, setTipo] = useState<Tipo>('GASTO');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(aISO(new Date()));
@@ -67,7 +69,20 @@ export function RegistrarMovimientoScreen() {
       )
       .then(setCategorias)
       .catch(() => setCategorias([]));
+    api
+      .get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token)
+      .then(setPlantillas)
+      .catch(() => setPlantillas([]));
   }, [token]);
+
+  const aplicarPlantilla = (p: PlantillaMovimientoDTO) => {
+    if (p.tipo === 'INGRESO' || p.tipo === 'GASTO' || p.tipo === 'TRANSFERENCIA') setTipo(p.tipo);
+    if (p.monto != null) setMonto(String(p.monto));
+    if (p.elementoOrigenId) setOrigenId(p.elementoOrigenId);
+    if (p.elementoDestinoId) setDestinoId(p.elementoDestinoId);
+    setCategoriaId(p.categoriaId);
+    setGlosa(p.glosa ?? '');
+  };
 
   const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
@@ -126,6 +141,21 @@ export function RegistrarMovimientoScreen() {
   return (
     <Screen>
       <Title>Registrar movimiento</Title>
+
+      {plantillas.length > 0 && (
+        <View style={styles.group}>
+          <Text style={styles.label}>Desde una plantilla</Text>
+          {plantillas.map((p) => (
+            <SelectRow
+              key={p.id}
+              label={p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre}
+              selected={false}
+              onPress={() => aplicarPlantilla(p)}
+            />
+          ))}
+        </View>
+      )}
+
       <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
       {tipo === 'CONVERSION' && (
         <Paragraph>

@@ -89,6 +89,19 @@ export interface CategoriaMovimientoDTO {
   estado: 'ACTIVA' | 'ARCHIVADA';
 }
 
+export interface PlantillaMovimientoDTO {
+  id: string;
+  nombre: string;
+  tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
+  monto: number | null;
+  moneda: string | null;
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
+  categoriaId: string | null;
+  glosa: string | null;
+  orden: number;
+}
+
 export interface LoginResult {
   accessToken: string;
   usuario: { id: string; email: string; nombre: string };

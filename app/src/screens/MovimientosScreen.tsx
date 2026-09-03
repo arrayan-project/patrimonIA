@@ -43,6 +43,11 @@ export function MovimientosScreen() {
 
       <GroupLabel>Planificación</GroupLabel>
       <MenuLink
+        title="Plantillas de movimiento"
+        subtitle="Moldes para el gasto o ingreso de siempre"
+        onPress={() => nav.go('Plantillas')}
+      />
+      <MenuLink
         title="Presupuestos"
         subtitle="Cuánto esperas ingresar y gastar, con seguimiento por rubro"
         onPress={() => nav.go('Presupuestos')}

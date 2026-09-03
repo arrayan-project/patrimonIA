@@ -34,6 +34,7 @@ export type RouteName =
   | 'PresupuestoRubros'
   | 'MovimientosProgramados'
   | 'MovimientoProgramadoDetalle'
+  | 'Plantillas'
   | 'EvolucionPatrimonio'
   | 'HogarConsolidado'
   | 'Notificaciones'

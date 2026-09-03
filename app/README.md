@@ -94,6 +94,7 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 |----------|------------------|
 | Dashboard → Movimientos programados | `GET /movimientos-programados` · `POST /comandos/CrearMovimientoProgramado` |
 | Detalle de movimiento programado | `GET /movimientos-programados/:id` · `MaterializarMovimientoProgramado` / `ActualizarMovimientoProgramado` / `CancelarMovimientoProgramado` |
+| Plantillas de movimiento (15h) | `GET /usuarios/me/plantillas-movimiento` · `CrearPlantillaMovimiento` / `ActualizarPlantillaMovimiento` / `EliminarPlantillaMovimiento` |
 
 ### Fase 8 — Deuda / Crédito
 
@@ -162,6 +163,10 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 - **15g — gráficos**: `react-native-svg` + `src/ui/charts.tsx` (`Dona`,
   `GraficoLinea`); dona en presupuesto por rubro y patrimonio del hogar, línea
   en evolución; tarjeta de resumen del Dashboard; iconos de tabs (Ionicons).
+- **15h — plantillas**: `PlantillasScreen` (CRUD de moldes personales); selector
+  "Desde una plantilla" arriba de "Registrar movimiento"; "Guardar como
+  plantilla" en el detalle de un movimiento (deriva origen/destino de los
+  impactos). Usar una plantilla solo rellena `RegistrarEventoFinanciero`.
 
 ### Decisiones aún provisionales
 

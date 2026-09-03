@@ -39,9 +39,10 @@ export function MovimientoDetalleScreen() {
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
 
-  const [modo, setModo] = useState<null | 'corregir' | 'anular'>(null);
+  const [modo, setModo] = useState<null | 'corregir' | 'anular' | 'plantilla'>(null);
   const [nuevoMonto, setNuevoMonto] = useState('');
   const [motivo, setMotivo] = useState('');
+  const [nombrePlantilla, setNombrePlantilla] = useState('');
   const [enviando, setEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -118,6 +119,35 @@ export function MovimientoDetalleScreen() {
   const impacto = evento.impactos.find((i) => i.elementoId === elementoId);
   const esCorreccion = evento.correccionDeId !== null;
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
+  const puedePlantilla = !evento.anulado && evento.tipo !== 'CONVERSION';
+
+  const guardarPlantilla = async () => {
+    setEnviando(true);
+    setError('');
+    try {
+      await api.post(
+        '/comandos/CrearPlantillaMovimiento',
+        {
+          nombre: nombrePlantilla.trim(),
+          tipo: evento.tipo,
+          monto: evento.monto,
+          moneda: evento.moneda,
+          elementoOrigenId: evento.impactos.find((i) => Number(i.monto) < 0)?.elementoId,
+          elementoDestinoId: evento.impactos.find((i) => Number(i.monto) > 0)?.elementoId,
+          ...(evento.categoriaId ? { categoriaId: evento.categoriaId } : {}),
+          ...(evento.glosa ? { glosa: evento.glosa } : {}),
+        },
+        token,
+      );
+      toast.mostrar('Plantilla creada');
+      setModo(null);
+      setNombrePlantilla('');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
     <Screen onRefresh={cargar}>
@@ -143,10 +173,47 @@ export function MovimientoDetalleScreen() {
         )}
       </View>
 
-      {accionable && modo === null && (
+      {modo === null && (
         <View style={{ gap: 8 }}>
-          <Button title="Corregir monto" onPress={() => setModo('corregir')} />
-          <Button title="Anular movimiento" variant="danger" onPress={() => setModo('anular')} />
+          {accionable && <Button title="Corregir monto" onPress={() => setModo('corregir')} />}
+          {puedePlantilla && (
+            <Button
+              title="Guardar como plantilla"
+              variant="secondary"
+              onPress={() => {
+                setNombrePlantilla(evento.glosa ?? '');
+                setModo('plantilla');
+              }}
+            />
+          )}
+          {accionable && (
+            <Button title="Anular movimiento" variant="danger" onPress={() => setModo('anular')} />
+          )}
+        </View>
+      )}
+
+      {modo === 'plantilla' && (
+        <View style={styles.card}>
+          <Text style={styles.formTitle}>Guardar como plantilla</Text>
+          <Text style={styles.nota}>
+            Se guarda el tipo, el monto, las cuentas, la categoría y el detalle para
+            reutilizarlos.
+          </Text>
+          <Field
+            label="Nombre de la plantilla"
+            value={nombrePlantilla}
+            onChangeText={setNombrePlantilla}
+            autoCapitalize="sentences"
+            placeholder="p. ej. Arriendo"
+          />
+          <ErrorText>{error}</ErrorText>
+          <Button
+            title="Guardar plantilla"
+            onPress={guardarPlantilla}
+            loading={enviando}
+            disabled={!nombrePlantilla.trim()}
+          />
+          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </View>
       )}
 
