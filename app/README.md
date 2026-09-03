@@ -127,17 +127,22 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Registrar movimiento → CONVERSION | `POST /comandos/RegistrarEventoFinanciero` (tipo CONVERSION) |
 | Patrimonio del hogar | total en la moneda de consolidación (o monedas faltantes) |
 
-### Fase 14a — Navegación y sesión (deuda técnica)
+### Fase 14 — Deuda técnica
 
-- **Navegación**: `@react-navigation/native` (native-stack). Las pantallas siguen
-  usando `useNav()` — ahora una fachada delgada sobre `useNavigation`/`useRoute`
-  (`src/navigation/navigator.tsx`). El árbol se arma en `RootNavigator.tsx`
-  (grupo sin sesión: Registro/Login · grupo con sesión: todas las pantallas).
-- **Sesión persistida**: el JWT se guarda en `expo-secure-store` (nativo) o
+- **Navegación** (14a): `@react-navigation/native` (native-stack). Las pantallas
+  siguen usando `useNav()` — ahora una fachada sobre `useNavigation`/`useRoute`
+  (`src/navigation/navigator.tsx`). El árbol se arma en `RootNavigator.tsx`.
+- **Sesión persistida** (14a): el JWT se guarda en `expo-secure-store` (nativo) o
   `localStorage` (web) — `src/auth/secureStorage.ts`. Al arrancar se restaura y
-  se valida contra `GET /usuarios/me`; si el token expiró se descarta.
-- **Multi-hogar**: si perteneces a más de un hogar, el Dashboard muestra un
+  se valida contra `GET /usuarios/me`.
+- **Multi-hogar** (14a): si perteneces a más de un hogar, el Dashboard muestra un
   selector; la elección se recuerda por usuario.
+- **Registro con token** (14c): `RegistroScreen` pide el token de registro a
+  `/auth/registro-token`; si el backend lo envía por email (modo producción),
+  pide el código.
+- **Push** (14c): al iniciar sesión, `src/push/registerPush.ts` obtiene el Expo
+  push token y lo registra en `/usuarios/me/dispositivos-push` (null en web /
+  simulador / Expo Go — necesita un development build + `projectId` de EAS).
 
 ### Decisiones aún provisionales
 

@@ -4,10 +4,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { api, ApiError, type LoginResult, type UsuarioDTO } from '../api/client';
+import { obtenerExpoPushToken } from '../push/registerPush';
 import { borrar, guardar, leer } from './secureStorage';
 
 interface Session {
@@ -41,6 +43,16 @@ const CLAVE_SESION = 'patrimonia.session';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [cargando, setCargando] = useState(true);
+  const pushToken = useRef<string | null>(null);
+
+  const registrarPush = useCallback(async (token: string) => {
+    const expoToken = await obtenerExpoPushToken();
+    if (!expoToken) return;
+    pushToken.current = expoToken;
+    await api.post('/usuarios/me/dispositivos-push', { expoPushToken: expoToken }, token).catch(
+      () => undefined,
+    );
+  }, []);
 
   useEffect(() => {
     let vivo = true;
@@ -52,7 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const guardada = JSON.parse(raw) as Session;
           // valida que el token siga sirviendo
           await api.get<UsuarioDTO>('/usuarios/me', guardada.token);
-          if (vivo) setSession(guardada);
+          if (vivo) {
+            setSession(guardada);
+            void registrarPush(guardada.token);
+          }
         } catch (e) {
           if (e instanceof ApiError && e.status === 401) await borrar(CLAVE_SESION);
         }
@@ -62,12 +77,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [registrarPush]);
 
-  const persistir = useCallback(async (s: Session) => {
-    setSession(s);
-    await guardar(CLAVE_SESION, JSON.stringify(s));
-  }, []);
+  const persistir = useCallback(
+    async (s: Session) => {
+      setSession(s);
+      await guardar(CLAVE_SESION, JSON.stringify(s));
+      void registrarPush(s.token);
+    },
+    [registrarPush],
+  );
 
   const iniciarSesion = useCallback(
     async (email: string, password: string) => {
@@ -98,9 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const cerrarSesion = useCallback(() => {
+    const token = session?.token;
+    if (token && pushToken.current) {
+      void api
+        .del('/usuarios/me/dispositivos-push', { expoPushToken: pushToken.current }, token)
+        .catch(() => undefined);
+    }
+    pushToken.current = null;
     setSession(null);
     void borrar(CLAVE_SESION);
-  }, []);
+  }, [session]);
 
   const value = useMemo(
     () => ({ session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion }),

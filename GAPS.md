@@ -303,19 +303,22 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
     correcciones vivas (colapsa el par original+compensatorio).
 - **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
 
-### G20 — Notificaciones (Fase 11)
-- **Qué falta**: el Principio 4 dice "se notifica al usuario como consecuencia"
-  de una política; hasta la Fase 10 eso solo quedaba en `auditoria`. UX_FLOWS
-  marca el envío (push/email) como fuera de alcance del dominio.
-- **Decisión (Fase 11)**: tabla `notificacion` (migración 005) como registro
-  **in-app**. NO es entidad de dominio: no genera auditoría, se puede regenerar.
-  Se emite dentro de la transacción del comando que dispara la política.
-  Generadores actuales: **OBJETIVO_COMPLETADO** (política "Completar objetivo"),
-  **RESERVA_CONSUMIDA** (política "Consumir reserva"), **INVITACION_RECIBIDA**
-  (InvitarMiembro). Endpoints `GET /usuarios/me/notificaciones`,
-  `.../no-leidas`, `POST .../:id/leer`, `POST .../leer-todas`.
-- **Fuera de alcance**: envío real push/email; preferencias de notificación;
-  notificar al emisor cuando aceptan su invitación (se puede agregar).
+### G20 — Notificaciones (Fase 11 + 14c)
+- **In-app (Fase 11)**: tabla `notificacion` (migración 005), registro que NO es
+  dominio (sin auditoría, regenerable). Se emite dentro de la transacción del
+  comando. Generadores: **OBJETIVO_COMPLETADO**, **RESERVA_CONSUMIDA**,
+  **INVITACION_RECIBIDA**. Endpoints `GET /usuarios/me/notificaciones(/no-leidas)`,
+  `POST .../:id/leer`, `POST .../leer-todas`.
+- **Push (Fase 14c)**: tabla `dispositivo_push` (migración 008) con los Expo push
+  tokens del usuario (`POST` / `DELETE /usuarios/me/dispositivos-push`). Al emitir
+  una notificación se dispara un push best-effort (fuera de la transacción —
+  podría llegar huérfano si el comando revierte) vía `PushSender` →
+  `ExpoPushSender` (POST a la Expo Push API, sin credenciales). La app registra
+  el token al iniciar sesión (`src/push/registerPush.ts`).
+- **Pendiente**: el push remoto necesita un **development build + `projectId` de
+  EAS** — en Expo Go SDK 53+ está limitado, y en web/simulador `registerPush`
+  devuelve null (no rompe nada). Preferencias de notificación y reintentos de
+  envío fallido tampoco están.
 
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita

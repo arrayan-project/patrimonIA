@@ -121,11 +121,23 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     persistida (`expo-secure-store` / `localStorage`), selector multi-hogar.
   - [x] **14b** — tests unitarios (`api/src/**/*.spec.ts`, sin DB) + CI
     (`.github/workflows/ci.yml`: Postgres de servicio, lint/build/unit/e2e + app).
-  - [ ] 14c — triangulación de divisas (G21), rate-limit + verificación de email
-    del pre-registro (G4), push notifications (G20).
+  - [x] **14c** — triangulación de divisas por pivote (G21); pre-registro con
+    rate-limit por IP + token ligado y enviado por email (`EmailSender`
+    intercambiable, G4); push notifications (`dispositivo_push` migr. 008 +
+    `ExpoPushSender`, G20). Falta solo el captcha y un development build para el
+    push real.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
-Modelo de dominio cerrado. Pendientes documentados en `GAPS.md`.
+Modelo de dominio cerrado; deuda técnica de Fase 14 saldada. Lo que queda son
+integraciones externas (captcha, proveedor de email, EAS para push) — la
+estructura está lista para colgarlas. Ver `GAPS.md`.
+
+## Tests
+
+```bash
+cd api && npm run test:all   # 20 unitarios + 83 e2e
+cd app && npx tsc --noEmit
+```
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

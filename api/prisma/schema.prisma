@@ -267,6 +267,7 @@ model usuario {
   created_at                                 DateTime               @default(now()) @db.Timestamptz(6)
   asignacion                                 asignacion[]
   auditoria                                  auditoria[]
+  dispositivo_push                           dispositivo_push[]
   elemento_propietario                       elemento_propietario[]
   idempotencia                               idempotencia[]
   invitacion_invitacion_emisor_idTousuario   invitacion[]           @relation("invitacion_emisor_idTousuario")
@@ -334,4 +335,14 @@ model tipo_cambio {
 
   @@unique([moneda_origen, moneda_destino, fecha_vigencia])
   @@index([moneda_origen, moneda_destino, fecha_vigencia(sort: Desc)], map: "ix_tipo_cambio_par")
+}
+
+model dispositivo_push {
+  usuario_id      String   @db.Uuid
+  expo_push_token String
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  usuario         usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([usuario_id, expo_push_token])
+  @@index([usuario_id], map: "ix_dispositivo_push_usuario")
 }

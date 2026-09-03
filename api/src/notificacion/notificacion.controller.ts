@@ -1,7 +1,24 @@
-import { Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { IsString, MinLength } from 'class-validator';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { NotificacionService } from './notificacion.service.js';
+
+class DispositivoPushDto {
+  @IsString()
+  @MinLength(10)
+  expoPushToken!: string;
+}
 
 @Controller()
 export class NotificacionController {
@@ -27,5 +44,17 @@ export class NotificacionController {
   @HttpCode(200)
   leerTodas(@CurrentUser() u: UsuarioAutenticado) {
     return this.notificaciones.marcarTodasLeidas(u.id);
+  }
+
+  @Post('usuarios/me/dispositivos-push')
+  @HttpCode(200)
+  registrarDispositivo(@CurrentUser() u: UsuarioAutenticado, @Body() dto: DispositivoPushDto) {
+    return this.notificaciones.registrarDispositivo(u.id, dto.expoPushToken);
+  }
+
+  @Delete('usuarios/me/dispositivos-push')
+  @HttpCode(200)
+  olvidarDispositivo(@CurrentUser() u: UsuarioAutenticado, @Body() dto: DispositivoPushDto) {
+    return this.notificaciones.olvidarDispositivo(u.id, dto.expoPushToken);
   }
 }

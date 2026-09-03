@@ -334,6 +334,16 @@ CREATE TABLE notificacion (
 CREATE INDEX ix_notificacion_usuario ON notificacion (usuario_id, created_at DESC);
 CREATE INDEX ix_notificacion_no_leida ON notificacion (usuario_id) WHERE leida = FALSE;
 
+-- Expo push tokens de los dispositivos del usuario (migración 008)
+CREATE TABLE dispositivo_push (
+    usuario_id       UUID NOT NULL REFERENCES usuario(id),
+    expo_push_token  TEXT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (usuario_id, expo_push_token)
+);
+
+CREATE INDEX ix_dispositivo_push_usuario ON dispositivo_push (usuario_id);
+
 -- ============================================================================
 -- 13. Idempotencia de comandos (migración 006 — infraestructura de API)
 -- Guarda la respuesta ya emitida para una (Idempotency-Key, usuario).

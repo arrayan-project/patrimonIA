@@ -59,6 +59,8 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `007_tipo_cambio.sql` — tabla `tipo_cambio` (dato de referencia global,
   inmutable — REQUISITES §514–532, GAPS.md G21). Ya incluida en
   `init/01_schema.sql`.
+- `008_dispositivo_push.sql` — tabla `dispositivo_push` (Expo push tokens,
+  GAPS.md G20). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

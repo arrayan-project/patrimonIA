@@ -1,6 +1,7 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, type notificacion as NotificacionRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { PUSH_SENDER, type PushSender } from './push-sender.js';
 
 export interface NotificacionDTO {
   id: string;
@@ -36,15 +37,21 @@ function toDTO(n: NotificacionRow): NotificacionDTO {
 }
 
 /**
- * Notificaciones in-app (Principio 4 del DDD). NO son entidad del dominio: no
- * generan auditoría y se pueden regenerar. El envío real (push/email) queda
- * fuera de alcance.
+ * Notificaciones in-app (Principio 4 del DDD) + envío push best-effort.
+ * NO son entidad del dominio: no generan auditoría y se pueden regenerar.
  */
 @Injectable()
 export class NotificacionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PUSH_SENDER) private readonly push: PushSender,
+  ) {}
 
-  /** Se llama DENTRO de la transacción del comando que dispara la política. */
+  /**
+   * Se llama DENTRO de la transacción del comando que dispara la política. El
+   * push sale fuera de la transacción (best-effort) — si el comando termina
+   * revertido, podría llegar un push huérfano (aceptable para un aviso).
+   */
   async emitir(tx: Prisma.TransactionClient, n: NuevaNotificacion): Promise<void> {
     await tx.notificacion.create({
       data: {
@@ -57,7 +64,46 @@ export class NotificacionService {
         leida: false,
       },
     });
+    void this.#pushBestEffort(n.usuarioId, n.titulo, n.cuerpo);
   }
+
+  async #pushBestEffort(usuarioId: string, titulo: string, cuerpo: string): Promise<void> {
+    try {
+      const disp = await this.prisma.dispositivo_push.findMany({
+        where: { usuario_id: usuarioId },
+        select: { expo_push_token: true },
+      });
+      if (disp.length > 0) {
+        await this.push.enviar(disp.map((d) => d.expo_push_token), titulo, cuerpo);
+      }
+    } catch {
+      // best-effort
+    }
+  }
+
+  // ── Dispositivos ──────────────────────────────────────────────────────────
+
+  async registrarDispositivo(usuarioId: string, expoPushToken: string): Promise<{ ok: true }> {
+    await this.prisma.dispositivo_push.upsert({
+      where: { usuario_id_expo_push_token: { usuario_id: usuarioId, expo_push_token: expoPushToken } },
+      create: { usuario_id: usuarioId, expo_push_token: expoPushToken },
+      update: {},
+    });
+    return { ok: true };
+  }
+
+  async olvidarDispositivo(usuarioId: string, expoPushToken: string): Promise<{ ok: true }> {
+    await this.prisma.dispositivo_push
+      .delete({
+        where: {
+          usuario_id_expo_push_token: { usuario_id: usuarioId, expo_push_token: expoPushToken },
+        },
+      })
+      .catch(() => undefined);
+    return { ok: true };
+  }
+
+  // ── Consultas ─────────────────────────────────────────────────────────────
 
   async listar(usuarioId: string, soloNoLeidas: boolean): Promise<NotificacionDTO[]> {
     const filas = await this.prisma.notificacion.findMany({

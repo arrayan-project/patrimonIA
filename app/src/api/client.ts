@@ -44,6 +44,8 @@ export const api = {
     req<T>('POST', path, { body, token }),
   postWith: <T>(path: string, body: unknown, headers: Record<string, string>) =>
     req<T>('POST', path, { body, headers }),
+  del: <T>(path: string, body?: unknown, token?: string | null) =>
+    req<T>('DELETE', path, { body, token }),
 };
 
 // ── Tipos de respuesta del backend ──────────────────────────────────────────
