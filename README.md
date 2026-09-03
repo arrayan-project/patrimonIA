@@ -107,11 +107,19 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     (activo solo con `AUTH_REGISTRO_TOKEN_REQUERIDO=true`). Falta el gate previo
     (captcha/email) — GAPS.md G4.
   - e2e en verde. Sin cambios en la app.
-- [ ] Fase 13 — subsistema de tipos de cambio + total consolidado + CONVERSION.
+- [x] **Fase 13 — Multimoneda (REQUISITES §514–532)**:
+  - [x] Backend: tabla `tipo_cambio` (migración 007) + comando nº 53
+    `RegistrarTipoCambio` + `ConversionService` (tasa vigente a la fecha, inverso
+    si no hay par directo). Evento **CONVERSION** (cambio de moneda entre dos
+    elementos). Total consolidado del hogar en su moneda (`total` /
+    `conversionesFaltantes`). e2e en verde.
+  - [x] Móvil: pantalla "Tipos de cambio", opción CONVERSION en registrar
+    movimiento, total en "Patrimonio del hogar".
 
-**Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de
-consolidación/métricas del hogar y el subsistema de tipos de cambio (ver GAPS.md
-G7/G8) — planificadas como Fases 10–13.
+**Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
+Modelo de dominio cerrado. Pendientes documentados en `GAPS.md` (gate captcha del
+pre-registro, triangulación de divisas, materialización de proyecciones,
+notificaciones push).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

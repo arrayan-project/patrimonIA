@@ -352,6 +352,27 @@ CREATE TABLE idempotencia (
 CREATE INDEX ix_idempotencia_created ON idempotencia (created_at);
 
 -- ============================================================================
+-- 14. Tipos de cambio (migración 007 — dato de referencia global, inmutable)
+-- REQUISITES §514–532: multimoneda; tasas históricas y reproducibles.
+-- ============================================================================
+
+CREATE TABLE tipo_cambio (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    moneda_origen   TEXT NOT NULL,
+    moneda_destino  TEXT NOT NULL,
+    tasa            NUMERIC(18,8) NOT NULL CHECK (tasa > 0),
+    fecha_vigencia  DATE NOT NULL,
+    fuente          TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT ck_tipo_cambio_monedas CHECK (moneda_origen <> moneda_destino),
+    UNIQUE (moneda_origen, moneda_destino, fecha_vigencia)
+);
+
+CREATE INDEX ix_tipo_cambio_par
+    ON tipo_cambio (moneda_origen, moneda_destino, fecha_vigencia DESC);
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

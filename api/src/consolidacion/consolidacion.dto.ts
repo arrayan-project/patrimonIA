@@ -9,10 +9,15 @@ export interface ConsolidadoPorMoneda {
 export interface PatrimonioConsolidadoDTO {
   hogarId: string;
   monedaConsolidacion: string;
-  /** Sin total único entre monedas: requiere tipos de cambio (GAPS.md G7). */
   porMoneda: ConsolidadoPorMoneda[];
   elementos: number;
   miembros: number;
+  /**
+   * Patrimonio neto total convertido a `monedaConsolidacion` con los tipos de
+   * cambio vigentes hoy. null si falta alguna tasa (ver `conversionesFaltantes`).
+   */
+  total: number | null;
+  conversionesFaltantes: string[];
 }
 
 export interface DistribucionCategoria {

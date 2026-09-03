@@ -321,3 +321,17 @@ model idempotencia {
   @@id([clave, usuario_id])
   @@index([created_at], map: "ix_idempotencia_created")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tipo_cambio {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moneda_origen  String
+  moneda_destino String
+  tasa           Decimal  @db.Decimal(18, 8)
+  fecha_vigencia DateTime @db.Date
+  fuente         String?
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([moneda_origen, moneda_destino, fecha_vigencia])
+  @@index([moneda_origen, moneda_destino, fecha_vigencia(sort: Desc)], map: "ix_tipo_cambio_par")
+}

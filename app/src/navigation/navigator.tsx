@@ -31,7 +31,8 @@ export type RouteName =
   | 'MovimientoProgramadoDetalle'
   | 'EvolucionPatrimonio'
   | 'HogarConsolidado'
-  | 'Notificaciones';
+  | 'Notificaciones'
+  | 'TiposCambio';
 
 export interface Route {
   name: RouteName;

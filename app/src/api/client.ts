@@ -224,6 +224,16 @@ export interface NotificacionDTO {
   createdAt: string;
 }
 
+export interface TipoCambioDTO {
+  id: string;
+  monedaOrigen: string;
+  monedaDestino: string;
+  tasa: number;
+  fechaVigencia: string;
+  fuente: string | null;
+  createdAt: string;
+}
+
 export interface PatrimonioConsolidadoDTO {
   hogarId: string;
   monedaConsolidacion: string;
@@ -236,6 +246,8 @@ export interface PatrimonioConsolidadoDTO {
   }[];
   elementos: number;
   miembros: number;
+  total: number | null;
+  conversionesFaltantes: string[];
 }
 
 export interface MetricasHogarDTO {

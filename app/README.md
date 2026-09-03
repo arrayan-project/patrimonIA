@@ -119,6 +119,14 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 |----------|------------------|
 | Dashboard → Notificaciones (N) | `GET /usuarios/me/notificaciones` · `POST .../:id/leer` · `POST .../leer-todas` |
 
+### Fase 13 — Multimoneda
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Tipos de cambio | `GET /tipos-cambio` · `POST /comandos/RegistrarTipoCambio` |
+| Registrar movimiento → CONVERSION | `POST /comandos/RegistrarEventoFinanciero` (tipo CONVERSION) |
+| Patrimonio del hogar | total en la moneda de consolidación (o monedas faltantes) |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

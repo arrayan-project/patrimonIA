@@ -93,16 +93,33 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿visibilidad granular por tipo de info?, ¿tabla de
   "compartido con"?, ¿reglas de co-propiedad más estrictas?
 
-### G7 — Proyección patrimonio_individual: en vivo vs. materializada, y sin total
+### G7 — Proyecciones: en vivo vs. materializada
 - **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan
   pendiente si las proyecciones son vista SQL en vivo o tabla materializada
-  (decisión de performance). Además, sin tipos de cambio (Sección S REQUISITES)
-  no hay un total consolidado entre monedas.
-- **Decisión provisional**: `GET /usuarios/me/patrimonio-individual` se calcula
-  **en vivo** desde la info primaria (Principio 1) y devuelve un desglose
-  `porMoneda`, sin total único.
-- **Para decidir**: materializar si el cálculo en vivo escala mal; subsistema de
-  tipos de cambio para consolidar.
+  (decisión de performance).
+- **Decisión provisional**: **todas en vivo** desde la info primaria
+  (Principio 1) — `patrimonio_individual`, `patrimonio_familiar_consolidado`,
+  `progreso_objetivo`, `desviacion_presupuestaria`, métricas del hogar,
+  reconstrucción histórica.
+- **Resuelto en Fase 13**: el total consolidado entre monedas ya existe —
+  `GET /hogares/:id/patrimonio-consolidado` devuelve `total` en la moneda del
+  hogar usando `tipo_cambio` (migración 007), y `null` + `conversionesFaltantes`
+  si falta alguna tasa. `patrimonio-individual` sigue siendo solo `porMoneda`
+  (el usuario no tiene "moneda de consolidación" propia).
+- **Para decidir**: materializar si el cálculo en vivo escala mal.
+
+### G21 — Conversión monetaria: sin triangulación (Fase 13)
+- **Qué falta**: REQUISITES pide conversiones "consistentes y reproducibles"
+  pero no especifica el algoritmo cuando no hay par directo.
+- **Decisión (Fase 13)**: `ConversionService` usa la tasa más reciente con
+  `fecha_vigencia <= fecha`; si no hay par directo A→B, usa el inverso B→A
+  (`1/tasa`). **No triangula** por una moneda pivote — si faltan A→B y B→A,
+  la conversión falla (y el total consolidado queda `null`).
+- `RegistrarTipoCambio` (comando nº 53, más allá del catálogo de 52) es dato
+  global, inmutable; para "corregir" una tasa se registra otra con fecha de
+  vigencia posterior.
+- **Para decidir**: ¿triangulación vía USD/CLP?, ¿importación automática de una
+  fuente de tasas?
 
 ### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)
 - **Qué falta**: AS #12 dice "datos corregidos" sin enumerarlos.
@@ -179,11 +196,15 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **AnularEventoFinanciero** de un evento que consumió reservas: no las
   "des-consume" (quedan CONSUMIDA). Pendiente.
 
-### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
-- **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
-  solo implementa INGRESO/GASTO/TRANSFERENCIA.
-- **Por qué**: CONVERSION necesita tipo de cambio (ver G7); PRESTAMO se cruza con
-  Deuda/Crédito (Flujo 4, y el vacío G1). Ambos son ciclos verticales aparte.
+### G8 — CONVERSION y PRESTAMO
+- **CONVERSION**: **implementado en Fase 13**. `RegistrarEventoFinanciero` con
+  `tipo: 'CONVERSION'`, origen y destino en monedas distintas; el destino recibe
+  el equivalente vía `ConversionService`. No se corrige (se anula y se registra
+  de nuevo — la tasa afecta ambos lados); sí se anula.
+- **PRESTAMO**: **descartado como tipo propio** (decisión de esta sesión). Ya se
+  modela con Deuda/Crédito: crear un elemento CREDITO/DEUDA y mover el saldo con
+  TRANSFERENCIA (ver G17). Se mantiene el valor `PRESTAMO` en el CHECK del
+  esquema por si más adelante se quiere distinguir por efectos legales.
 
 ### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"
 - **Qué falta**: el esquema de `presupuesto` no tiene columna de propiedad, pero

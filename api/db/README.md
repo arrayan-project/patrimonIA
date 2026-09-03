@@ -56,6 +56,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   Principio 4, GAPS.md G20). Ya incluida en `init/01_schema.sql`.
 - `006_idempotencia.sql` — tabla `idempotencia` (header `Idempotency-Key`,
   API_DESIGN §43). Ya incluida en `init/01_schema.sql`.
+- `007_tipo_cambio.sql` — tabla `tipo_cambio` (dato de referencia global,
+  inmutable — REQUISITES §514–532, GAPS.md G21). Ya incluida en
+  `init/01_schema.sql`.
 
 ## Estado
 

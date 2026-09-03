@@ -28,6 +28,7 @@ import { MovimientoProgramadoDetalleScreen } from './screens/MovimientoProgramad
 import { EvolucionPatrimonioScreen } from './screens/EvolucionPatrimonioScreen';
 import { HogarConsolidadoScreen } from './screens/HogarConsolidadoScreen';
 import { NotificacionesScreen } from './screens/NotificacionesScreen';
+import { TiposCambioScreen } from './screens/TiposCambioScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -81,6 +82,8 @@ function Routes() {
       return <HogarConsolidadoScreen />;
     case 'Notificaciones':
       return <NotificacionesScreen />;
+    case 'TiposCambio':
+      return <TiposCambioScreen />;
     default:
       return <BienvenidaScreen />;
   }

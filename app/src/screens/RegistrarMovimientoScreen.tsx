@@ -17,7 +17,7 @@ import {
   Title,
 } from '../ui';
 
-const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
+const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
 type Tipo = (typeof TIPOS)[number];
 
 export function RegistrarMovimientoScreen() {
@@ -39,8 +39,8 @@ export function RegistrarMovimientoScreen() {
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
   }, [token]);
 
-  const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA';
-  const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA';
+  const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
+  const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
 
   const monedaEvento = useMemo(() => {
     const ref = elementos?.find((e) => e.id === (necesitaOrigen ? origenId : destinoId));
@@ -88,6 +88,12 @@ export function RegistrarMovimientoScreen() {
     <Screen>
       <Title>Registrar movimiento</Title>
       <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
+      {tipo === 'CONVERSION' && (
+        <Paragraph>
+          Cambio de moneda: el monto va en la moneda del origen; el destino recibe el
+          equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
+        </Paragraph>
+      )}
       <Field label="Monto" keyboardType="numeric" value={monto} onChangeText={setMonto} placeholder="0" />
 
       {necesitaOrigen && (

@@ -18,6 +18,7 @@ import { NotificacionModule } from './notificacion/notificacion.module.js';
 import { PlanificacionModule } from './planificacion/planificacion.module.js';
 import { PresupuestoModule } from './presupuesto/presupuesto.module.js';
 import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
+import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
     PlanificacionModule,
     PresupuestoModule,
     ProyeccionesModule,
+    TipoCambioModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor }],
 })

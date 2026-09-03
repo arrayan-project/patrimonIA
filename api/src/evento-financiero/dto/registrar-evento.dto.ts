@@ -1,15 +1,16 @@
 import { IsIn, IsISO8601, IsNumber, IsOptional, IsPositive, IsUUID, Length } from 'class-validator';
 
 /**
- * Fase 2 (Flujo 1) cubre INGRESO / GASTO / TRANSFERENCIA. CONVERSION y PRESTAMO
- * quedan para ciclos siguientes (tipo de cambio y Deuda/Crédito) — ver GAPS.md.
+ * INGRESO / GASTO / TRANSFERENCIA (Fase 2) + CONVERSION (Fase 13, cambio de
+ * moneda entre dos elementos). PRESTAMO se modela vía Deuda/Crédito — ver GAPS.md G17.
  */
-export const TIPOS_FASE_2 = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
+export const TIPOS_EVENTO = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
 
 export class RegistrarEventoDto {
-  @IsIn(TIPOS_FASE_2)
-  tipo!: (typeof TIPOS_FASE_2)[number];
+  @IsIn(TIPOS_EVENTO)
+  tipo!: (typeof TIPOS_EVENTO)[number];
 
+  /** Para CONVERSION es el monto en la moneda del elemento origen. */
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   monto!: number;

@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
 import { NotificacionService } from '../notificacion/notificacion.service.js';
+import { ConversionService } from '../tipo-cambio/conversion.service.js';
 import { derivarValorPendiente } from '../common/deuda.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
@@ -28,6 +29,7 @@ export class EventoFinancieroService {
     private readonly auditoria: AuditoriaService,
     private readonly progreso: ProgresoService,
     private readonly notificaciones: NotificacionService,
+    private readonly conversion: ConversionService,
   ) {}
 
   /**
@@ -44,7 +46,7 @@ export class EventoFinancieroService {
     const fecha = dto.fecha ? new Date(dto.fecha) : new Date();
     const monto = new Prisma.Decimal(dto.monto);
 
-    const plan = await this.planImpactos(actorId, dto, moneda, monto);
+    const plan = await this.planImpactos(actorId, dto, moneda, monto, fecha);
 
     // Política "Consumir reserva": si el evento se asocia a una asignación propia.
     const asignacion = dto.asignacionId
@@ -201,6 +203,11 @@ export class EventoFinancieroService {
   async corregirEvento(actorId: string, dto: CorregirEventoDto): Promise<EventoFinancieroDTO> {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
     if (evento.anulado) throw new ConflictException('No se puede corregir un evento anulado');
+    if (evento.tipo === 'CONVERSION') {
+      throw new BadRequestException(
+        'Una CONVERSION se corrige anulándola y registrándola de nuevo (la tasa cambia ambos lados)',
+      );
+    }
     if (await this.tieneCorreccionViva(evento.id)) {
       throw new ConflictException('El evento ya tiene una corrección — corrige esa última');
     }
@@ -304,6 +311,7 @@ export class EventoFinancieroService {
     dto: RegistrarEventoDto,
     moneda: string,
     monto: Prisma.Decimal,
+    fecha: Date,
   ): Promise<ImpactoPlan[]> {
     const cargar = async (id: string): Promise<ElementoRow> => {
       const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id } });
@@ -332,9 +340,9 @@ export class EventoFinancieroService {
       return [{ elemento: origen, monto: monto.negated() }];
     }
 
-    // TRANSFERENCIA
+    // TRANSFERENCIA y CONVERSION comparten estructura (origen + destino).
     if (!dto.elementoOrigenId || !dto.elementoDestinoId) {
-      throw new BadRequestException('TRANSFERENCIA requiere elementoOrigenId y elementoDestinoId');
+      throw new BadRequestException(`${dto.tipo} requiere elementoOrigenId y elementoDestinoId`);
     }
     if (dto.elementoOrigenId === dto.elementoDestinoId) {
       throw new BadRequestException('Origen y destino no pueden ser el mismo elemento');
@@ -342,12 +350,30 @@ export class EventoFinancieroService {
     const origen = await cargar(dto.elementoOrigenId);
     const destino = await cargar(dto.elementoDestinoId);
     await this.exigirPropietario(origen.id, actorId); // solo mueves plata de lo tuyo
-    if (origen.moneda !== destino.moneda) {
-      throw new BadRequestException('Transferencia entre monedas distintas es una CONVERSION (no soportada aún)');
-    }
-    this.exigirMoneda(origen, moneda);
+    this.exigirMoneda(origen, moneda); // el monto del evento va en la moneda del origen
     if (!(await this.actorPuedeRecibirEn(destino, actorId))) {
-      throw new ForbiddenException('No puedes transferir a ese elemento destino');
+      throw new ForbiddenException('No puedes mover fondos a ese elemento destino');
+    }
+
+    if (dto.tipo === 'CONVERSION') {
+      if (origen.moneda === destino.moneda) {
+        throw new BadRequestException('CONVERSION requiere monedas distintas — usa TRANSFERENCIA');
+      }
+      const montoDestino = await this.conversion.convertir(
+        monto,
+        origen.moneda,
+        destino.moneda,
+        fecha,
+      );
+      return [
+        { elemento: origen, monto: monto.negated() },
+        { elemento: destino, monto: montoDestino },
+      ];
+    }
+
+    // TRANSFERENCIA
+    if (origen.moneda !== destino.moneda) {
+      throw new BadRequestException('Transferencia entre monedas distintas es una CONVERSION');
     }
     return [
       { elemento: origen, monto: monto.negated() },

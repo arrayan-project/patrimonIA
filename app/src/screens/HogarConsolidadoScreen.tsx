@@ -52,9 +52,20 @@ export function HogarConsolidadoScreen() {
     <Screen>
       <Title>Patrimonio del hogar</Title>
       <Text style={styles.muted}>
-        {cons.elementos} elementos consolidados · {cons.miembros} miembros. Sin
-        conversión entre monedas.
+        {cons.elementos} elementos consolidados · {cons.miembros} miembros.
       </Text>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Total ({cons.monedaConsolidacion})</Text>
+        {cons.total != null ? (
+          <Text style={styles.total}>{money(cons.total, cons.monedaConsolidacion)}</Text>
+        ) : (
+          <Text style={styles.muted}>
+            Falta tipo de cambio para: {cons.conversionesFaltantes.join(', ')}. Regístralo
+            en "Tipos de cambio".
+          </Text>
+        )}
+      </View>
 
       {cons.porMoneda.map((pm) => {
         const metricas = met.porMoneda.find((x) => x.moneda === pm.moneda);
@@ -126,4 +137,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
   muted: { fontSize: 13, color: colors.muted },
+  total: { fontSize: 22, fontWeight: '800', color: colors.text },
 });

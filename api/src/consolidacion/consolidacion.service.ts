@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
+import { ConversionService } from '../tipo-cambio/conversion.service.js';
 import {
   type EventoConsolidadoDTO,
   type MetricasHogarDTO,
@@ -25,6 +26,7 @@ export class ConsolidacionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly progreso: ProgresoService,
+    private readonly conversion: ConversionService,
   ) {}
 
   async patrimonioConsolidado(
@@ -56,20 +58,36 @@ export class ConsolidacionService {
       acc.set(el.moneda, cur);
     }
 
+    const porMoneda = [...acc.entries()]
+      .map(([moneda, v]) => ({
+        moneda,
+        patrimonioNeto: v.neto.toNumber(),
+        activos: v.activos.toNumber(),
+        pasivos: v.pasivos.toNumber(),
+        valorLiquido: v.liquido.toNumber(),
+      }))
+      .sort((a, b) => a.moneda.localeCompare(b.moneda));
+
+    const destino = hogar.moneda_consolidacion;
+    const hoy = new Date();
+    let total = new Prisma.Decimal(0);
+    const conversionesFaltantes: string[] = [];
+    for (const [moneda, v] of acc.entries()) {
+      if (await this.conversion.disponible(moneda, destino, hoy)) {
+        total = total.plus(await this.conversion.convertir(v.neto, moneda, destino, hoy));
+      } else {
+        conversionesFaltantes.push(moneda);
+      }
+    }
+
     return {
       hogarId,
-      monedaConsolidacion: hogar.moneda_consolidacion,
+      monedaConsolidacion: destino,
       elementos: elementos.length,
       miembros: miembros.length,
-      porMoneda: [...acc.entries()]
-        .map(([moneda, v]) => ({
-          moneda,
-          patrimonioNeto: v.neto.toNumber(),
-          activos: v.activos.toNumber(),
-          pasivos: v.pasivos.toNumber(),
-          valorLiquido: v.liquido.toNumber(),
-        }))
-        .sort((a, b) => a.moneda.localeCompare(b.moneda)),
+      porMoneda,
+      total: conversionesFaltantes.length > 0 ? null : total.toNumber(),
+      conversionesFaltantes,
     };
   }
 
