@@ -387,8 +387,15 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   por rubro. Extiende G15 (que dejó "asignaciones esperadas" fuera).
 - **Todo esto es configuración**, no hecho económico → historial solo en
   auditoría (DATABASE_DESIGN §125, Principio C).
-- **Para decidir**: ¿categorías del hogar o personales? ¿jerarquía de 1 o 2
-  niveles? ¿categoría obligatoria en el gasto o siempre opcional?
+- **Decisiones (sesión 2026-09-03)**:
+  - Categorías **del hogar** (`categoria_movimiento.hogar_id`, vocabulario
+    compartido). Administra cualquier miembro ACTIVA.
+  - **Lista plana** al inicio (sin `categoria_padre_id`; se puede agregar después
+    sin romper datos).
+  - Categoría **siempre opcional** en el evento; los sin-categoría se agrupan como
+    "Sin clasificar" en reportes.
+  - **Ambas** (categoría + etiqueta), pero etiquetas y agrupaciones de elementos
+    quedan para fase posterior — la categoría es la única de Fase 15c.
 
 ### G24 — Plantillas / movimientos recurrentes rápidos
 - **Qué falta**: registrar "el gasto de siempre" (internet, arriendo) en 2 toques.

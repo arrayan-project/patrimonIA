@@ -174,6 +174,12 @@ categorías)"*.
 | Alcance típico | vocabulario compartido del hogar | personal |
 | Ejemplos | Mercado, Transporte, Salud, Vivienda, Ocio, Sueldo, Arriendo | #reembolsable, #vacaciones-chile-2026, #regalo, #emergencia |
 
+### Decisiones tomadas (sesión 2026-09-03)
+
+- Categorías **del hogar**, **lista plana**, **siempre opcionales** en el evento.
+- **Ambas** (categoría + etiqueta), pero solo la **categoría** entra en Fase 15c;
+  etiquetas y agrupaciones de elementos son fases posteriores.
+
 ### Recomendación: **ambas, con roles distintos — la categoría es la columna vertebral**
 
 1. **Categoría** (0..1, obligatoria-suave en el gasto): impulsa el presupuesto por
