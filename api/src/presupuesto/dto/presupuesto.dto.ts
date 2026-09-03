@@ -1,4 +1,7 @@
+import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsISO8601,
   IsNumber,
@@ -7,6 +10,7 @@ import {
   IsUUID,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
 export const TIPOS_PRESUPUESTO = ['INDIVIDUAL', 'FAMILIAR'] as const;
@@ -108,4 +112,29 @@ export class EliminarPresupuestoDto {
   @IsString()
   @MinLength(3)
   motivo!: string;
+}
+
+/** Una línea del presupuesto por rubro. */
+export class LineaPresupuestoDto {
+  @IsUUID()
+  categoriaId!: string;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoEsperado!: number;
+}
+
+/**
+ * Body de POST /comandos/DefinirLineasPresupuesto (GAPS.md G26).
+ * Reemplaza el conjunto completo de líneas por rubro del presupuesto.
+ */
+export class DefinirLineasPresupuestoDto {
+  @IsUUID()
+  presupuestoId!: string;
+
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => LineaPresupuestoDto)
+  lineas!: LineaPresupuestoDto[];
 }

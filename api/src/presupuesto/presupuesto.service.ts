@@ -12,12 +12,15 @@ import {
   esVigente,
   toPresupuestoDTO,
   type DesviacionPresupuestariaDTO,
+  type DesviacionRubroDTO,
   type PresupuestoDTO,
+  type PresupuestoLineaDTO,
 } from './presupuesto.dto.js';
 import type {
   ActualizarPresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
+  DefinirLineasPresupuestoDto,
   EliminarPresupuestoDto,
 } from './dto/presupuesto.dto.js';
 
@@ -216,10 +219,11 @@ export class PresupuestoService {
     return toPresupuestoDTO(cerrado);
   }
 
-  /** AS #52 — EliminarPresupuesto. Borrado físico (sin cascada, sin dependientes). */
+  /** AS #52 — EliminarPresupuesto. Borrado físico. Arrastra sus líneas por rubro. */
   async eliminar(actorId: string, dto: EliminarPresupuestoDto): Promise<{ ok: true }> {
     const p = await this.#cargar(dto.presupuestoId, actorId);
     await this.prisma.$transaction(async (tx) => {
+      await tx.presupuesto_linea.deleteMany({ where: { presupuesto_id: p.id } });
       await tx.presupuesto.delete({ where: { id: p.id } });
       await this.auditoria.registrar(tx, {
         comando: 'EliminarPresupuesto',
@@ -237,10 +241,111 @@ export class PresupuestoService {
     return { ok: true };
   }
 
+  /**
+   * DefinirLineasPresupuesto (GAPS.md G26): reemplaza el conjunto completo de
+   * líneas por rubro del presupuesto. Un rubro con monto 0 se elimina.
+   * Auditoría: Modificación — líneas anterior/posterior, en la misma transacción.
+   */
+  async definirLineas(
+    actorId: string,
+    dto: DefinirLineasPresupuestoDto,
+  ): Promise<PresupuestoLineaDTO[]> {
+    const p = await this.#cargar(dto.presupuestoId, actorId);
+    if (p.estado === 'CERRADO') throw new ConflictException('El presupuesto está cerrado');
+
+    const nuevas = dto.lineas.filter((l) => l.montoEsperado > 0);
+    const ids = nuevas.map((l) => l.categoriaId);
+    if (new Set(ids).size !== ids.length) {
+      throw new BadRequestException('Hay una categoría repetida en las líneas');
+    }
+
+    // Categorías permitidas: FAMILIAR → las del hogar del presupuesto;
+    // INDIVIDUAL → las de cualquier hogar donde el actor sea miembro ACTIVA.
+    const hogaresPermitidos = p.hogar_id
+      ? [p.hogar_id]
+      : (
+          await this.prisma.membresia.findMany({
+            where: { usuario_id: actorId, estado: 'ACTIVA' },
+            select: { hogar_id: true },
+          })
+        ).map((m) => m.hogar_id);
+
+    if (ids.length > 0) {
+      const validas = await this.prisma.categoria_movimiento.findMany({
+        where: { id: { in: ids }, hogar_id: { in: hogaresPermitidos }, estado: 'ACTIVA' },
+        select: { id: true },
+      });
+      const okIds = new Set(validas.map((c) => c.id));
+      const invalida = ids.find((id) => !okIds.has(id));
+      if (invalida) {
+        throw new BadRequestException('Una categoría no está activa o no pertenece a tu hogar');
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const previas = await tx.presupuesto_linea.findMany({
+        where: { presupuesto_id: p.id },
+        select: { categoria_id: true, monto_esperado: true },
+      });
+      await tx.presupuesto_linea.deleteMany({ where: { presupuesto_id: p.id } });
+      if (nuevas.length > 0) {
+        await tx.presupuesto_linea.createMany({
+          data: nuevas.map((l) => ({
+            presupuesto_id: p.id,
+            categoria_id: l.categoriaId,
+            monto_esperado: new Prisma.Decimal(l.montoEsperado),
+          })),
+        });
+      }
+      await this.auditoria.registrar(tx, {
+        comando: 'DefinirLineasPresupuesto',
+        usuarioId: actorId,
+        entidadTipo: 'PRESUPUESTO',
+        entidadId: p.id,
+        valorAnterior: {
+          lineas: previas.map((x) => ({
+            categoria_id: x.categoria_id,
+            monto_esperado: Number(x.monto_esperado),
+          })),
+        },
+        valorPosterior: {
+          lineas: nuevas.map((l) => ({
+            categoria_id: l.categoriaId,
+            monto_esperado: l.montoEsperado,
+          })),
+        },
+        ...(p.hogar_id
+          ? { entidadRelacionadaTipo: 'HOGAR', entidadRelacionadaId: p.hogar_id }
+          : {}),
+      });
+    });
+
+    return this.lineas(p.id, actorId);
+  }
+
   // ── Consultas ─────────────────────────────────────────────────────────────
 
   async obtener(presupuestoId: string, actorId: string): Promise<PresupuestoDTO> {
     return toPresupuestoDTO(await this.#cargar(presupuestoId, actorId));
+  }
+
+  /** Líneas por rubro del presupuesto, con el nombre/color de cada categoría. */
+  async lineas(presupuestoId: string, actorId: string): Promise<PresupuestoLineaDTO[]> {
+    await this.#cargar(presupuestoId, actorId);
+    const filas = await this.prisma.presupuesto_linea.findMany({
+      where: { presupuesto_id: presupuestoId },
+      include: { categoria_movimiento: true },
+      orderBy: { categoria_movimiento: { orden: 'asc' } },
+    });
+    return filas.map((f) => ({
+      id: f.id,
+      presupuestoId: f.presupuesto_id,
+      categoriaId: f.categoria_id,
+      nombre: f.categoria_movimiento.nombre,
+      color: f.categoria_movimiento.color,
+      tipoAplicable: f.categoria_movimiento.tipo_aplicable,
+      montoEsperado: Number(f.monto_esperado),
+    }));
   }
 
   async listar(actorId: string, tipo?: string, soloVigentes?: boolean): Promise<PresupuestoDTO[]> {
@@ -287,6 +392,13 @@ export class PresupuestoService {
     const elementoIds = [...new Set(props.map((x) => x.elemento_id))];
 
     const real = { ingresos: 0, gastos: 0, ahorro: 0 };
+    // real por categoría (categoria_id o null = sin clasificar) separado ingreso/gasto.
+    const realPorCat = new Map<string | null, { ingresos: number; gastos: number }>();
+    const sumarCat = (catId: string | null, tipo: 'ingresos' | 'gastos', monto: number) => {
+      const cur = realPorCat.get(catId) ?? { ingresos: 0, gastos: 0 };
+      cur[tipo] += monto;
+      realPorCat.set(catId, cur);
+    };
     if (elementoIds.length > 0) {
       const impactos = await this.prisma.impacto_patrimonial.findMany({
         where: { elemento_id: { in: elementoIds }, origen_tipo: 'EVENTO_FINANCIERO' },
@@ -309,12 +421,20 @@ export class PresupuestoService {
       });
       for (const e of eventos) {
         // Sin tipos de cambio: se suman los montos tal cual, sin distinguir moneda (GAPS.md G16).
-        if (e.tipo === 'INGRESO') real.ingresos += Number(e.monto);
-        else if (e.tipo === 'GASTO') real.gastos += Number(e.monto);
+        if (e.tipo === 'INGRESO') {
+          real.ingresos += Number(e.monto);
+          sumarCat(e.categoria_id, 'ingresos', Number(e.monto));
+        } else if (e.tipo === 'GASTO') {
+          real.gastos += Number(e.monto);
+          sumarCat(e.categoria_id, 'gastos', Number(e.monto));
+        }
         // TRANSFERENCIA / CONVERSION / PRESTAMO: no cuentan como ingreso ni gasto del período.
       }
       real.ahorro = real.ingresos - real.gastos;
     }
+
+    const porRubro = await this.#desviacionPorRubro(p.id, realPorCat);
+    const sinCat = realPorCat.get(null) ?? { ingresos: 0, gastos: 0 };
 
     const esperado = {
       ingresos: Number(p.ingresos_esperados ?? 0),
@@ -335,7 +455,70 @@ export class PresupuestoService {
         gastos: real.gastos - esperado.gastos,
         ahorro: real.ahorro - esperado.ahorro,
       },
+      porRubro,
+      sinClasificar: { ingresos: sinCat.ingresos, gastos: sinCat.gastos },
     };
+  }
+
+  /**
+   * Desglose por rubro: una fila por línea del presupuesto (esperado vs. real de
+   * esa categoría en el período) más los rubros con movimiento real pero sin
+   * línea (esperado 0). Ordenado por real desc.
+   */
+  async #desviacionPorRubro(
+    presupuestoId: string,
+    realPorCat: Map<string | null, { ingresos: number; gastos: number }>,
+  ): Promise<DesviacionRubroDTO[]> {
+    const lineas = await this.prisma.presupuesto_linea.findMany({
+      where: { presupuesto_id: presupuestoId },
+      include: { categoria_movimiento: true },
+    });
+
+    // categorías que tienen movimiento real pero no aparecen como línea
+    const conLinea = new Set(lineas.map((l) => l.categoria_id));
+    const sueltas = [...realPorCat.keys()].filter(
+      (k): k is string => k !== null && !conLinea.has(k),
+    );
+    const catsSueltas =
+      sueltas.length > 0
+        ? await this.prisma.categoria_movimiento.findMany({ where: { id: { in: sueltas } } })
+        : [];
+
+    const realDe = (catId: string, tipo: string) => {
+      const r = realPorCat.get(catId) ?? { ingresos: 0, gastos: 0 };
+      return tipo === 'INGRESO' ? r.ingresos : tipo === 'GASTO' ? r.gastos : r.ingresos + r.gastos;
+    };
+
+    const filas: DesviacionRubroDTO[] = [
+      ...lineas.map((l) => {
+        const c = l.categoria_movimiento;
+        const esperado = Number(l.monto_esperado);
+        const real = realDe(c.id, c.tipo_aplicable);
+        return {
+          categoriaId: c.id,
+          nombre: c.nombre,
+          color: c.color,
+          tipoAplicable: c.tipo_aplicable,
+          esperado,
+          real,
+          desviacion: real - esperado,
+        };
+      }),
+      ...catsSueltas.map((c) => {
+        const real = realDe(c.id, c.tipo_aplicable);
+        return {
+          categoriaId: c.id,
+          nombre: c.nombre,
+          color: c.color,
+          tipoAplicable: c.tipo_aplicable,
+          esperado: 0,
+          real,
+          desviacion: real,
+        };
+      }),
+    ];
+
+    return filas.sort((a, b) => b.real - a.real);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

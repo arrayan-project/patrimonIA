@@ -289,6 +289,8 @@ CREATE TABLE presupuesto (
 CREATE INDEX ix_presupuesto_tipo    ON presupuesto (tipo);
 CREATE INDEX ix_presupuesto_usuario ON presupuesto (usuario_id);
 CREATE INDEX ix_presupuesto_hogar   ON presupuesto (hogar_id);
+-- presupuesto_linea (presupuesto por rubro) se define en la sección 16,
+-- después de categoria_movimiento a la que referencia.
 
 -- ============================================================================
 -- 11. Auditoría (Sección U)
@@ -406,6 +408,24 @@ CREATE TABLE categoria_movimiento (
 
 CREATE INDEX ix_categoria_movimiento_hogar
     ON categoria_movimiento (hogar_id, estado, orden);
+
+-- ============================================================================
+-- 16. Presupuesto por rubro (migración 010 — configuración, GAPS.md G26)
+-- Monto esperado de una categoría de movimiento dentro de un presupuesto.
+-- La proyección desviacion_presupuestaria se desglosa también por rubro.
+-- ============================================================================
+
+CREATE TABLE presupuesto_linea (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    presupuesto_id UUID NOT NULL REFERENCES presupuesto(id) ON DELETE CASCADE,
+    categoria_id   UUID NOT NULL REFERENCES categoria_movimiento(id),
+    monto_esperado NUMERIC(18,2) NOT NULL CHECK (monto_esperado >= 0),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (presupuesto_id, categoria_id)
+);
+
+CREATE INDEX ix_presupuesto_linea_presu ON presupuesto_linea (presupuesto_id);
 
 -- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,

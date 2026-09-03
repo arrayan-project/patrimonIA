@@ -50,6 +50,29 @@ export function toPresupuestoDTO(p: PresupuestoRow): PresupuestoDTO {
   };
 }
 
+/** Una línea del presupuesto por rubro, con el nombre/color de la categoría. */
+export interface PresupuestoLineaDTO {
+  id: string;
+  presupuestoId: string;
+  categoriaId: string;
+  nombre: string;
+  color: string | null;
+  tipoAplicable: string;
+  montoEsperado: number;
+}
+
+/** Comparación esperado-vs-real de un rubro dentro del período del presupuesto. */
+export interface DesviacionRubroDTO {
+  categoriaId: string;
+  nombre: string;
+  color: string | null;
+  tipoAplicable: string;
+  esperado: number;
+  real: number;
+  /** real − esperado (positivo = por encima de lo presupuestado). */
+  desviacion: number;
+}
+
 export interface DesviacionPresupuestariaDTO {
   presupuestoId: string;
   periodo: { desde: string | null; hasta: string | null };
@@ -57,4 +80,9 @@ export interface DesviacionPresupuestariaDTO {
   real: { ingresos: number; gastos: number; ahorro: number };
   /** real − esperado (positivo = por encima de lo presupuestado). */
   desviacion: { ingresos: number; gastos: number; ahorro: number };
+  /** Desglose por rubro: una fila por línea del presupuesto, más los rubros con
+   *  gasto/ingreso real pero sin línea (esperado 0). Ordenado por real desc. */
+  porRubro: DesviacionRubroDTO[];
+  /** Ingreso y gasto real del período sin categoría asignada. */
+  sinClasificar: { ingresos: number; gastos: number };
 }

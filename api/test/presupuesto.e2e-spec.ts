@@ -31,7 +31,7 @@ describe('Presupuesto (e2e)', () => {
     prisma = app.get(PrismaService);
     http = app.getHttpServer();
     await prisma.$executeRawUnsafe(
-      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto RESTART IDENTITY CASCADE',
+      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, presupuesto_linea, categoria_movimiento RESTART IDENTITY CASCADE',
     );
     await request(http)
       .post('/comandos/RegistrarUsuario')
@@ -197,6 +197,101 @@ describe('Presupuesto (e2e)', () => {
       .set('Authorization', `Bearer ${otroToken}`)
       .send({ presupuestoId: id, motivo: 'no es mío pero igual' })
       .expect(403);
+  });
+
+  it('presupuesto por rubro: define líneas y la desviación se desglosa por categoría', async () => {
+    const cats = (
+      await auth(request(http).get(`/hogares/${hogarId}/categorias-movimiento`)).expect(200)
+    ).body as Array<{ id: string; nombre: string; tipoAplicable: string }>;
+    const mercado = cats.find((c) => c.nombre === 'Mercado')!;
+    const sueldo = cats.find((c) => c.nombre === 'Sueldo')!;
+
+    const id = (
+      await auth(request(http).post('/comandos/CrearPresupuesto'))
+        .send({
+          tipo: 'FAMILIAR',
+          periodicidad: 'ESPECIFICO',
+          hogarId,
+          fechaInicio: '2026-01-01',
+          fechaFin: '2026-12-31',
+          gastosEsperados: 1_000_000,
+        })
+        .expect(201)
+    ).body.id;
+
+    await auth(request(http).post('/comandos/DefinirLineasPresupuesto'))
+      .send({
+        presupuestoId: id,
+        lineas: [
+          { categoriaId: mercado.id, montoEsperado: 300_000 },
+          { categoriaId: sueldo.id, montoEsperado: 2_000_000 },
+          { categoriaId: mercado.id, montoEsperado: 0 }, // monto 0 → se ignora, no rompe por repetida
+        ],
+      })
+      .expect(200);
+
+    const lineas = (
+      await auth(request(http).get(`/presupuestos/${id}/lineas`)).expect(200)
+    ).body as Array<{ nombre: string; montoEsperado: number }>;
+    expect(lineas).toHaveLength(2);
+    expect(lineas.find((l) => l.nombre === 'Mercado')!.montoEsperado).toBe(300_000);
+
+    // gasto categorizado dentro del período + gasto sin categoría
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 400_000, moneda: 'CLP', elementoOrigenId: cuentaId, fecha: '2026-04-02', categoriaId: mercado.id })
+      .expect(201);
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 100_000, moneda: 'CLP', elementoOrigenId: cuentaId, fecha: '2026-04-05' })
+      .expect(201);
+
+    const d = (await auth(request(http).get(`/presupuestos/${id}/desviacion`)).expect(200)).body;
+    const rubroMercado = d.porRubro.find((r: { nombre: string }) => r.nombre === 'Mercado');
+    expect(rubroMercado).toMatchObject({ esperado: 300_000, real: 400_000, desviacion: 100_000 });
+    const rubroSueldo = d.porRubro.find((r: { nombre: string }) => r.nombre === 'Sueldo');
+    expect(rubroSueldo).toMatchObject({ esperado: 2_000_000, real: 0 });
+    // hay gasto sin categoría en el período (este test y los anteriores comparten cuenta)
+    expect(d.sinClasificar.gastos).toBeGreaterThanOrEqual(100_000);
+  });
+
+  it('DefinirLineasPresupuesto rechaza una categoría de otro hogar y un presupuesto cerrado', async () => {
+    // hogar ajeno con sus propias categorías
+    await request(http)
+      .post('/comandos/RegistrarUsuario')
+      .send({ email: 'ajeno@e2e.cl', nombre: 'Ajeno', password: 'secret123' })
+      .expect(201);
+    const ajenoToken = (
+      await request(http).post('/auth/login').send({ email: 'ajeno@e2e.cl', password: 'secret123' })
+    ).body.accessToken;
+    const hogarAjeno = (
+      await request(http)
+        .post('/comandos/CrearHogar')
+        .set('Authorization', `Bearer ${ajenoToken}`)
+        .send({ nombre: 'Otra casa' })
+        .expect(201)
+    ).body.id;
+    const catAjena = (
+      await request(http)
+        .get(`/hogares/${hogarAjeno}/categorias-movimiento`)
+        .set('Authorization', `Bearer ${ajenoToken}`)
+        .expect(200)
+    ).body[0].id;
+
+    const id = (
+      await auth(request(http).post('/comandos/CrearPresupuesto'))
+        .send({ tipo: 'FAMILIAR', periodicidad: 'ESPECIFICO', hogarId, fechaInicio: '2026-01-01', fechaFin: '2026-06-30' })
+        .expect(201)
+    ).body.id;
+
+    await auth(request(http).post('/comandos/DefinirLineasPresupuesto'))
+      .send({ presupuestoId: id, lineas: [{ categoriaId: catAjena, montoEsperado: 10_000 }] })
+      .expect(400);
+
+    await auth(request(http).post('/comandos/CerrarPresupuesto'))
+      .send({ presupuestoId: id, motivo: 'cierre para la prueba' })
+      .expect(200);
+    await auth(request(http).post('/comandos/DefinirLineasPresupuesto'))
+      .send({ presupuestoId: id, lineas: [] })
+      .expect(409);
   });
 
   it('EliminarPresupuesto borra la fila y deja rastro en auditoría', async () => {

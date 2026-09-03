@@ -6,6 +6,7 @@ import {
   ActualizarPresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
+  DefinirLineasPresupuestoDto,
   EliminarPresupuestoDto,
 } from './dto/presupuesto.dto.js';
 
@@ -36,6 +37,12 @@ export class PresupuestoController {
     return this.presupuestos.eliminar(u.id, dto);
   }
 
+  @Post('comandos/DefinirLineasPresupuesto')
+  @HttpCode(200)
+  definirLineas(@CurrentUser() u: UsuarioAutenticado, @Body() dto: DefinirLineasPresupuestoDto) {
+    return this.presupuestos.definirLineas(u.id, dto);
+  }
+
   @Get('presupuestos')
   listar(
     @CurrentUser() u: UsuarioAutenticado,
@@ -48,6 +55,11 @@ export class PresupuestoController {
   @Get('presupuestos/:id')
   obtener(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
     return this.presupuestos.obtener(id, u.id);
+  }
+
+  @Get('presupuestos/:id/lineas')
+  lineas(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
+    return this.presupuestos.lineas(id, u.id);
   }
 
   @Get('presupuestos/:id/desviacion')
