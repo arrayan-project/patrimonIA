@@ -11,17 +11,17 @@ cd "$(dirname "$0")/../app"
 nvm use             # lee .nvmrc → Node 22
 node -v
 
-# Metro SIEMPRE en el 8081 (el puerto que abriste en el firewall). Si quedó algo
-# ocupándolo, lo cerramos para no terminar en el 8082 (bloqueado por ufw).
-puerto=8081
-viejo=$(lsof -ti :"$puerto" 2>/dev/null || true)
-if [ -n "$viejo" ]; then
-  echo "Puerto $puerto ocupado por el proceso $viejo — lo cierro."
-  kill "$viejo" 2>/dev/null || true
-  sleep 1
-  kill -9 "$viejo" 2>/dev/null || true
-fi
+# Metro suele usar el 8081; si está ocupado por algo tuyo, lo cerramos. Si aun
+# así Expo cae al 8082, abre el rango en el firewall UNA vez:
+#     sudo ufw allow 8081:8090/tcp
+for puerto in 8081; do
+  viejo=$(lsof -ti :"$puerto" 2>/dev/null || true)
+  if [ -n "$viejo" ]; then
+    echo "Puerto $puerto ocupado por el proceso $viejo — lo cierro."
+    kill "$viejo" 2>/dev/null || true; sleep 1; kill -9 "$viejo" 2>/dev/null || true
+  fi
+done
 
-# Pasar --tunnel como argumento si el router aísla los dispositivos
-# (redes de campus/hotel, IPs 10.x):  ./scripts/app.sh --tunnel
-npm start -- --port "$puerto" "$@"
+# En redes que aíslan los dispositivos (campus / oficina / hotel) el teléfono no
+# puede ver al PC; usa el emulador Android (tecla `a`) o prueba en otra WiFi.
+npm start -- "$@"

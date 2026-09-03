@@ -29,7 +29,7 @@ Si ya lo hiciste antes, salta al punto 2.
 3. **Firewall** — abrir los puertos para que el teléfono llegue al PC:
    ```bash
    sudo ufw allow 3000/tcp
-   sudo ufw allow 8081/tcp
+   sudo ufw allow 8081:8090/tcp   # rango: Expo a veces se corre al 8082, 8083…
    ```
 4. **Dependencias** instaladas:
    ```bash
@@ -143,13 +143,13 @@ docker compose down -v && docker compose up -d
 
 | Síntoma | Causa probable | Solución |
 |---------|----------------|----------|
-| `http://<ip>:3000/health` no carga en el teléfono, sí en el PC | Firewall | `sudo ufw allow 3000/tcp` y `sudo ufw allow 8081/tcp` |
+| `http://<ip>:3000/health` no carga en el teléfono, sí en el PC | Firewall | `sudo ufw allow 3000/tcp` y `sudo ufw allow 8081:8090/tcp` |
 | No carga ni en el PC | El backend se cayó | Mira la Terminal 1. ¿Dice algo de Node? → `nvm use` y de nuevo `./scripts/api.sh` |
-| Expo Go: *"There was a problem running the requested project"* | El teléfono no llega a Metro (8081) | Mismo WiFi + firewall (8081). Última opción: `./scripts/app.sh --tunnel` |
-| Expo Go: **"timed out"** y en la Terminal 2 dice *"port 8081 in use, using 8082"* | Metro quedó en un puerto que el firewall bloquea | `./scripts/parar.sh` y de nuevo `./scripts/app.sh` — ahora fuerza el 8081. Si sigue: `./scripts/app.sh --tunnel` |
-| Expo Go: "timed out" y `./scripts/estado.sh` muestra tu IP como `10.x.x.x` | Red de campus/oficina/hotel que aísla los dispositivos | `./scripts/app.sh --tunnel` (obligatorio en estas redes) |
+| Expo Go: *"There was a problem running the requested project"* | El teléfono no llega a Metro | Mismo WiFi + firewall (rango 8081:8090). |
+| Expo Go: **"timed out"** y en la Terminal 2 dice *"Port 8081 is being used… Use port 8082?"* | Metro cayó a un puerto que el firewall no tiene abierto | Responde **yes** al 8082, y abre el rango una vez: `sudo ufw allow 8081:8090/tcp`. (Si el 8081 quedó "pegado" sin proceso dueño, un reinicio del PC lo limpia.) |
+| Expo Go: "timed out" aunque el firewall esté abierto, y `./scripts/estado.sh` muestra tu IP como `10.x.x.x` | Red de campus/oficina/hotel que aísla los dispositivos entre sí | No hay arreglo simple: en esa red el teléfono no puede ver al PC. Prueba en una WiFi de casa, o usa un emulador Android en el PC (`./scripts/app.sh` y tecla `a`). |
 | El backend arranca y se muere sin decir nada | Node 20 en vez de 22 | `node -v` debe decir `v22.x`. `nvm use` en `api/`. |
-| El router separa los dispositivos ("AP isolation") | Red del hogar/hotel | `./scripts/app.sh --tunnel` (más lento, pasa por servidores de Expo) |
+| El router separa los dispositivos ("AP isolation") | Red del hogar/hotel | Usa el emulador Android en el PC (`./scripts/app.sh`, tecla `a`), o prueba en otra WiFi. El `--tunnel` de Expo solo tunelea Metro, no el backend, así que no basta acá. |
 | `EADDRINUSE: address already in use :::3000` | Quedó un backend viejo corriendo | `./scripts/parar.sh` y de nuevo `./scripts/api.sh` (que ya libera el puerto solo) |
 | `docker ps` da error de permisos | Tu usuario no está en el grupo `docker` | `sudo usermod -aG docker $USER` y reinicia sesión |
 | La app abre pero "no se pudo conectar con el servidor" | Backend caído, o IP cambió | `./scripts/estado.sh`. Si tu IP cambió, reinicia `./scripts/app.sh` (la app la infiere de Expo). |
