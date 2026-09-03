@@ -67,26 +67,28 @@ model auditoria {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model elemento_patrimonial {
-  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nombre                  String
-  tipo                    String
-  categoria_funcional     String
-  ambito                  String
-  valor_vigente           Decimal                 @db.Decimal(18, 2)
-  moneda                  String
-  participa_valor_liquido Boolean                 @default(false)
-  participa_consolidacion Boolean                 @default(false)
-  admite_valorizacion     Boolean                 @default(false)
-  visibilidad             String
-  estado                  String
-  valor_pendiente         Decimal?                @db.Decimal(18, 2)
-  created_at              DateTime                @default(now()) @db.Timestamptz(6)
-  ajuste_patrimonial      ajuste_patrimonial[]
-  elemento_propietario    elemento_propietario[]
-  impacto_patrimonial     impacto_patrimonial[]
-  movimiento_programado   movimiento_programado[]
-  reserva                 reserva[]
-  valorizacion            valorizacion[]
+  id                                                                                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                                                                              String
+  tipo                                                                                String
+  categoria_funcional                                                                 String
+  ambito                                                                              String
+  valor_vigente                                                                       Decimal                 @db.Decimal(18, 2)
+  moneda                                                                              String
+  participa_valor_liquido                                                             Boolean                 @default(false)
+  participa_consolidacion                                                             Boolean                 @default(false)
+  admite_valorizacion                                                                 Boolean                 @default(false)
+  visibilidad                                                                         String
+  estado                                                                              String
+  valor_pendiente                                                                     Decimal?                @db.Decimal(18, 2)
+  created_at                                                                          DateTime                @default(now()) @db.Timestamptz(6)
+  ajuste_patrimonial                                                                  ajuste_patrimonial[]
+  elemento_propietario                                                                elemento_propietario[]
+  impacto_patrimonial                                                                 impacto_patrimonial[]
+  movimiento_programado                                                               movimiento_programado[]
+  plantilla_movimiento_plantilla_movimiento_elemento_destino_idToelemento_patrimonial plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial")
+  plantilla_movimiento_plantilla_movimiento_elemento_origen_idToelemento_patrimonial  plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial")
+  reserva                                                                             reserva[]
+  valorizacion                                                                        valorizacion[]
 
   @@index([categoria_funcional], map: "ix_elemento_categoria")
   @@index([estado], map: "ix_elemento_estado")
@@ -281,6 +283,7 @@ model usuario {
   membresia                                  membresia[]
   notificacion                               notificacion[]
   objetivo_financiero                        objetivo_financiero[]
+  plantilla_movimiento                       plantilla_movimiento[]
   presupuesto                                presupuesto[]
 }
 
@@ -355,18 +358,19 @@ model dispositivo_push {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model categoria_movimiento {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  hogar_id          String              @db.Uuid
-  nombre            String
-  tipo_aplicable    String
-  color             String?
-  icono             String?
-  orden             Int                 @default(0)
-  estado            String              @default("ACTIVA")
-  created_at        DateTime            @default(now()) @db.Timestamptz(6)
-  hogar             hogar               @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  evento_financiero evento_financiero[]
-  presupuesto_linea presupuesto_linea[]
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hogar_id             String                 @db.Uuid
+  nombre               String
+  tipo_aplicable       String
+  color                String?
+  icono                String?
+  orden                Int                    @default(0)
+  estado               String                 @default("ACTIVA")
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  hogar                hogar                  @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_financiero    evento_financiero[]
+  plantilla_movimiento plantilla_movimiento[]
+  presupuesto_linea    presupuesto_linea[]
 
   @@unique([hogar_id, nombre])
   @@index([hogar_id, estado, orden], map: "ix_categoria_movimiento_hogar")
@@ -384,4 +388,27 @@ model presupuesto_linea {
 
   @@unique([presupuesto_id, categoria_id])
   @@index([presupuesto_id], map: "ix_presupuesto_linea_presu")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model plantilla_movimiento {
+  id                                                                                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuario_id                                                                          String                @db.Uuid
+  nombre                                                                              String
+  tipo                                                                                String
+  monto                                                                               Decimal?              @db.Decimal(18, 2)
+  moneda                                                                              String?
+  elemento_origen_id                                                                  String?               @db.Uuid
+  elemento_destino_id                                                                 String?               @db.Uuid
+  categoria_id                                                                        String?               @db.Uuid
+  glosa                                                                               String?
+  orden                                                                               Int                   @default(0)
+  created_at                                                                          DateTime              @default(now()) @db.Timestamptz(6)
+  categoria_movimiento                                                                categoria_movimiento? @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  elemento_patrimonial_plantilla_movimiento_elemento_destino_idToelemento_patrimonial elemento_patrimonial? @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial", fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  elemento_patrimonial_plantilla_movimiento_elemento_origen_idToelemento_patrimonial  elemento_patrimonial? @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial", fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario                                                                             usuario               @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([usuario_id, nombre])
+  @@index([usuario_id, orden], map: "ix_plantilla_movimiento_usuario")
 }

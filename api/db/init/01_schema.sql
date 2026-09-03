@@ -428,6 +428,30 @@ CREATE TABLE presupuesto_linea (
 CREATE INDEX ix_presupuesto_linea_presu ON presupuesto_linea (presupuesto_id);
 
 -- ============================================================================
+-- 17. Plantillas de movimiento (migración 011 — configuración personal, G24)
+-- Molde reutilizable y sin fecha para registrar gastos/ingresos recurrentes.
+-- ============================================================================
+
+CREATE TABLE plantilla_movimiento (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id          UUID NOT NULL REFERENCES usuario(id),
+    nombre              TEXT NOT NULL,
+    tipo                TEXT NOT NULL CHECK (tipo IN ('INGRESO', 'GASTO', 'TRANSFERENCIA')),
+    monto               NUMERIC(18,2) CHECK (monto IS NULL OR monto > 0),
+    moneda              TEXT,
+    elemento_origen_id  UUID REFERENCES elemento_patrimonial(id),
+    elemento_destino_id UUID REFERENCES elemento_patrimonial(id),
+    categoria_id        UUID REFERENCES categoria_movimiento(id),
+    glosa               TEXT,
+    orden               INTEGER NOT NULL DEFAULT 0,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (usuario_id, nombre)
+);
+
+CREATE INDEX ix_plantilla_movimiento_usuario ON plantilla_movimiento (usuario_id, orden);
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

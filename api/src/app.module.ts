@@ -17,6 +17,7 @@ import { ConsolidacionModule } from './consolidacion/consolidacion.module.js';
 import { MovimientoProgramadoModule } from './movimiento-programado/movimiento-programado.module.js';
 import { NotificacionModule } from './notificacion/notificacion.module.js';
 import { PlanificacionModule } from './planificacion/planificacion.module.js';
+import { PlantillaMovimientoModule } from './plantilla-movimiento/plantilla-movimiento.module.js';
 import { PresupuestoModule } from './presupuesto/presupuesto.module.js';
 import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
 import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
@@ -39,6 +40,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     MovimientoProgramadoModule,
     NotificacionModule,
     PlanificacionModule,
+    PlantillaMovimientoModule,
     PresupuestoModule,
     ProyeccionesModule,
     TipoCambioModule,
