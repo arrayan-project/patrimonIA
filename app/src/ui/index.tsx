@@ -304,6 +304,43 @@ export function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
+/** Paleta estable para categorías sin color propio (índice → hex). */
+export const PALETA_CATEGORIA = [
+  '#1d4ed8', '#0891b2', '#16a34a', '#ca8a04', '#dc2626',
+  '#9333ea', '#db2777', '#ea580c', '#4b5563', '#0d9488', '#7c3aed',
+];
+
+export function colorCategoria(color: string | null, i: number): string {
+  return color ?? PALETA_CATEGORIA[i % PALETA_CATEGORIA.length];
+}
+
+/** Barra 100 % apilada: reparte un total en segmentos de color (la "dona" plana). */
+export function BarraDistribucion({
+  segmentos,
+}: {
+  segmentos: { valor: number; color: string }[];
+}) {
+  const total = segmentos.reduce((s, x) => s + Math.max(0, x.valor), 0);
+  if (total <= 0) return <View style={[styles.progressTrack, { height: 14 }]} />;
+  return (
+    <View style={styles.distTrack}>
+      {segmentos.map((s, i) =>
+        s.valor > 0 ? (
+          <View
+            key={i}
+            style={{ width: `${(Math.max(0, s.valor) / total) * 100}%`, backgroundColor: s.color }}
+          />
+        ) : null,
+      )}
+    </View>
+  );
+}
+
+/** Punto de color (leyenda de categoría). */
+export function Punto({ color }: { color: string }) {
+  return <View style={[styles.punto, { backgroundColor: color }]} />;
+}
+
 export function Row({ left, right }: { left: string; right: string }) {
   return (
     <View style={styles.dataRow}>
@@ -400,4 +437,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressFill: { height: 10, borderRadius: 5, backgroundColor: colors.primary },
+  distTrack: {
+    flexDirection: 'row',
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.faint,
+    overflow: 'hidden',
+  },
+  punto: { width: 10, height: 10, borderRadius: 5 },
 });

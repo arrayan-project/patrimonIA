@@ -242,12 +242,34 @@ export interface PresupuestoDTO {
   createdAt: string;
 }
 
+export interface PresupuestoLineaDTO {
+  id: string;
+  presupuestoId: string;
+  categoriaId: string;
+  nombre: string;
+  color: string | null;
+  tipoAplicable: 'INGRESO' | 'GASTO' | 'AMBOS';
+  montoEsperado: number;
+}
+
+export interface DesviacionRubroDTO {
+  categoriaId: string;
+  nombre: string;
+  color: string | null;
+  tipoAplicable: 'INGRESO' | 'GASTO' | 'AMBOS';
+  esperado: number;
+  real: number;
+  desviacion: number;
+}
+
 export interface DesviacionPresupuestariaDTO {
   presupuestoId: string;
   periodo: { desde: string | null; hasta: string | null };
   esperado: { ingresos: number; gastos: number; ahorro: number };
   real: { ingresos: number; gastos: number; ahorro: number };
   desviacion: { ingresos: number; gastos: number; ahorro: number };
+  porRubro: DesviacionRubroDTO[];
+  sinClasificar: { ingresos: number; gastos: number };
 }
 
 export interface NotificacionDTO {

@@ -28,6 +28,7 @@ import { ObjetivoDetalleScreen } from '../screens/ObjetivoDetalleScreen';
 import { AsignacionDetalleScreen } from '../screens/AsignacionDetalleScreen';
 import { PresupuestosScreen } from '../screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from '../screens/PresupuestoDetalleScreen';
+import { PresupuestoRubrosScreen } from '../screens/PresupuestoRubrosScreen';
 import { MovimientosProgramadosScreen } from '../screens/MovimientosProgramadosScreen';
 import { MovimientoProgramadoDetalleScreen } from '../screens/MovimientoProgramadoDetalleScreen';
 import { EvolucionPatrimonioScreen } from '../screens/EvolucionPatrimonioScreen';
@@ -68,6 +69,7 @@ const PANTALLAS_APP: [string, React.ComponentType][] = [
   ['AsignacionDetalle', AsignacionDetalleScreen],
   ['Presupuestos', PresupuestosScreen],
   ['PresupuestoDetalle', PresupuestoDetalleScreen],
+  ['PresupuestoRubros', PresupuestoRubrosScreen],
   ['MovimientosProgramados', MovimientosProgramadosScreen],
   ['MovimientoProgramadoDetalle', MovimientoProgramadoDetalleScreen],
   ['EvolucionPatrimonio', EvolucionPatrimonioScreen],

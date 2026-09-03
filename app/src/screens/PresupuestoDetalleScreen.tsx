@@ -13,13 +13,16 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  BarraDistribucion,
   Button,
   colors,
+  colorCategoria,
   ErrorText,
   Field,
   fechaLegible,
   LinkButton,
   MoneyField,
+  Punto,
   Row,
   Screen,
   Title,
@@ -110,6 +113,12 @@ export function PresupuestoDetalleScreen() {
   const sign = (n: number) => (n > 0 ? `+${money(n, 'CLP')}` : money(n, 'CLP'));
   const puedeCerrar = p.periodicidad === 'ESPECIFICO' && p.estado === 'ACTIVO';
 
+  const rubrosGasto = desv.porRubro.filter((r) => r.tipoAplicable !== 'INGRESO');
+  const segmentos = [
+    ...rubrosGasto.map((r, i) => ({ valor: r.real, color: colorCategoria(r.color, i) })),
+    { valor: desv.sinClasificar.gastos, color: colors.muted },
+  ];
+
   return (
     <Screen onRefresh={cargar}>
       <Title>
@@ -139,6 +148,61 @@ export function PresupuestoDetalleScreen() {
         <Row left="Ahorro esperado" right={money(desv.esperado.ahorro, 'CLP')} />
         <Row left="Ahorro real" right={money(desv.real.ahorro, 'CLP')} />
         <Row left="Desviación ahorro" right={sign(desv.desviacion.ahorro)} />
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.filaTitulo}>
+          <Text style={styles.sectionTitle}>Por rubro</Text>
+          {p.estado !== 'CERRADO' && (
+            <LinkButton
+              title="Editar rubros"
+              onPress={() => nav.go('PresupuestoRubros', { presupuestoId })}
+            />
+          )}
+        </View>
+
+        {desv.porRubro.length === 0 && desv.sinClasificar.gastos === 0 ? (
+          <Text style={styles.muted}>
+            Sin rubros. Define cuánto esperas por categoría para seguir el gasto en detalle.
+          </Text>
+        ) : (
+          <>
+            <BarraDistribucion segmentos={segmentos} />
+            {desv.porRubro.map((r, i) => (
+              <View key={r.categoriaId} style={styles.rubro}>
+                <View style={styles.rubroNombre}>
+                  <Punto color={colorCategoria(r.color, i)} />
+                  <Text style={styles.rubroTexto}>{r.nombre}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.rubroTexto}>
+                    {money(r.real, 'CLP')}
+                    {r.esperado > 0 ? ` / ${money(r.esperado, 'CLP')}` : ''}
+                  </Text>
+                  {r.esperado > 0 && (
+                    <Text
+                      style={[
+                        styles.muted,
+                        { color: r.desviacion > 0 ? colors.danger : colors.muted },
+                      ]}
+                    >
+                      {sign(r.desviacion)}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+            {desv.sinClasificar.gastos > 0 && (
+              <View style={styles.rubro}>
+                <View style={styles.rubroNombre}>
+                  <Punto color={colors.muted} />
+                  <Text style={styles.rubroTexto}>Sin clasificar</Text>
+                </View>
+                <Text style={styles.rubroTexto}>{money(desv.sinClasificar.gastos, 'CLP')}</Text>
+              </View>
+            )}
+          </>
+        )}
       </View>
 
       {modo === null && (
@@ -198,4 +262,15 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   muted: { fontSize: 13, color: colors.muted },
   sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },
+  filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  rubro: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.faint,
+    paddingTop: 8,
+  },
+  rubroNombre: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  rubroTexto: { fontSize: 14, color: colors.text, fontWeight: '600' },
 });

@@ -85,7 +85,8 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Pantalla | Comando/consulta |
 |----------|------------------|
 | Dashboard → Presupuestos | `GET /presupuestos` · `POST /comandos/CrearPresupuesto` |
-| Detalle de presupuesto | `GET /presupuestos/:id` · `GET /presupuestos/:id/desviacion` · `ActualizarDatosPresupuesto` / `CerrarPresupuesto` / `EliminarPresupuesto` |
+| Detalle de presupuesto | `GET /presupuestos/:id` · `GET /presupuestos/:id/desviacion` (con `porRubro`) · `ActualizarDatosPresupuesto` / `CerrarPresupuesto` / `EliminarPresupuesto` |
+| Presupuesto por rubro (15d) | `GET /presupuestos/:id/lineas` · `POST /comandos/DefinirLineasPresupuesto` |
 
 ### Fase 7 — Movimiento Programado
 

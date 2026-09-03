@@ -28,6 +28,7 @@ export type RouteName =
   | 'AsignacionDetalle'
   | 'Presupuestos'
   | 'PresupuestoDetalle'
+  | 'PresupuestoRubros'
   | 'MovimientosProgramados'
   | 'MovimientoProgramadoDetalle'
   | 'EvolucionPatrimonio'
