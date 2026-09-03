@@ -27,11 +27,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 - [x] **Fase 0 — backend**: NestJS 12 + Prisma 7 sobre PostgreSQL. `GET /health`
   responde 200 con ping real a la DB. Ver `api/README.md`.
 - [x] **Fase 0 — app**: Expo SDK 57 + TypeScript, pantalla en blanco. Ver `app/README.md`.
-- [~] **Fase 1 — esqueleto vertical Flujo 2 (Alta de hogar)**:
+- [x] **Fase 1 — esqueleto vertical Flujo 2 (Alta de hogar)**:
   - [x] Backend: AS #43 RegistrarUsuario, #34 CrearHogar, #37 InvitarMiembro,
     #38 AceptarInvitacion, #39 RechazarInvitacion. Auditoría en la misma
     transacción desde el primer comando. Auth JWT. e2e en verde.
-  - [ ] Móvil: pantallas Registro / Bienvenida / Crear Hogar / Invitaciones.
+  - [x] Móvil: pantallas Registro / Bienvenida / Crear Hogar / Invitaciones /
+    Dashboard. `tsc` + `expo export` limpios; render confirmado en web.
+- [ ] Fase 2 — se define al cerrar Fase 1 (BUILD_INSTRUCTIONS §3).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 
