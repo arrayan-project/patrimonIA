@@ -144,3 +144,14 @@ export interface ValorizacionDTO {
   correccionDeId: string | null;
   createdAt: string;
 }
+
+export interface AjustePatrimonialDTO {
+  id: string;
+  elementoId: string;
+  monto: number;
+  motivo: string;
+  fecha: string;
+  anulado: boolean;
+  correccionDeId: string | null;
+  createdAt: string;
+}

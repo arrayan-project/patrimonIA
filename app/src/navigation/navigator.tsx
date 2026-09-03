@@ -16,7 +16,9 @@ export type RouteName =
   | 'ElementoDetalle'
   | 'MovimientoDetalle'
   | 'Valorizar'
-  | 'ValorizacionDetalle';
+  | 'ValorizacionDetalle'
+  | 'RegistrarAjuste'
+  | 'AjusteDetalle';
 
 export interface Route {
   name: RouteName;

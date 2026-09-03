@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import {
   api,
   ApiError,
+  type AjustePatrimonialDTO,
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type ValorizacionDTO,
@@ -20,6 +21,7 @@ export function ElementoDetalleScreen() {
   const [elemento, setElemento] = useState<ElementoPatrimonialDTO | null>(null);
   const [eventos, setEventos] = useState<EventoFinancieroDTO[]>([]);
   const [valorizaciones, setValorizaciones] = useState<ValorizacionDTO[]>([]);
+  const [ajustes, setAjustes] = useState<AjustePatrimonialDTO[]>([]);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -33,6 +35,9 @@ export function ElementoDetalleScreen() {
       setElemento(el);
       setEventos(
         await api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token),
+      );
+      setAjustes(
+        await api.get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token),
       );
       if (el.admiteValorizacion) {
         setValorizaciones(
@@ -163,6 +168,43 @@ export function ElementoDetalleScreen() {
           </View>
         </View>
       )}
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Ajustes patrimoniales</Text>
+        {ajustes.length === 0 ? (
+          <Text style={styles.muted}>Sin ajustes.</Text>
+        ) : (
+          ajustes.map((a) => (
+            <Pressable
+              key={a.id}
+              style={styles.mov}
+              onPress={() =>
+                nav.go('AjusteDetalle', { ajusteId: a.id, elementoId, moneda: elemento.moneda })
+              }
+            >
+              <Text style={[styles.muted, a.anulado && styles.tachado]}>
+                {a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
+              </Text>
+              <Text style={[styles.movMonto, a.anulado && styles.tachado]}>
+                {money(a.monto, elemento.moneda)}
+              </Text>
+            </Pressable>
+          ))
+        )}
+        <View style={{ marginTop: 8 }}>
+          <Button
+            title="Registrar ajuste"
+            variant="secondary"
+            onPress={() =>
+              nav.go('RegistrarAjuste', {
+                elementoId,
+                valorActual: elemento.valorVigente,
+                moneda: elemento.moneda,
+              })
+            }
+          />
+        </View>
+      </View>
 
       <ErrorText>{error}</ErrorText>
       <LinkButton title="Actualizar" onPress={() => void cargar()} />
