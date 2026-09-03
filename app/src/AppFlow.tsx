@@ -25,6 +25,7 @@ import { PresupuestosScreen } from './screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from './screens/PresupuestoDetalleScreen';
 import { MovimientosProgramadosScreen } from './screens/MovimientosProgramadosScreen';
 import { MovimientoProgramadoDetalleScreen } from './screens/MovimientoProgramadoDetalleScreen';
+import { EvolucionPatrimonioScreen } from './screens/EvolucionPatrimonioScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -72,6 +73,8 @@ function Routes() {
       return <MovimientosProgramadosScreen />;
     case 'MovimientoProgramadoDetalle':
       return <MovimientoProgramadoDetalleScreen />;
+    case 'EvolucionPatrimonio':
+      return <EvolucionPatrimonioScreen />;
     default:
       return <BienvenidaScreen />;
   }

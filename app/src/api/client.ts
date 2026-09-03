@@ -213,6 +213,19 @@ export interface DesviacionPresupuestariaDTO {
   desviacion: { ingresos: number; gastos: number; ahorro: number };
 }
 
+export interface VariacionPatrimonialDTO {
+  usuarioId: string;
+  desde: string;
+  hasta: string;
+  porMoneda: {
+    moneda: string;
+    patrimonioDesde: number;
+    patrimonioHasta: number;
+    variacion: number;
+    variacionPorcentaje: number | null;
+  }[];
+}
+
 export interface MovimientoProgramadoDTO {
   id: string;
   montoPlanificado: number;

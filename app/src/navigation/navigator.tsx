@@ -28,7 +28,8 @@ export type RouteName =
   | 'Presupuestos'
   | 'PresupuestoDetalle'
   | 'MovimientosProgramados'
-  | 'MovimientoProgramadoDetalle';
+  | 'MovimientoProgramadoDetalle'
+  | 'EvolucionPatrimonio';
 
 export interface Route {
   name: RouteName;

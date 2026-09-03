@@ -86,7 +86,7 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     a una fecha (`GET /elementos-patrimoniales/:id/valor-historico?fecha=`),
     patrimonio individual a una fecha, y variación patrimonial entre dos fechas.
     e2e en verde.
-  - [ ] Móvil: pendiente.
+  - [x] Móvil: pantalla "Evolución de mi patrimonio" (variación entre dos fechas).
 - [ ] Fase 10 — consolidación y métricas del hogar.
 
 **Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de

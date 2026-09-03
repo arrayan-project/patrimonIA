@@ -101,6 +101,12 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Agregar elemento | categoría DEUDA/CREDITO → `valorPendiente` en vez de valor inicial |
 | Detalle de elemento (deuda/crédito) | saldo pendiente · `POST /comandos/CondonarDeuda` / `POST /comandos/DeclararIncobrable` |
 
+### Fase 9 — Reconstrucción histórica
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Evolución de mi patrimonio | `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por
