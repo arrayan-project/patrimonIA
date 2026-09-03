@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, Paragraph, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Paragraph, Screen, Skeleton, Title } from '../ui';
 
 export function InvitacionesScreen() {
   const { token } = useSession();
@@ -57,7 +57,7 @@ export function InvitacionesScreen() {
       <ErrorText>{error}</ErrorText>
 
       {invitaciones === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : invitaciones.length === 0 ? (
         <Paragraph>No tienes invitaciones pendientes por ahora.</Paragraph>
       ) : (

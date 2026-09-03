@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -22,6 +22,7 @@ import {
   FAB,
   fechaLegible,
   MoneyText,
+  Skeleton,
   Screen,
   Segmented,
   Title,
@@ -154,7 +155,7 @@ export function MovimientosScreen() {
         formatearOpcion={(v) => (v === 'mios' ? 'Míos' : 'Del hogar')}
       />
 
-      {cargando && !resumen && !anual && <ActivityIndicator color={colors.primary} />}
+      {cargando && !resumen && !anual && <Skeleton filas={2} />}
 
       {modo === 'Mes' && resumen && (
         <>

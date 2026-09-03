@@ -229,6 +229,18 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   con el ejemplo de la opción elegida.
 - `MoneyText` en el patrimonio neto del Inicio (rojo si negativo).
 
+### Fase 19 — Carga y pickers
+
+- **`Skeleton`** (`ui/index.tsx`): tarjetas grises con pulso (`Animated`);
+  reemplazó el `ActivityIndicator` centrado en 9 pantallas de lista.
+- **B7**: campo "Buscar elemento" sobre los pickers de origen / destino en
+  "Registrar movimiento", visible solo con > 6 elementos.
+- Barra de **avance total** en la lista de Objetivos (suma de los activos).
+- Fix iPhone: `Screen` exige `HeaderHeightContext > 0` para considerar que hay
+  header (el native-stack lo expone con 0 aunque esté oculto) — así las
+  pantallas de tab vuelven a padear `24 + safe-area-top` y el título no queda
+  bajo el notch. Mismo arreglo para la posición del `FAB`.
+
 ### Decisiones aún provisionales
 
 - "Registrar movimiento" solo lista tus propios elementos como destino; para

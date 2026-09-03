@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Title } from '../ui';
+import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title } from '../ui';
 import type { RouteName } from '../navigation/navigator';
 
 /** entidadTipo de una notificación → a qué pantalla lleva. */
@@ -64,7 +64,7 @@ export function NotificacionesScreen() {
       <Title>Notificaciones</Title>
 
       {lista === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : lista.length === 0 ? (
         <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes un objetivo, se consuma una reserva o te inviten a un hogar." />
       ) : (

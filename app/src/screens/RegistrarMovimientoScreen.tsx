@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   api,
   ApiError,
@@ -26,6 +26,7 @@ import {
   LinkButton,
   MoneyField,
   Paragraph,
+  Skeleton,
   Screen,
   Segmented,
   SelectRow,
@@ -51,6 +52,7 @@ export function RegistrarMovimientoScreen() {
   const [fecha, setFecha] = useState(aISO(new Date()));
   const [origenId, setOrigenId] = useState<string | null>(null);
   const [destinoId, setDestinoId] = useState<string | null>(null);
+  const [filtroEl, setFiltroEl] = useState('');
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [glosa, setGlosa] = useState('');
   const [error, setError] = useState('');
@@ -139,10 +141,14 @@ export function RegistrarMovimientoScreen() {
   if (!elementos) {
     return (
       <Screen>
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton filas={2} />
       </Screen>
     );
   }
+
+  const elsFiltrados = filtroEl.trim()
+    ? elementos.filter((e) => e.nombre.toLowerCase().includes(filtroEl.trim().toLowerCase()))
+    : elementos;
 
   const puedeEnviar =
     Number(monto) > 0 &&
@@ -205,10 +211,19 @@ export function RegistrarMovimientoScreen() {
         </View>
       )}
 
+      {(necesitaOrigen || necesitaDestino) && elementos.length > 6 && (
+        <Field
+          label="Buscar elemento"
+          value={filtroEl}
+          onChangeText={setFiltroEl}
+          placeholder="Escribe parte del nombre"
+        />
+      )}
+
       {necesitaOrigen && (
         <View style={styles.group}>
           <Text style={styles.label}>Elemento de origen</Text>
-          {elementos.map((el) => (
+          {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
               label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
@@ -222,7 +237,7 @@ export function RegistrarMovimientoScreen() {
       {necesitaDestino && (
         <View style={styles.group}>
           <Text style={styles.label}>Elemento de destino</Text>
-          {elementos.map((el) => (
+          {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
               label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}

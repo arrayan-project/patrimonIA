@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type TipoCambioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -14,6 +14,7 @@ import {
   fechaLegible,
   LinkButton,
   Row,
+  Skeleton,
   Screen,
   Title,
 } from '../ui';
@@ -90,7 +91,7 @@ export function TiposCambioScreen() {
       </View>
 
       {lista === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : lista.length === 0 ? (
         <Text style={styles.muted}>Sin tipos de cambio registrados.</Text>
       ) : (

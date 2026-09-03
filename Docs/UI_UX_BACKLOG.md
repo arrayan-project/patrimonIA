@@ -49,7 +49,7 @@ vio el elemento, se asumió que falló.)
 | B4 | ✅ 15k — componente `Select` (hoja modal con lista scrollable, opción "Otro…"); categoría funcional del elemento pasó de `Segmented` a `Select` | 🟡 | P1 |
 | B5 | ✅ 15k — `tipo` de elemento = `Select` con presets (`TIPOS_ELEMENTO_SUGERIDOS` en `labels.ts`) + "Otro…" para texto libre; en Agregar y Editar elemento | 🟡 | P1 |
 | B6 | ✅ 15k — `Select` de moneda (`MONEDAS_FRECUENTES` ISO 4217 + "Otro…") en Agregar elemento | 🟡 | P2 |
-| B7 | **Buscador / filtro** en los pickers de elementos (Registrar movimiento lista *todos* como radios verticales; no escala > 6) | 🟡 | P2 |
+| B7 | ✅ 19 — campo "Buscar elemento" (filtra por nombre) sobre los pickers de origen/destino en "Registrar movimiento", visible solo con > 6 elementos | 🟡 | P2 |
 | B8 | **UI de co-propietarios con %** — el backend soporta `propietarios[]` desde Fase 2; hoy solo se puede crear al 100 % propio | 🟡 | P2 |
 | B9 | ✅ 15k — `Screen` envuelve el scroll en `KeyboardAvoidingView` (+ `keyboardDismissMode="interactive"`) | 🟡 | P1 |
 
@@ -94,7 +94,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | E2 | **Diálogo de confirmación** para acciones destructivas (Eliminar elemento/hogar, Anular, Condonar, Cerrar sesión) | 🟡 | P1 |
 | E3 | **Variante `danger` en `Button`** — hoy "Eliminar" usa el estilo `secondary` gris, igual que "Cancelar" | 🟡 | P1 |
 | E4 | ✅ 15l — componente `EmptyState` (ícono + texto + acción opcional); en Dashboard (con botón), Objetivos, Presupuestos, Movimientos programados, Plantillas, Etiquetas, Agrupaciones, Notificaciones | 🟡 | P2 |
-| E5 | **Skeleton loaders** en vez de un spinner centrado que tapa la pantalla | 🟡 | P2 |
+| E5 | ⚠️ 19 parcial — componente `Skeleton` (tarjetas gris con pulso); reemplazó el spinner en 8 pantallas de lista (Presupuestos, Objetivos, Mov. programados, Categorías, Notificaciones, Tipos de cambio, Invitaciones, Movimientos, Registrar movimiento). Falta: pantallas de detalle | 🟡 | P2 |
 | E6 | **Errores por campo** — hoy todo cae en un solo `ErrorText` al fondo (a veces un string multilínea del backend) | 🟡 | P2 |
 | E7 | **Estado offline / sin backend** — mensaje claro + reintento | 🟡 | P2 |
 
@@ -119,7 +119,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 |---|------|------|-----------|
 | G1 | ⚠️ 17 parcial — tokens `colors.fondo` / `colors.info` + `sombra`; el `Screen` va sobre gris suave y las tarjetas blancas resaltan (sweep de `styles.card` en 26 pantallas: `backgroundColor` + `borderRadius: 14`); componentes `Card` (con chevron "ver más" y `franja` de color) y `Chip` ya existen. Falta: escala tipográfica/espaciado, migrar todos los `styles.card` sueltos a `<Card>`, `ListItem`/`Stat` | 🟡 | P2 |
 | G2 | **Iconografía** — cero iconos; categorías, tipos de movimiento y navegación se leen mucho mejor con iconos | 🟡 | P2 |
-| G3 | ✅ 15g — `react-native-svg`; `src/ui/charts.tsx` con `Dona` (distribución + leyenda) y `GraficoLinea` (serie temporal). Dona en presupuesto por rubro y en "Patrimonio del hogar"; línea en "Evolución de mi patrimonio" (nuevo `GET /usuarios/me/serie-patrimonial`). Falta: avance de objetivos como gráfico | 🟡 | P2 |
+| G3 | ✅ 15g/19 — `react-native-svg`; `src/ui/charts.tsx` con `Dona`, `GraficoLinea`, `GraficoBarras`. Dona en presupuesto por rubro / patrimonio del hogar / Movimientos; línea en Evolución; barras en Movimientos (año); barra de avance total en la lista de Objetivos | 🟡 | P2 |
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
 | G2 | ✅ 15g (parcial) — `@expo/vector-icons` (Ionicons) en la barra de tabs. Falta: iconos en `MenuLink`, categorías, listas | 🟡 | P2 |
 | G5 | **Modo oscuro** | 🟡 | P3 |
@@ -286,7 +286,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15l~~ ✅ | Pulido: iconos en `MenuLink` (G2, todos los hubs); `EmptyState` en las 8 listas principales (E4); deep-link desde notificaciones (D5); card "Primeros pasos" en el Dashboard (J1). | — |
 | ~~16~~ ✅ | **Reportes financieros + reorg de tabs** (GAPS G27): backend `resumen-financiero` / `resumen-anual` (agrega los `evento_financiero` existentes, alcance mios/hogar); app: tab **Movimientos** = vista mensual/anual (‹ mes/año ›, dona de gastos por rubro, lista, barras anuales, toggle Míos/Hogar), nueva tab **Planificar**, Dashboard sin miembros/invitar, categorías del hogar → tab Hogar. `GraficoBarras` en `charts.tsx`. | 15 |
 | ~~17~~ ✅ | **Sistema visual + ayuda contextual**: `colors.fondo` (página gris suave) + `colors.info` + `sombra`; sweep de `styles.card` (fondo blanco + `borderRadius: 14`) en 26 pantallas → las tarjetas resaltan; componente `Card` (chevron "ver más" + `franja` de color) usado en las listas de Objetivos/Presupuestos/Mov. programados; chevron en las filas tocables (Inicio, detalle de elemento, Movimientos); puntos de color por agrupación en el Inicio; componente `Ayuda` (F5) en 8 pantallas. | 16 |
-| ~~18~~ ✅ | Acciones y explicaciones: `FAB` (D4) para "Registrar movimiento" en Inicio/Movimientos; H5 (toggle "cuenta en el patrimonio del hogar" en editar elemento); J2 (ayuda de categoría funcional al agregar); visibilidad con ayuda; F3 en el patrimonio neto del Inicio. Pendiente suelto: B7, B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5–E7, D6, gráfico de avance de objetivos. | 17 |
+| ~~18~~ ✅ | Acciones y explicaciones: `FAB` (D4) para "Registrar movimiento" en Inicio/Movimientos; H5 (toggle "cuenta en el patrimonio del hogar" en editar elemento); J2 (ayuda de categoría funcional al agregar); visibilidad con ayuda; F3 en el patrimonio neto del Inicio. | 17 |
+| ~~19~~ ✅ | Carga y pickers: componente `Skeleton` (E5, 8 pantallas de lista); "Buscar elemento" en los pickers de Registrar movimiento (B7); barra de avance total en la lista de Objetivos; `fix`: el título quedaba bajo el notch en iPhone (native-stack exponía `HeaderHeightContext` = 0 con header oculto). Pendiente suelto: B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5 detalle, E6–E7, D6. | 18 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

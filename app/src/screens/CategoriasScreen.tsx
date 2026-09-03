@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type CategoriaMovimientoDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Title } from '../ui';
+import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -105,7 +105,7 @@ export function CategoriasScreen() {
       </Ayuda>
 
       {lista === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : (
         lista.map((c, i) => (
           <View key={c.id} style={styles.card}>

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -17,6 +17,7 @@ import {
   Field,
   MoneyField,
   ProgressBar,
+  Skeleton,
   Screen,
   Title,
 } from '../ui';
@@ -73,7 +74,7 @@ export function ObjetivosScreen() {
       </Ayuda>
 
       {objetivos === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : objetivos.length === 0 ? (
         <EmptyState
           icon="flag-outline"
@@ -81,6 +82,25 @@ export function ObjetivosScreen() {
           descripcion="Créalo abajo y luego asígnale reservas."
         />
       ) : (
+        (() => {
+          const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
+          const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
+          const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
+          const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
+          return enProgreso.length > 1 ? (
+            <View style={styles.card}>
+              <Text style={styles.nombre}>Avance total ({enProgreso.length} objetivos activos)</Text>
+              <ProgressBar pct={pct} />
+              <Text style={styles.muted}>
+                {money(avance, 'CLP')} de {money(meta, 'CLP')} · {pct}%
+              </Text>
+            </View>
+          ) : null;
+        })()
+      )}
+
+      {objetivos !== null &&
+        objetivos.length > 0 &&
         objetivos.map((o) => (
           <Card key={o.id} onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}>
             <View style={styles.head}>
@@ -92,8 +112,7 @@ export function ObjetivosScreen() {
               {money(o.progreso, 'CLP')} de {money(o.montoObjetivo, 'CLP')} · {o.progresoPorcentaje}%
             </Text>
           </Card>
-        ))
-      )}
+        ))}
 
       <View style={styles.card}>
         <Text style={styles.nombre}>Nuevo objetivo</Text>

@@ -205,6 +205,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] "Agregar elemento": explicación de la categoría funcional según la
     opción elegida. Patrimonio neto en rojo si es negativo.
 
+- [x] **Fase 19 — Carga y pickers** (solo app):
+  - [x] Componente `Skeleton` en las pantallas de lista (en vez del spinner);
+    "Buscar elemento" en los pickers de Registrar movimiento (> 6 elementos);
+    barra de avance total en la lista de Objetivos.
+  - [x] Fix: en iPhone el título quedaba bajo el notch en las pantallas de tab.
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
 La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y

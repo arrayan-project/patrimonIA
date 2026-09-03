@@ -1,6 +1,7 @@
-import { useContext, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -695,6 +696,32 @@ export function Ayuda({ children }: { children: ReactNode }) {
   );
 }
 
+/** Placeholder mientras carga una lista — mejor que un spinner suelto. */
+export function Skeleton({ filas = 3 }: { filas?: number }) {
+  const pulso = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulso, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulso, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulso]);
+
+  return (
+    <View style={{ gap: 12 }}>
+      {Array.from({ length: filas }).map((_, i) => (
+        <Animated.View key={i} style={[styles.skelCard, { opacity: pulso }]}>
+          <View style={[styles.skelBar, { width: '50%' }]} />
+          <View style={[styles.skelBar, { width: '78%' }]} />
+        </Animated.View>
+      ))}
+    </View>
+  );
+}
+
 /** Estado vacío con ícono, texto y (opcional) una acción para empezar. */
 export function EmptyState({
   icon,
@@ -910,6 +937,15 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   ayudaTexto: { flex: 1, fontSize: 13, color: colors.text, lineHeight: 19 },
+  skelCard: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  skelBar: { height: 12, borderRadius: 6, backgroundColor: colors.faint },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
   emptyTitulo: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
   emptyDesc: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },

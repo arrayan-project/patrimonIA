@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type PresupuestoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -17,6 +17,7 @@ import {
   etiqueta,
   LinkButton,
   MoneyField,
+  Skeleton,
   Screen,
   Segmented,
   Title,
@@ -99,7 +100,7 @@ export function PresupuestosScreen() {
       </Ayuda>
 
       {lista === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : lista.length === 0 ? (
         <EmptyState
           icon="pie-chart-outline"

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -24,6 +24,7 @@ import {
   fechaLegible,
   LinkButton,
   MoneyField,
+  Skeleton,
   Screen,
   SelectRow,
   Title,
@@ -103,7 +104,7 @@ export function MovimientosProgramadosScreen() {
       </Ayuda>
 
       {lista === null ? (
-        <ActivityIndicator color={colors.primary} />
+        <Skeleton />
       ) : lista.length === 0 ? (
         <EmptyState
           icon="calendar-outline"
