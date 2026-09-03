@@ -1,0 +1,274 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ajuste_patrimonial {
+  id                       String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  elemento_id              String               @db.Uuid
+  monto                    Decimal              @db.Decimal(18, 2)
+  motivo                   String
+  fecha                    DateTime             @db.Date
+  correccion_de_id         String?              @db.Uuid
+  anulado                  Boolean              @default(false)
+  created_at               DateTime             @default(now()) @db.Timestamptz(6)
+  ajuste_patrimonial       ajuste_patrimonial?  @relation("ajuste_patrimonialToajuste_patrimonial", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_ajuste_patrimonial ajuste_patrimonial[] @relation("ajuste_patrimonialToajuste_patrimonial")
+  elemento_patrimonial     elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([elemento_id], map: "ix_ajuste_elemento")
+}
+
+model asignacion {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                 String
+  monto_objetivo         Decimal?             @db.Decimal(18, 2)
+  objetivo_financiero_id String?              @db.Uuid
+  created_at             DateTime             @default(now()) @db.Timestamptz(6)
+  objetivo_financiero    objetivo_financiero? @relation(fields: [objetivo_financiero_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_financiero      evento_financiero[]
+  reserva                reserva[]
+
+  @@index([objetivo_financiero_id], map: "ix_asignacion_objetivo", where: raw("(objetivo_financiero_id IS NOT NULL)"))
+}
+
+model auditoria {
+  id                       String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  comando                  String
+  usuario_id               String      @db.Uuid
+  fecha_hora               DateTime    @db.Timestamptz(6)
+  entidad_tipo             String
+  entidad_id               String      @db.Uuid
+  valor_anterior           Json?
+  valor_posterior          Json?
+  motivo                   String?
+  entidad_relacionada_tipo String?
+  entidad_relacionada_id   String?     @db.Uuid
+  encadenada_de_id         String?     @db.Uuid
+  created_at               DateTime    @default(now()) @db.Timestamptz(6)
+  auditoria                auditoria?  @relation("auditoriaToauditoria", fields: [encadenada_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_auditoria          auditoria[] @relation("auditoriaToauditoria")
+  usuario                  usuario     @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([comando], map: "ix_auditoria_comando")
+  @@index([encadenada_de_id], map: "ix_auditoria_encadenada", where: raw("(encadenada_de_id IS NOT NULL)"))
+  @@index([entidad_tipo, entidad_id], map: "ix_auditoria_entidad")
+  @@index([fecha_hora], map: "ix_auditoria_fecha")
+  @@index([usuario_id], map: "ix_auditoria_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model elemento_patrimonial {
+  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                  String
+  tipo                    String
+  categoria_funcional     String
+  ambito                  String
+  valor_vigente           Decimal                 @db.Decimal(18, 2)
+  moneda                  String
+  participa_valor_liquido Boolean                 @default(false)
+  participa_consolidacion Boolean                 @default(false)
+  admite_valorizacion     Boolean                 @default(false)
+  visibilidad             String
+  estado                  String
+  valor_pendiente         Decimal?                @db.Decimal(18, 2)
+  created_at              DateTime                @default(now()) @db.Timestamptz(6)
+  ajuste_patrimonial      ajuste_patrimonial[]
+  elemento_propietario    elemento_propietario[]
+  impacto_patrimonial     impacto_patrimonial[]
+  movimiento_programado   movimiento_programado[]
+  reserva                 reserva[]
+  valorizacion            valorizacion[]
+
+  @@index([categoria_funcional], map: "ix_elemento_categoria")
+  @@index([estado], map: "ix_elemento_estado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model elemento_propietario {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  elemento_id          String               @db.Uuid
+  usuario_id           String               @db.Uuid
+  porcentaje           Decimal              @db.Decimal(5, 2)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario              usuario              @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([elemento_id, usuario_id])
+  @@index([elemento_id], map: "ix_elemento_propietario_elemento")
+  @@index([usuario_id], map: "ix_elemento_propietario_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model evento_financiero {
+  id                              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo                            String
+  monto                           Decimal                @db.Decimal(18, 2)
+  moneda                          String
+  fecha                           DateTime               @db.Date
+  asignacion_id                   String?                @db.Uuid
+  movimiento_programado_origen_id String?                @db.Uuid
+  correccion_de_id                String?                @db.Uuid
+  anulado                         Boolean                @default(false)
+  created_at                      DateTime               @default(now()) @db.Timestamptz(6)
+  asignacion                      asignacion?            @relation(fields: [asignacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_financiero               evento_financiero?     @relation("evento_financieroToevento_financiero", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_evento_financiero         evento_financiero[]    @relation("evento_financieroToevento_financiero")
+  movimiento_programado           movimiento_programado? @relation(fields: [movimiento_programado_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([asignacion_id], map: "ix_evento_asignacion", where: raw("(asignacion_id IS NOT NULL)"))
+  @@index([correccion_de_id], map: "ix_evento_correccion", where: raw("(correccion_de_id IS NOT NULL)"))
+  @@index([fecha], map: "ix_evento_fecha")
+}
+
+model hogar {
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre               String
+  moneda_consolidacion String
+  created_at           DateTime     @default(now()) @db.Timestamptz(6)
+  invitacion           invitacion[]
+  membresia            membresia[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model impacto_patrimonial {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  elemento_id          String               @db.Uuid
+  monto                Decimal              @db.Decimal(18, 2)
+  origen_tipo          String
+  origen_id            String               @db.Uuid
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([elemento_id], map: "ix_impacto_elemento")
+  @@index([origen_tipo, origen_id], map: "ix_impacto_origen")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model invitacion {
+  id                                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hogar_id                                String   @db.Uuid
+  emisor_id                               String   @db.Uuid
+  invitado_id                             String   @db.Uuid
+  estado                                  String
+  created_at                              DateTime @default(now()) @db.Timestamptz(6)
+  usuario_invitacion_emisor_idTousuario   usuario  @relation("invitacion_emisor_idTousuario", fields: [emisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  hogar                                   hogar    @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario_invitacion_invitado_idTousuario usuario  @relation("invitacion_invitado_idTousuario", fields: [invitado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([hogar_id], map: "ix_invitacion_hogar_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
+  @@index([invitado_id], map: "ix_invitacion_invitado_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model membresia {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hogar_id   String   @db.Uuid
+  usuario_id String   @db.Uuid
+  rol        String
+  estado     String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  hogar      hogar    @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario    usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([hogar_id, usuario_id], map: "ux_membresia_activa", where: raw("(estado = 'ACTIVA'::text)"))
+  @@index([hogar_id], map: "ix_membresia_hogar", where: raw("(estado = 'ACTIVA'::text)"))
+  @@index([usuario_id], map: "ix_membresia_usuario", where: raw("(estado = 'ACTIVA'::text)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model movimiento_programado {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  monto_planificado    Decimal              @db.Decimal(18, 2)
+  moneda               String
+  fecha_programada     DateTime             @db.Date
+  elemento_destino_id  String               @db.Uuid
+  observaciones        String?
+  estado               String
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  evento_financiero    evento_financiero[]
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fecha_programada], map: "ix_movimiento_programado_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model objetivo_financiero {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre         String
+  monto_objetivo Decimal      @db.Decimal(18, 2)
+  fecha_objetivo DateTime?    @db.Date
+  estado         String
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  asignacion     asignacion[]
+
+  @@index([estado], map: "ix_objetivo_estado")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model presupuesto {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo               String
+  periodicidad       String
+  intervalo          String?
+  fecha_inicio       DateTime? @db.Date
+  fecha_fin          DateTime? @db.Date
+  ingresos_esperados Decimal?  @db.Decimal(18, 2)
+  gastos_esperados   Decimal?  @db.Decimal(18, 2)
+  ahorro_esperado    Decimal?  @db.Decimal(18, 2)
+  estado             String?
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([tipo], map: "ix_presupuesto_tipo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reserva {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asignacion_id        String               @db.Uuid
+  elemento_origen_id   String               @db.Uuid
+  monto                Decimal              @db.Decimal(18, 2)
+  estado               String
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  asignacion           asignacion           @relation(fields: [asignacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([asignacion_id], map: "ix_reserva_asignacion")
+  @@index([elemento_origen_id], map: "ix_reserva_elemento_activa", where: raw("(estado = 'ACTIVA'::text)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model usuario {
+  id                                         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                      String                 @unique
+  nombre                                     String
+  password_hash                              String
+  preferencias                               Json?
+  estado                                     String
+  created_at                                 DateTime               @default(now()) @db.Timestamptz(6)
+  auditoria                                  auditoria[]
+  elemento_propietario                       elemento_propietario[]
+  invitacion_invitacion_emisor_idTousuario   invitacion[]           @relation("invitacion_emisor_idTousuario")
+  invitacion_invitacion_invitado_idTousuario invitacion[]           @relation("invitacion_invitado_idTousuario")
+  membresia                                  membresia[]
+}
+
+model valorizacion {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  elemento_id          String               @db.Uuid
+  valor_anterior       Decimal              @db.Decimal(18, 2)
+  valor_nuevo          Decimal              @db.Decimal(18, 2)
+  fecha                DateTime             @db.Date
+  correccion_de_id     String?              @db.Uuid
+  anulada              Boolean              @default(false)
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  valorizacion         valorizacion?        @relation("valorizacionTovalorizacion", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_valorizacion   valorizacion[]       @relation("valorizacionTovalorizacion")
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([elemento_id, fecha, created_at], map: "ix_valorizacion_elemento_fecha", where: raw("(anulada = false)"))
+}
