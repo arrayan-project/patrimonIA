@@ -19,7 +19,17 @@ interface AuthContextValue {
   session: Session | null;
   /** true mientras se restaura la sesión persistida al arrancar. */
   cargando: boolean;
-  registrar: (email: string, nombre: string, password: string) => Promise<void>;
+  /**
+   * Pide un token de registro para el email. Devuelve el token si el backend lo
+   * entrega directo (dev), o null si lo envió por email y hay que pedir el código.
+   */
+  solicitarTokenRegistro: (email: string) => Promise<string | null>;
+  registrar: (
+    email: string,
+    nombre: string,
+    password: string,
+    registroToken?: string,
+  ) => Promise<void>;
   iniciarSesion: (email: string, password: string) => Promise<void>;
   cerrarSesion: () => void;
 }
@@ -67,9 +77,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persistir],
   );
 
+  const solicitarTokenRegistro = useCallback(async (email: string) => {
+    const r = await api.post<{ token?: string; enviado?: true }>('/auth/registro-token', { email });
+    return r.token ?? null;
+  }, []);
+
   const registrar = useCallback(
-    async (email: string, nombre: string, password: string) => {
-      await api.post<UsuarioDTO>('/comandos/RegistrarUsuario', { email, nombre, password });
+    async (email: string, nombre: string, password: string, registroToken?: string) => {
+      const cuerpo = { email, nombre, password };
+      if (registroToken) {
+        await api.postWith<UsuarioDTO>('/comandos/RegistrarUsuario', cuerpo, {
+          'X-Registro-Token': registroToken,
+        });
+      } else {
+        await api.post<UsuarioDTO>('/comandos/RegistrarUsuario', cuerpo);
+      }
       await iniciarSesion(email, password);
     },
     [iniciarSesion],
@@ -81,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, cargando, registrar, iniciarSesion, cerrarSesion }),
-    [session, cargando, registrar, iniciarSesion, cerrarSesion],
+    () => ({ session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion }),
+    [session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

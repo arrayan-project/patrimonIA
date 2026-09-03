@@ -3,27 +3,25 @@ import { Prisma } from '@prisma/client';
 import { ConversionService } from './conversion.service.js';
 
 /** PrismaService falso: `tipo_cambio.findFirst` devuelve lo que se le programe. */
-function fakePrisma(filas: {
-  moneda_origen: string;
-  moneda_destino: string;
-  tasa: number;
-  fecha_vigencia: string;
-}[]) {
+type Fila = { moneda_origen: string; moneda_destino: string; tasa: number; fecha_vigencia: string };
+
+function fakePrisma(filas: Fila[]) {
   return {
     tipo_cambio: {
-      findFirst: vi.fn(async ({ where, orderBy: _o }: { where: Record<string, unknown> }) => {
+      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
         const o = where.moneda_origen as string;
         const d = where.moneda_destino as string;
         const lte = (where.fecha_vigencia as { lte: Date }).lte;
         const match = filas
           .filter(
-            (f) =>
-              f.moneda_origen === o &&
-              f.moneda_destino === d &&
-              new Date(f.fecha_vigencia) <= lte,
+            (f) => f.moneda_origen === o && f.moneda_destino === d && new Date(f.fecha_vigencia) <= lte,
           )
           .sort((a, b) => (a.fecha_vigencia < b.fecha_vigencia ? 1 : -1))[0];
         return match ? { ...match, tasa: new Prisma.Decimal(match.tasa) } : null;
+      }),
+      findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
+        const lte = (where.fecha_vigencia as { lte: Date }).lte;
+        return filas.filter((f) => new Date(f.fecha_vigencia) <= lte);
       }),
     },
   };
@@ -64,10 +62,24 @@ describe('ConversionService', () => {
     expect(r.toNumber()).toBe(5);
   });
 
-  it('lanza si no hay tasa en ningún sentido', async () => {
+  it('lanza si no hay tasa ni triangulación', async () => {
+    setup([
+      { moneda_origen: 'USD', moneda_destino: 'CLP', tasa: 1000, fecha_vigencia: '2026-01-01' },
+    ]);
     await expect(
       svc.convertir(new Prisma.Decimal(1), 'USD', 'EUR', new Date('2026-06-01')),
     ).rejects.toThrow(/tipo de cambio USD→EUR/);
     expect(await svc.disponible('USD', 'EUR', new Date('2026-06-01'))).toBe(false);
+  });
+
+  it('triangula por una pivote cuando faltan el par directo y el inverso', async () => {
+    // USD→EUR no existe, pero sí USD→CLP y EUR→CLP
+    setup([
+      { moneda_origen: 'USD', moneda_destino: 'CLP', tasa: 1000, fecha_vigencia: '2026-01-01' },
+      { moneda_origen: 'EUR', moneda_destino: 'CLP', tasa: 1100, fecha_vigencia: '2026-01-01' },
+    ]);
+    // USD→CLP (×1000) luego CLP→EUR (×1/1100) = 1000/1100 EUR por USD
+    const r = await svc.convertir(new Prisma.Decimal(1100), 'USD', 'EUR', new Date('2026-06-01'));
+    expect(r.toNumber()).toBeCloseTo(1000, 6);
   });
 });

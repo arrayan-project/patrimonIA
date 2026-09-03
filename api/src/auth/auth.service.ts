@@ -1,8 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { verifyPassword } from '../common/password.js';
+import { EMAIL_SENDER, type EmailSender } from './email-sender.js';
 import type { JwtPayload } from './jwt-payload.js';
+
+const REGISTRO_TOKEN_REQUERIDO = () => process.env.AUTH_REGISTRO_TOKEN_REQUERIDO === 'true';
 
 export interface LoginResult {
   accessToken: string;
@@ -19,6 +22,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
   ) {}
 
   async login(email: string, password: string): Promise<LoginResult> {
@@ -38,13 +42,28 @@ export class AuthService {
   }
 
   /**
-   * Token de sesión temporal de registro (API_DESIGN). Corto y con propósito
-   * acotado. El gate previo (captcha / email) queda pendiente — ver GAPS.md G4.
+   * Token de sesión temporal de registro (API_DESIGN). Corto (15 min) y con
+   * propósito acotado. Si se da un email, el token queda ligado a él y se envía
+   * por correo; en modo requerido (prod) el token NO se devuelve en la respuesta,
+   * solo llega al email. El captcha/otro gate anti-bots antes de esto sigue
+   * pendiente (GAPS.md G4) — el rate-limit por IP se aplica en el controller.
    */
-  async emitirTokenRegistro(): Promise<{ token: string; expiraEn: string }> {
-    return {
-      token: await this.jwt.signAsync({ purpose: 'registro' }, { expiresIn: '15m' }),
-      expiraEn: '15m',
-    };
+  async emitirTokenRegistro(
+    email?: string,
+  ): Promise<{ token: string; expiraEn: string } | { enviado: true }> {
+    const claims: Record<string, unknown> = { purpose: 'registro' };
+    if (email) claims.email = email.toLowerCase();
+    const token = await this.jwt.signAsync(claims, { expiresIn: '15m' });
+
+    if (email) {
+      await this.email.enviar(
+        email,
+        'Tu código de registro en PatrimonIA',
+        `Usa este token para completar tu registro (vence en 15 minutos):\n\n${token}`,
+      );
+    }
+
+    if (REGISTRO_TOKEN_REQUERIDO()) return { enviado: true };
+    return { token, expiraEn: '15m' };
   }
 }

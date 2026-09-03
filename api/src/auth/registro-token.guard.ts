@@ -19,11 +19,19 @@ export class RegistroTokenGuard implements CanActivate {
       req.headers['x-registro-token'] ?? req.headers['authorization']?.replace(/^Bearer /, '');
     if (!token) throw new UnauthorizedException('Falta el token de registro');
 
+    let payload: { purpose?: string; email?: string };
     try {
-      const payload = await this.jwt.verifyAsync<{ purpose?: string }>(token);
-      if (payload.purpose !== 'registro') throw new Error('propósito inválido');
+      payload = await this.jwt.verifyAsync(token);
     } catch {
       throw new UnauthorizedException('Token de registro inválido o expirado');
+    }
+    if (payload.purpose !== 'registro') {
+      throw new UnauthorizedException('Token de registro inválido o expirado');
+    }
+    // Si el token se emitió para un email concreto, debe coincidir con el del alta.
+    const emailAlta = String(req.body?.email ?? '').toLowerCase();
+    if (payload.email && payload.email !== emailAlta) {
+      throw new UnauthorizedException('El token de registro es de otro email');
     }
     return true;
   }

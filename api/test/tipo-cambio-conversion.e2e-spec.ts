@@ -128,4 +128,21 @@ describe('Tipos de cambio y CONVERSION (e2e)', () => {
     const lista = await auth(request(http).get('/tipos-cambio?origen=USD&destino=CLP')).expect(200);
     expect(lista.body.length).toBe(2);
   });
+
+  it('triangula por CLP para una CONVERSION USD→EUR sin par directo', async () => {
+    await auth(request(http).post('/comandos/RegistrarTipoCambio'))
+      .send({ monedaOrigen: 'EUR', monedaDestino: 'CLP', tasa: 1100, fechaVigencia: '2026-07-01' })
+      .expect(201);
+    const eur = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'EUR2', tipo: 'x', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'EUR' })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'CONVERSION', monto: 110, moneda: 'USD', elementoOrigenId: cuentaUsd, elementoDestinoId: eur, fecha: '2026-07-01' })
+      .expect(201);
+    const el = await auth(request(http).get(`/elementos-patrimoniales/${eur}`)).expect(200);
+    // 110 USD ×1000 (USD→CLP) = 110.000 CLP ; ÷1100 (CLP→EUR) = 100 EUR
+    expect(el.body.valorVigente).toBeCloseTo(100, 4);
+  });
 });

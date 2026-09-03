@@ -10,10 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { token?: string | null; body?: unknown };
+type Options = { token?: string | null; body?: unknown; headers?: Record<string, string> };
 
 async function req<T>(method: string, path: string, opts: Options = {}): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...opts.headers };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
 
@@ -42,6 +42,8 @@ export const api = {
   get: <T>(path: string, token?: string | null) => req<T>('GET', path, { token }),
   post: <T>(path: string, body?: unknown, token?: string | null) =>
     req<T>('POST', path, { body, token }),
+  postWith: <T>(path: string, body: unknown, headers: Record<string, string>) =>
+    req<T>('POST', path, { body, headers }),
 };
 
 // ── Tipos de respuesta del backend ──────────────────────────────────────────

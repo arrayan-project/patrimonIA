@@ -6,6 +6,8 @@ import { Reflector } from '@nestjs/core';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { ConsoleEmailSender, EMAIL_SENDER } from './email-sender.js';
+import { RateLimiter } from '../common/rate-limiter.js';
 
 @Global()
 @Module({
@@ -22,12 +24,14 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
   controllers: [AuthController],
   providers: [
     AuthService,
+    RateLimiter,
+    { provide: EMAIL_SENDER, useClass: ConsoleEmailSender },
     {
       provide: APP_GUARD,
       useFactory: (reflector: Reflector, jwt: JwtService) => new JwtAuthGuard(reflector, jwt),
       inject: [Reflector, JwtService],
     },
   ],
-  exports: [JwtModule],
+  exports: [JwtModule, EMAIL_SENDER],
 })
 export class AuthModule {}

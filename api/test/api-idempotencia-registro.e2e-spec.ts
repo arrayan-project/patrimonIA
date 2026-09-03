@@ -4,6 +4,19 @@ import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { PrismaService } from './../src/prisma/prisma.service.js';
+import { EMAIL_SENDER, type EmailSender } from './../src/auth/email-sender.js';
+
+const emailsEnviados: { a: string; asunto: string; cuerpo: string }[] = [];
+const emailSpy: EmailSender = {
+  async enviar(a, asunto, cuerpo) {
+    emailsEnviados.push({ a, asunto, cuerpo });
+  },
+};
+/** Extrae el token JWT del cuerpo del último email a `destinatario`. */
+const tokenDelEmail = (destinatario: string) => {
+  const email = [...emailsEnviados].reverse().find((e) => e.a === destinatario);
+  return email?.cuerpo.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/)?.[0];
+};
 
 /**
  * Fase 12 — Idempotency-Key (API_DESIGN §43) y token de pre-registro (GAPS.md G4).
@@ -18,7 +31,10 @@ describe('Idempotencia y pre-registro (e2e)', () => {
   const auth = (r: request.Test) => r.set('Authorization', `Bearer ${token}`);
 
   beforeAll(async () => {
-    const fixture: TestingModule = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const fixture: TestingModule = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(EMAIL_SENDER)
+      .useValue(emailSpy)
+      .compile();
     app = fixture.createNestApplication();
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
@@ -95,9 +111,14 @@ describe('Idempotencia y pre-registro (e2e)', () => {
     expect(await prisma.elemento_patrimonial.count({ where: { nombre: 'De otro' } })).toBe(1);
   });
 
-  it('POST /auth/registro-token emite un token', async () => {
-    const r = await request(http).post('/auth/registro-token').expect(200);
+  it('POST /auth/registro-token emite un token (y lo liga al email si se da)', async () => {
+    const r = await request(http).post('/auth/registro-token').send({}).expect(200);
     expect(typeof r.body.token).toBe('string');
+    const conEmail = await request(http)
+      .post('/auth/registro-token')
+      .send({ email: 'nuevo@e2e.cl' })
+      .expect(200);
+    expect(typeof conEmail.body.token).toBe('string');
   });
 
   describe('con AUTH_REGISTRO_TOKEN_REQUERIDO=true', () => {
@@ -108,14 +129,31 @@ describe('Idempotencia y pre-registro (e2e)', () => {
       delete process.env.AUTH_REGISTRO_TOKEN_REQUERIDO;
     });
 
-    it('RegistrarUsuario exige el token de registro', async () => {
+    it('en modo requerido el token no se devuelve, solo llega por email', async () => {
+      const r = await request(http)
+        .post('/auth/registro-token')
+        .send({ email: 'con-token@e2e.cl' })
+        .expect(200);
+      expect(r.body).toEqual({ enviado: true });
+      expect(tokenDelEmail('con-token@e2e.cl')).toBeTruthy();
+    });
+
+    it('RegistrarUsuario exige un token de registro válido y del mismo email', async () => {
       await request(http)
         .post('/comandos/RegistrarUsuario')
         .send({ email: 'sin-token@e2e.cl', nombre: 'X', password: 'secret123' })
         .expect(401);
 
-      const { token: registroToken } = (await request(http).post('/auth/registro-token').expect(200))
-        .body;
+      await request(http).post('/auth/registro-token').send({ email: 'con-token@e2e.cl' }).expect(200);
+      const registroToken = tokenDelEmail('con-token@e2e.cl')!;
+
+      // token ligado a con-token@ no sirve para otro email
+      await request(http)
+        .post('/comandos/RegistrarUsuario')
+        .set('X-Registro-Token', registroToken)
+        .send({ email: 'distinto@e2e.cl', nombre: 'W', password: 'secret123' })
+        .expect(401);
+
       await request(http)
         .post('/comandos/RegistrarUsuario')
         .set('X-Registro-Token', registroToken)

@@ -65,16 +65,19 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 ### G4 — "Token de sesión temporal de registro" para RegistrarUsuario
 - **Qué falta**: API_DESIGN dice que `POST /comandos/RegistrarUsuario` va con un
   "token de sesión temporal de registro, no de usuario ya autenticado".
-- **Estado (Fase 12)**: **parcialmente resuelto**.
-  - `POST /auth/registro-token` (anónimo) emite un JWT `{ purpose: 'registro' }`
-    de 15 min.
-  - `RegistroTokenGuard` en `RegistrarUsuario` lo exige **solo si**
-    `AUTH_REGISTRO_TOKEN_REQUERIDO=true` (producción). En dev/test el endpoint
-    sigue abierto para no romper el arranque ni los e2e.
-- **Lo que sigue pendiente**: el gate **antes** de emitir el token — captcha,
-  verificación de email, o rate-limit por IP. Hoy `/auth/registro-token` lo da a
-  cualquiera, así que el token no aporta seguridad real todavía; es la estructura
-  lista para colgar ese gate.
+- **Estado (Fase 12 + 14c)**: **resuelto salvo el captcha**.
+  - `POST /auth/registro-token` (anónimo, **rate-limit 10/hora por IP** —
+    `RateLimiter` en memoria) emite un JWT `{ purpose: 'registro' }` de 15 min.
+    Si se le pasa `email`, el token queda **ligado a ese email** y se **envía por
+    correo** (`EmailSender` → `ConsoleEmailSender` por defecto; se cambia el
+    provider `EMAIL_SENDER` por Resend/SES en prod).
+  - En modo requerido (`AUTH_REGISTRO_TOKEN_REQUERIDO=true`) el token **no** se
+    devuelve en la respuesta (`{ enviado: true }`), solo llega al email; y
+    `RegistroTokenGuard` exige que el `email` del token coincida con el del alta.
+  - En dev/test el endpoint devuelve el token directo y el guard no bloquea.
+- **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
+  (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
+  Rate-limit en memoria → para varias instancias haría falta un store compartido.
 
 ### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)
 - **Qué falta**: el DDD (Sección M) define visibilidad "por tipo de información"
@@ -108,18 +111,16 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   (el usuario no tiene "moneda de consolidación" propia).
 - **Para decidir**: materializar si el cálculo en vivo escala mal.
 
-### G21 — Conversión monetaria: sin triangulación (Fase 13)
-- **Qué falta**: REQUISITES pide conversiones "consistentes y reproducibles"
-  pero no especifica el algoritmo cuando no hay par directo.
-- **Decisión (Fase 13)**: `ConversionService` usa la tasa más reciente con
-  `fecha_vigencia <= fecha`; si no hay par directo A→B, usa el inverso B→A
-  (`1/tasa`). **No triangula** por una moneda pivote — si faltan A→B y B→A,
-  la conversión falla (y el total consolidado queda `null`).
-- `RegistrarTipoCambio` (comando nº 53, más allá del catálogo de 52) es dato
-  global, inmutable; para "corregir" una tasa se registra otra con fecha de
-  vigencia posterior.
-- **Para decidir**: ¿triangulación vía USD/CLP?, ¿importación automática de una
-  fuente de tasas?
+### G21 — Conversión monetaria (Fase 13 + 14c)
+- `ConversionService` (Fase 13): tasa directa más reciente con
+  `fecha_vigencia <= fecha`; si no hay, el inverso B→A (`1/tasa`).
+- **Triangulación (Fase 14c)**: si tampoco hay inverso, se busca una moneda
+  pivote C con A↔C y C↔B disponibles (máx. 2 saltos). Con varias pivotes se
+  elige la primera alfabéticamente — determinista. Si no hay ninguna, la
+  conversión falla (y el total consolidado queda `null`).
+- `RegistrarTipoCambio` (comando nº 53) es dato global, inmutable; para
+  "corregir" una tasa se registra otra con fecha de vigencia posterior.
+- **Pendiente**: importación automática desde una fuente de tasas.
 
 ### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)
 - **Qué falta**: AS #12 dice "datos corregidos" sin enumerarlos.
