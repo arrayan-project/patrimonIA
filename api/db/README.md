@@ -61,6 +61,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   `init/01_schema.sql`.
 - `008_dispositivo_push.sql` — tabla `dispositivo_push` (Expo push tokens,
   GAPS.md G20). Ya incluida en `init/01_schema.sql`.
+- `009_categoria_movimiento.sql` — tabla `categoria_movimiento` (del hogar) +
+  `evento_financiero.glosa` + `evento_financiero.categoria_id` (GAPS.md
+  G22/G23). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

@@ -134,10 +134,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] **15b** — `DateField` (calendario nativo), `MoneyField` (formato de
     miles), campo fecha en Registrar movimiento/ajuste/Valorizar, `ToastProvider`,
     `confirmar()` + botón `danger` en acciones destructivas, `fechaLegible()`.
-  - [ ] 15c+ — glosa + categorías de movimiento (🔴 migración 009, `GAPS.md`
-    G22–G24, decisiones: del hogar / plana / opcional), presupuesto por rubro,
-    sección de Ajustes + `usuario.preferencias` (`GAPS.md` G25), tabs, traducción
-    de enums, gráficos.
+  - [x] **15c** — glosa en `evento_financiero`, `categoria_movimiento` del hogar
+    (migración 009; comandos Crear/Actualizar/Archivar/Reordenar; seed al crear
+    hogar), selector de categoría + detalle al registrar movimiento, pantalla
+    Ajustes → Categorías, `GET /usuarios/me` con `preferencias`.
+  - [ ] 15d+ — presupuesto por rubro (`GAPS.md` G16/G23), gráficos, tabs,
+    traducción de enums, plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
