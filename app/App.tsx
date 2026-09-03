@@ -1,33 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, SafeAreaView, StatusBar as RNStatusBar, StyleSheet } from 'react-native';
-import { AppFlow } from './src/AppFlow';
-import { AuthFlow } from './src/AuthFlow';
-import { AuthProvider, useAuth } from './src/auth/AuthContext';
-
-function Root() {
-  const { session } = useAuth();
-  return session ? <AppFlow /> : <AuthFlow />;
-}
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from './src/auth/AuthContext';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
 /**
- * Fase 1 — Flujo 2 (Alta de hogar). Registro → Bienvenida → Crear Hogar /
- * Invitaciones → Dashboard. Ver Docs/UX_FLOWS.docx "Desglose — Flujo 2".
+ * PatrimonIA — gestión de patrimonio familiar.
+ * Navegación con @react-navigation; sesión persistida (expo-secure-store).
  */
 export default function App() {
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaProvider>
       <AuthProvider>
-        <Root />
+        <RootNavigator />
       </AuthProvider>
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
-  },
-});

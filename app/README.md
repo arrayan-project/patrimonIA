@@ -127,13 +127,20 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Registrar movimiento → CONVERSION | `POST /comandos/RegistrarEventoFinanciero` (tipo CONVERSION) |
 | Patrimonio del hogar | total en la moneda de consolidación (o monedas faltantes) |
 
-### Decisiones del esqueleto (provisionales)
+### Fase 14a — Navegación y sesión (deuda técnica)
 
-- Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por
-  `@react-navigation/native` cuando crezca el número de pantallas.
-- Sesión (JWT) en memoria — se pierde al reiniciar. La persistencia
-  (`expo-secure-store`) llega después.
-- Dashboard muestra el primer hogar; el selector multi-hogar llega después.
+- **Navegación**: `@react-navigation/native` (native-stack). Las pantallas siguen
+  usando `useNav()` — ahora una fachada delgada sobre `useNavigation`/`useRoute`
+  (`src/navigation/navigator.tsx`). El árbol se arma en `RootNavigator.tsx`
+  (grupo sin sesión: Registro/Login · grupo con sesión: todas las pantallas).
+- **Sesión persistida**: el JWT se guarda en `expo-secure-store` (nativo) o
+  `localStorage` (web) — `src/auth/secureStorage.ts`. Al arrancar se restaura y
+  se valida contra `GET /usuarios/me`; si el token expiró se descarta.
+- **Multi-hogar**: si perteneces a más de un hogar, el Dashboard muestra un
+  selector; la elección se recuerda por usuario.
+
+### Decisiones aún provisionales
+
 - "Registrar movimiento" solo lista tus propios elementos como destino; para
   transferir a otra persona hay que conocer el id de su elemento (ver GAPS.md G6).
 
@@ -141,12 +148,12 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 
 ```
 src/
-  config.ts            API_URL (EXPO_PUBLIC_API_URL)
-  api/client.ts        wrapper fetch + tipos de respuesta
-  auth/AuthContext.tsx  sesión, registrar / iniciarSesion / cerrarSesion
-  navigation/           pila mínima (NavProvider / useNav)
+  config.ts             API_URL (EXPO_PUBLIC_API_URL)
+  api/client.ts         wrapper fetch + tipos de respuesta
+  auth/AuthContext.tsx  sesión persistida (registrar / iniciarSesion / cerrarSesion)
+  auth/secureStorage.ts secure-store (nativo) / localStorage (web)
+  navigation/navigator.tsx    fachada useNav() sobre @react-navigation
+  navigation/RootNavigator.tsx  árbol de navegación (auth vs. app)
   ui/                   componentes compartidos
   screens/              una pantalla por archivo
-  AuthFlow.tsx          sin sesión: Registro / Login
-  AppFlow.tsx           con sesión: Bienvenida / CrearHogar / Invitaciones / Dashboard
 ```

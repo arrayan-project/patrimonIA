@@ -9,6 +9,7 @@ import {
   View,
   type TextInputProps,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const colors = {
   bg: '#ffffff',
@@ -22,10 +23,14 @@ export const colors = {
 };
 
 export function Screen({ children }: { children: ReactNode }) {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.screenContent}
+      contentContainerStyle={[
+        styles.screenContent,
+        { paddingTop: 24 + insets.top, paddingBottom: 24 + insets.bottom },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       {children}
@@ -172,7 +177,7 @@ export function LinkButton({ title, onPress }: { title: string; onPress: () => v
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  screenContent: { padding: 24, gap: 16, flexGrow: 1 },
+  screenContent: { paddingHorizontal: 24, gap: 16, flexGrow: 1 },
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
   paragraph: { fontSize: 15, color: colors.muted, lineHeight: 22 },
   field: { gap: 6 },

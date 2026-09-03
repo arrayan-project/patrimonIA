@@ -116,10 +116,15 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] Móvil: pantalla "Tipos de cambio", opción CONVERSION en registrar
     movimiento, total en "Patrimonio del hogar".
 
+- [x] **Fase 14 — Deuda técnica**:
+  - [x] **14a** App: `@react-navigation` (fachada `useNav()` intacta), sesión
+    persistida (`expo-secure-store` / `localStorage`), selector multi-hogar.
+  - [ ] 14b — tests unitarios + CI.
+  - [ ] 14c — triangulación de divisas (G21), rate-limit + verificación de email
+    del pre-registro (G4), push notifications (G20).
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
-Modelo de dominio cerrado. Pendientes documentados en `GAPS.md` (gate captcha del
-pre-registro, triangulación de divisas, materialización de proyecciones,
-notificaciones push).
+Modelo de dominio cerrado. Pendientes documentados en `GAPS.md`.
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

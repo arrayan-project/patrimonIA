@@ -10,14 +10,18 @@ import {
 } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, SelectRow, Title } from '../ui';
 
 export function DashboardScreen() {
   const { token, usuario } = useSession();
   const { cerrarSesion } = useAuth();
   const nav = useNav();
+  const claveHogar = `patrimonia.hogar.${usuario.id}`;
 
+  const [hogares, setHogares] = useState<HogarDTO[]>([]);
+  const [hogarId, setHogarId] = useState<string | null>(null);
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
@@ -27,16 +31,29 @@ export function DashboardScreen() {
   const [invitando, setInvitando] = useState(false);
   const [aviso, setAviso] = useState('');
 
+  const elegirHogar = useCallback(
+    (id: string) => {
+      setHogarId(id);
+      void guardar(claveHogar, id);
+    },
+    [claveHogar],
+  );
+
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const hogares = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
-      if (hogares.length === 0) {
+      const lista = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
+      if (lista.length === 0) {
         nav.reset('Bienvenida');
         return;
       }
+      setHogares(lista);
+      const guardado = await leer(claveHogar);
+      const activo = lista.find((h) => h.id === guardado)?.id ?? lista[0].id;
+      setHogarId(activo);
+
       const [h, p, els] = await Promise.all([
-        api.get<HogarDTO>(`/hogares/${hogares[0].id}`, token),
+        api.get<HogarDTO>(`/hogares/${activo}`, token),
         api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       ]);
@@ -55,11 +72,21 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav]);
+  }, [token, nav, claveHogar]);
 
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  // recarga el detalle al cambiar de hogar activo
+  useEffect(() => {
+    if (!hogarId) return;
+    let vivo = true;
+    api
+      .get<HogarDTO>(`/hogares/${hogarId}`, token)
+      .then((h) => vivo && setHogar(h))
+      .catch(() => undefined);
+  }, [hogarId, token]);
 
   const esAdmin = hogar?.miembros?.some(
     (m) => m.usuarioId === usuario.id && m.rol === 'ADMINISTRADOR',
@@ -97,6 +124,20 @@ export function DashboardScreen() {
   return (
     <Screen>
       <Title>{hogar.nombre}</Title>
+
+      {hogares.length > 1 && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Hogar activo</Text>
+          {hogares.map((h) => (
+            <SelectRow
+              key={h.id}
+              label={h.nombre}
+              selected={h.id === hogarId}
+              onPress={() => elegirHogar(h.id)}
+            />
+          ))}
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Mi patrimonio</Text>
