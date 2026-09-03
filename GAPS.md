@@ -397,14 +397,28 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   - **Ambas** (categoría + etiqueta), pero etiquetas y agrupaciones de elementos
     quedan para fase posterior — la categoría es la única de Fase 15c.
 
-### G24 — Plantillas / movimientos recurrentes rápidos
+### G24 — Plantillas / movimientos recurrentes rápidos (Fase 15h)
 - **Qué falta**: registrar "el gasto de siempre" (internet, arriendo) en 2 toques.
   Distinto de **Movimiento Programado** (#13–#16, que es un movimiento futuro
   concreto con fecha): una plantilla es un molde reutilizable sin fecha.
-- **Depende de** G23 (categoría) y G22 (glosa).
-- **Opción**: tabla `plantilla_movimiento(usuario_id, nombre, tipo, monto?,
-  elemento_id?, categoria_id?, glosa?)` + comando de alta desde un evento
-  existente ("guardar como plantilla"). Fase posterior.
+- **Decisión (sesión 2026-09-03)**:
+  - Tabla `plantilla_movimiento(id, usuario_id, nombre, tipo INGRESO/GASTO/
+    TRANSFERENCIA, monto?, moneda?, elemento_origen_id?, elemento_destino_id?,
+    categoria_id?, glosa?, orden)`. Migración 011. **Personal** (`usuario_id`),
+    `UNIQUE (usuario_id, nombre)`. Todos los campos salvo `nombre`/`tipo` son
+    opcionales — es un molde, los huecos se llenan al usarla.
+  - Es configuración → historial solo en `auditoria`; los eventos generados a
+    partir de ella son independientes.
+  - Comandos `CrearPlantillaMovimiento`, `ActualizarPlantillaMovimiento` (`null`
+    limpia un campo), `EliminarPlantillaMovimiento` (borrado físico).
+    `GET /usuarios/me/plantillas-movimiento`.
+  - Validación: propiedad de los elementos; la categoría debe ser de un hogar del
+    actor y compatible con el tipo; TRANSFERENCIA no lleva categoría.
+  - **Usar una plantilla NO es un comando**: el cliente rellena
+    `RegistrarEventoFinanciero` con sus valores. En la app: selector "Desde una
+    plantilla" arriba de "Registrar movimiento" + botón "Guardar como plantilla"
+    en el detalle de un movimiento (deriva origen/destino de los impactos).
+  - CONVERSION queda fuera (dos monedas, más lógica).
 
 ### G25 — Sección de Ajustes / preferencias de visualización
 - **Qué falta**: un lugar para administrar de forma granular lo que se muestra —

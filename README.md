@@ -155,8 +155,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     "Evolución de mi patrimonio" (`GET /usuarios/me/serie-patrimonial`);
     tarjeta de resumen del Dashboard (neto · líquido · variación 30 días);
     iconos de tabs con `@expo/vector-icons`.
-  - [ ] 15h+ — plantillas / etiquetas / agrupaciones (`GAPS.md` G24), montos
-    contables, design tokens completos, onboarding.
+  - [x] **15h** — plantillas de movimiento: `plantilla_movimiento`
+    (migración 011, `GAPS.md` G24), comandos Crear/Actualizar/Eliminar,
+    `GET /usuarios/me/plantillas-movimiento`; app: pantalla Plantillas,
+    "Desde una plantilla" al registrar un movimiento y "Guardar como
+    plantilla" en el detalle.
+  - [ ] 15i+ — etiquetas y agrupaciones de elementos, montos contables,
+    design tokens completos, onboarding.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
@@ -166,7 +171,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 92 e2e
+cd api && npm run test:all   # 20 unitarios + 99 e2e
 cd app && npx tsc --noEmit
 ```
 
