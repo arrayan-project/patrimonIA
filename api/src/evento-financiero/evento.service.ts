@@ -1,9 +1,17 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
+import type { AnularEventoDto } from './dto/anular-evento.dto.js';
+import type { CorregirEventoDto } from './dto/corregir-evento.dto.js';
 
 interface ImpactoPlan {
   elemento: ElementoRow;
@@ -77,6 +85,126 @@ export class EventoFinancieroService {
     });
 
     return toEventoDTO(evento, impactos);
+  }
+
+  /**
+   * AS #11 — AnularEventoFinanciero.
+   * Validaciones: el evento existe y está vigente (no anulado); no puede anularse
+   * un evento que ya tiene una corrección viva (anula/maneja primero la corrección).
+   * Orquestación: revertir el efecto de sus impactos sobre valor_vigente y
+   * marcarlo `anulado` — INMUTABLE salvo ese flag (DATABASE_DESIGN §4). Los
+   * impacto_patrimonial se conservan pero quedan "marcados" vía evento.anulado
+   * (se filtran en las lecturas de impactos).
+   * Auditoría: Anulación — motivo, evento anulado.
+   */
+  async anularEvento(actorId: string, dto: AnularEventoDto): Promise<EventoFinancieroDTO> {
+    const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
+    if (evento.anulado) throw new ConflictException('El evento ya está anulado');
+    if (await this.tieneCorreccionViva(evento.id)) {
+      throw new ConflictException('El evento tiene una corrección vigente — anúlala primero');
+    }
+
+    const anulado = await this.prisma.$transaction(async (tx) => {
+      for (const i of impactos) {
+        const el = await tx.elemento_patrimonial.findUniqueOrThrow({ where: { id: i.elemento_id } });
+        await tx.elemento_patrimonial.update({
+          where: { id: i.elemento_id },
+          data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).minus(i.monto) },
+        });
+      }
+
+      const actualizado = await tx.evento_financiero.update({
+        where: { id: evento.id },
+        data: { anulado: true },
+      });
+
+      await this.auditoria.registrar(tx, {
+        comando: 'AnularEventoFinanciero',
+        usuarioId: actorId,
+        entidadTipo: 'EVENTO_FINANCIERO',
+        entidadId: evento.id,
+        motivo: dto.motivo,
+        valorAnterior: { anulado: false },
+        valorPosterior: { anulado: true },
+      });
+
+      return actualizado;
+    });
+
+    return toEventoDTO(anulado, impactos);
+  }
+
+  /**
+   * AS #12 — CorregirEventoFinanciero. Patrón de corrección (DDD Sección T): el
+   * evento original permanece intacto e inmutable; se INSERTA un evento
+   * compensatorio con `correccion_de_id` apuntando al original. En Evento
+   * Financiero la corrección **compensa montos** (flujo): impacto = signo del
+   * impacto original × (nuevoMonto − montoOriginal).
+   * Fase 3 corrige solo el monto — tipo/fecha/elementos requieren anular + registrar.
+   * Auditoría: Corrección — evento original, evento compensatorio, motivo.
+   */
+  async corregirEvento(actorId: string, dto: CorregirEventoDto): Promise<EventoFinancieroDTO> {
+    const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
+    if (evento.anulado) throw new ConflictException('No se puede corregir un evento anulado');
+    if (await this.tieneCorreccionViva(evento.id)) {
+      throw new ConflictException('El evento ya tiene una corrección — corrige esa última');
+    }
+
+    const nuevoMonto = new Prisma.Decimal(dto.nuevoMonto);
+    const delta = nuevoMonto.minus(evento.monto); // p.ej. 45.000 − 50.000 = −5.000
+    if (delta.isZero()) {
+      throw new BadRequestException('El nuevo monto es igual al actual — no hay nada que corregir');
+    }
+
+    const resultado = await this.prisma.$transaction(async (tx) => {
+      const compensatorio = await tx.evento_financiero.create({
+        data: {
+          tipo: evento.tipo,
+          monto: delta.abs(),
+          moneda: evento.moneda,
+          fecha: evento.fecha,
+          correccion_de_id: evento.id,
+          anulado: false,
+        },
+      });
+
+      const nuevosImpactos = [];
+      for (const i of impactos) {
+        const signo = new Prisma.Decimal(i.monto).isNegative() ? -1 : 1;
+        const montoComp = delta.times(signo); // signo del impacto original × delta
+        nuevosImpactos.push(
+          await tx.impacto_patrimonial.create({
+            data: {
+              elemento_id: i.elemento_id,
+              monto: montoComp,
+              origen_tipo: 'EVENTO_FINANCIERO',
+              origen_id: compensatorio.id,
+            },
+          }),
+        );
+        const el = await tx.elemento_patrimonial.findUniqueOrThrow({ where: { id: i.elemento_id } });
+        await tx.elemento_patrimonial.update({
+          where: { id: i.elemento_id },
+          data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(montoComp) },
+        });
+      }
+
+      await this.auditoria.registrar(tx, {
+        comando: 'CorregirEventoFinanciero',
+        usuarioId: actorId,
+        entidadTipo: 'EVENTO_FINANCIERO',
+        entidadId: evento.id,
+        motivo: dto.motivo,
+        valorAnterior: { monto: evento.monto.toNumber() },
+        valorPosterior: { monto: nuevoMonto.toNumber() },
+        entidadRelacionadaTipo: 'EVENTO_FINANCIERO',
+        entidadRelacionadaId: compensatorio.id,
+      });
+
+      return { compensatorio, nuevosImpactos };
+    });
+
+    return toEventoDTO(resultado.compensatorio, resultado.nuevosImpactos);
   }
 
   // ── Consultas ─────────────────────────────────────────────────────────────
@@ -210,5 +338,27 @@ export class EventoFinancieroService {
       where: { elemento_id: { in: elementoIds }, usuario_id: actorId },
     });
     return prop !== null;
+  }
+
+  /** Carga el evento + sus impactos y exige que el actor sea propietario de
+   *  algún elemento afectado. */
+  private async exigirAccesoEvento(eventoId: string, actorId: string) {
+    const evento = await this.prisma.evento_financiero.findUnique({ where: { id: eventoId } });
+    if (!evento) throw new NotFoundException('Evento no encontrado');
+    const impactos = await this.prisma.impacto_patrimonial.findMany({
+      where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: eventoId },
+    });
+    if (!(await this.actorVeAlgunElemento(impactos.map((i) => i.elemento_id), actorId))) {
+      throw new NotFoundException('Evento no encontrado');
+    }
+    return { evento, impactos };
+  }
+
+  /** ¿Hay una corrección no-anulada apuntando a este evento? */
+  private async tieneCorreccionViva(eventoId: string): Promise<boolean> {
+    const corr = await this.prisma.evento_financiero.findFirst({
+      where: { correccion_de_id: eventoId, anulado: false },
+    });
+    return corr !== null;
   }
 }

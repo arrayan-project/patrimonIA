@@ -156,7 +156,22 @@ export class ElementoService {
       where: { elemento_id: elementoId },
       orderBy: { created_at: 'desc' },
     });
-    return impactos.map(toImpactoDTO);
+    // Excluir impactos cuya causa (evento financiero) fue anulada — DDD Sección F:
+    // "si la causa desaparece, sus impactos asociados también desaparecen".
+    const eventoIds = impactos
+      .filter((i) => i.origen_tipo === 'EVENTO_FINANCIERO')
+      .map((i) => i.origen_id);
+    const anulados = new Set(
+      (
+        await this.prisma.evento_financiero.findMany({
+          where: { id: { in: eventoIds }, anulado: true },
+          select: { id: true },
+        })
+      ).map((e) => e.id),
+    );
+    return impactos
+      .filter((i) => !(i.origen_tipo === 'EVENTO_FINANCIERO' && anulados.has(i.origen_id)))
+      .map(toImpactoDTO);
   }
 
   // ── Helpers de acceso ─────────────────────────────────────────────────────

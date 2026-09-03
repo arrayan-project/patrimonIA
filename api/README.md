@@ -59,7 +59,7 @@ src/
                        #38 AceptarInvitacion · #39 RechazarInvitacion
                        + consultas de hogar/miembros/invitaciones
   elemento/            AS #1 RegistrarElementoPatrimonial + consultas
-  evento-financiero/   AS #10 RegistrarEventoFinanciero (INGRESO/GASTO/TRANSFERENCIA)
+  evento-financiero/   AS #10 Registrar · #11 Anular · #12 Corregir
   proyecciones/        GET /usuarios/me/patrimonio-individual (cálculo en vivo)
 ```
 
@@ -83,6 +83,16 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
   `/elementos-patrimoniales/:id[/impactos]`, `/eventos-financieros?elemento=:id`,
   `/eventos-financieros/:id`, `/usuarios/me/patrimonio-individual`.
 - Verificado: `test/flujo1-dia-a-dia.e2e-spec.ts`.
+
+### Fase 3 — Flujo 6 (corregir / anular un movimiento)
+
+- `POST /comandos/AnularEventoFinanciero` (#11) — revierte el efecto sobre
+  `valor_vigente` y marca `anulado` (única mutación permitida). Motivo obligatorio.
+- `POST /comandos/CorregirEventoFinanciero` (#12) — **patrón de corrección**
+  (DDD Sección T): el original queda intacto, se inserta un evento compensatorio
+  con `correccion_de_id` y un impacto = signo del impacto original × (nuevo − viejo).
+  Fase 3 corrige solo el monto. Motivo obligatorio.
+- Verificado: `test/flujo6-correccion.e2e-spec.ts`.
 
 Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
 de los 52 Application Services entra en fases siguientes, un flujo vertical a la

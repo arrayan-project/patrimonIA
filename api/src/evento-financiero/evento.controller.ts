@@ -1,7 +1,19 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
+import { AnularEventoDto } from './dto/anular-evento.dto.js';
+import { CorregirEventoDto } from './dto/corregir-evento.dto.js';
 import { EventoFinancieroService } from './evento.service.js';
 import type { EventoFinancieroDTO } from './evento.dto.js';
 
@@ -15,6 +27,23 @@ export class EventoFinancieroController {
     @Body() dto: RegistrarEventoDto,
   ): Promise<EventoFinancieroDTO> {
     return this.eventos.registrarEvento(user.id, dto);
+  }
+
+  @Post('comandos/AnularEventoFinanciero')
+  @HttpCode(200)
+  anular(
+    @CurrentUser() user: UsuarioAutenticado,
+    @Body() dto: AnularEventoDto,
+  ): Promise<EventoFinancieroDTO> {
+    return this.eventos.anularEvento(user.id, dto);
+  }
+
+  @Post('comandos/CorregirEventoFinanciero')
+  corregir(
+    @CurrentUser() user: UsuarioAutenticado,
+    @Body() dto: CorregirEventoDto,
+  ): Promise<EventoFinancieroDTO> {
+    return this.eventos.corregirEvento(user.id, dto);
   }
 
   @Get('eventos-financieros')

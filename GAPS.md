@@ -80,6 +80,29 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: materializar si el cálculo en vivo escala mal; subsistema de
   tipos de cambio para consolidar.
 
+### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)
+- **Qué falta**: AS #12 dice "datos corregidos" sin enumerarlos.
+- **Decisión provisional (Fase 3)**: solo se corrige el **monto**. Cambiar tipo,
+  fecha o elementos afectados requiere `AnularEventoFinanciero` + registrar de
+  nuevo. Además la cadena de correcciones es lineal: no se puede corregir (ni
+  anular) un evento que ya tiene una corrección viva — hay que actuar sobre la
+  última corrección.
+- **Para decidir**: ¿permitir corregir fecha?, ¿re-corregir encadenando deltas?
+
+### G10 — AnularEventoFinanciero: impactos y autorización (Fase 3)
+- **Qué falta**: DATABASE_DESIGN §4 dice que Anular "borra o marca" los
+  `impacto_patrimonial`; el esquema no tiene flag en esa tabla. El DDD no dice
+  quién puede anular/corregir.
+- **Decisión provisional (Fase 3)**:
+  - Se **conservan** las filas `impacto_patrimonial` (no hay flag para marcar);
+    quedan "marcadas" transitivamente por `evento_financiero.anulado` y se
+    filtran en `GET /elementos-patrimoniales/:id/impactos`. `valor_vigente` se
+    revierte con aritmética directa. El evento anulado sigue apareciendo en
+    `GET /eventos-financieros?elemento=` con `anulado: true`.
+  - Puede anular/corregir cualquier **propietario de un elemento afectado**.
+- **Colapso visual** original+corrección (UX_FLOWS Flujo 6): la app los muestra
+  como filas separadas etiquetadas; el colapso en una sola línea llega después.
+
 ### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
 - **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
   solo implementa INGRESO/GASTO/TRANSFERENCIA.

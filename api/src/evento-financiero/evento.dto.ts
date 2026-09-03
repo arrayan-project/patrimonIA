@@ -10,6 +10,8 @@ export interface EventoFinancieroDTO {
   moneda: string;
   fecha: string;
   anulado: boolean;
+  /** Si no es null, este evento es la corrección compensatoria del evento indicado. */
+  correccionDeId: string | null;
   createdAt: string;
   impactos: {
     id: string;
@@ -26,6 +28,7 @@ export function toEventoDTO(e: EventoRow, impactos: ImpactoRow[]): EventoFinanci
     moneda: e.moneda,
     fecha: e.fecha.toISOString().slice(0, 10),
     anulado: e.anulado,
+    correccionDeId: e.correccion_de_id,
     createdAt: e.created_at.toISOString(),
     impactos: impactos.map((i) => ({
       id: i.id,
