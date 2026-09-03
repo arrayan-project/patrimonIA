@@ -62,6 +62,9 @@ src/
   evento-financiero/   AS #10 Registrar · #11 Anular · #12 Corregir
   valorizacion/        AS #17 Registrar · #18 Anular · #19 Corregir
   ajuste-patrimonial/  AS #20 Registrar · #21 Anular · #22 Corregir
+  planificacion/       Objetivo (#30-33) · Asignación (#23-26) · Reserva (#27-29)
+                       + progreso_objetivo + políticas "Completar objetivo" /
+                       "Consumir reserva"
   proyecciones/        GET /usuarios/me/patrimonio-individual (cálculo en vivo)
 ```
 
@@ -125,6 +128,21 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
   `EliminarHogar` (#42). Invariante "≥1 administrador" validado en el AS.
 - Usuario: `ActualizarDatosUsuario` (#44), `DesactivarUsuario` (#46).
 - Verificado: `test/fase5b-ciclo-vida.e2e-spec.ts`. Ver GAPS.md G12.
+
+### Fase 5c — Flujo 5 (objetivo + asignación + reserva)
+
+- Objetivo: `Crear` (#30), `ActualizarDatos` (#31), `CambiarEstado` (#32),
+  `Eliminar` (#33). `GET /objetivos-financieros[?estado=]`, `/:id` (con progreso).
+- Asignación: `Crear` (#23), `ActualizarDatos` (#24), `CambiarAsociacionAObjetivo`
+  (#25), `Eliminar` (#26, cascada de reservas). `GET /asignaciones[?objetivo=]`,
+  `/:id`, `/:id/reservas`.
+- Reserva: `Crear` (#27, valida disponibilidad), `AjustarMonto` (#28),
+  `Liberar` (#29).
+- Proyección `progreso_objetivo` = Σ reservas ACTIVAS de sus asignaciones.
+- Política **Completar objetivo** (auto, fila de auditoría encadenada) y
+  **Consumir reserva** (`asignacionId` en RegistrarEventoFinanciero).
+- Requiere migración `db/migrations/001_...sql` (columna `usuario_id`, GAPS.md G13).
+- Verificado: `test/flujo5-objetivo-reserva.e2e-spec.ts`. Ver GAPS.md G14.
 
 Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
 de los 52 Application Services entra en fases siguientes, un flujo vertical a la

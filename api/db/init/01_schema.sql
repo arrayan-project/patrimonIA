@@ -114,10 +114,12 @@ CREATE TABLE objetivo_financiero (
     monto_objetivo  NUMERIC(18,2) NOT NULL,
     fecha_objetivo  DATE,  -- opcional
     estado          TEXT NOT NULL CHECK (estado IN ('EN_PROGRESO', 'COMPLETADO', 'CANCELADO')),
+    usuario_id      UUID REFERENCES usuario(id),  -- migración 001: objetivo personal (GAPS.md G13)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ix_objetivo_estado ON objetivo_financiero (estado);
+CREATE INDEX ix_objetivo_usuario ON objetivo_financiero (usuario_id);
 
 -- Nota: progreso_acumulado NO es columna — proyección calculada (ver sección 12).
 
@@ -131,10 +133,12 @@ CREATE TABLE asignacion (
     nombre                   TEXT NOT NULL,
     monto_objetivo           NUMERIC(18,2),  -- nullable
     objetivo_financiero_id   UUID REFERENCES objetivo_financiero(id),  -- NULL = asignación independiente
+    usuario_id               UUID REFERENCES usuario(id),  -- migración 001: asignación personal (GAPS.md G13)
     created_at               TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ix_asignacion_objetivo ON asignacion (objetivo_financiero_id) WHERE objetivo_financiero_id IS NOT NULL;
+CREATE INDEX ix_asignacion_usuario ON asignacion (usuario_id);
 
 CREATE TABLE reserva (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

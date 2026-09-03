@@ -31,8 +31,8 @@ export class AuditoriaService {
    * Escribe la entrada DENTRO de la transacción del comando que la origina.
    * No es un paso posterior ni opcional (DDD Sección U, BUILD_INSTRUCTIONS §5).
    */
-  async registrar(tx: Prisma.TransactionClient, e: EntradaAuditoria): Promise<void> {
-    await tx.auditoria.create({
+  async registrar(tx: Prisma.TransactionClient, e: EntradaAuditoria): Promise<string> {
+    const fila = await tx.auditoria.create({
       data: {
         comando: e.comando,
         usuario_id: e.usuarioId,
@@ -47,5 +47,6 @@ export class AuditoriaService {
         encadenada_de_id: e.encadenadaDeId,
       },
     });
+    return fila.id;
   }
 }

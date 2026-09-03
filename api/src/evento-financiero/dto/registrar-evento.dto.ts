@@ -31,4 +31,13 @@ export class RegistrarEventoDto {
   @IsOptional()
   @IsUUID()
   elementoDestinoId?: string;
+
+  /**
+   * Si se asocia a una asignación, dispara la política "Consumir reserva":
+   * las reservas ACTIVAS de esa asignación pasan a CONSUMIDA y se recalcula el
+   * progreso del objetivo (DDD Sección T / W).
+   */
+  @IsOptional()
+  @IsUUID()
+  asignacionId?: string;
 }

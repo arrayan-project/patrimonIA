@@ -131,6 +131,30 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   un `UPDATE` idéntico a #2 con `comando` distinto + motivo (la config no es
   hecho económico; su historial vive en auditoría — DATABASE_DESIGN §3).
 
+### G13 — Propiedad de Objetivo Financiero y Asignación (migración 001)
+- **Qué falta**: DDD Secciones H y J no definen quién es dueño de un objetivo o
+  una asignación, y el esquema original no tenía columna de propiedad.
+- **Decisión**: son **personales** — la migración `api/db/migrations/001_...sql`
+  agrega `usuario_id` a `objetivo_financiero` y `asignacion`. Consistente con el
+  planteamiento monousuario del Flujo 5 (UX_FLOWS). Reflejado también en
+  `init/01_schema.sql`.
+- **Para decidir**: ¿objetivos/asignaciones compartidos por hogar?
+
+### G14 — Fase 5c: políticas y simplificaciones
+- **"Completar objetivo"**: solo transiciona EN_PROGRESO → COMPLETADO. Si el
+  progreso baja después (LiberarReserva), el objetivo **no** vuelve a
+  EN_PROGRESO solo — el usuario lo hace con `CambiarEstadoObjetivoFinanciero`
+  (Principio 4: última palabra del usuario). Genera fila de auditoría propia
+  encadenada al comando que la disparó (DATABASE_DESIGN §11).
+- **"Consumir reserva"**: al asociar un evento financiero a una asignación
+  (`asignacionId` en RegistrarEventoFinanciero), **todas** sus reservas ACTIVAS
+  pasan a CONSUMIDA (modelo grueso — no se consume "hasta el monto del evento").
+  Se registra embebido en la entrada de RegistrarEventoFinanciero.
+- **Disponibilidad / valor libre**: `valor_vigente − Σ reservas ACTIVAS`,
+  calculado en vivo. La reserva no mueve `valor_vigente` (no es hecho económico).
+- **AnularEventoFinanciero** de un evento que consumió reservas: no las
+  "des-consume" (quedan CONSUMIDA). Pendiente.
+
 ### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
 - **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
   solo implementa INGRESO/GASTO/TRANSFERENCIA.

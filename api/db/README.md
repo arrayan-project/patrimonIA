@@ -17,15 +17,32 @@ host=localhost port=5432 db=patrimonia user=patrimonia password=patrimonia
 
 ## Esquema
 
-`init/01_schema.sql` es una copia de `Docs/schema.sql` (traducción mecánica de
-`DATABASE_DESIGN.docx`). Los scripts de `init/` los ejecuta el entrypoint de
-Postgres **solo en el primer arranque**, cuando el volumen de datos está vacío.
+`init/01_schema.sql` parte de `Docs/schema.sql` (traducción de
+`DATABASE_DESIGN.docx`) más los cambios de las migraciones ya aplicadas. Los
+scripts de `init/` los ejecuta el entrypoint de Postgres **solo en el primer
+arranque**, cuando el volumen de datos está vacío.
 
-Para reaplicar el esquema desde cero:
+Para reaplicar el esquema desde cero (DB nueva, ya trae todo):
 
 ```bash
 docker compose down -v && docker compose up -d
 ```
+
+### Migraciones (`migrations/`)
+
+Cambios incrementales para DBs **existentes**. Aplicar en orden:
+
+```bash
+for f in migrations/*.sql; do
+  docker exec -i patrimonia-postgres psql -U patrimonia -d patrimonia < "$f"
+done
+# luego regenerar el cliente Prisma:
+cd .. && npm run prisma:pull && npm run prisma:generate
+```
+
+- `001_objetivo_asignacion_propietario.sql` — columna `usuario_id` en
+  `objetivo_financiero` y `asignacion` (GAPS.md G13). Ya incluida en
+  `init/01_schema.sql`.
 
 ## Estado
 

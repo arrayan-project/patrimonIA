@@ -8,6 +8,7 @@ import {
 import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { ProgresoService } from '../planificacion/progreso.service.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
 import type { AnularEventoDto } from './dto/anular-evento.dto.js';
@@ -23,6 +24,7 @@ export class EventoFinancieroService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly progreso: ProgresoService,
   ) {}
 
   /**
@@ -41,9 +43,21 @@ export class EventoFinancieroService {
 
     const plan = await this.planImpactos(actorId, dto, moneda, monto);
 
+    // Política "Consumir reserva": si el evento se asocia a una asignación propia.
+    const asignacion = dto.asignacionId
+      ? await this.#asignacionPropia(dto.asignacionId, actorId)
+      : null;
+
     const { evento, impactos } = await this.prisma.$transaction(async (tx) => {
       const evento = await tx.evento_financiero.create({
-        data: { tipo: dto.tipo, monto, moneda, fecha, anulado: false },
+        data: {
+          tipo: dto.tipo,
+          monto,
+          moneda,
+          fecha,
+          anulado: false,
+          asignacion_id: asignacion?.id ?? null,
+        },
       });
 
       const impactos = [];
@@ -64,7 +78,19 @@ export class EventoFinancieroService {
         });
       }
 
-      await this.auditoria.registrar(tx, {
+      let reservasConsumidas: { id: string; monto: number }[] = [];
+      if (asignacion) {
+        const activas = await tx.reserva.findMany({
+          where: { asignacion_id: asignacion.id, estado: 'ACTIVA' },
+        });
+        reservasConsumidas = activas.map((r) => ({ id: r.id, monto: Number(r.monto) }));
+        await tx.reserva.updateMany({
+          where: { asignacion_id: asignacion.id, estado: 'ACTIVA' },
+          data: { estado: 'CONSUMIDA' },
+        });
+      }
+
+      const entradaId = await this.auditoria.registrar(tx, {
         comando: 'RegistrarEventoFinanciero',
         usuarioId: actorId,
         entidadTipo: 'EVENTO_FINANCIERO',
@@ -78,8 +104,20 @@ export class EventoFinancieroService {
             elemento_id: p.elemento.id,
             monto: p.monto.toNumber(),
           })),
+          ...(asignacion
+            ? { asignacion_id: asignacion.id, reservas_consumidas: reservasConsumidas }
+            : {}),
         },
       });
+
+      if (asignacion?.objetivo_financiero_id) {
+        await this.progreso.recalcularYCompletar(
+          tx,
+          asignacion.objetivo_financiero_id,
+          actorId,
+          entradaId,
+        );
+      }
 
       return { evento, impactos };
     });
@@ -352,6 +390,13 @@ export class EventoFinancieroService {
       throw new NotFoundException('Evento no encontrado');
     }
     return { evento, impactos };
+  }
+
+  async #asignacionPropia(asignacionId: string, actorId: string) {
+    const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
+    if (!a) throw new NotFoundException('Asignación no encontrada');
+    if (a.usuario_id !== actorId) throw new ForbiddenException('La asignación no es tuya');
+    return a;
   }
 
   /** ¿Hay una corrección no-anulada apuntando a este evento? */
