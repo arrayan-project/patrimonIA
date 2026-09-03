@@ -3,11 +3,13 @@ import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { useToast } from '../ui/Toast';
+import { Button, DateField, ErrorText, LinkButton, MoneyField, Paragraph, Screen, Title } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const elementoId = nav.route.params?.elementoId as string;
   const valorActual = nav.route.params?.valorActual as number | undefined;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
@@ -26,10 +28,11 @@ export function ValorizarScreen() {
         {
           elementoId,
           valorNuevo: Number(valorNuevo),
-          ...(fecha.trim() ? { fecha: fecha.trim() } : {}),
+          ...(fecha.trim() ? { fecha } : {}),
         },
         token,
       );
+      toast.mostrar('Valorización registrada');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -49,19 +52,8 @@ export function ValorizarScreen() {
         historial.
       </Paragraph>
 
-      <Field
-        label={`Nuevo valor (${moneda})`}
-        keyboardType="numeric"
-        value={valorNuevo}
-        onChangeText={setValorNuevo}
-        placeholder="0"
-      />
-      <Field
-        label="Fecha (opcional, YYYY-MM-DD)"
-        value={fecha}
-        onChangeText={setFecha}
-        placeholder="hoy"
-      />
+      <MoneyField label="Nuevo valor" value={valorNuevo} onChange={setValorNuevo} moneda={moneda} />
+      <DateField label="Fecha (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
 
       <ErrorText>{error}</ErrorText>
       <Button

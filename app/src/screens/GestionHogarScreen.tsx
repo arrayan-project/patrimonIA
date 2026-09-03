@@ -4,11 +4,14 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
 import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
 
 export function GestionHogarScreen() {
   const { token, usuario } = useSession();
   const { cerrarSesion } = useAuth();
+  const toast = useToast();
   const nav = useNav();
   const hogarId = nav.route.params?.hogarId as string;
 
@@ -70,9 +73,14 @@ export function GestionHogarScreen() {
             title="Guardar nombre"
             loading={busy}
             onPress={() =>
-              run(() =>
-                api.post('/comandos/ActualizarDatosHogar', { hogarId, nombre: nombre.trim() }, token),
-              )
+              run(async () => {
+                await api.post(
+                  '/comandos/ActualizarDatosHogar',
+                  { hogarId, nombre: nombre.trim() },
+                  token,
+                );
+                toast.mostrar('Hogar actualizado');
+              })
             }
           />
         </View>
@@ -131,22 +139,28 @@ export function GestionHogarScreen() {
         <Text style={styles.sectionTitle}>Salir</Text>
         <Button
           title="Salir del hogar"
-          variant="secondary"
+          variant="danger"
           loading={busy}
-          onPress={() => run(() => api.post('/comandos/SalirDeHogar', { hogarId }, token), true)}
+          onPress={async () => {
+            if (!(await confirmar('Salir del hogar', 'Dejarás de ver la consolidación y los objetivos del hogar. Tus elementos siguen siendo tuyos.', 'Salir')))
+              return;
+            await run(() => api.post('/comandos/SalirDeHogar', { hogarId }, token), true);
+          }}
         />
         {soyAdmin && (
           <Button
             title="Eliminar hogar"
-            variant="secondary"
+            variant="danger"
             loading={busy}
             disabled={motivo.trim().length < 3}
-            onPress={() =>
-              run(
+            onPress={async () => {
+              if (!(await confirmar('Eliminar hogar', 'Se elimina el hogar y todas sus membresías. Los elementos patrimoniales de cada miembro sobreviven.', 'Eliminar')))
+                return;
+              await run(
                 () => api.post('/comandos/EliminarHogar', { hogarId, motivo: motivo.trim() }, token),
                 true,
-              )
-            }
+              );
+            }}
           />
         )}
       </View>

@@ -3,11 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type UsuarioDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
 import { Button, colors, ErrorText, Field, LinkButton, Paragraph, Row, Screen, Title } from '../ui';
 
 export function PerfilScreen() {
   const { token } = useSession();
   const { cerrarSesion } = useAuth();
+  const toast = useToast();
   const nav = useNav();
 
   const [me, setMe] = useState<UsuarioDTO | null>(null);
@@ -31,6 +34,7 @@ export function PerfilScreen() {
     setError('');
     try {
       await api.post('/comandos/ActualizarDatosUsuario', { nombre: nombre.trim() }, token);
+      toast.mostrar('Perfil actualizado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -40,6 +44,14 @@ export function PerfilScreen() {
   };
 
   const desactivar = async () => {
+    if (
+      !(await confirmar(
+        'Desactivar mi cuenta',
+        'No podrás volver a iniciar sesión. Se cerrará la sesión ahora.',
+        'Desactivar',
+      ))
+    )
+      return;
     setBusy(true);
     setError('');
     try {
@@ -71,7 +83,7 @@ export function PerfilScreen() {
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         <Button
           title="Desactivar mi cuenta"
-          variant="secondary"
+          variant="danger"
           onPress={desactivar}
           loading={busy}
           disabled={motivo.trim().length < 3}

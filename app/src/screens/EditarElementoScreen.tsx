@@ -3,6 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
 import { Button, colors, ErrorText, Field, LinkButton, Paragraph, Screen, Segmented, Title } from '../ui';
 
 const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
@@ -10,6 +12,7 @@ const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 export function EditarElementoScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const elementoId = nav.route.params?.elementoId as string;
 
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
@@ -32,11 +35,12 @@ export function EditarElementoScreen() {
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error'));
   }, [elementoId, token]);
 
-  const run = async (fn: () => Promise<unknown>) => {
+  const run = async (fn: () => Promise<unknown>, aviso?: string) => {
     setBusy(true);
     setError('');
     try {
       await fn();
+      if (aviso) toast.mostrar(aviso);
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -108,35 +112,43 @@ export function EditarElementoScreen() {
           <>
             <Button
               title="Desactivar elemento"
-              variant="secondary"
+              variant="danger"
               loading={busy}
-              onPress={() =>
-                run(() =>
-                  api.post(
-                    '/comandos/DesactivarElementoPatrimonial',
-                    { elementoId, ...(motivo.trim() ? { motivo: motivo.trim() } : {}) },
-                    token,
-                  ),
-                )
-              }
+              onPress={async () => {
+                if (!(await confirmar('Desactivar elemento', 'Deja de contar en tu patrimonio. Se puede reactivar después.', 'Desactivar')))
+                  return;
+                await run(
+                  () =>
+                    api.post(
+                      '/comandos/DesactivarElementoPatrimonial',
+                      { elementoId, ...(motivo.trim() ? { motivo: motivo.trim() } : {}) },
+                      token,
+                    ),
+                  'Elemento desactivado',
+                );
+              }}
             />
             <Paragraph>
               Eliminar solo si el elemento nunca tuvo movimientos ni valorizaciones.
             </Paragraph>
             <Button
               title="Eliminar elemento"
-              variant="secondary"
+              variant="danger"
               loading={busy}
               disabled={motivo.trim().length < 3}
-              onPress={() =>
-                run(() =>
-                  api.post(
-                    '/comandos/EliminarElementoPatrimonial',
-                    { elementoId, justificacion: motivo.trim() },
-                    token,
-                  ),
-                )
-              }
+              onPress={async () => {
+                if (!(await confirmar('Eliminar elemento', 'Borrado definitivo. Solo si nunca tuvo movimientos ni valorizaciones.', 'Eliminar')))
+                  return;
+                await run(
+                  () =>
+                    api.post(
+                      '/comandos/EliminarElementoPatrimonial',
+                      { elementoId, justificacion: motivo.trim() },
+                      token,
+                    ),
+                  'Elemento eliminado',
+                );
+              }}
             />
           </>
         ) : (

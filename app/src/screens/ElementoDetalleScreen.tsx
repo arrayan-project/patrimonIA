@@ -12,11 +12,14 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
+import { Button, colors, ErrorText, Field, fechaLegible, LinkButton, Row, Screen, Title } from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const elementoId = nav.route.params?.elementoId as string | undefined;
 
   const [elemento, setElemento] = useState<ElementoPatrimonialDTO | null>(null);
@@ -61,6 +64,14 @@ export function ElementoDetalleScreen() {
   const esCredito = elemento?.categoriaFuncional === 'CREDITO';
 
   const saldar = async () => {
+    const ok = await confirmar(
+      esDeuda ? 'Condonar deuda' : 'Declarar incobrable',
+      esDeuda
+        ? 'El saldo pendiente se lleva a cero y tu patrimonio sube. No se puede deshacer.'
+        : 'El saldo pendiente se lleva a cero y tu patrimonio baja. No se puede deshacer.',
+      esDeuda ? 'Condonar' : 'Declarar incobrable',
+    );
+    if (!ok) return;
     setSaldando(true);
     setError('');
     try {
@@ -69,6 +80,7 @@ export function ElementoDetalleScreen() {
         { elementoId, motivo: saldarMotivo.trim() },
         token,
       );
+      toast.mostrar(esDeuda ? 'Deuda condonada' : 'Crédito incobrable');
       setSaldarMotivo('');
       await cargar();
     } catch (e) {
@@ -118,7 +130,7 @@ export function ElementoDetalleScreen() {
               <Field label="Motivo" value={saldarMotivo} onChangeText={setSaldarMotivo} autoCapitalize="sentences" />
               <Button
                 title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}
-                variant="secondary"
+                variant="danger"
                 onPress={saldar}
                 loading={saldando}
                 disabled={saldarMotivo.trim().length < 3}
@@ -148,7 +160,7 @@ export function ElementoDetalleScreen() {
               ? 'anulado'
               : ev.correccionDeId
                 ? 'corrección'
-                : ev.fecha;
+                : fechaLegible(ev.fecha);
             return (
               <Pressable
                 key={ev.id}
@@ -196,7 +208,7 @@ export function ElementoDetalleScreen() {
                 }
               >
                 <Text style={[styles.muted, v.anulada && styles.tachado]}>
-                  {v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : v.fecha}
+                  {v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
                 </Text>
                 <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
                   {money(v.valorNuevo, elemento.moneda)}
