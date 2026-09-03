@@ -119,8 +119,9 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 |---|------|------|-----------|
 | G1 | **Sistema de diseño** — hoy cada pantalla redefine `styles.card`, colores hardcodeados, sin escala tipográfica ni de espaciado. Tokens + componentes `Card`, `ListItem`, `Chip`, `Stat` | 🟡 | P2 |
 | G2 | **Iconografía** — cero iconos; categorías, tipos de movimiento y navegación se leen mucho mejor con iconos | 🟡 | P2 |
-| G3 | **Gráficos** — evolución patrimonial (línea), distribución del hogar (dona), avance de objetivos — hoy son tablas de números | 🟡 | P2 |
-| G4 | **Tarjeta de resumen** arriba del Dashboard (patrimonio neto · líquido · variación del mes) en vez de filas sueltas | 🟡 | P2 |
+| G3 | ✅ 15g — `react-native-svg`; `src/ui/charts.tsx` con `Dona` (distribución + leyenda) y `GraficoLinea` (serie temporal). Dona en presupuesto por rubro y en "Patrimonio del hogar"; línea en "Evolución de mi patrimonio" (nuevo `GET /usuarios/me/serie-patrimonial`). Falta: avance de objetivos como gráfico | 🟡 | P2 |
+| G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
+| G2 | ✅ 15g (parcial) — `@expo/vector-icons` (Ionicons) en la barra de tabs. Falta: iconos en `MenuLink`, categorías, listas | 🟡 | P2 |
 | G5 | **Modo oscuro** | 🟡 | P3 |
 | G6 | Contraste — `colors.muted` (#6b7280 sobre blanco) está al límite AA | 🟡 | P2 |
 
@@ -277,7 +278,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15d~~ ✅ | 🔴 C3 — `presupuesto_linea` (migr. 010, GAPS G26) + `DefinirLineasPresupuesto` + `GET /presupuestos/:id/lineas` + `desviacion.porRubro`/`sinClasificar`; app: pantalla `PresupuestoRubros` (editor) + sección "Por rubro" con barra de distribución apilada (`BarraDistribucion`) en el detalle. La dona SVG real queda para 15g. | 15c |
 | ~~15e~~ ✅ | D1 (tabs inferiores: Inicio·Movimientos·Objetivos·Hogar·Ajustes) + D2 (header nativo, sin `LinkButton "Volver"`) + D3 (jerarquía del dashboard: hubs `MovimientosScreen`/`HogarScreen`, `MenuLink`/`GroupLabel`). `@react-navigation/bottom-tabs`. Faltan de D: D4 (FAB), D5 (deep-link notificación), D6 (breadcrumb). | — |
 | ~~15f~~ ✅ | F1 (`src/labels.ts` — `etiqueta()`/`humanizar()`, `Segmented` autoformatea, ~12 pantallas) + F2 parcial (`fechaRelativa()` en notificaciones). Pendiente: F3 (montos/deudas contables), G1 (design tokens completos), G2 (iconos reales — necesita `@expo/vector-icons`) → 15g. | 15e |
-| **15g** | G3–G4 (gráficos, tarjeta resumen) + J1–J2 (onboarding) | 15c, 15d |
+| ~~15g~~ ✅ | G3 (`react-native-svg` + `src/ui/charts.tsx`: `Dona`, `GraficoLinea`; aplicados en presupuesto por rubro, patrimonio del hogar, evolución + `GET /usuarios/me/serie-patrimonial`) + G4 (tarjeta resumen del Dashboard: neto + líquido + variación 30d) + G2 parcial (Ionicons en las tabs). Pendiente: F3 (montos contables), G1 (tokens completos), J1–J2 (onboarding), gráfico de avance de objetivos → 15h/más adelante. | 15c, 15d |
 | **15h** | 🔴 C4 (plantillas), C5 (etiquetas), C6 (agrupaciones) + B7, B8, H1–H5 | 15c |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las

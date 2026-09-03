@@ -150,8 +150,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     traduce los enums del dominio (`LIQUIDEZ` → "Liquidez", `EN_PROGRESO` →
     "En progreso", `cuenta_corriente` → "Cuenta corriente"…); `Segmented`
     formatea sus opciones; `fechaRelativa()` en notificaciones.
-  - [ ] 15g+ — design tokens + iconos, gráficos SVG, montos contables,
-    plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
+  - [x] **15g** — gráficos: `react-native-svg` + `src/ui/charts.tsx` (`Dona`,
+    `GraficoLinea`) en presupuesto por rubro, "Patrimonio del hogar" y
+    "Evolución de mi patrimonio" (`GET /usuarios/me/serie-patrimonial`);
+    tarjeta de resumen del Dashboard (neto · líquido · variación 30 días);
+    iconos de tabs con `@expo/vector-icons`.
+  - [ ] 15h+ — plantillas / etiquetas / agrupaciones (`GAPS.md` G24), montos
+    contables, design tokens completos, onboarding.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
@@ -161,7 +166,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 90 e2e
+cd api && npm run test:all   # 20 unitarios + 92 e2e
 cd app && npx tsc --noEmit
 ```
 
