@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type PresupuestoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -7,7 +7,9 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
+  Card,
   colors,
   DateField,
   EmptyState,
@@ -91,19 +93,23 @@ export function PresupuestosScreen() {
     <Screen onRefresh={cargar}>
       <Title>Presupuestos</Title>
 
+      <Ayuda>
+        Un presupuesto fija cuánto esperas ingresar y gastar en un período y lo
+        compara con lo real (en total y, si quieres, por rubro).
+      </Ayuda>
+
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : lista.length === 0 ? (
         <EmptyState
           icon="pie-chart-outline"
           titulo="Todavía no tienes presupuestos"
-          descripcion="Un presupuesto compara lo que esperas ingresar/gastar con lo real, y opcionalmente por rubro. Crea uno abajo."
+          descripcion="Crea uno abajo."
         />
       ) : (
         lista.map((p) => (
-          <Pressable
+          <Card
             key={p.id}
-            style={styles.card}
             onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: p.id })}
           >
             <View style={styles.head}>
@@ -122,7 +128,7 @@ export function PresupuestosScreen() {
               Ingresos {money(p.ingresosEsperados ?? 0, 'CLP')} · Gastos{' '}
               {money(p.gastosEsperados ?? 0, 'CLP')}
             </Text>
-          </Pressable>
+          </Card>
         ))
       )}
 
@@ -163,7 +169,7 @@ export function PresupuestosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

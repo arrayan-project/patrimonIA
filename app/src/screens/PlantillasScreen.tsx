@@ -15,6 +15,7 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   colors,
   EmptyState,
@@ -180,10 +181,11 @@ export function PlantillasScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>Plantillas de movimiento</Title>
-      <Text style={styles.muted}>
-        Moldes para registrar el gasto o ingreso de siempre en dos toques. Aparecen
-        arriba en "Registrar movimiento".
-      </Text>
+      <Ayuda>
+        Moldes para registrar el gasto o ingreso de siempre en dos toques.
+        Aparecen arriba en "Registrar movimiento". A diferencia de un movimiento
+        programado, una plantilla no tiene fecha.
+      </Ayuda>
 
       {modo === null &&
         lista.map((p) => (
@@ -326,7 +328,7 @@ export function PlantillasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   group: { gap: 8 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text },

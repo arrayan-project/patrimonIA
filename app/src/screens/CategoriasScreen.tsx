@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Title } from '../ui';
+import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Title } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -98,10 +98,11 @@ export function CategoriasScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>Categorías de movimiento</Title>
-      <Text style={styles.muted}>
-        Vocabulario del hogar para clasificar ingresos y gastos. La lista y el orden
-        los ven todos los miembros.
-      </Text>
+      <Ayuda>
+        Vocabulario del hogar para clasificar ingresos y gastos (Mercado,
+        Servicios, Sueldo…). La lista y el orden los ven todos los miembros, y
+        son la base del presupuesto por rubro.
+      </Ayuda>
 
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
@@ -161,7 +162,7 @@ export function CategoriasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   flecha: { fontSize: 16, color: colors.primary },

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -12,7 +12,9 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
+  Card,
   colors,
   DateField,
   EmptyState,
@@ -94,19 +96,24 @@ export function MovimientosProgramadosScreen() {
     <Screen onRefresh={cargar}>
       <Title>Movimientos programados</Title>
 
+      <Ayuda>
+        Un ingreso futuro con fecha (un sueldo, un arriendo por cobrar). Cuando
+        llega la fecha lo "materializas" y recién ahí entra a tu cuenta como un
+        movimiento real.
+      </Ayuda>
+
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : lista.length === 0 ? (
         <EmptyState
           icon="calendar-outline"
           titulo="No tienes movimientos programados"
-          descripcion="Un movimiento programado es un ingreso futuro con fecha (un sueldo, un arriendo por cobrar). Al llegar la fecha lo materializas."
+          descripcion="Créalo abajo."
         />
       ) : (
         lista.map((m) => (
-          <Pressable
+          <Card
             key={m.id}
-            style={styles.card}
             onPress={() => nav.go('MovimientoProgramadoDetalle', { movimientoId: m.id })}
           >
             <View style={styles.head}>
@@ -115,7 +122,7 @@ export function MovimientosProgramadosScreen() {
             </View>
             <Text style={styles.muted}>Programado para {fechaLegible(m.fechaProgramada)}</Text>
             {m.observaciones ? <Text style={styles.muted}>{m.observaciones}</Text> : null}
-          </Pressable>
+          </Card>
         ))
       )}
 
@@ -147,7 +154,7 @@ export function MovimientosProgramadosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

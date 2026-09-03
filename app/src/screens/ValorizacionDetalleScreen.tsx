@@ -141,7 +141,7 @@ export function ValorizacionDetalleScreen() {
 
 const styles = StyleSheet.create({
   valor: { fontSize: 20, fontWeight: '800', color: colors.text },
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
 });

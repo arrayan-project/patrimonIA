@@ -173,6 +173,6 @@ export function MovimientoProgramadoDetalleScreen() {
 
 const styles = StyleSheet.create({
   monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
 });

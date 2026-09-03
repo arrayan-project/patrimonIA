@@ -12,10 +12,12 @@ import {
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { Ionicons } from '@expo/vector-icons';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
 import {
   Button,
+  colorCategoria,
   colors,
   EmptyState,
   ErrorText,
@@ -225,11 +227,12 @@ export function DashboardScreen() {
               style={styles.elemento}
               onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
             >
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.elementoNombre}>{el.nombre}</Text>
                 <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
               </View>
               <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
             </Pressable>
           );
           if (elementos.length === 0) {
@@ -245,20 +248,24 @@ export function DashboardScreen() {
           }
           const agrupados = new Set(agrupaciones.flatMap((a) => a.elementoIds));
           const sinAgrupar = elementos.filter((el) => !agrupados.has(el.id));
+          const hayGrupos = agrupaciones.some((a) => a.elementoIds.length > 0);
           return (
             <>
-              {agrupaciones.map((a) => {
+              {agrupaciones.map((a, i) => {
                 const els = elementos.filter((el) => a.elementoIds.includes(el.id));
                 if (els.length === 0) return null;
                 return (
                   <View key={a.id}>
-                    <Text style={styles.grupoTitulo}>{a.nombre}</Text>
+                    <View style={styles.grupoHead}>
+                      <View style={[styles.grupoPunto, { backgroundColor: colorCategoria(a.color, i) }]} />
+                      <Text style={styles.grupoTitulo}>{a.nombre}</Text>
+                    </View>
                     {els.map(fila)}
                   </View>
                 );
               })}
-              {sinAgrupar.length > 0 && agrupaciones.some((a) => a.elementoIds.length > 0) && (
-                <Text style={styles.grupoTitulo}>Sin agrupar</Text>
+              {sinAgrupar.length > 0 && hayGrupos && (
+                <Text style={[styles.grupoTitulo, { marginLeft: 14 }]}>Sin agrupar</Text>
               )}
               {sinAgrupar.map(fila)}
             </>
@@ -289,9 +296,10 @@ export function DashboardScreen() {
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     gap: 8,
   },
@@ -300,20 +308,21 @@ const styles = StyleSheet.create({
   resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   resumenNeto: { fontSize: 24, fontWeight: '800', color: colors.text },
   resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
+  grupoHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  grupoPunto: { width: 8, height: 8, borderRadius: 4 },
   grupoTitulo: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.muted,
     textTransform: 'uppercase',
-    marginTop: 10,
   },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   pasoTexto: { fontSize: 14, color: colors.text },
   elemento: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: colors.faint,
     paddingVertical: 10,

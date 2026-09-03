@@ -203,6 +203,20 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   Ajustes queda solo con lo personal.
 - `charts.tsx` gana `GraficoBarras`.
 
+### Fase 17 — Sistema visual + ayuda contextual
+
+- **Tokens**: `colors.fondo` (gris suave para la página), `colors.info` (tinte
+  de ayuda), `sombra` (sombra sutil compartida). El `Screen` va sobre
+  `colors.fondo` y las tarjetas (fondo blanco, `borderRadius: 14`) resaltan
+  (sweep de `styles.card` en 26 pantallas).
+- **`Card`** (`ui/index.tsx`): tarjeta blanca; con `onPress` es tocable y
+  muestra un chevron "ver más"; `franja` pinta una barra de color a la
+  izquierda. Usada en las listas de Objetivos / Presupuestos / Mov. programados.
+- **`Ayuda`**: caja con ícono de info + explicación breve sobre fondo azul
+  tenue; reemplazó los párrafos explicativos en 8 pantallas.
+- Chevron en las filas tocables (Inicio, detalle de elemento, Movimientos);
+  puntos de color por agrupación en la lista del Inicio (`colorCategoria`).
+
 ### Decisiones aún provisionales
 
 - "Registrar movimiento" solo lista tus propios elementos como destino; para

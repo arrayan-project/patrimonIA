@@ -108,7 +108,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
 | F3 | ⚠️ 15k parcial — componente `MoneyText` (rojo para negativos, opción `contable` con paréntesis); aplicado al valor destacado del detalle de elemento. Falta extenderlo a más listas/pantallas | 🟡 | P2 |
 | F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
-| F5 | **Ayuda contextual** compacta en vez de `Paragraph` largos que explican el modelo de dominio en cada form | 🟡 | P2 |
+| F5 | ✅ 17 — componente `Ayuda` (ícono info + texto sobre fondo azul tenue); reemplazó los `Paragraph`/`Text` explicativos en Objetivos, Asignación, Presupuestos, Categorías, Etiquetas, Agrupaciones, Plantillas, Movimientos programados | 🟡 | P2 |
 | F6 | Infra de i18n (aunque sea es-CL única al inicio) para no tener strings hardcodeados por toda la app | 🟡 | P3 |
 
 ---
@@ -117,7 +117,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| G1 | **Sistema de diseño** — hoy cada pantalla redefine `styles.card`, colores hardcodeados, sin escala tipográfica ni de espaciado. Tokens + componentes `Card`, `ListItem`, `Chip`, `Stat` | 🟡 | P2 |
+| G1 | ⚠️ 17 parcial — tokens `colors.fondo` / `colors.info` + `sombra`; el `Screen` va sobre gris suave y las tarjetas blancas resaltan (sweep de `styles.card` en 26 pantallas: `backgroundColor` + `borderRadius: 14`); componentes `Card` (con chevron "ver más" y `franja` de color) y `Chip` ya existen. Falta: escala tipográfica/espaciado, migrar todos los `styles.card` sueltos a `<Card>`, `ListItem`/`Stat` | 🟡 | P2 |
 | G2 | **Iconografía** — cero iconos; categorías, tipos de movimiento y navegación se leen mucho mejor con iconos | 🟡 | P2 |
 | G3 | ✅ 15g — `react-native-svg`; `src/ui/charts.tsx` con `Dona` (distribución + leyenda) y `GraficoLinea` (serie temporal). Dona en presupuesto por rubro y en "Patrimonio del hogar"; línea en "Evolución de mi patrimonio" (nuevo `GET /usuarios/me/serie-patrimonial`). Falta: avance de objetivos como gráfico | 🟡 | P2 |
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
@@ -284,7 +284,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15j~~ ✅ | 🔴 C6 — `agrupacion_elemento` + `agrupacion_miembro` (migr. 013, GAPS G23, una carpeta por elemento); comandos `CrearAgrupacion`/`ActualizarAgrupacion`/`EliminarAgrupacion`/`DefinirElementosAgrupacion`; `GET /usuarios/me/agrupaciones`. App: `AgrupacionesScreen` (Ajustes → Cuenta), la lista "Elementos" del Dashboard se agrupa por carpeta con subtítulos + "Sin agrupar". **Bloque C del backlog cerrado.** | 15i |
 | ~~15k~~ ✅ | Controles de entrada: componente `Select` (hoja modal + "Otro…") → B4 (categoría funcional), B5 (`tipo` de elemento con presets), B6 (moneda ISO); B9 (`KeyboardAvoidingView` en `Screen`); F3 parcial (`MoneyText` rojo/contable en el detalle de elemento). | — |
 | ~~15l~~ ✅ | Pulido: iconos en `MenuLink` (G2, todos los hubs); `EmptyState` en las 8 listas principales (E4); deep-link desde notificaciones (D5); card "Primeros pasos" en el Dashboard (J1). | — |
-| ~~16~~ ✅ | **Reportes financieros + reorg de tabs** (GAPS G27): backend `resumen-financiero` / `resumen-anual` (agrega los `evento_financiero` existentes, alcance mios/hogar); app: tab **Movimientos** = vista mensual/anual (‹ mes/año ›, dona de gastos por rubro, lista, barras anuales, toggle Míos/Hogar), nueva tab **Planificar**, Dashboard sin miembros/invitar, categorías del hogar → tab Hogar. `GraficoBarras` en `charts.tsx`. Pendiente suelto: B7, B8, H1–H5, F3 completo, G1 (design tokens), J2, E5–E7, D4 (FAB), D6. | 15 |
+| ~~16~~ ✅ | **Reportes financieros + reorg de tabs** (GAPS G27): backend `resumen-financiero` / `resumen-anual` (agrega los `evento_financiero` existentes, alcance mios/hogar); app: tab **Movimientos** = vista mensual/anual (‹ mes/año ›, dona de gastos por rubro, lista, barras anuales, toggle Míos/Hogar), nueva tab **Planificar**, Dashboard sin miembros/invitar, categorías del hogar → tab Hogar. `GraficoBarras` en `charts.tsx`. | 15 |
+| ~~17~~ ✅ | **Sistema visual + ayuda contextual**: `colors.fondo` (página gris suave) + `colors.info` + `sombra`; sweep de `styles.card` (fondo blanco + `borderRadius: 14`) en 26 pantallas → las tarjetas resaltan; componente `Card` (chevron "ver más" + `franja` de color) usado en las listas de Objetivos/Presupuestos/Mov. programados; chevron en las filas tocables (Inicio, detalle de elemento, Movimientos); puntos de color por agrupación en el Inicio; componente `Ayuda` (F5) en 8 pantallas. Pendiente suelto: B7, B8, H1–H5, F3 completo, G1 (tipografía/espaciado, `<Card>` en todos lados), J2, E5–E7, D4 (FAB), D6. | 16 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

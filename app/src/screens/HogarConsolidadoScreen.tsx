@@ -132,7 +132,7 @@ export function HogarConsolidadoScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 6 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 6 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
   muted: { fontSize: 13, color: colors.muted },

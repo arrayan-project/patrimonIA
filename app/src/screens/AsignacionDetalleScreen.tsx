@@ -13,6 +13,7 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   colors,
   ErrorText,
@@ -83,6 +84,12 @@ export function AsignacionDetalleScreen() {
     <Screen onRefresh={cargar}>
       <Title>{asg.nombre}</Title>
       <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, 'CLP')}</Text>
+
+      <Ayuda>
+        Una asignación divide un objetivo en partes. Cada reserva "aparta" un
+        monto de tus cuentas hacia esa parte — el dinero no se mueve, solo queda
+        marcado como comprometido para esta meta.
+      </Ayuda>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Reservas activas</Text>
@@ -179,7 +186,7 @@ export function AsignacionDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 10 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   reserva: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   muted: { fontSize: 13, color: colors.muted },

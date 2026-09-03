@@ -191,6 +191,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     plantillas + evolución). El Dashboard suelta el bloque de miembros/invitar
     (→ Gestionar hogar); las categorías del hogar pasan de Ajustes a la tab Hogar.
 
+- [x] **Fase 17 — Sistema visual + ayuda contextual** (solo app):
+  - [x] Página sobre gris suave (`colors.fondo`) con tarjetas blancas que
+    resaltan; componente `Card` (con chevron "ver más" y franja de color) y
+    `Ayuda` (caja de explicación breve). Chevron en las filas tocables, puntos
+    de color por agrupación en el Inicio, cajas de ayuda en 8 pantallas
+    (objetivos, asignaciones, presupuestos, etiquetas…).
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
 La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y

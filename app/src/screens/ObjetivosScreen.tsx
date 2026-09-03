@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -7,7 +7,9 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
+  Card,
   colors,
   EmptyState,
   ErrorText,
@@ -64,21 +66,23 @@ export function ObjetivosScreen() {
     <Screen onRefresh={cargar}>
       <Title>Objetivos financieros</Title>
 
+      <Ayuda>
+        Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje).
+        Adentro creas asignaciones y les guardas reservas de dinero para ir
+        viendo el avance.
+      </Ayuda>
+
       {objetivos === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : objetivos.length === 0 ? (
         <EmptyState
           icon="flag-outline"
           titulo="Aún no tienes objetivos"
-          descripcion="Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje). Créalo abajo y luego asígnale reservas."
+          descripcion="Créalo abajo y luego asígnale reservas."
         />
       ) : (
         objetivos.map((o) => (
-          <Pressable
-            key={o.id}
-            style={styles.card}
-            onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-          >
+          <Card key={o.id} onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}>
             <View style={styles.head}>
               <Text style={styles.nombre}>{o.nombre}</Text>
               <Text style={styles.estado}>{etiqueta(o.estado)}</Text>
@@ -87,7 +91,7 @@ export function ObjetivosScreen() {
             <Text style={styles.muted}>
               {money(o.progreso, 'CLP')} de {money(o.montoObjetivo, 'CLP')} · {o.progresoPorcentaje}%
             </Text>
-          </Pressable>
+          </Card>
         ))
       )}
 
@@ -104,7 +108,7 @@ export function ObjetivosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

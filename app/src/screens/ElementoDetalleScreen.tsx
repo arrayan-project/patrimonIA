@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -187,16 +188,19 @@ export function ElementoDetalleScreen() {
                     {ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
                   </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.movMonto,
-                    ev.anulado
-                      ? styles.tachado
-                      : { color: (impacto?.monto ?? 0) < 0 ? colors.danger : colors.primary },
-                  ]}
-                >
-                  {money(impacto?.monto ?? ev.monto, ev.moneda)}
-                </Text>
+                <View style={styles.movDer}>
+                  <Text
+                    style={[
+                      styles.movMonto,
+                      ev.anulado
+                        ? styles.tachado
+                        : { color: (impacto?.monto ?? 0) < 0 ? colors.danger : colors.primary },
+                    ]}
+                  >
+                    {money(impacto?.monto ?? ev.monto, ev.moneda)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+                </View>
               </Pressable>
             );
           })
@@ -224,9 +228,12 @@ export function ElementoDetalleScreen() {
                 <Text style={[styles.muted, v.anulada && styles.tachado]}>
                   {v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
                 </Text>
-                <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
-                  {money(v.valorNuevo, elemento.moneda)}
-                </Text>
+                <View style={styles.movDer}>
+                  <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
+                    {money(v.valorNuevo, elemento.moneda)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+                </View>
               </Pressable>
             ))
           )}
@@ -262,9 +269,12 @@ export function ElementoDetalleScreen() {
               <Text style={[styles.muted, a.anulado && styles.tachado]}>
                 {a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
               </Text>
-              <Text style={[styles.movMonto, a.anulado && styles.tachado]}>
-                {money(a.monto, elemento.moneda)}
-              </Text>
+              <View style={styles.movDer}>
+                <Text style={[styles.movMonto, a.anulado && styles.tachado]}>
+                  {money(a.monto, elemento.moneda)}
+                </Text>
+                <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+              </View>
             </Pressable>
           ))
         )}
@@ -295,7 +305,7 @@ export function ElementoDetalleScreen() {
 
 const styles = StyleSheet.create({
   valor: { fontSize: 28, fontWeight: '800' },
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 4 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 4 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
   muted: { fontSize: 13, color: colors.muted },
   mov: {
@@ -308,5 +318,6 @@ const styles = StyleSheet.create({
   },
   movTipo: { fontSize: 14, fontWeight: '600', color: colors.text },
   movMonto: { fontSize: 15, fontWeight: '700' },
+  movDer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   tachado: { textDecorationLine: 'line-through', color: colors.muted },
 });

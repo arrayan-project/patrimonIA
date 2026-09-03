@@ -7,6 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   Chip,
   colors,
@@ -97,10 +98,11 @@ export function EtiquetasScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>Etiquetas</Title>
-      <Text style={styles.muted}>
+      <Ayuda>
         Marcas personales y transversales para tus movimientos (#reembolsable,
-        #viaje-2026). Un movimiento puede llevar varias. No afectan el presupuesto.
-      </Text>
+        #viaje-2026). Un movimiento puede llevar varias. A diferencia de la
+        categoría, no entran en el presupuesto.
+      </Ayuda>
 
       {lista.map((e) => (
         <View key={e.id} style={styles.card}>
@@ -165,7 +167,7 @@ export function EtiquetasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },

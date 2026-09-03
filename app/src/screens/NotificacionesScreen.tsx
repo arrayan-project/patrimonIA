@@ -102,8 +102,8 @@ export function NotificacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 4 },
-  noLeida: { borderColor: colors.primary, backgroundColor: colors.faint },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 4 },
+  noLeida: { borderColor: colors.primary, backgroundColor: colors.info },
   titulo: { fontSize: 15, fontWeight: '700', color: colors.text },
   cuerpo: { fontSize: 14, color: colors.text },
   muted: { fontSize: 12, color: colors.muted },

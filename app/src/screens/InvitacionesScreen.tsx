@@ -86,9 +86,10 @@ export function InvitacionesScreen() {
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 16,
     gap: 12,
   },

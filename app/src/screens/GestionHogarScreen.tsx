@@ -203,7 +203,7 @@ export function GestionHogarScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 10 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   miembro: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },

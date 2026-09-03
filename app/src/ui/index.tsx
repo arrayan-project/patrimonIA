@@ -62,15 +62,30 @@ function agruparMiles(entero: string): string {
 }
 
 export const colors = {
+  /** Fondo de la página — gris muy suave, para que las tarjetas blancas resalten. */
+  fondo: '#f3f4f6',
+  /** Fondo de tarjetas, inputs y modales. */
   bg: '#ffffff',
   text: '#111827',
   muted: '#6b7280',
-  border: '#d1d5db',
+  border: '#e5e7eb',
   primary: '#1d4ed8',
   primaryText: '#ffffff',
   danger: '#b91c1c',
-  faint: '#f3f4f6',
+  /** Relleno tenue para chips, íconos, barras de fondo. */
+  faint: '#eef1f5',
+  /** Tinte para cajas de ayuda / información. */
+  info: '#eff6ff',
 };
+
+/** Sombra sutil compartida por las tarjetas (iOS + Android). */
+export const sombra = {
+  shadowColor: '#0f172a',
+  shadowOpacity: 0.06,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 2,
+} as const;
 
 /**
  * Contenedor scrollable de cada pantalla. Si se pasa `onRefresh`, habilita
@@ -127,6 +142,42 @@ export function Screen({
 
 export function Title({ children }: { children: ReactNode }) {
   return <Text style={styles.title}>{children}</Text>;
+}
+
+/**
+ * Tarjeta blanca con sombra sutil. Si se pasa `onPress`, es tocable y muestra
+ * un chevron "ver más" a la derecha. `franja` pinta una barra de color a la
+ * izquierda (p. ej. para diferenciar agrupaciones).
+ */
+export function Card({
+  children,
+  onPress,
+  franja,
+  style,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  franja?: string;
+  style?: object;
+}) {
+  const contenido = (
+    <>
+      {franja ? <View style={[styles.cardFranja, { backgroundColor: franja }]} /> : null}
+      <View style={{ flex: 1, gap: 8 }}>{children}</View>
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={colors.muted} /> : null}
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, styles.cardRow, pressed && styles.cardPressed, style]}
+      >
+        {contenido}
+      </Pressable>
+    );
+  }
+  return <View style={[styles.card, styles.cardRow, style]}>{contenido}</View>;
 }
 
 export function Paragraph({ children }: { children: ReactNode }) {
@@ -600,6 +651,20 @@ export function GroupLabel({ children }: { children: ReactNode }) {
   return <Text style={styles.groupLabel}>{children}</Text>;
 }
 
+/**
+ * Caja de ayuda contextual: un ícono de info + una explicación breve, sobre
+ * fondo azul muy tenue. Para conceptos que la gente no maneja (objetivos,
+ * asignaciones, reservas…). Discreta, no una tarjeta.
+ */
+export function Ayuda({ children }: { children: ReactNode }) {
+  return (
+    <View style={styles.ayuda}>
+      <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+      <Text style={styles.ayudaTexto}>{children}</Text>
+    </View>
+  );
+}
+
 /** Estado vacío con ícono, texto y (opcional) una acción para empezar. */
 export function EmptyState({
   icon,
@@ -629,8 +694,25 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  screenContent: { paddingHorizontal: 24, gap: 16, flexGrow: 1 },
+  screen: { flex: 1, backgroundColor: colors.fondo },
+  screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
+  card: {
+    backgroundColor: colors.bg,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    ...sombra,
+  },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 10, overflow: 'hidden' },
+  cardPressed: { opacity: 0.7 },
+  cardFranja: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
   paragraph: { fontSize: 15, color: colors.muted, lineHeight: 22 },
   field: { gap: 6 },
@@ -778,6 +860,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: 'uppercase',
   },
+  ayuda: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+    backgroundColor: colors.info,
+    borderRadius: 10,
+    padding: 12,
+  },
+  ayudaTexto: { flex: 1, fontSize: 13, color: colors.text, lineHeight: 19 },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
   emptyTitulo: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
   emptyDesc: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },

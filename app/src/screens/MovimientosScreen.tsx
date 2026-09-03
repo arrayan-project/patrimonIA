@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -217,6 +218,7 @@ export function MovimientosScreen() {
                     {m.tipo === 'GASTO' ? '−' : '+'}
                     {money(m.monto, m.moneda)}
                   </Text>
+                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
                 </Pressable>
               ))
             )}
@@ -278,7 +280,7 @@ function Row({ label, valor, moneda }: { label: string; valor: number; moneda: s
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
   flecha: { fontSize: 30, color: colors.primary, paddingHorizontal: 8 },
   periodo: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' },

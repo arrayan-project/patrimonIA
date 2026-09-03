@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
+import { Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
 
 export function AgrupacionesScreen() {
   const { token } = useSession();
@@ -95,10 +95,11 @@ export function AgrupacionesScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>Agrupaciones de elementos</Title>
-      <Text style={styles.muted}>
-        Carpetas para ordenar tus cuentas y activos en el Inicio (p. ej. "Inversiones"
-        con tu APV y fondos). No afectan tu patrimonio ni la consolidación.
-      </Text>
+      <Ayuda>
+        Carpetas para ordenar tus cuentas y activos en el Inicio (p. ej.
+        "Inversiones" con tu APV y fondos). No afectan tu patrimonio ni la
+        consolidación — solo la vista.
+      </Ayuda>
 
       {lista.map((a) => (
         <View key={a.id} style={styles.card}>
@@ -170,7 +171,7 @@ export function AgrupacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
   muted: { fontSize: 13, color: colors.muted },
