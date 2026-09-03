@@ -102,8 +102,11 @@ export function Screen({
   fab?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  // Si hay header nativo de navegación, él cubre el área segura superior.
-  const conHeader = useContext(HeaderHeightContext) != null;
+  // Si hay header nativo de navegación (altura > 0), él cubre el área segura
+  // superior. Ojo: el native-stack expone el contexto con valor 0 aun cuando
+  // el header está oculto (pantallas de tab) — por eso el > 0.
+  const alturaHeader = useContext(HeaderHeightContext);
+  const conHeader = typeof alturaHeader === 'number' && alturaHeader > 0;
   const [refrescando, setRefrescando] = useState(false);
 
   const alRefrescar = async () => {
