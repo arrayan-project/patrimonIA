@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { api, ApiError, type VariacionPatrimonialDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type SeriePatrimonialDTO,
+  type VariacionPatrimonialDTO,
+} from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title } from '../ui';
+import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
   const { token } = useSession();
@@ -12,6 +18,7 @@ export function EvolucionPatrimonioScreen() {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [data, setData] = useState<VariacionPatrimonialDTO | null>(null);
+  const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -23,9 +30,12 @@ export function EvolucionPatrimonioScreen() {
     try {
       const q = new URLSearchParams({ desde: desde.trim() });
       if (fechaOk(hasta)) q.set('hasta', hasta.trim());
-      setData(
-        await api.get<VariacionPatrimonialDTO>(`/usuarios/me/variacion-patrimonial?${q}`, token),
-      );
+      const [v, s] = await Promise.all([
+        api.get<VariacionPatrimonialDTO>(`/usuarios/me/variacion-patrimonial?${q}`, token),
+        api.get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?${q}&pasos=12`, token),
+      ]);
+      setData(v);
+      setSerie(s);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
@@ -48,6 +58,25 @@ export function EvolucionPatrimonioScreen() {
       <ErrorText>{error}</ErrorText>
 
       {busy && <ActivityIndicator color={colors.primary} />}
+
+      {serie && serie.puntos.length >= 2 && (
+        <View style={styles.card}>
+          {[...new Set(serie.puntos.flatMap((p) => p.porMoneda.map((m) => m.moneda)))].map(
+            (moneda) => (
+              <View key={moneda} style={{ gap: 6 }}>
+                <Text style={styles.sectionTitle}>Evolución ({moneda})</Text>
+                <GraficoLinea
+                  puntos={serie.puntos.map((p) => ({
+                    etiqueta: fechaLegible(p.fecha),
+                    valor: p.porMoneda.find((m) => m.moneda === moneda)?.patrimonio ?? 0,
+                  }))}
+                  formatoValor={(n) => money(n, moneda)}
+                />
+              </View>
+            ),
+          )}
+        </View>
+      )}
 
       {data && (
         <View style={styles.card}>

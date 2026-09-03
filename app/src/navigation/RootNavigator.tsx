@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { colors } from '../ui';
@@ -52,11 +53,12 @@ function Cargando() {
   );
 }
 
-const icono = (glifo: string) => {
-  const Icono = ({ color }: { color: string }) => (
-    <Text style={{ fontSize: 20, color, opacity: color === colors.primary ? 1 : 0.7 }}>{glifo}</Text>
+type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
+const icono = (nombre: NombreIcono) => {
+  const Icono = ({ color, size }: { color: string; size: number }) => (
+    <Ionicons name={nombre} color={color} size={size} />
   );
-  Icono.displayName = `TabIcon(${glifo})`;
+  Icono.displayName = `TabIcon(${nombre})`;
   return Icono;
 };
 
@@ -74,27 +76,27 @@ function Tabs() {
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ tabBarLabel: 'Inicio', tabBarIcon: icono('🏠') }}
+        options={{ tabBarLabel: 'Inicio', tabBarIcon: icono('home-outline') }}
       />
       <Tab.Screen
         name="Movimientos"
         component={MovimientosScreen}
-        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('💸') }}
+        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('swap-horizontal') }}
       />
       <Tab.Screen
         name="Objetivos"
         component={ObjetivosScreen}
-        options={{ tabBarLabel: 'Objetivos', tabBarIcon: icono('🎯') }}
+        options={{ tabBarLabel: 'Objetivos', tabBarIcon: icono('flag-outline') }}
       />
       <Tab.Screen
         name="Hogar"
         component={HogarScreen}
-        options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('🏡') }}
+        options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('people-outline') }}
       />
       <Tab.Screen
         name="Ajustes"
         component={AjustesScreen}
-        options={{ tabBarLabel: 'Ajustes', tabBarIcon: icono('⚙️') }}
+        options={{ tabBarLabel: 'Ajustes', tabBarIcon: icono('settings-outline') }}
       />
     </Tab.Navigator>
   );

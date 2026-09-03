@@ -10,7 +10,8 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { colors, ErrorText, etiqueta, ProgressBar, Row, Screen, Title } from '../ui';
+import { colorCategoria, colors, ErrorText, etiqueta, ProgressBar, Row, Screen, Title } from '../ui';
+import { Dona } from '../ui/charts';
 
 export function HogarConsolidadoScreen() {
   const { token } = useSession();
@@ -81,13 +82,15 @@ export function HogarConsolidadoScreen() {
             {metricas && metricas.distribucionPorActivo.length > 0 && (
               <>
                 <Text style={styles.subTitle}>Distribución de activos</Text>
-                {metricas.distribucionPorActivo.map((d) => (
-                  <Row
-                    key={d.categoria}
-                    left={etiqueta(d.categoria)}
-                    right={`${money(d.valor, pm.moneda)} · ${d.porcentaje}%`}
-                  />
-                ))}
+                <Dona
+                  segmentos={metricas.distribucionPorActivo.map((d, i) => ({
+                    label: etiqueta(d.categoria),
+                    valor: d.valor,
+                    color: colorCategoria(null, i),
+                  }))}
+                  centro={money(pm.activos, pm.moneda).replace(` ${pm.moneda}`, '')}
+                  formatoValor={(n) => money(n, pm.moneda)}
+                />
               </>
             )}
             {metricas && metricas.distribucionPorPasivo.length > 0 && (

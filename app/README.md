@@ -106,7 +106,7 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 
 | Pantalla | Comando/consulta |
 |----------|------------------|
-| Dashboard → Evolución de mi patrimonio | `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` |
+| Dashboard → Evolución de mi patrimonio | `GET /usuarios/me/variacion-patrimonial` + `GET /usuarios/me/serie-patrimonial` (gráfico de línea, 15g) |
 
 ### Fase 10 — Consolidación y métricas del hogar
 
@@ -157,6 +157,11 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   **header nativo** (título + botón atrás) — se quitaron los enlaces "Volver".
   `MovimientosScreen` y `HogarScreen` son hubs (`MenuLink` / `GroupLabel`); el
   Dashboard queda con patrimonio + elementos + acciones frecuentes.
+- **15f — textos**: `src/labels.ts` (`etiqueta()` / `humanizar()`) traduce los
+  enums; `fechaRelativa()` en notificaciones.
+- **15g — gráficos**: `react-native-svg` + `src/ui/charts.tsx` (`Dona`,
+  `GraficoLinea`); dona en presupuesto por rubro y patrimonio del hogar, línea
+  en evolución; tarjeta de resumen del Dashboard; iconos de tabs (Ionicons).
 
 ### Decisiones aún provisionales
 

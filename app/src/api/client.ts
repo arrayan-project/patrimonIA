@@ -343,6 +343,13 @@ export interface VariacionPatrimonialDTO {
   }[];
 }
 
+export interface SeriePatrimonialDTO {
+  usuarioId: string;
+  desde: string;
+  hasta: string;
+  puntos: { fecha: string; porMoneda: { moneda: string; patrimonio: number }[] }[];
+}
+
 export interface MovimientoProgramadoDTO {
   id: string;
   montoPlanificado: number;

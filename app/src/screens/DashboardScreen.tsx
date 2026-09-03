@@ -8,6 +8,7 @@ import {
   type HogarDTO,
   type InvitacionDTO,
   type PatrimonioIndividualDTO,
+  type VariacionPatrimonialDTO,
 } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -25,6 +26,7 @@ export function DashboardScreen() {
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
+  const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
   const [noLeidas, setNoLeidas] = useState(0);
@@ -61,6 +63,17 @@ export function DashboardScreen() {
       setHogar(h);
       setPatrimonio(p);
       setElementos(els);
+      try {
+        const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+        setVariacion(
+          await api.get<VariacionPatrimonialDTO>(
+            `/usuarios/me/variacion-patrimonial?desde=${hace30}`,
+            token,
+          ),
+        );
+      } catch {
+        setVariacion(null);
+      }
       try {
         const { noLeidas: n } = await api.get<{ noLeidas: number }>(
           '/usuarios/me/notificaciones/no-leidas',
@@ -143,9 +156,29 @@ export function DashboardScreen() {
         {patrimonio.porMoneda.length === 0 ? (
           <Text style={styles.muted}>Aún no tienes elementos patrimoniales.</Text>
         ) : (
-          patrimonio.porMoneda.map((m) => (
-            <Row key={m.moneda} left={`Patrimonio (${m.moneda})`} right={money(m.patrimonio, m.moneda)} />
-          ))
+          patrimonio.porMoneda.map((m) => {
+            const v = variacion?.porMoneda.find((x) => x.moneda === m.moneda);
+            return (
+              <View key={m.moneda} style={styles.resumen}>
+                <Text style={styles.resumenNeto}>{money(m.patrimonio, m.moneda)}</Text>
+                <View style={styles.resumenFila}>
+                  <Text style={styles.muted}>Líquido {money(m.valorLiquido, m.moneda)}</Text>
+                  {v && v.variacion !== 0 && (
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: '600',
+                        color: v.variacion >= 0 ? colors.primary : colors.danger,
+                      }}
+                    >
+                      {v.variacion >= 0 ? '▲' : '▼'} {money(Math.abs(v.variacion), m.moneda)}
+                      {v.variacionPorcentaje != null ? ` (${v.variacionPorcentaje}%)` : ''} · 30 días
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })
         )}
       </View>
 
@@ -221,6 +254,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   muted: { fontSize: 13, color: colors.muted },
+  resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
+  resumenNeto: { fontSize: 24, fontWeight: '800', color: colors.text },
+  resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
   elemento: {
     flexDirection: 'row',
     justifyContent: 'space-between',

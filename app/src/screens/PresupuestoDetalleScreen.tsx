@@ -13,7 +13,6 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
-  BarraDistribucion,
   Button,
   colors,
   colorCategoria,
@@ -23,11 +22,11 @@ import {
   fechaLegible,
   LinkButton,
   MoneyField,
-  Punto,
   Row,
   Screen,
   Title,
 } from '../ui';
+import { Dona } from '../ui/charts';
 
 export function PresupuestoDetalleScreen() {
   const { token } = useSession();
@@ -115,9 +114,14 @@ export function PresupuestoDetalleScreen() {
 
   const rubrosGasto = desv.porRubro.filter((r) => r.tipoAplicable !== 'INGRESO');
   const segmentos = [
-    ...rubrosGasto.map((r, i) => ({ valor: r.real, color: colorCategoria(r.color, i) })),
-    { valor: desv.sinClasificar.gastos, color: colors.muted },
+    ...rubrosGasto.map((r, i) => ({
+      label: r.nombre,
+      valor: r.real,
+      color: colorCategoria(r.color, i),
+    })),
+    { label: 'Sin clasificar', valor: desv.sinClasificar.gastos, color: colors.muted },
   ];
+  const rubrosConMeta = desv.porRubro.filter((r) => r.esperado > 0);
 
   return (
     <Screen onRefresh={cargar}>
@@ -168,40 +172,28 @@ export function PresupuestoDetalleScreen() {
           </Text>
         ) : (
           <>
-            <BarraDistribucion segmentos={segmentos} />
-            {desv.porRubro.map((r, i) => (
+            {segmentos.some((s) => s.valor > 0) && (
+              <Dona
+                segmentos={segmentos}
+                centro={money(desv.real.gastos, 'CLP').replace(' CLP', '')}
+                formatoValor={(n) => money(n, 'CLP')}
+              />
+            )}
+            {rubrosConMeta.map((r) => (
               <View key={r.categoriaId} style={styles.rubro}>
-                <View style={styles.rubroNombre}>
-                  <Punto color={colorCategoria(r.color, i)} />
-                  <Text style={styles.rubroTexto}>{r.nombre}</Text>
-                </View>
+                <Text style={styles.rubroTexto}>{r.nombre}</Text>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.rubroTexto}>
-                    {money(r.real, 'CLP')}
-                    {r.esperado > 0 ? ` / ${money(r.esperado, 'CLP')}` : ''}
+                    {money(r.real, 'CLP')} / {money(r.esperado, 'CLP')}
                   </Text>
-                  {r.esperado > 0 && (
-                    <Text
-                      style={[
-                        styles.muted,
-                        { color: r.desviacion > 0 ? colors.danger : colors.muted },
-                      ]}
-                    >
-                      {sign(r.desviacion)}
-                    </Text>
-                  )}
+                  <Text
+                    style={[styles.muted, { color: r.desviacion > 0 ? colors.danger : colors.muted }]}
+                  >
+                    {sign(r.desviacion)}
+                  </Text>
                 </View>
               </View>
             ))}
-            {desv.sinClasificar.gastos > 0 && (
-              <View style={styles.rubro}>
-                <View style={styles.rubroNombre}>
-                  <Punto color={colors.muted} />
-                  <Text style={styles.rubroTexto}>Sin clasificar</Text>
-                </View>
-                <Text style={styles.rubroTexto}>{money(desv.sinClasificar.gastos, 'CLP')}</Text>
-              </View>
-            )}
           </>
         )}
       </View>
