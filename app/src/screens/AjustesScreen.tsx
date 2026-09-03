@@ -28,6 +28,11 @@ export function AjustesScreen() {
         subtitle="Marcas personales transversales para tus movimientos"
         onPress={() => nav.go('Etiquetas')}
       />
+      <MenuLink
+        title="Agrupaciones de elementos"
+        subtitle="Carpetas para ordenar tus cuentas y activos"
+        onPress={() => nav.go('Agrupaciones')}
+      />
 
       <GroupLabel>Hogar</GroupLabel>
       <MenuLink

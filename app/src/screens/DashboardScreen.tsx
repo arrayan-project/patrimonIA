@@ -4,6 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
+  type AgrupacionDTO,
   type ElementoPatrimonialDTO,
   type HogarDTO,
   type InvitacionDTO,
@@ -28,6 +29,7 @@ export function DashboardScreen() {
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [agrupaciones, setAgrupaciones] = useState<AgrupacionDTO[]>([]);
   const [error, setError] = useState('');
   const [noLeidas, setNoLeidas] = useState(0);
   const [email, setEmail] = useState('');
@@ -55,14 +57,16 @@ export function DashboardScreen() {
       const activo = lista.find((h) => h.id === guardado)?.id ?? lista[0].id;
       setHogarId(activo);
 
-      const [h, p, els] = await Promise.all([
+      const [h, p, els, ags] = await Promise.all([
         api.get<HogarDTO>(`/hogares/${activo}`, token),
         api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+        api.get<AgrupacionDTO[]>('/usuarios/me/agrupaciones', token).catch(() => []),
       ]);
       setHogar(h);
       setPatrimonio(p);
       setElementos(els);
+      setAgrupaciones(ags);
       try {
         const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
         setVariacion(
@@ -184,19 +188,41 @@ export function DashboardScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Elementos</Text>
-        {elementos.map((el) => (
-          <Pressable
-            key={el.id}
-            style={styles.elemento}
-            onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
-          >
-            <View>
-              <Text style={styles.elementoNombre}>{el.nombre}</Text>
-              <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
-            </View>
-            <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
-          </Pressable>
-        ))}
+        {(() => {
+          const fila = (el: ElementoPatrimonialDTO) => (
+            <Pressable
+              key={el.id}
+              style={styles.elemento}
+              onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
+            >
+              <View>
+                <Text style={styles.elementoNombre}>{el.nombre}</Text>
+                <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
+              </View>
+              <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
+            </Pressable>
+          );
+          const agrupados = new Set(agrupaciones.flatMap((a) => a.elementoIds));
+          const sinAgrupar = elementos.filter((el) => !agrupados.has(el.id));
+          return (
+            <>
+              {agrupaciones.map((a) => {
+                const els = elementos.filter((el) => a.elementoIds.includes(el.id));
+                if (els.length === 0) return null;
+                return (
+                  <View key={a.id}>
+                    <Text style={styles.grupoTitulo}>{a.nombre}</Text>
+                    {els.map(fila)}
+                  </View>
+                );
+              })}
+              {sinAgrupar.length > 0 && agrupaciones.some((a) => a.elementoIds.length > 0) && (
+                <Text style={styles.grupoTitulo}>Sin agrupar</Text>
+              )}
+              {sinAgrupar.map(fila)}
+            </>
+          );
+        })()}
         <View style={styles.actions}>
           <Button title="Agregar elemento" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
           {elementos.length > 0 && (
@@ -257,6 +283,13 @@ const styles = StyleSheet.create({
   resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   resumenNeto: { fontSize: 24, fontWeight: '800', color: colors.text },
   resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
+  grupoTitulo: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.muted,
+    textTransform: 'uppercase',
+    marginTop: 10,
+  },
   elemento: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -41,7 +41,8 @@ export type RouteName =
   | 'TiposCambio'
   | 'Ajustes'
   | 'Categorias'
-  | 'Etiquetas';
+  | 'Etiquetas'
+  | 'Agrupaciones';
 
 export interface Route {
   name: string;

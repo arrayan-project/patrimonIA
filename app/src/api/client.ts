@@ -95,6 +95,14 @@ export interface EtiquetaDTO {
   color: string | null;
 }
 
+export interface AgrupacionDTO {
+  id: string;
+  nombre: string;
+  color: string | null;
+  orden: number;
+  elementoIds: string[];
+}
+
 export interface PlantillaMovimientoDTO {
   id: string;
   nombre: string;

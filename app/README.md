@@ -96,6 +96,7 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Detalle de movimiento programado | `GET /movimientos-programados/:id` · `MaterializarMovimientoProgramado` / `ActualizarMovimientoProgramado` / `CancelarMovimientoProgramado` |
 | Plantillas de movimiento (15h) | `GET /usuarios/me/plantillas-movimiento` · `CrearPlantillaMovimiento` / `ActualizarPlantillaMovimiento` / `EliminarPlantillaMovimiento` |
 | Etiquetas (15i) | `GET /usuarios/me/etiquetas` · `CrearEtiqueta` / `ActualizarEtiqueta` / `EliminarEtiqueta` / `EtiquetarEvento` |
+| Agrupaciones de elementos (15j) | `GET /usuarios/me/agrupaciones` · `CrearAgrupacion` / `ActualizarAgrupacion` / `EliminarAgrupacion` / `DefinirElementosAgrupacion` |
 
 ### Fase 8 — Deuda / Crédito
 
@@ -171,6 +172,9 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 - **15i — etiquetas**: `EtiquetasScreen` (Ajustes → Cuenta); componente `Chip`;
   chips seleccionables al registrar un movimiento (`RegistrarEventoFinanciero.
   etiquetaIds`) y en el detalle ("Editar etiquetas" → `EtiquetarEvento`).
+- **15j — agrupaciones**: `AgrupacionesScreen` (Ajustes → Cuenta): carpetas
+  personales para tus elementos (una por elemento). La lista de "Elementos" del
+  Inicio se muestra agrupada por carpeta, con "Sin agrupar" al final.
 
 ### Decisiones aún provisionales
 
