@@ -148,5 +148,6 @@ docker compose down -v && docker compose up -d
 | Expo Go: *"There was a problem running the requested project"* | El teléfono no llega a Metro (8081) | Mismo WiFi + firewall (8081). Última opción: `./scripts/app.sh --tunnel` |
 | El backend arranca y se muere sin decir nada | Node 20 en vez de 22 | `node -v` debe decir `v22.x`. `nvm use` en `api/`. |
 | El router separa los dispositivos ("AP isolation") | Red del hogar/hotel | `./scripts/app.sh --tunnel` (más lento, pasa por servidores de Expo) |
+| `EADDRINUSE: address already in use :::3000` | Quedó un backend viejo corriendo | `./scripts/parar.sh` y de nuevo `./scripts/api.sh` (que ya libera el puerto solo) |
 | `docker ps` da error de permisos | Tu usuario no está en el grupo `docker` | `sudo usermod -aG docker $USER` y reinicia sesión |
 | La app abre pero "no se pudo conectar con el servidor" | Backend caído, o IP cambió | `./scripts/estado.sh`. Si tu IP cambió, reinicia `./scripts/app.sh` (la app la infiere de Expo). |

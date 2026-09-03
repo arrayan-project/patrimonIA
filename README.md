@@ -159,6 +159,7 @@ Resumen — dos terminales:
 ./scripts/db.sh && ./scripts/api.sh   # terminal 1: base de datos + backend
 ./scripts/app.sh                      # terminal 2: Expo (muestra el QR)
 ./scripts/estado.sh                   # diagnóstico: ¿qué está andando?
+./scripts/parar.sh                    # cierra backend + Expo si se colgaron
 ```
 Los scripts eligen Node 22 solos. Firewall (una vez): `sudo ufw allow 3000/tcp`
 y `sudo ufw allow 8081/tcp`. No hay usuario de prueba: se crea en "Crear cuenta".
