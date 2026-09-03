@@ -272,7 +272,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | Fase | Contenido | Depende de |
 |------|-----------|------------|
 | ~~15a~~ ✅ | A1 (auto-refresh al enfocar), A2 (pull-to-refresh), A5 (Idempotency-Key en altas), A6 (401 → logout). A3 completo queda para 15b. | — |
-| **15b** | B1–B3 (date picker, campo fecha, input de monto) + E1–E3 (toast, confirmación, botón danger) | — |
+| ~~15b~~ ✅ | B1 (`DateField`), B2 (campo fecha en Registrar movimiento/ajuste/Valorizar), B3 (`MoneyField`), E1 (`ToastProvider`/`useToast`), E2 (`confirmar()` en acciones destructivas), E3 (`Button variant="danger"`), + `fechaLegible()`. Pendiente de B: B4 selector dropdown, B5 `tipo` picker, B6 moneda, B7 buscador de elementos, B8 co-propietarios. | — |
 | **15c** | 🔴 C1 (glosa) + C2 (categorías: tabla, comandos, seed, selector) + Ajustes → Categorías. Exponer `preferencias` en `GET /usuarios/me`. Migración 009 (+010) | GAPS G22, G23, G25 |
 | **15d** | 🔴 C3 (presupuesto por categoría) + reportes de distribución por rubro (gráfico dona) | 15c |
 | **15e** | D1–D3 (tabs, header nativo, jerarquía del dashboard) + Ajustes como tab | — |

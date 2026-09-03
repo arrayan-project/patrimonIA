@@ -131,9 +131,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] **15a** — auto-refresh al enfocar (`useCargaAlEnfocar`), pull-to-refresh
     (`Screen onRefresh=`), `Idempotency-Key` en las altas (`api.comando`),
     401 → logout automático.
-  - [ ] 15b+ — date pickers, glosa + categorías de movimiento (🔴 migración,
-    `GAPS.md` G22–G24), presupuesto por rubro, sección de Ajustes +
-    `usuario.preferencias` (`GAPS.md` G25), tabs, traducción de enums, gráficos.
+  - [x] **15b** — `DateField` (calendario nativo), `MoneyField` (formato de
+    miles), campo fecha en Registrar movimiento/ajuste/Valorizar, `ToastProvider`,
+    `confirmar()` + botón `danger` en acciones destructivas, `fechaLegible()`.
+  - [ ] 15c+ — glosa + categorías de movimiento (🔴 migración 009, `GAPS.md`
+    G22–G24, decisiones: del hogar / plana / opcional), presupuesto por rubro,
+    sección de Ajustes + `usuario.preferencias` (`GAPS.md` G25), tabs, traducción
+    de enums, gráficos.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
