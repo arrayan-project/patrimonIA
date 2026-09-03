@@ -103,6 +103,20 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Colapso visual** original+corrección (UX_FLOWS Flujo 6): la app los muestra
   como filas separadas etiquetadas; el colapso en una sola línea llega después.
 
+### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)
+- **Qué falta**: AS #18 dice que la cadena de valorizaciones "debe ser
+  recorrible en orden" pero no acota cuál se puede anular.
+- **Decisión provisional (Fase 4)**: solo se puede **anular o corregir la última
+  valorización vigente** del elemento (igual que G9 para eventos).
+  `AnularValorizacion` **elimina** el impacto asociado (DDD #18 dice "eliminar",
+  y el esquema no tiene flag en `impacto_patrimonial`).
+- **`admite_valorizacion`**: se fija al crear el elemento
+  (`RegistrarElementoPatrimonial`). No hay comando para activarlo/desactivarlo
+  después — si creaste un elemento sin ese flag, no puedes valorizarlo. La app
+  lo activa por defecto para categorías ACTIVO / INVERSION.
+- **Para decidir**: ¿anular/corregir valorizaciones intermedias re-encadenando?
+  ¿un comando para cambiar `admite_valorizacion`?
+
 ### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
 - **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
   solo implementa INGRESO/GASTO/TRANSFERENCIA.

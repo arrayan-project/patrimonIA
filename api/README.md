@@ -60,6 +60,7 @@ src/
                        + consultas de hogar/miembros/invitaciones
   elemento/            AS #1 RegistrarElementoPatrimonial + consultas
   evento-financiero/   AS #10 Registrar · #11 Anular · #12 Corregir
+  valorizacion/        AS #17 Registrar · #18 Anular · #19 Corregir
   proyecciones/        GET /usuarios/me/patrimonio-individual (cálculo en vivo)
 ```
 
@@ -93,6 +94,16 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
   con `correccion_de_id` y un impacto = signo del impacto original × (nuevo − viejo).
   Fase 3 corrige solo el monto. Motivo obligatorio.
 - Verificado: `test/flujo6-correccion.e2e-spec.ts`.
+
+### Fase 4 — Flujo 3 (activo no líquido + valorización)
+
+- `POST /comandos/RegistrarValorizacion` (#17) — reemplaza `valor_vigente` (no
+  acumula), genera impacto = nuevo − anterior. Exige `admite_valorizacion`.
+- `POST /comandos/AnularValorizacion` (#18) / `CorregirValorizacion` (#19) —
+  solo sobre la última valorización vigente del elemento. Corregir **reemplaza**
+  el valor (stock, no flujo). Motivo obligatorio.
+- `GET /elementos-patrimoniales/:id/valorizaciones` — historial.
+- Verificado: `test/flujo3-valorizacion.e2e-spec.ts`.
 
 Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
 de los 52 Application Services entra en fases siguientes, un flujo vertical a la
