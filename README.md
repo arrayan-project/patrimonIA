@@ -42,7 +42,8 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 - [x] **Fase 3 — Flujo 6 (corregir / anular un movimiento)**:
   - [x] Backend: AS #11 AnularEventoFinanciero, #12 CorregirEventoFinanciero
     (patrón de corrección). e2e en verde.
-  - [ ] Móvil: acciones Corregir / Anular en el detalle del movimiento.
+  - [x] Móvil: detalle de movimiento con acciones Corregir / Anular; en el
+    detalle de elemento los anulados van tachados y las correcciones etiquetadas.
 - [ ] Fase 4 — se define al cerrar Fase 3 (BUILD_INSTRUCTIONS §3).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.

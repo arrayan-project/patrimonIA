@@ -53,6 +53,13 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Registrar movimiento | `POST /comandos/RegistrarEventoFinanciero` (INGRESO/GASTO/TRANSFERENCIA) |
 | Detalle de elemento | `GET /elementos-patrimoniales/:id` · `GET /eventos-financieros?elemento=:id` |
 
+### Fase 3 — Flujo 6 (corregir / anular un movimiento)
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Detalle de elemento | movimientos tappables; anulados tachados, correcciones etiquetadas |
+| Detalle de movimiento | `GET /eventos-financieros/:id` · `POST /comandos/CorregirEventoFinanciero` · `POST /comandos/AnularEventoFinanciero` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

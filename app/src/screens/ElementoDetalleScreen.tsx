@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   api,
   ApiError,
@@ -76,21 +76,34 @@ export function ElementoDetalleScreen() {
         ) : (
           eventos.map((ev) => {
             const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
+            const etiqueta = ev.anulado
+              ? 'anulado'
+              : ev.correccionDeId
+                ? 'corrección'
+                : ev.fecha;
             return (
-              <View key={ev.id} style={styles.mov}>
+              <Pressable
+                key={ev.id}
+                style={styles.mov}
+                onPress={() =>
+                  nav.go('MovimientoDetalle', { eventoId: ev.id, elementoId })
+                }
+              >
                 <View>
-                  <Text style={styles.movTipo}>{ev.tipo}</Text>
-                  <Text style={styles.muted}>{ev.fecha}</Text>
+                  <Text style={[styles.movTipo, ev.anulado && styles.tachado]}>{ev.tipo}</Text>
+                  <Text style={styles.muted}>{etiqueta}</Text>
                 </View>
                 <Text
                   style={[
                     styles.movMonto,
-                    { color: (impacto?.monto ?? 0) < 0 ? colors.danger : colors.primary },
+                    ev.anulado
+                      ? styles.tachado
+                      : { color: (impacto?.monto ?? 0) < 0 ? colors.danger : colors.primary },
                   ]}
                 >
                   {money(impacto?.monto ?? ev.monto, ev.moneda)}
                 </Text>
-              </View>
+              </Pressable>
             );
           })
         )}
@@ -118,4 +131,5 @@ const styles = StyleSheet.create({
   },
   movTipo: { fontSize: 14, fontWeight: '600', color: colors.text },
   movMonto: { fontSize: 15, fontWeight: '700' },
+  tachado: { textDecorationLine: 'line-through', color: colors.muted },
 });

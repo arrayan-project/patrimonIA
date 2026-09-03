@@ -13,7 +13,8 @@ export type RouteName =
   | 'Dashboard'
   | 'AgregarElemento'
   | 'RegistrarMovimiento'
-  | 'ElementoDetalle';
+  | 'ElementoDetalle'
+  | 'MovimientoDetalle';
 
 export interface Route {
   name: RouteName;

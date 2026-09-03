@@ -1,0 +1,141 @@
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { api, ApiError, type EventoFinancieroDTO } from '../api/client';
+import { useSession } from '../auth/AuthContext';
+import { useNav } from '../navigation/navigator';
+import { money } from '../format';
+import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
+
+export function MovimientoDetalleScreen() {
+  const { token } = useSession();
+  const nav = useNav();
+  const eventoId = nav.route.params?.eventoId as string;
+  const elementoId = nav.route.params?.elementoId as string | undefined;
+
+  const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
+  const [tieneCorreccion, setTieneCorreccion] = useState(false);
+  const [error, setError] = useState('');
+
+  const [modo, setModo] = useState<null | 'corregir' | 'anular'>(null);
+  const [nuevoMonto, setNuevoMonto] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  const cargar = useCallback(async () => {
+    setError('');
+    try {
+      const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
+      setEvento(ev);
+      setNuevoMonto(String(ev.monto));
+      if (elementoId) {
+        const lista = await api.get<EventoFinancieroDTO[]>(
+          `/eventos-financieros?elemento=${elementoId}`,
+          token,
+        );
+        setTieneCorreccion(lista.some((e) => e.correccionDeId === eventoId && !e.anulado));
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    }
+  }, [eventoId, elementoId, token]);
+
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
+
+  const ejecutar = async () => {
+    setEnviando(true);
+    setError('');
+    try {
+      if (modo === 'corregir') {
+        await api.post(
+          '/comandos/CorregirEventoFinanciero',
+          { eventoId, nuevoMonto: Number(nuevoMonto), motivo: motivo.trim() },
+          token,
+        );
+      } else {
+        await api.post(
+          '/comandos/AnularEventoFinanciero',
+          { eventoId, motivo: motivo.trim() },
+          token,
+        );
+      }
+      nav.back();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (!evento) {
+    return (
+      <Screen>
+        <ErrorText>{error}</ErrorText>
+        {!error && <ActivityIndicator color={colors.primary} />}
+        <LinkButton title="Volver" onPress={nav.back} />
+      </Screen>
+    );
+  }
+
+  const impacto = evento.impactos.find((i) => i.elementoId === elementoId);
+  const esCorreccion = evento.correccionDeId !== null;
+  const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
+
+  return (
+    <Screen>
+      <Title>{evento.tipo}</Title>
+      <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
+
+      <View style={styles.card}>
+        <Row left="Fecha" right={evento.fecha} />
+        {impacto && (
+          <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
+        )}
+        <Row left="Estado" right={evento.anulado ? 'Anulado' : 'Vigente'} />
+        {esCorreccion && <Text style={styles.nota}>Es la corrección de un movimiento anterior.</Text>}
+        {tieneCorreccion && (
+          <Text style={styles.nota}>Este movimiento ya fue corregido — corrige o anula esa corrección.</Text>
+        )}
+      </View>
+
+      {accionable && modo === null && (
+        <View style={{ gap: 8 }}>
+          <Button title="Corregir monto" onPress={() => setModo('corregir')} />
+          <Button title="Anular movimiento" variant="secondary" onPress={() => setModo('anular')} />
+        </View>
+      )}
+
+      {modo === 'corregir' && (
+        <View style={styles.card}>
+          <Text style={styles.formTitle}>Corregir monto</Text>
+          <Field label="Monto correcto" keyboardType="numeric" value={nuevoMonto} onChangeText={setNuevoMonto} />
+          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se corrige" autoCapitalize="sentences" />
+          <ErrorText>{error}</ErrorText>
+          <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
+        </View>
+      )}
+
+      {modo === 'anular' && (
+        <View style={styles.card}>
+          <Text style={styles.formTitle}>Anular movimiento</Text>
+          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" autoCapitalize="sentences" />
+          <ErrorText>{error}</ErrorText>
+          <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
+        </View>
+      )}
+
+      {modo === null && <ErrorText>{error}</ErrorText>}
+      <LinkButton title="Volver" onPress={nav.back} />
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  monto: { fontSize: 28, fontWeight: '800', color: colors.text },
+  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 8 },
+  formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
+});

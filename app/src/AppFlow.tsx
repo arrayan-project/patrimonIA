@@ -9,6 +9,7 @@ import { CrearHogarScreen } from './screens/CrearHogarScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { ElementoDetalleScreen } from './screens/ElementoDetalleScreen';
 import { InvitacionesScreen } from './screens/InvitacionesScreen';
+import { MovimientoDetalleScreen } from './screens/MovimientoDetalleScreen';
 import { RegistrarMovimientoScreen } from './screens/RegistrarMovimientoScreen';
 import { colors } from './ui';
 
@@ -27,6 +28,8 @@ function Routes() {
       return <RegistrarMovimientoScreen />;
     case 'ElementoDetalle':
       return <ElementoDetalleScreen />;
+    case 'MovimientoDetalle':
+      return <MovimientoDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }

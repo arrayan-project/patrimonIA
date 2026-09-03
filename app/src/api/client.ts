@@ -123,6 +123,7 @@ export interface EventoFinancieroDTO {
   moneda: string;
   fecha: string;
   anulado: boolean;
+  correccionDeId: string | null;
   createdAt: string;
   impactos: { id: string; elementoId: string; monto: number }[];
 }
