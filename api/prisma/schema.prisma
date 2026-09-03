@@ -81,6 +81,7 @@ model elemento_patrimonial {
   estado                                                                              String
   valor_pendiente                                                                     Decimal?                @db.Decimal(18, 2)
   created_at                                                                          DateTime                @default(now()) @db.Timestamptz(6)
+  agrupacion_miembro                                                                  agrupacion_miembro?
   ajuste_patrimonial                                                                  ajuste_patrimonial[]
   elemento_propietario                                                                elemento_propietario[]
   impacto_patrimonial                                                                 impacto_patrimonial[]
@@ -274,6 +275,7 @@ model usuario {
   preferencias                               Json?
   estado                                     String
   created_at                                 DateTime               @default(now()) @db.Timestamptz(6)
+  agrupacion_elemento                        agrupacion_elemento[]
   asignacion                                 asignacion[]
   auditoria                                  auditoria[]
   dispositivo_push                           dispositivo_push[]
@@ -436,4 +438,27 @@ model evento_etiqueta {
 
   @@id([evento_id, etiqueta_id])
   @@index([etiqueta_id], map: "ix_evento_etiqueta_etiqueta")
+}
+
+model agrupacion_elemento {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuario_id         String               @db.Uuid
+  nombre             String
+  color              String?
+  orden              Int                  @default(0)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  usuario            usuario              @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agrupacion_miembro agrupacion_miembro[]
+
+  @@unique([usuario_id, nombre])
+  @@index([usuario_id, orden], map: "ix_agrupacion_elemento_usuario")
+}
+
+model agrupacion_miembro {
+  elemento_id          String               @id @db.Uuid
+  agrupacion_id        String               @db.Uuid
+  agrupacion_elemento  agrupacion_elemento  @relation(fields: [agrupacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([agrupacion_id], map: "ix_agrupacion_miembro_agrupacion")
 }

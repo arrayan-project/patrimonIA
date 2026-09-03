@@ -478,6 +478,32 @@ CREATE TABLE evento_etiqueta (
 CREATE INDEX ix_evento_etiqueta_etiqueta ON evento_etiqueta (etiqueta_id);
 
 -- ============================================================================
+-- 19. Agrupaciones de elementos (migración 013 — carpeta de visualización, G23)
+-- Personal. Un elemento pertenece a lo sumo a una agrupación. No afecta la
+-- consolidación ni la reconstrucción — solo organiza la vista.
+-- ============================================================================
+
+CREATE TABLE agrupacion_elemento (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuario(id),
+    nombre     TEXT NOT NULL,
+    color      TEXT,
+    orden      INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (usuario_id, nombre)
+);
+
+CREATE INDEX ix_agrupacion_elemento_usuario ON agrupacion_elemento (usuario_id, orden);
+
+CREATE TABLE agrupacion_miembro (
+    elemento_id   UUID PRIMARY KEY REFERENCES elemento_patrimonial(id) ON DELETE CASCADE,
+    agrupacion_id UUID NOT NULL REFERENCES agrupacion_elemento(id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_agrupacion_miembro_agrupacion ON agrupacion_miembro (agrupacion_id);
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

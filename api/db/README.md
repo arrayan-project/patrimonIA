@@ -73,6 +73,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `012_etiqueta.sql` — tablas `etiqueta` (personal) y `evento_etiqueta` (N:M,
   `ON DELETE CASCADE`) — clasificación transversal de movimientos (GAPS.md G23).
   Ya incluida en `init/01_schema.sql`.
+- `013_agrupacion_elemento.sql` — tablas `agrupacion_elemento` (personal) y
+  `agrupacion_miembro` (`elemento_id` único → una carpeta por elemento) —
+  carpetas de visualización (GAPS.md G23). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 
