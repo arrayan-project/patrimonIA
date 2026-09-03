@@ -7,11 +7,10 @@ import {
   type AgrupacionDTO,
   type ElementoPatrimonialDTO,
   type HogarDTO,
-  type InvitacionDTO,
   type PatrimonioIndividualDTO,
   type VariacionPatrimonialDTO,
 } from '../api/client';
-import { useAuth, useSession } from '../auth/AuthContext';
+import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
@@ -21,9 +20,7 @@ import {
   EmptyState,
   ErrorText,
   etiqueta,
-  Field,
   MenuLink,
-  Row,
   Screen,
   SelectRow,
   Title,
@@ -31,7 +28,6 @@ import {
 
 export function DashboardScreen() {
   const { token, usuario } = useSession();
-  const { cerrarSesion } = useAuth();
   const nav = useNav();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
 
@@ -47,9 +43,6 @@ export function DashboardScreen() {
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
   const [error, setError] = useState('');
   const [noLeidas, setNoLeidas] = useState(0);
-  const [email, setEmail] = useState('');
-  const [invitando, setInvitando] = useState(false);
-  const [aviso, setAviso] = useState('');
 
   const elegirHogar = useCallback(
     (id: string) => {
@@ -136,30 +129,6 @@ export function DashboardScreen() {
       .then((h) => vivo && setHogar(h))
       .catch(() => undefined);
   }, [hogarId, token]);
-
-  const esAdmin = hogar?.miembros?.some(
-    (m) => m.usuarioId === usuario.id && m.rol === 'ADMINISTRADOR',
-  );
-
-  const invitar = async () => {
-    if (!hogar) return;
-    setInvitando(true);
-    setError('');
-    setAviso('');
-    try {
-      await api.post<InvitacionDTO>(
-        '/comandos/InvitarMiembro',
-        { hogarId: hogar.id, emailInvitado: email.trim() },
-        token,
-      );
-      setAviso(`Invitación enviada a ${email.trim()}`);
-      setEmail('');
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setInvitando(false);
-    }
-  };
 
   if (!hogar || !patrimonio) {
     return (
@@ -303,31 +272,6 @@ export function DashboardScreen() {
         )}
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Miembros del hogar</Text>
-        {hogar.miembros?.map((m) => (
-          <Row key={m.usuarioId} left={m.nombre} right={etiqueta(m.rol)} />
-        ))}
-        {esAdmin && (
-          <View style={{ gap: 8, marginTop: 8 }}>
-            <Field
-              label="Invitar por email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="persona@email.cl"
-            />
-            {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
-            <Button
-              title="Enviar invitación"
-              onPress={invitar}
-              loading={invitando}
-              disabled={!email.trim()}
-            />
-          </View>
-        )}
-      </View>
-
       {noLeidas > 0 && (
         <MenuLink
           icon="notifications-outline"
@@ -377,5 +321,4 @@ const styles = StyleSheet.create({
   elementoNombre: { fontSize: 15, color: colors.text, fontWeight: '600' },
   elementoValor: { fontSize: 15, color: colors.text },
   actions: { gap: 8, marginTop: 8 },
-  aviso: { color: colors.primary, fontSize: 14 },
 });

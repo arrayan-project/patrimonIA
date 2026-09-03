@@ -18,6 +18,8 @@ export function GestionHogarScreen() {
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [nombre, setNombre] = useState('');
   const [motivo, setMotivo] = useState('');
+  const [email, setEmail] = useState('');
+  const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -134,6 +136,36 @@ export function GestionHogarScreen() {
         )}
       </View>
 
+      {soyAdmin && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Invitar a alguien</Text>
+          <Field
+            label="Email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="persona@email.cl"
+          />
+          {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
+          <Button
+            title="Enviar invitación"
+            loading={busy}
+            disabled={!email.trim()}
+            onPress={() =>
+              run(async () => {
+                await api.post(
+                  '/comandos/InvitarMiembro',
+                  { hogarId, emailInvitado: email.trim() },
+                  token,
+                );
+                setAviso(`Invitación enviada a ${email.trim()}`);
+                setEmail('');
+              })
+            }
+          />
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Salir</Text>
         <Button
@@ -175,4 +207,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   miembro: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  aviso: { color: colors.primary, fontSize: 14 },
 });

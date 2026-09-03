@@ -62,6 +62,20 @@ export function HogarScreen() {
         onPress={() => hogar && nav.go('HogarConsolidado', { hogarId: hogar.id })}
       />
 
+      <GroupLabel>Configuración del hogar</GroupLabel>
+      <MenuLink
+        icon="list-outline"
+        title="Categorías de movimiento"
+        subtitle="Rubros para clasificar ingresos y gastos (los ven todos)"
+        onPress={() => nav.go('Categorias')}
+      />
+      <MenuLink
+        icon="swap-horizontal-outline"
+        title="Tipos de cambio"
+        subtitle="Tasas para convertir entre monedas"
+        onPress={() => nav.go('TiposCambio')}
+      />
+
       <GroupLabel>Administración</GroupLabel>
       <MenuLink
         icon="people-outline"

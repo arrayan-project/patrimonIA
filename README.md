@@ -180,6 +180,17 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [ ] 15m+ — design tokens completos, buscadores en pickers, co-propietarios
     con %, F3 en más pantallas, FAB.
 
+- [x] **Fase 16 — Reportes financieros + reorganización de navegación**:
+  - [x] Backend: `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=` y
+    `GET /usuarios/me/resumen-anual?anio=&alcance=` — proyección de lectura que
+    agrega los `evento_financiero` existentes (totales por moneda, desglose por
+    rubro, lista de movimientos); alcance `mios` / `hogar`. `GAPS.md` G27.
+  - [x] App: la tab **Movimientos** pasa a ser la vista mensual/anual (selector
+    ‹ mes/año ›, toggle Míos/Hogar, dona de gastos por rubro, lista, barras
+    anuales). Nueva tab **Planificar** (objetivos + presupuestos + programados +
+    plantillas + evolución). El Dashboard suelta el bloque de miembros/invitar
+    (→ Gestionar hogar); las categorías del hogar pasan de Ajustes a la tab Hogar.
+
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
 La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y
@@ -188,7 +199,7 @@ preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 108 e2e
+cd api && npm run test:all   # 20 unitarios + 112 e2e
 cd app && npx tsc --noEmit
 ```
 

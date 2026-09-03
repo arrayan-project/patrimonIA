@@ -15,6 +15,7 @@ import { CrearHogarScreen } from '../screens/CrearHogarScreen';
 import { InvitacionesScreen } from '../screens/InvitacionesScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MovimientosScreen } from '../screens/MovimientosScreen';
+import { PlanificarScreen } from '../screens/PlanificarScreen';
 import { HogarScreen } from '../screens/HogarScreen';
 import { AgregarElementoScreen } from '../screens/AgregarElementoScreen';
 import { RegistrarMovimientoScreen } from '../screens/RegistrarMovimientoScreen';
@@ -84,12 +85,12 @@ function Tabs() {
       <Tab.Screen
         name="Movimientos"
         component={MovimientosScreen}
-        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('swap-horizontal') }}
+        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('receipt-outline') }}
       />
       <Tab.Screen
-        name="Objetivos"
-        component={ObjetivosScreen}
-        options={{ tabBarLabel: 'Objetivos', tabBarIcon: icono('flag-outline') }}
+        name="Planificar"
+        component={PlanificarScreen}
+        options={{ tabBarLabel: 'Planificar', tabBarIcon: icono('flag-outline') }}
       />
       <Tab.Screen
         name="Hogar"
@@ -121,6 +122,7 @@ const TITULOS: Record<string, string> = {
   EditarElemento: 'Editar elemento',
   GestionHogar: 'Gestionar hogar',
   Perfil: 'Mi perfil',
+  Objetivos: 'Objetivos financieros',
   ObjetivoDetalle: 'Objetivo',
   AsignacionDetalle: 'Asignación',
   Presupuestos: 'Presupuestos',
@@ -153,6 +155,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['EditarElemento', EditarElementoScreen],
   ['GestionHogar', GestionHogarScreen],
   ['Perfil', PerfilScreen],
+  ['Objetivos', ObjetivosScreen],
   ['ObjetivoDetalle', ObjetivoDetalleScreen],
   ['AsignacionDetalle', AsignacionDetalleScreen],
   ['Presupuestos', PresupuestosScreen],

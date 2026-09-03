@@ -378,6 +378,49 @@ export interface SeriePatrimonialDTO {
   puntos: { fecha: string; porMoneda: { moneda: string; patrimonio: number }[] }[];
 }
 
+export type AlcanceReporte = 'mios' | 'hogar';
+
+export interface TotalesPorMoneda {
+  moneda: string;
+  ingresos: number;
+  gastos: number;
+  balance: number;
+}
+
+export interface RubroReporteDTO {
+  categoriaId: string | null;
+  nombre: string;
+  color: string | null;
+  tipo: 'INGRESO' | 'GASTO';
+  total: number;
+}
+
+export interface MovimientoReporteDTO {
+  eventoId: string;
+  fecha: string;
+  tipo: string;
+  monto: number;
+  moneda: string;
+  glosa: string | null;
+  categoriaId: string | null;
+  etiquetaIds: string[];
+  corregido: boolean;
+}
+
+export interface ResumenFinancieroDTO {
+  periodo: { desde: string; hasta: string };
+  alcance: AlcanceReporte;
+  porMoneda: TotalesPorMoneda[];
+  porRubro: RubroReporteDTO[];
+  movimientos: MovimientoReporteDTO[];
+}
+
+export interface ResumenAnualDTO {
+  anio: number;
+  alcance: AlcanceReporte;
+  meses: { mes: number; porMoneda: TotalesPorMoneda[] }[];
+}
+
 export interface MovimientoProgramadoDTO {
   id: string;
   montoPlanificado: number;

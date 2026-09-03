@@ -14,6 +14,7 @@ export type RouteName =
   | 'Invitaciones'
   | 'Dashboard'
   | 'Movimientos'
+  | 'Planificar'
   | 'Hogar'
   | 'AgregarElemento'
   | 'RegistrarMovimiento'

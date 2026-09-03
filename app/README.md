@@ -186,6 +186,23 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   `entidadTipo` → ruta); card "Primeros pasos" en el Dashboard (secure-store
   `patrimonia.onboarding.<uid>`).
 
+### Fase 16 — Reportes financieros + reorganización de tabs
+
+- **`MovimientosScreen`** deja de ser un hub y pasa a ser la **vista mensual /
+  anual**: selector `‹ mes/año ›`, toggles Mes/Año y Míos/Del hogar, tarjeta de
+  totales (ingresos · gastos · balance, con comparación al período anterior),
+  `Dona` de gastos por rubro, lista de movimientos, y `GraficoBarras` (ingreso
+  vs. gasto por mes) en modo Año. Consume `GET /usuarios/me/resumen-financiero`
+  y `/resumen-anual`.
+- Nueva tab **Planificar** (`PlanificarScreen`): Objetivos + Presupuestos +
+  Movimientos programados + Plantillas + Evolución de mi patrimonio. `Objetivos`
+  deja de ser tab y pasa a pantalla apilada.
+- El **Dashboard** suelta el bloque "Miembros del hogar" + formulario de invitar
+  (ahora en `GestionHogarScreen`). Las **categorías del hogar** y **tipos de
+  cambio** pasan de Ajustes a la tab **Hogar** (grupo "Configuración del hogar").
+  Ajustes queda solo con lo personal.
+- `charts.tsx` gana `GraficoBarras`.
+
 ### Decisiones aún provisionales
 
 - "Registrar movimiento" solo lista tus propios elementos como destino; para

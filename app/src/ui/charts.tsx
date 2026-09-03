@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, Polyline, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G, Polyline, Line, Rect, Text as SvgText } from 'react-native-svg';
 import { colors, Punto } from './index';
 
 export interface SegmentoDona {
@@ -155,6 +155,74 @@ export function GraficoLinea({
       <View style={styles.ejeFila}>
         <Text style={styles.ejeTxt}>mín {formatoValor(min)}</Text>
         <Text style={styles.ejeTxt}>máx {formatoValor(max)}</Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Barras mensuales pareadas (ingreso vs. gasto). `barras` en orden cronológico.
+ */
+export function GraficoBarras({
+  barras,
+  alto = 150,
+  colorIngreso = colors.primary,
+  colorGasto = colors.danger,
+}: {
+  barras: { etiqueta: string; ingresos: number; gastos: number }[];
+  alto?: number;
+  colorIngreso?: string;
+  colorGasto?: string;
+}) {
+  const ancho = 320;
+  const padY = 8;
+  const max = Math.max(1, ...barras.flatMap((b) => [b.ingresos, b.gastos]));
+  const paso = ancho / barras.length;
+  const anchoBarra = Math.min(10, paso / 3);
+  const h = (v: number) => (v / max) * (alto - 2 * padY);
+
+  return (
+    <View style={{ gap: 4 }}>
+      <View style={{ height: alto }}>
+        <Svg width="100%" height={alto} viewBox={`0 0 ${ancho} ${alto}`} preserveAspectRatio="none">
+          {barras.map((b, i) => {
+            const cx = i * paso + paso / 2;
+            return (
+              <G key={i}>
+                <Rect
+                  x={cx - anchoBarra - 1}
+                  y={alto - padY - h(b.ingresos)}
+                  width={anchoBarra}
+                  height={h(b.ingresos)}
+                  fill={colorIngreso}
+                  rx={1}
+                />
+                <Rect
+                  x={cx + 1}
+                  y={alto - padY - h(b.gastos)}
+                  width={anchoBarra}
+                  height={h(b.gastos)}
+                  fill={colorGasto}
+                  rx={1}
+                />
+              </G>
+            );
+          })}
+          <Line x1={0} y1={alto - padY} x2={ancho} y2={alto - padY} stroke={colors.border} strokeWidth={1} />
+        </Svg>
+      </View>
+      <View style={{ flexDirection: 'row' }}>
+        {barras.map((b, i) => (
+          <Text key={i} style={[styles.ejeTxt, { flex: 1, textAlign: 'center' }]}>
+            {b.etiqueta}
+          </Text>
+        ))}
+      </View>
+      <View style={styles.leyendaFila}>
+        <Punto color={colorIngreso} />
+        <Text style={styles.ejeTxt}>Ingresos</Text>
+        <Punto color={colorGasto} />
+        <Text style={styles.ejeTxt}>Gastos</Text>
       </View>
     </View>
   );

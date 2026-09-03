@@ -37,20 +37,6 @@ export function AjustesScreen() {
         onPress={() => nav.go('Agrupaciones')}
       />
 
-      <GroupLabel>Hogar</GroupLabel>
-      <MenuLink
-        icon="list-outline"
-        title="Categorías de movimiento"
-        subtitle="Rubros para clasificar ingresos y gastos"
-        onPress={() => nav.go('Categorias')}
-      />
-      <MenuLink
-        icon="swap-horizontal-outline"
-        title="Tipos de cambio"
-        subtitle="Tasas para convertir entre monedas"
-        onPress={() => nav.go('TiposCambio')}
-      />
-
       <GroupLabel>Sesión</GroupLabel>
       <Button title="Cerrar sesión" variant="danger" onPress={salir} />
     </Screen>
