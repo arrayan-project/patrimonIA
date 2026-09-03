@@ -8,7 +8,7 @@ H='content-type: application/json'
 py() { python3 -c "import sys,json;print(json.load(sys.stdin)$1)"; }
 
 docker exec patrimonia-postgres psql -U patrimonia -d patrimonia -c \
-  "TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva RESTART IDENTITY CASCADE" >/dev/null
+  "TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, movimiento_programado RESTART IDENTITY CASCADE" >/dev/null
 
 curl -s -XPOST "$B/comandos/RegistrarUsuario" -H "$H" \
   -d '{"email":"demo@patrimonia.cl","nombre":"Demo","password":"demo1234"}' >/dev/null
@@ -38,6 +38,18 @@ ASG=$(curl -s -XPOST "$B/comandos/CrearAsignacion" -H "$A" -H "$H" \
 curl -s -XPOST "$B/comandos/CrearReserva" -H "$A" -H "$H" \
   -d "{\"asignacionId\":\"$ASG\",\"elementoOrigenId\":\"$FIN\",\"monto\":2000000}" >/dev/null
 
+DEU=$(curl -s -XPOST "$B/comandos/RegistrarElementoPatrimonial" -H "$A" -H "$H" \
+  -d '{"nombre":"Crédito automotriz","tipo":"deuda","categoriaFuncional":"DEUDA","valorPendiente":4000000,"moneda":"CLP"}' | py '["id"]')
+curl -s -XPOST "$B/comandos/RegistrarEventoFinanciero" -H "$A" -H "$H" \
+  -d "{\"tipo\":\"TRANSFERENCIA\",\"monto\":500000,\"moneda\":\"CLP\",\"elementoOrigenId\":\"$CC\",\"elementoDestinoId\":\"$DEU\"}" >/dev/null
+
+curl -s -XPOST "$B/comandos/CrearPresupuesto" -H "$A" -H "$H" \
+  -d '{"tipo":"INDIVIDUAL","periodicidad":"PERIODICO","intervalo":"MENSUAL","ingresosEsperados":1200000,"gastosEsperados":900000,"ahorroEsperado":300000}' >/dev/null
+
+curl -s -XPOST "$B/comandos/CrearMovimientoProgramado" -H "$A" -H "$H" \
+  -d "{\"montoPlanificado\":1200000,\"moneda\":\"CLP\",\"fechaProgramada\":\"2020-01-05\",\"elementoDestinoId\":\"$CC\",\"observaciones\":\"sueldo\"}" >/dev/null
+
 echo "✓ Datos demo listos — usuario: demo@patrimonia.cl / demo1234"
 echo "  Casa Demo · Cuenta Corriente (gasto corregido) · Departamento (95M→110M)"
 echo "  · Fintual · objetivo 'Pie vivienda' 20% (reserva 2M)"
+echo "  · Crédito automotriz (4M, abono 500k) · presupuesto mensual · sueldo programado"
