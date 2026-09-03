@@ -7,14 +7,22 @@ Cliente móvil. React Native + Expo (SDK 57, TypeScript).
 ```bash
 npm install
 
-# El backend debe estar corriendo (../api). En un dispositivo físico localhost
-# no resuelve al PC — pasar la IP LAN:
-EXPO_PUBLIC_API_URL=http://192.168.1.50:3000 npm start
-
-npm run android   # emulador Android
-npm run ios        # simulador iOS (requiere macOS)
-npm run web        # navegador
+# El backend debe estar corriendo (../api, puerto 3000).
+npm start          # escanear el QR con Expo Go
+npm run android    # emulador Android
+npm run ios         # simulador iOS (requiere macOS)
+npm run web         # navegador
 ```
+
+### ¿A qué backend se conecta?
+
+`src/config.ts` resuelve la URL así:
+
+1. `EXPO_PUBLIC_API_URL` si la defines (`EXPO_PUBLIC_API_URL=http://IP:3000 npm start`).
+2. Si no, **infiere la IP del PC donde corre Expo** (la misma que muestra
+   `npx expo start`) y asume el backend en `:3000`. En un teléfono real funciona
+   sin configurar nada, estando en la misma WiFi.
+3. Fallback: `localhost:3000` (emulador / navegador en el mismo PC).
 
 ## Estado
 
