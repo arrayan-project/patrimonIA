@@ -94,6 +94,13 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Dashboard → Movimientos programados | `GET /movimientos-programados` · `POST /comandos/CrearMovimientoProgramado` |
 | Detalle de movimiento programado | `GET /movimientos-programados/:id` · `MaterializarMovimientoProgramado` / `ActualizarMovimientoProgramado` / `CancelarMovimientoProgramado` |
 
+### Fase 8 — Deuda / Crédito
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Agregar elemento | categoría DEUDA/CREDITO → `valorPendiente` en vez de valor inicial |
+| Detalle de elemento (deuda/crédito) | saldo pendiente · `POST /comandos/CondonarDeuda` / `POST /comandos/DeclararIncobrable` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

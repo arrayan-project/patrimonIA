@@ -112,6 +112,8 @@ export interface ElementoPatrimonialDTO {
   admiteValorizacion: boolean;
   visibilidad: string;
   estado: string;
+  /** Solo DEUDA/CREDITO: saldo pendiente (magnitud positiva). */
+  valorPendiente: number | null;
   createdAt: string;
   propietarios: PropietarioDTO[];
 }

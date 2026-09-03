@@ -8,6 +8,7 @@ import {
 import { Prisma, type ajuste_patrimonial as AjusteRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { derivarValorPendiente } from '../common/deuda.js';
 import { toAjusteDTO, type AjustePatrimonialDTO } from './ajuste.dto.js';
 import type { RegistrarAjusteDto } from './dto/registrar-ajuste.dto.js';
 import type { AnularAjusteDto } from './dto/anular-ajuste.dto.js';
@@ -48,6 +49,7 @@ export class AjustePatrimonialService {
         where: { id: elemento.id },
         data: { valor_vigente: new Prisma.Decimal(elemento.valor_vigente).plus(monto) },
       });
+      await derivarValorPendiente(tx, elemento.id);
       await this.auditoria.registrar(tx, {
         comando: 'RegistrarAjustePatrimonial',
         usuarioId: actorId,
@@ -82,6 +84,7 @@ export class AjustePatrimonialService {
           where: { id: i.elemento_id },
           data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).minus(i.monto) },
         });
+        await derivarValorPendiente(tx, i.elemento_id);
       }
       await tx.impacto_patrimonial.deleteMany({
         where: { origen_tipo: 'AJUSTE_PATRIMONIAL', origen_id: ajuste.id },
@@ -148,6 +151,7 @@ export class AjustePatrimonialService {
         where: { id: original.elemento_id },
         data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(delta) },
       });
+      await derivarValorPendiente(tx, original.elemento_id);
       await this.auditoria.registrar(tx, {
         comando: 'CorregirAjustePatrimonial',
         usuarioId: actorId,

@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Segmented, Title } from '../ui';
 
-const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO'] as const;
+const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
 
 export function AgregarElementoScreen() {
   const { token } = useSession();
@@ -14,10 +14,13 @@ export function AgregarElementoScreen() {
   const [tipo, setTipo] = useState('cuenta_corriente');
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('LIQUIDEZ');
   const [valorInicial, setValorInicial] = useState('0');
+  const [valorPendiente, setValorPendiente] = useState('');
   const [moneda, setMoneda] = useState('CLP');
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';
 
   const onCategoria = (c: (typeof CATEGORIAS)[number]) => {
     setCategoria(c);
@@ -34,10 +37,14 @@ export function AgregarElementoScreen() {
           nombre: nombre.trim(),
           tipo: tipo.trim(),
           categoriaFuncional: categoria,
-          valorInicial: Number(valorInicial) || 0,
           moneda: moneda.trim().toUpperCase(),
-          participaValorLiquido: categoria === 'LIQUIDEZ',
-          admiteValorizacion: valorizable === 'Sí',
+          ...(esDeudaOCredito
+            ? { valorPendiente: Number(valorPendiente) || 0 }
+            : {
+                valorInicial: Number(valorInicial) || 0,
+                participaValorLiquido: categoria === 'LIQUIDEZ',
+                admiteValorizacion: valorizable === 'Sí',
+              }),
         },
         token,
       );
@@ -57,21 +64,40 @@ export function AgregarElementoScreen() {
       <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Cuenta Corriente" autoCapitalize="sentences" />
       <Field label="Tipo" value={tipo} onChangeText={setTipo} placeholder="cuenta_corriente" />
       <Segmented label="Categoría funcional" options={CATEGORIAS} value={categoria} onChange={onCategoria} />
-      <Field
-        label="Valor inicial"
-        keyboardType="numeric"
-        value={valorInicial}
-        onChangeText={setValorInicial}
-        placeholder="0"
-      />
+      {esDeudaOCredito ? (
+        <>
+          <Field
+            label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
+            keyboardType="numeric"
+            value={valorPendiente}
+            onChangeText={setValorPendiente}
+            placeholder="0"
+          />
+          <Paragraph>
+            {categoria === 'DEUDA'
+              ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
+              : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
+          </Paragraph>
+        </>
+      ) : (
+        <>
+          <Field
+            label="Valor inicial"
+            keyboardType="numeric"
+            value={valorInicial}
+            onChangeText={setValorInicial}
+            placeholder="0"
+          />
+          <Segmented
+            label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
+            options={['No', 'Sí'] as const}
+            value={valorizable}
+            onChange={setValorizable}
+          />
+          <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
+        </>
+      )}
       <Field label="Moneda (ISO 4217)" value={moneda} onChangeText={setMoneda} placeholder="CLP" maxLength={3} />
-      <Segmented
-        label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
-        options={['No', 'Sí'] as const}
-        value={valorizable}
-        onChange={setValorizable}
-      />
-      <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
 
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar elemento" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />

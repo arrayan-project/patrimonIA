@@ -23,6 +23,7 @@ import type {
   CorregirDatosElementoDto,
   DesactivarElementoDto,
   EliminarElementoDto,
+  LlevarPendienteACeroDto,
   ReactivarElementoDto,
 } from './dto/comandos-elemento.dto.js';
 
@@ -70,6 +71,28 @@ export class ElementoService {
       throw new BadRequestException('Algún propietario no es un usuario activo');
     }
 
+    // DEUDA/CREDITO: el atributo obligatorio es valor_pendiente; valor_vigente se
+    // deriva con signo (DEUDA arrastra el patrimonio hacia abajo). Ver GAPS.md G17.
+    const esDeudaOCredito = dto.categoriaFuncional === 'DEUDA' || dto.categoriaFuncional === 'CREDITO';
+    let valorVigente: Prisma.Decimal;
+    let valorPendiente: Prisma.Decimal | null = null;
+    if (esDeudaOCredito) {
+      if (dto.valorPendiente === undefined || dto.valorPendiente <= 0) {
+        throw new BadRequestException('DEUDA/CREDITO requiere valorPendiente > 0');
+      }
+      if (dto.admiteValorizacion) {
+        throw new BadRequestException('DEUDA/CREDITO no admite valorización');
+      }
+      valorPendiente = new Prisma.Decimal(dto.valorPendiente);
+      valorVigente =
+        dto.categoriaFuncional === 'DEUDA' ? valorPendiente.negated() : valorPendiente;
+    } else {
+      if (dto.valorPendiente !== undefined) {
+        throw new BadRequestException('valorPendiente solo aplica a DEUDA/CREDITO');
+      }
+      valorVigente = new Prisma.Decimal(dto.valorInicial ?? 0);
+    }
+
     const elemento = await this.prisma.$transaction(async (tx) => {
       const creado = await tx.elemento_patrimonial.create({
         data: {
@@ -77,14 +100,14 @@ export class ElementoService {
           tipo: dto.tipo,
           categoria_funcional: dto.categoriaFuncional,
           ambito: dto.ambito ?? 'PERSONAL',
-          valor_vigente: new Prisma.Decimal(dto.valorInicial),
+          valor_vigente: valorVigente,
           moneda: dto.moneda.toUpperCase(),
           participa_valor_liquido: dto.participaValorLiquido ?? false,
           participa_consolidacion: dto.participaConsolidacion ?? false,
           admite_valorizacion: dto.admiteValorizacion ?? false,
           visibilidad: dto.visibilidad ?? 'PRIVADA',
           estado: 'ACTIVO',
-          // valor_pendiente queda NULL: categoría no es DEUDA/CREDITO (CHECK del esquema).
+          valor_pendiente: valorPendiente,
         },
       });
 
@@ -104,7 +127,8 @@ export class ElementoService {
         valorPosterior: {
           nombre: creado.nombre,
           categoria_funcional: creado.categoria_funcional,
-          valor_inicial: dto.valorInicial,
+          valor_inicial: esDeudaOCredito ? valorVigente.toNumber() : (dto.valorInicial ?? 0),
+          ...(esDeudaOCredito ? { valor_pendiente: dto.valorPendiente } : {}),
           moneda: creado.moneda,
           propietarios: propietarios.map((p) => ({
             usuario_id: p.usuarioId,
@@ -342,6 +366,83 @@ export class ElementoService {
     return this.obtenerElemento(el.id, actorId);
   }
 
+  /**
+   * AS #47 — CondonarDeuda. Decisión activa del acreedor de perdonar el saldo.
+   * Genera un impacto que lleva el valor pendiente (y el valor_vigente) a cero;
+   * el elemento se conserva para efectos históricos (DDD Sección T).
+   */
+  async condonarDeuda(actorId: string, dto: LlevarPendienteACeroDto): Promise<ElementoPatrimonialDTO> {
+    return this.#llevarPendienteACero(actorId, dto, 'CondonarDeuda', 'DEUDA', 'CONDONACION');
+  }
+
+  /**
+   * AS #48 — DeclararIncobrable. Reconocimiento de que un crédito no se recuperará.
+   * Mismo efecto mecánico que CondonarDeuda pero comando separado (DDD Sección T:
+   * pueden divergir en efectos legales/contables).
+   */
+  async declararIncobrable(
+    actorId: string,
+    dto: LlevarPendienteACeroDto,
+  ): Promise<ElementoPatrimonialDTO> {
+    return this.#llevarPendienteACero(
+      actorId,
+      dto,
+      'DeclararIncobrable',
+      'CREDITO',
+      'DECLARACION_INCOBRABLE',
+    );
+  }
+
+  async #llevarPendienteACero(
+    actorId: string,
+    dto: LlevarPendienteACeroDto,
+    comando: string,
+    categoriaEsperada: 'DEUDA' | 'CREDITO',
+    origenTipo: string,
+  ): Promise<ElementoPatrimonialDTO> {
+    const el = await this.#cargarConPropietario(dto.elementoId, actorId);
+    if (el.estado !== 'ACTIVO') throw new ConflictException('El elemento no está activo');
+    if (el.categoria_funcional !== categoriaEsperada) {
+      throw new BadRequestException(
+        `${comando} aplica solo a elementos de categoría ${categoriaEsperada}`,
+      );
+    }
+    const pendiente = new Prisma.Decimal(el.valor_pendiente ?? 0);
+    if (pendiente.lessThanOrEqualTo(0)) {
+      throw new ConflictException('El elemento no tiene saldo pendiente');
+    }
+    const delta = new Prisma.Decimal(el.valor_vigente).negated(); // lleva valor_vigente a 0
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.elemento_patrimonial.update({
+        where: { id: el.id },
+        data: { valor_vigente: new Prisma.Decimal(0), valor_pendiente: new Prisma.Decimal(0) },
+      });
+      const entradaId = await this.auditoria.registrar(tx, {
+        comando,
+        usuarioId: actorId,
+        entidadTipo: 'ELEMENTO_PATRIMONIAL',
+        entidadId: el.id,
+        motivo: dto.motivo,
+        valorAnterior: {
+          valor_pendiente: pendiente.toNumber(),
+          valor_vigente: Number(el.valor_vigente),
+        },
+        valorPosterior: { valor_pendiente: 0, valor_vigente: 0 },
+      });
+      await tx.impacto_patrimonial.create({
+        data: {
+          elemento_id: el.id,
+          monto: delta,
+          origen_tipo: origenTipo,
+          origen_id: entradaId,
+        },
+      });
+    });
+
+    return this.obtenerElemento(el.id, actorId);
+  }
+
   async #cargarActivo(elementoId: string, actorId: string): Promise<ElementoRow> {
     const el = await this.#cargarConPropietario(elementoId, actorId);
     if (el.estado !== 'ACTIVO') throw new ConflictException('El elemento no está activo');
@@ -364,6 +465,7 @@ export class ElementoService {
     actorId: string,
     propietarioId: string,
     incluirInactivos = false,
+    categoria?: string,
   ): Promise<ElementoPatrimonialDTO[]> {
     if (propietarioId !== actorId) {
       // Fase 2: solo puedes listar tus propios elementos. Ver GAPS.md G6.
@@ -373,9 +475,11 @@ export class ElementoService {
       where: { usuario_id: propietarioId },
       include: { elemento_patrimonial: true },
     });
-    const visibles = incluirInactivos
-      ? filas
-      : filas.filter((f) => f.elemento_patrimonial.estado === 'ACTIVO');
+    const visibles = filas.filter((f) => {
+      if (!incluirInactivos && f.elemento_patrimonial.estado !== 'ACTIVO') return false;
+      if (categoria && f.elemento_patrimonial.categoria_funcional !== categoria) return false;
+      return true;
+    });
     return Promise.all(visibles.map((f) => this.obtenerElemento(f.elemento_id, actorId)));
   }
 

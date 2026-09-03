@@ -11,7 +11,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, ErrorText, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, LinkButton, Row, Screen, Title } from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
@@ -23,6 +23,8 @@ export function ElementoDetalleScreen() {
   const [valorizaciones, setValorizaciones] = useState<ValorizacionDTO[]>([]);
   const [ajustes, setAjustes] = useState<AjustePatrimonialDTO[]>([]);
   const [error, setError] = useState('');
+  const [saldarMotivo, setSaldarMotivo] = useState('');
+  const [saldando, setSaldando] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!elementoId) return;
@@ -56,6 +58,27 @@ export function ElementoDetalleScreen() {
     void cargar();
   }, [cargar]);
 
+  const esDeuda = elemento?.categoriaFuncional === 'DEUDA';
+  const esCredito = elemento?.categoriaFuncional === 'CREDITO';
+
+  const saldar = async () => {
+    setSaldando(true);
+    setError('');
+    try {
+      await api.post(
+        esDeuda ? '/comandos/CondonarDeuda' : '/comandos/DeclararIncobrable',
+        { elementoId, motivo: saldarMotivo.trim() },
+        token,
+      );
+      setSaldarMotivo('');
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setSaldando(false);
+    }
+  };
+
   if (!elemento) {
     return (
       <Screen>
@@ -78,6 +101,35 @@ export function ElementoDetalleScreen() {
         <Row left="Visibilidad" right={elemento.visibilidad} />
         <Row left="Estado" right={elemento.estado} />
       </View>
+
+      {(esDeuda || esCredito) && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>{esDeuda ? 'Deuda' : 'Crédito'}</Text>
+          <Row
+            left="Saldo pendiente"
+            right={money(elemento.valorPendiente ?? 0, elemento.moneda)}
+          />
+          {(elemento.valorPendiente ?? 0) > 0 ? (
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <Text style={styles.muted}>
+                {esDeuda
+                  ? 'Condonar: el acreedor perdona el saldo (tu patrimonio sube).'
+                  : 'Declarar incobrable: reconoces que no se recuperará (tu patrimonio baja).'}
+              </Text>
+              <Field label="Motivo" value={saldarMotivo} onChangeText={setSaldarMotivo} autoCapitalize="sentences" />
+              <Button
+                title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}
+                variant="secondary"
+                onPress={saldar}
+                loading={saldando}
+                disabled={saldarMotivo.trim().length < 3}
+              />
+            </View>
+          ) : (
+            <Text style={styles.muted}>Saldada.</Text>
+          )}
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Propietarios</Text>

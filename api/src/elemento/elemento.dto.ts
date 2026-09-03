@@ -23,6 +23,8 @@ export interface ElementoPatrimonialDTO {
   admiteValorizacion: boolean;
   visibilidad: string;
   estado: string;
+  /** Solo DEUDA/CREDITO: saldo pendiente (magnitud positiva). NULL en el resto. */
+  valorPendiente: number | null;
   createdAt: string;
   propietarios: PropietarioDTO[];
 }
@@ -53,6 +55,7 @@ export function toElementoDTO(
     admiteValorizacion: e.admite_valorizacion,
     visibilidad: e.visibilidad,
     estado: e.estado,
+    valorPendiente: e.valor_pendiente === null ? null : Number(e.valor_pendiente),
     createdAt: e.created_at.toISOString(),
     propietarios: propietarios.map((p) => ({
       usuarioId: p.usuario_id,

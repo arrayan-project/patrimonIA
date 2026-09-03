@@ -15,10 +15,18 @@ import {
 } from 'class-validator';
 
 /**
- * Fase 2 (Flujo 1) trabaja categorías de activo. DEUDA/CREDITO es un ciclo
- * vertical aparte (Flujo 4) y arrastra el vacío G1 — ver GAPS.md.
+ * Categorías de activo (Fase 2, Flujo 1) + DEUDA/CREDITO (Fase 8, Flujo 4).
+ * Para DEUDA/CREDITO el atributo obligatorio es `valorPendiente` y el
+ * `valor_vigente` se deriva con signo (DEUDA negativo, CREDITO positivo).
  */
-export const CATEGORIAS_FASE_2 = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO'] as const;
+export const CATEGORIAS_ELEMENTO = [
+  'LIQUIDEZ',
+  'RESERVA',
+  'INVERSION',
+  'ACTIVO',
+  'DEUDA',
+  'CREDITO',
+] as const;
 export const VISIBILIDADES = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 export const AMBITOS = ['PERSONAL', 'HOGAR'] as const;
 
@@ -39,16 +47,24 @@ export class RegistrarElementoDto {
   @MinLength(1)
   tipo!: string;
 
-  @IsIn(CATEGORIAS_FASE_2)
-  categoriaFuncional!: (typeof CATEGORIAS_FASE_2)[number];
+  @IsIn(CATEGORIAS_ELEMENTO)
+  categoriaFuncional!: (typeof CATEGORIAS_ELEMENTO)[number];
 
   @IsOptional()
   @IsIn(AMBITOS)
   ambito?: (typeof AMBITOS)[number];
 
+  /** Categorías de activo. Para DEUDA/CREDITO se ignora — manda `valorPendiente`. */
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  valorInicial!: number;
+  valorInicial?: number;
+
+  /** Obligatorio y > 0 solo para categoría DEUDA o CREDITO (validado en el service). */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  valorPendiente?: number;
 
   @IsString()
   @Length(3, 3)

@@ -55,3 +55,9 @@ export class CambiarPropiedadDto {
   @Type(() => PropietarioDto)
   propietarios!: PropietarioDto[];
 }
+
+/** Body de POST /comandos/CondonarDeuda (AS #47) y /comandos/DeclararIncobrable (AS #48). */
+export class LlevarPendienteACeroDto {
+  @IsUUID() elementoId!: string;
+  @IsString() @MinLength(3) motivo!: string;
+}

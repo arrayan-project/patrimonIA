@@ -203,7 +203,8 @@ CREATE TABLE impacto_patrimonial (
     elemento_id   UUID NOT NULL REFERENCES elemento_patrimonial(id),
     monto         NUMERIC(18,2) NOT NULL,  -- signo indica entrada/salida
     origen_tipo   TEXT NOT NULL CHECK (origen_tipo IN
-                   ('EVENTO_FINANCIERO', 'VALORIZACION', 'AJUSTE_PATRIMONIAL')),
+                   ('EVENTO_FINANCIERO', 'VALORIZACION', 'AJUSTE_PATRIMONIAL',
+                    'CONDONACION', 'DECLARACION_INCOBRABLE')),  -- migración 003
     origen_id     UUID NOT NULL,  -- FK polimórfica: resuelta en Application Service, no en DB
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

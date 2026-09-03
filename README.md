@@ -72,10 +72,16 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     (GAPS.md G2). e2e en verde.
   - [x] Móvil: pantalla Movimientos programados (lista + alta) y detalle con
     Materializar / Editar / Cancelar.
-- [ ] Fase 8 — se define al cerrar Fase 7 (BUILD_INSTRUCTIONS §3).
+- [x] **Fase 8 — Deuda / Crédito (especialización de Elemento, Flujo 4, AS #47/#48)**:
+  - [x] Backend: `RegistrarElementoPatrimonial` acepta categoría DEUDA/CREDITO
+    con `valorPendiente` (deriva `valor_vigente` con signo). CondonarDeuda,
+    DeclararIncobrable. Política "Derivar estado operativo" = invariante
+    `valor_pendiente == |valor_vigente|` tras cada impacto (evento y ajuste).
+    Migración 003 (orígenes de impacto). `?categoria=DEUDA|CREDITO`. e2e en verde.
+  - [x] Móvil: alta de deuda/crédito; en el detalle, saldo pendiente + acción
+    Condonar / Declarar incobrable.
 
-**Cobertura de los 52 Application Services**: 50 implementados (#1–#46, #49–#52).
-Faltan 2: Deuda/Crédito (#47 CondonarDeuda, #48 DeclararIncobrable).
+**Cobertura de los 52 Application Services**: 52 / 52.
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

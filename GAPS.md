@@ -12,10 +12,13 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Qué falta**: un valor entre "activa" y "pagada por completo" para mostrar en UI.
 - **Por qué no está resuelto**: la Sección T del DDD dice que el estado "se deriva
   del valor pendiente" pero no enumera los valores intermedios.
-- **Opciones**: (a) cálculo trivial de UI — `% pagado = (monto_original - valor_pendiente) / monto_original`;
-  (b) estado formal nombrado en el modelo.
-- **Estado**: sin decidir. No implementar (a) como estado formal sin decisión
-  explícita. Fase 1 no toca Deuda/Crédito.
+- **Decisión (Fase 8)**: NO se introduce un estado formal nombrado. La política
+  "Derivar estado operativo" se implementa como el mantenimiento del invariante
+  `valor_pendiente == |valor_vigente|` tras cada impacto (ver G17). El "estado"
+  (activa / parcial / saldada) es un **cálculo de lectura** que la UI hace con
+  `valor_pendiente` y el pendiente inicial (de la auditoría de creación). No hay
+  columna `estado_operativo`.
+- **Para decidir**: ¿hace falta un enum formal para reporting/consolidación?
 
 ### G2 — Visibilidad / propiedad de Movimiento Programado
 - **Qué falta**: definir si `movimiento_programado` lleva columnas de
@@ -212,6 +215,31 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿presupuesto con moneda?, ¿ahorro real desde reservas/objetivos
   en vez de ingresos−gastos?, ¿excluir transferencias entre elementos del alcance
   ya está bien así?
+
+### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)
+- **Qué falta**: ni el DDD ni DATABASE_DESIGN fijan el signo de
+  `elemento_patrimonial.valor_vigente` para una DEUDA, ni cómo se relaciona con
+  `valor_pendiente` cuando cambian por evento/ajuste.
+- **Decisión provisional (Fase 8)**:
+  - **DEUDA** → `valor_vigente` **negativo** (arrastra el patrimonio hacia abajo);
+    **CREDITO** → `valor_vigente` positivo. En ambos, magnitud = `valor_pendiente`.
+  - `RegistrarElementoPatrimonial` para DEUDA/CREDITO exige `valorPendiente > 0`,
+    ignora `valorInicial` y deriva el `valor_vigente` con signo. No admite
+    valorización.
+  - **Invariante `valor_pendiente == |valor_vigente|`**: se mantiene con la
+    política muda `derivarValorPendiente` (`src/common/deuda.ts`), llamada tras
+    cada impacto en `RegistrarEventoFinanciero` / `AnularEventoFinanciero` /
+    `CorregirEventoFinanciero` / los tres comandos de Ajuste. Sin entrada de
+    auditoría propia (DDD Sección U: política 1-a-1 y muda).
+  - Pagar una deuda / cobrar un crédito se modela como **TRANSFERENCIA** entre la
+    cuenta y el elemento DEUDA/CREDITO (el impacto sobre este último mueve su
+    `valor_vigente` hacia cero y el invariante actualiza `valor_pendiente`).
+  - `CondonarDeuda` / `DeclararIncobrable` llevan `valor_vigente` y
+    `valor_pendiente` a 0 y generan un impacto `origen_tipo` `CONDONACION` /
+    `DECLARACION_INCOBRABLE` (migración 003) cuyo `origen_id` apunta a la entrada
+    de auditoría del comando (no hay tabla propia).
+- **Para decidir**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
+  TRANSFERENCIA hacia el elemento crédito? ¿intereses como Ajuste o como evento?
 
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita

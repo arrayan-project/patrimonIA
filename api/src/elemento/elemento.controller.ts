@@ -10,6 +10,7 @@ import {
   CorregirDatosElementoDto,
   DesactivarElementoDto,
   EliminarElementoDto,
+  LlevarPendienteACeroDto,
   ReactivarElementoDto,
 } from './dto/comandos-elemento.dto.js';
 import { ElementoService } from './elemento.service.js';
@@ -78,17 +79,31 @@ export class ElementoController {
     return this.elementos.cambiarPropiedad(u.id, dto);
   }
 
+  @Post('comandos/CondonarDeuda')
+  @HttpCode(200)
+  condonarDeuda(@CurrentUser() u: UsuarioAutenticado, @Body() dto: LlevarPendienteACeroDto) {
+    return this.elementos.condonarDeuda(u.id, dto);
+  }
+
+  @Post('comandos/DeclararIncobrable')
+  @HttpCode(200)
+  declararIncobrable(@CurrentUser() u: UsuarioAutenticado, @Body() dto: LlevarPendienteACeroDto) {
+    return this.elementos.declararIncobrable(u.id, dto);
+  }
+
   @Get('elementos-patrimoniales')
   listar(
     @CurrentUser() user: UsuarioAutenticado,
     @Query('propietario') propietario?: string,
     @Query('incluirInactivos') incluirInactivos?: string,
+    @Query('categoria') categoria?: string,
   ): Promise<ElementoPatrimonialDTO[]> {
     const propietarioId = !propietario || propietario === 'me' ? user.id : propietario;
     return this.elementos.listarPorPropietario(
       user.id,
       propietarioId,
       incluirInactivos === 'true',
+      categoria,
     );
   }
 

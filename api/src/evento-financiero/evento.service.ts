@@ -9,6 +9,7 @@ import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
+import { derivarValorPendiente } from '../common/deuda.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
 import type { AnularEventoDto } from './dto/anular-evento.dto.js';
@@ -76,6 +77,7 @@ export class EventoFinancieroService {
           where: { id: p.elemento.id },
           data: { valor_vigente: new Prisma.Decimal(p.elemento.valor_vigente).plus(p.monto) },
         });
+        await derivarValorPendiente(tx, p.elemento.id);
       }
 
       let reservasConsumidas: { id: string; monto: number }[] = [];
@@ -149,6 +151,7 @@ export class EventoFinancieroService {
           where: { id: i.elemento_id },
           data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).minus(i.monto) },
         });
+        await derivarValorPendiente(tx, i.elemento_id);
       }
 
       const actualizado = await tx.evento_financiero.update({
@@ -225,6 +228,7 @@ export class EventoFinancieroService {
           where: { id: i.elemento_id },
           data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(montoComp) },
         });
+        await derivarValorPendiente(tx, i.elemento_id);
       }
 
       await this.auditoria.registrar(tx, {

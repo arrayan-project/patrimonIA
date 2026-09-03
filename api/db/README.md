@@ -46,6 +46,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `002_presupuesto_propietario.sql` — columnas `usuario_id` / `hogar_id` +
   CHECK `ck_presupuesto_propietario` en `presupuesto` (GAPS.md G15). Ya incluida
   en `init/01_schema.sql`.
+- `003_impacto_origen_condonacion.sql` — amplía el CHECK de
+  `impacto_patrimonial.origen_tipo` con `CONDONACION` / `DECLARACION_INCOBRABLE`
+  (GAPS.md G17). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 
