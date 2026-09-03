@@ -335,6 +335,23 @@ CREATE INDEX ix_notificacion_usuario ON notificacion (usuario_id, created_at DES
 CREATE INDEX ix_notificacion_no_leida ON notificacion (usuario_id) WHERE leida = FALSE;
 
 -- ============================================================================
+-- 13. Idempotencia de comandos (migración 006 — infraestructura de API)
+-- Guarda la respuesta ya emitida para una (Idempotency-Key, usuario).
+-- ============================================================================
+
+CREATE TABLE idempotencia (
+    clave        TEXT NOT NULL,
+    usuario_id   UUID NOT NULL REFERENCES usuario(id),
+    endpoint     TEXT NOT NULL,
+    status_code  INTEGER,
+    respuesta    JSONB,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (clave, usuario_id)
+);
+
+CREATE INDEX ix_idempotencia_created ON idempotencia (created_at);
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

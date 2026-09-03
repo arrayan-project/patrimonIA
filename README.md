@@ -99,7 +99,15 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `GET /usuarios/me/notificaciones(/no-leidas)`, `POST .../:id/leer`,
     `POST .../leer-todas`. e2e en verde.
   - [x] Móvil: bandeja de notificaciones con contador en el Dashboard.
-- [ ] Fase 12 — Idempotency-Key + token de pre-registro.
+- [x] **Fase 12 — Infraestructura de API**:
+  - [x] `Idempotency-Key` en `POST /comandos/*` (interceptor global, tabla
+    `idempotencia`, migración 006): un reintento con la misma clave devuelve la
+    respuesta guardada sin re-ejecutar.
+  - [x] Token de pre-registro: `POST /auth/registro-token` + `RegistroTokenGuard`
+    (activo solo con `AUTH_REGISTRO_TOKEN_REQUERIDO=true`). Falta el gate previo
+    (captcha/email) — GAPS.md G4.
+  - e2e en verde. Sin cambios en la app.
+- [ ] Fase 13 — subsistema de tipos de cambio + total consolidado + CONVERSION.
 
 **Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de
 consolidación/métricas del hogar y el subsistema de tipos de cambio (ver GAPS.md

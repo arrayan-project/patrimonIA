@@ -1,7 +1,8 @@
-import { Body, Controller, Get, HttpCode, NotFoundException, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, NotFoundException, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { Public } from '../auth/public.decorator.js';
+import { RegistroTokenGuard } from '../auth/registro-token.guard.js';
 import { RegistrarUsuarioDto } from './dto/registrar-usuario.dto.js';
 import {
   ActualizarDatosUsuarioDto,
@@ -15,12 +16,13 @@ export class UsuarioController {
   constructor(private readonly usuarios: UsuarioService) {}
 
   /**
-   * API_DESIGN pide un "token de sesión temporal de registro" para este
-   * endpoint. Ese pre-registro no está modelado en el dominio (no hay comando
-   * para emitirlo) — decisión técnica: se difiere y el endpoint queda @Public.
-   * Ver GAPS.md.
+   * API_DESIGN pide un "token de sesión temporal de registro". `RegistroTokenGuard`
+   * lo exige solo si `AUTH_REGISTRO_TOKEN_REQUERIDO=true` (prod); en dev/test el
+   * endpoint queda abierto. El gate previo (captcha/email) sigue pendiente —
+   * ver GAPS.md G4. Se emite en `POST /auth/registro-token`.
    */
   @Public()
+  @UseGuards(RegistroTokenGuard)
   @Post('comandos/RegistrarUsuario')
   registrarUsuario(@Body() dto: RegistrarUsuarioDto): Promise<UsuarioDTO> {
     return this.usuarios.registrarUsuario(dto);

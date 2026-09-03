@@ -64,14 +64,17 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
 ### G4 — "Token de sesión temporal de registro" para RegistrarUsuario
 - **Qué falta**: API_DESIGN dice que `POST /comandos/RegistrarUsuario` va con un
-  "token de sesión temporal de registro, no de usuario ya autenticado". Ese
-  pre-registro (pedir el token) no está modelado — no hay comando que lo emita.
-- **Decisión provisional (técnica, no de dominio)**: el endpoint queda `@Public()`
-  (sin JWT). Gatearlo tras un token que nadie puede obtener todavía bloquearía el
-  alta por completo.
-- **Para decidir**: diseñar el flujo de pre-registro (endpoint anónimo que emite
-  un token de registro de corta duración, p. ej. tras un captcha o un email) —
-  es infraestructura de auth, se puede resolver sin tocar el DDD.
+  "token de sesión temporal de registro, no de usuario ya autenticado".
+- **Estado (Fase 12)**: **parcialmente resuelto**.
+  - `POST /auth/registro-token` (anónimo) emite un JWT `{ purpose: 'registro' }`
+    de 15 min.
+  - `RegistroTokenGuard` en `RegistrarUsuario` lo exige **solo si**
+    `AUTH_REGISTRO_TOKEN_REQUERIDO=true` (producción). En dev/test el endpoint
+    sigue abierto para no romper el arranque ni los e2e.
+- **Lo que sigue pendiente**: el gate **antes** de emitir el token — captcha,
+  verificación de email, o rate-limit por IP. Hoy `/auth/registro-token` lo da a
+  cualquiera, así que el token no aporta seguridad real todavía; es la estructura
+  lista para colgar ese gate.
 
 ### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)
 - **Qué falta**: el DDD (Sección M) define visibilidad "por tipo de información"

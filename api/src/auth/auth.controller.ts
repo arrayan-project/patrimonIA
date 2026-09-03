@@ -13,4 +13,11 @@ export class AuthController {
   login(@Body() dto: LoginDto): Promise<LoginResult> {
     return this.auth.login(dto.email, dto.password);
   }
+
+  @Public()
+  @Post('registro-token')
+  @HttpCode(200)
+  tokenRegistro() {
+    return this.auth.emitirTokenRegistro();
+  }
 }

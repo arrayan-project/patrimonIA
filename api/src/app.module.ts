@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { IdempotencyInterceptor } from './common/idempotency.interceptor.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
 import { AuditoriaModule } from './auditoria/auditoria.module.js';
@@ -37,5 +39,6 @@ import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
     PresupuestoModule,
     ProyeccionesModule,
   ],
+  providers: [{ provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor }],
 })
 export class AppModule {}

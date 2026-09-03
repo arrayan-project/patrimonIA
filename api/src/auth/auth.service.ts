@@ -36,4 +36,15 @@ export class AuthService {
       usuario: { id: usuario.id, email: usuario.email, nombre: usuario.nombre },
     };
   }
+
+  /**
+   * Token de sesión temporal de registro (API_DESIGN). Corto y con propósito
+   * acotado. El gate previo (captcha / email) queda pendiente — ver GAPS.md G4.
+   */
+  async emitirTokenRegistro(): Promise<{ token: string; expiraEn: string }> {
+    return {
+      token: await this.jwt.signAsync({ purpose: 'registro' }, { expiresIn: '15m' }),
+      expiraEn: '15m',
+    };
+  }
 }

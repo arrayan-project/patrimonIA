@@ -268,6 +268,7 @@ model usuario {
   asignacion                                 asignacion[]
   auditoria                                  auditoria[]
   elemento_propietario                       elemento_propietario[]
+  idempotencia                               idempotencia[]
   invitacion_invitacion_emisor_idTousuario   invitacion[]           @relation("invitacion_emisor_idTousuario")
   invitacion_invitacion_invitado_idTousuario invitacion[]           @relation("invitacion_invitado_idTousuario")
   membresia                                  membresia[]
@@ -306,4 +307,17 @@ model notificacion {
 
   @@index([usuario_id], map: "ix_notificacion_no_leida", where: raw("(leida = false)"))
   @@index([usuario_id, created_at(sort: Desc)], map: "ix_notificacion_usuario")
+}
+
+model idempotencia {
+  clave       String
+  usuario_id  String   @db.Uuid
+  endpoint    String
+  status_code Int?
+  respuesta   Json?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  usuario     usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([clave, usuario_id])
+  @@index([created_at], map: "ix_idempotencia_created")
 }

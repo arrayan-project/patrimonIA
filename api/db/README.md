@@ -54,6 +54,8 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   G18). Backfill desde los orígenes. Ya incluida en `init/01_schema.sql`.
 - `005_notificacion.sql` — tabla `notificacion` (infraestructura in-app del
   Principio 4, GAPS.md G20). Ya incluida en `init/01_schema.sql`.
+- `006_idempotencia.sql` — tabla `idempotencia` (header `Idempotency-Key`,
+  API_DESIGN §43). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 
