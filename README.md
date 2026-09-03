@@ -119,7 +119,8 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 - [x] **Fase 14 — Deuda técnica**:
   - [x] **14a** App: `@react-navigation` (fachada `useNav()` intacta), sesión
     persistida (`expo-secure-store` / `localStorage`), selector multi-hogar.
-  - [ ] 14b — tests unitarios + CI.
+  - [x] **14b** — tests unitarios (`api/src/**/*.spec.ts`, sin DB) + CI
+    (`.github/workflows/ci.yml`: Postgres de servicio, lint/build/unit/e2e + app).
   - [ ] 14c — triangulación de divisas (G21), rate-limit + verificación de email
     del pre-registro (G4), push notifications (G20).
 

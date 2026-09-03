@@ -19,6 +19,18 @@ npm run prisma:generate
 npm run start:dev
 ```
 
+## Tests
+
+```
+npm test          # unitarios (src/**/*.spec.ts) — sin DB
+npm run test:e2e  # end-to-end (test/**/*.e2e-spec.ts) — requiere Postgres arriba
+npm run test:all  # ambos
+```
+
+CI en `.github/workflows/ci.yml`: levanta `postgres:16` de servicio, carga
+`db/init/01_schema.sql`, y corre lint + build + unitarios + e2e (y en la app,
+`tsc` + `expo export`).
+
 ## Healthcheck
 
 ```

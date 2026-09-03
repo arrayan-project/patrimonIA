@@ -1,7 +1,7 @@
 {
   "name": "patrimonia-api",
   "version": "0.0.1",
-  "description": "PatrimonIA — backend NestJS",
+  "description": "PatrimonIA \u2014 backend NestJS",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -25,7 +25,8 @@
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "prisma:pull": "prisma db pull",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "test:all": "vitest run && vitest run --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
