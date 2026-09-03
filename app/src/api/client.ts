@@ -210,3 +210,15 @@ export interface DesviacionPresupuestariaDTO {
   real: { ingresos: number; gastos: number; ahorro: number };
   desviacion: { ingresos: number; gastos: number; ahorro: number };
 }
+
+export interface MovimientoProgramadoDTO {
+  id: string;
+  montoPlanificado: number;
+  moneda: string;
+  fechaProgramada: string;
+  elementoDestinoId: string;
+  observaciones: string | null;
+  estado: 'PENDIENTE' | 'MATERIALIZADO' | 'CANCELADO';
+  eventoFinancieroId: string | null;
+  createdAt: string;
+}

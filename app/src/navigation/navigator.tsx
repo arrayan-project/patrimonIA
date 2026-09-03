@@ -26,7 +26,9 @@ export type RouteName =
   | 'ObjetivoDetalle'
   | 'AsignacionDetalle'
   | 'Presupuestos'
-  | 'PresupuestoDetalle';
+  | 'PresupuestoDetalle'
+  | 'MovimientosProgramados'
+  | 'MovimientoProgramadoDetalle';
 
 export interface Route {
   name: RouteName;

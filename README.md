@@ -64,10 +64,18 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     e2e en verde.
   - [x] Móvil: pantalla Presupuestos (lista + alta) y detalle con la
     comparación presupuestado-vs-real y acciones Editar / Cerrar / Eliminar.
-- [ ] Fase 7 — se define al cerrar Fase 6 (BUILD_INSTRUCTIONS §3).
+- [x] **Fase 7 — Movimiento Programado (agregado propio, AS #13–#16)**:
+  - [x] Backend: CrearMovimientoProgramado, ActualizarMovimientoProgramado
+    (solo PENDIENTE), MaterializarMovimientoProgramado (dispara un Evento
+    INGRESO hacia el destino, con una sola entrada de auditoría),
+    CancelarMovimientoProgramado. Autorización heredada del elemento destino
+    (GAPS.md G2). e2e en verde.
+  - [x] Móvil: pantalla Movimientos programados (lista + alta) y detalle con
+    Materializar / Editar / Cancelar.
+- [ ] Fase 8 — se define al cerrar Fase 7 (BUILD_INSTRUCTIONS §3).
 
-**Cobertura de los 52 Application Services**: 46 implementados (#1–#12, #17–#46,
-#49–#52). Faltan 6: Movimiento Programado (#13–#16), Deuda/Crédito (#47/#48).
+**Cobertura de los 52 Application Services**: 50 implementados (#1–#46, #49–#52).
+Faltan 2: Deuda/Crédito (#47 CondonarDeuda, #48 DeclararIncobrable).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

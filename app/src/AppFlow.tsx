@@ -23,6 +23,8 @@ import { ObjetivoDetalleScreen } from './screens/ObjetivoDetalleScreen';
 import { AsignacionDetalleScreen } from './screens/AsignacionDetalleScreen';
 import { PresupuestosScreen } from './screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from './screens/PresupuestoDetalleScreen';
+import { MovimientosProgramadosScreen } from './screens/MovimientosProgramadosScreen';
+import { MovimientoProgramadoDetalleScreen } from './screens/MovimientoProgramadoDetalleScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -66,6 +68,10 @@ function Routes() {
       return <PresupuestosScreen />;
     case 'PresupuestoDetalle':
       return <PresupuestoDetalleScreen />;
+    case 'MovimientosProgramados':
+      return <MovimientosProgramadosScreen />;
+    case 'MovimientoProgramadoDetalle':
+      return <MovimientoProgramadoDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }

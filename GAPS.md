@@ -20,9 +20,27 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 ### G2 — Visibilidad / propiedad de Movimiento Programado
 - **Qué falta**: definir si `movimiento_programado` lleva columnas de
   visibilidad/propiedad propias o hereda las del elemento destino.
-- **Por qué no está resuelto**: DDD Sección S lo deja explícitamente para después.
-- **Estado**: sin decidir. No agregar columnas ni lógica sin decisión explícita.
-  Fase 1 no toca Movimiento Programado.
+- **Por qué no está resuelto**: DDD Sección S lo deja explícitamente para después
+  ("Revisar si Movimiento Programado requiere reglas de visibilidad/propiedad
+  propias o hereda las del Elemento Patrimonial destino").
+- **Decisión provisional (Fase 7, técnica no de dominio)**: **hereda del elemento
+  destino** — el actor debe ser propietario de `elemento_destino_id` para crear,
+  actualizar, materializar, cancelar o ver el movimiento programado. No se agregan
+  columnas al esquema. Es la lectura menos invasiva de las dos que plantea el DDD.
+- **Otras simplificaciones de Fase 7**:
+  - El esquema modela `elemento_destino_id` **singular** (AS #13 dice "elemento(s)
+    destino"). Se usa singular.
+  - No hay columna `tipo` en `movimiento_programado`. **Materializar genera un
+    evento INGRESO** hacia el elemento destino (el caso natural de un movimiento
+    con un único destino y monto planificado — ej. un abono recurrente).
+    Gastos/transferencias programados quedan como extensión futura.
+  - Materializar exige `fecha_programada <= hoy` y estado PENDIENTE. Escribe **una
+    sola** entrada de auditoría (`comando = MaterializarMovimientoProgramado`,
+    entidad = MOVIMIENTO_PROGRAMADO, relacionada = EVENTO_FINANCIERO) — no
+    reutiliza la auditoría de `RegistrarEventoFinanciero` (AS #15: "único caso de
+    uso compartido, se registra bajo el mismo comando").
+- **Para decidir**: ¿MP con `tipo` y origen para programar gastos/transferencias?
+  ¿reglas de visibilidad propias?
 
 ---
 

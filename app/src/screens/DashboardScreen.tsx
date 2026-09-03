@@ -151,6 +151,10 @@ export function DashboardScreen() {
       <LinkButton title="Objetivos financieros" onPress={() => nav.go('Objetivos')} />
       <LinkButton title="Presupuestos" onPress={() => nav.go('Presupuestos')} />
       <LinkButton
+        title="Movimientos programados"
+        onPress={() => nav.go('MovimientosProgramados')}
+      />
+      <LinkButton
         title="Gestionar hogar"
         onPress={() => nav.go('GestionHogar', { hogarId: hogar.id })}
       />

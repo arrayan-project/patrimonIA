@@ -87,6 +87,13 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Dashboard → Presupuestos | `GET /presupuestos` · `POST /comandos/CrearPresupuesto` |
 | Detalle de presupuesto | `GET /presupuestos/:id` · `GET /presupuestos/:id/desviacion` · `ActualizarDatosPresupuesto` / `CerrarPresupuesto` / `EliminarPresupuesto` |
 
+### Fase 7 — Movimiento Programado
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Movimientos programados | `GET /movimientos-programados` · `POST /comandos/CrearMovimientoProgramado` |
+| Detalle de movimiento programado | `GET /movimientos-programados/:id` · `MaterializarMovimientoProgramado` / `ActualizarMovimientoProgramado` / `CancelarMovimientoProgramado` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por
