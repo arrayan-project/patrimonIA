@@ -258,6 +258,26 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿agregar `fecha_alta` / `fecha_baja` al elemento? ¿fecha a la
   anulación para reconstruirla en el tiempo?
 
+### G19 — Consolidación del hogar sin `hogar_id` en el elemento (Fase 10)
+- **Qué falta**: DDD Sección Q dice "un elemento participa en una única
+  consolidación de hogar", pero el esquema solo tiene el booleano
+  `participa_consolidacion` — no hay columna que apunte a qué hogar.
+- **Decisión provisional (Fase 10)**: un elemento con `participa_consolidacion =
+  true` entra en la consolidación de **todo hogar** donde alguno de sus
+  propietarios sea miembro ACTIVA. En el caso normal (un hogar por usuario) es
+  exacto; con multi-hogar un elemento podría contarse en dos consolidaciones.
+- **Otras decisiones de Fase 10**:
+  - El elemento se suma **una vez por su `valor_vigente` completo** (no ponderado
+    por %) — Sección Q: "no debe duplicar elementos compartidos".
+  - **Sin total entre monedas** (G7): desglose `porMoneda`.
+  - Pasivos = categoría `DEUDA` (magnitud); `CREDITO` es activo.
+  - "Avance de objetivos del hogar" agrega los objetivos personales de todos los
+    miembros ACTIVA (los objetivos siguen siendo personales, G13).
+  - `GET /hogares/:id/eventos-financieros` (no `?hogar=` como en API_DESIGN):
+    una fila por evento (colapsa transferencias) con `montoEfectivo` neto de
+    correcciones vivas (colapsa el par original+compensatorio).
+- **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
+
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN

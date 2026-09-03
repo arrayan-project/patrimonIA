@@ -26,6 +26,7 @@ import { PresupuestoDetalleScreen } from './screens/PresupuestoDetalleScreen';
 import { MovimientosProgramadosScreen } from './screens/MovimientosProgramadosScreen';
 import { MovimientoProgramadoDetalleScreen } from './screens/MovimientoProgramadoDetalleScreen';
 import { EvolucionPatrimonioScreen } from './screens/EvolucionPatrimonioScreen';
+import { HogarConsolidadoScreen } from './screens/HogarConsolidadoScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -75,6 +76,8 @@ function Routes() {
       return <MovimientoProgramadoDetalleScreen />;
     case 'EvolucionPatrimonio':
       return <EvolucionPatrimonioScreen />;
+    case 'HogarConsolidado':
+      return <HogarConsolidadoScreen />;
     default:
       return <BienvenidaScreen />;
   }

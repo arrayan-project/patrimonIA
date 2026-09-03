@@ -10,6 +10,7 @@ import { ElementoModule } from './elemento/elemento.module.js';
 import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
 import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
+import { ConsolidacionModule } from './consolidacion/consolidacion.module.js';
 import { MovimientoProgramadoModule } from './movimiento-programado/movimiento-programado.module.js';
 import { PlanificacionModule } from './planificacion/planificacion.module.js';
 import { PresupuestoModule } from './presupuesto/presupuesto.module.js';
@@ -28,6 +29,7 @@ import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
     EventoFinancieroModule,
     ValorizacionModule,
     AjustePatrimonialModule,
+    ConsolidacionModule,
     MovimientoProgramadoModule,
     PlanificacionModule,
     PresupuestoModule,

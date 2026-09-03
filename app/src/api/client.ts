@@ -213,6 +213,41 @@ export interface DesviacionPresupuestariaDTO {
   desviacion: { ingresos: number; gastos: number; ahorro: number };
 }
 
+export interface PatrimonioConsolidadoDTO {
+  hogarId: string;
+  monedaConsolidacion: string;
+  porMoneda: {
+    moneda: string;
+    patrimonioNeto: number;
+    activos: number;
+    pasivos: number;
+    valorLiquido: number;
+  }[];
+  elementos: number;
+  miembros: number;
+}
+
+export interface MetricasHogarDTO {
+  hogarId: string;
+  porMoneda: {
+    moneda: string;
+    patrimonioNeto: number;
+    activos: number;
+    pasivos: number;
+    liquidez: number | null;
+    distribucionPorActivo: { categoria: string; valor: number; porcentaje: number }[];
+    distribucionPorPasivo: { categoria: string; valor: number; porcentaje: number }[];
+  }[];
+  objetivos: {
+    total: number;
+    enProgreso: number;
+    completados: number;
+    montoObjetivoTotal: number;
+    progresoTotal: number;
+    avancePorcentaje: number | null;
+  };
+}
+
 export interface VariacionPatrimonialDTO {
   usuarioId: string;
   desde: string;

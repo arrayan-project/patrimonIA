@@ -148,6 +148,10 @@ export function DashboardScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
+      <LinkButton
+        title="Patrimonio del hogar"
+        onPress={() => nav.go('HogarConsolidado', { hogarId: hogar.id })}
+      />
       <LinkButton title="Evolución de mi patrimonio" onPress={() => nav.go('EvolucionPatrimonio')} />
       <LinkButton title="Objetivos financieros" onPress={() => nav.go('Objetivos')} />
       <LinkButton title="Presupuestos" onPress={() => nav.go('Presupuestos')} />

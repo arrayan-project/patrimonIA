@@ -107,6 +107,12 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 |----------|------------------|
 | Dashboard → Evolución de mi patrimonio | `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` |
 
+### Fase 10 — Consolidación y métricas del hogar
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Dashboard → Patrimonio del hogar | `GET /hogares/:id/patrimonio-consolidado` · `GET /hogares/:id/metricas` |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

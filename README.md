@@ -87,7 +87,13 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     patrimonio individual a una fecha, y variación patrimonial entre dos fechas.
     e2e en verde.
   - [x] Móvil: pantalla "Evolución de mi patrimonio" (variación entre dos fechas).
-- [ ] Fase 10 — consolidación y métricas del hogar.
+- [x] **Fase 10 — Consolidación y métricas del hogar (DDD Secciones Q / N)**:
+  - [x] Backend: `GET /hogares/:id/patrimonio-consolidado` (neto/activos/pasivos/
+    líquido por moneda), `GET /hogares/:id/metricas` (distribución por categoría,
+    liquidez, avance de objetivos), `GET /hogares/:id/eventos-financieros` (vista
+    colapsada). e2e en verde.
+  - [x] Móvil: pantalla "Patrimonio del hogar".
+- [ ] Fase 11 — notificaciones.
 
 **Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de
 consolidación/métricas del hogar y el subsistema de tipos de cambio (ver GAPS.md
