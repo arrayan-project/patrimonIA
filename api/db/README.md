@@ -70,6 +70,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `011_plantilla_movimiento.sql` — tabla `plantilla_movimiento` (molde personal
   y sin fecha para movimientos recurrentes, GAPS.md G24). Ya incluida en
   `init/01_schema.sql`.
+- `012_etiqueta.sql` — tablas `etiqueta` (personal) y `evento_etiqueta` (N:M,
+  `ON DELETE CASCADE`) — clasificación transversal de movimientos (GAPS.md G23).
+  Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

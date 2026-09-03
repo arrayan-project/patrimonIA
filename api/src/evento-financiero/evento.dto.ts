@@ -14,6 +14,8 @@ export interface EventoFinancieroDTO {
   correccionDeId: string | null;
   glosa: string | null;
   categoriaId: string | null;
+  /** Etiquetas (0..N, personales) del movimiento. */
+  etiquetaIds: string[];
   createdAt: string;
   impactos: {
     id: string;
@@ -22,7 +24,11 @@ export interface EventoFinancieroDTO {
   }[];
 }
 
-export function toEventoDTO(e: EventoRow, impactos: ImpactoRow[]): EventoFinancieroDTO {
+export function toEventoDTO(
+  e: EventoRow,
+  impactos: ImpactoRow[],
+  etiquetaIds: string[] = [],
+): EventoFinancieroDTO {
   return {
     id: e.id,
     tipo: e.tipo,
@@ -33,6 +39,7 @@ export function toEventoDTO(e: EventoRow, impactos: ImpactoRow[]): EventoFinanci
     correccionDeId: e.correccion_de_id,
     glosa: e.glosa,
     categoriaId: e.categoria_id,
+    etiquetaIds,
     createdAt: e.created_at.toISOString(),
     impactos: impactos.map((i) => ({
       id: i.id,

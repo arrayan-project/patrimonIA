@@ -452,6 +452,32 @@ CREATE TABLE plantilla_movimiento (
 CREATE INDEX ix_plantilla_movimiento_usuario ON plantilla_movimiento (usuario_id, orden);
 
 -- ============================================================================
+-- 18. Etiquetas de movimiento (migración 012 — anotación personal, G23)
+-- Clasificación transversal 0..N por movimiento. Complementa a la categoría.
+-- ============================================================================
+
+CREATE TABLE etiqueta (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuario(id),
+    nombre     TEXT NOT NULL,
+    color      TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (usuario_id, nombre)
+);
+
+CREATE INDEX ix_etiqueta_usuario ON etiqueta (usuario_id);
+
+CREATE TABLE evento_etiqueta (
+    evento_id   UUID NOT NULL REFERENCES evento_financiero(id) ON DELETE CASCADE,
+    etiqueta_id UUID NOT NULL REFERENCES etiqueta(id) ON DELETE CASCADE,
+
+    PRIMARY KEY (evento_id, etiqueta_id)
+);
+
+CREATE INDEX ix_evento_etiqueta_etiqueta ON evento_etiqueta (etiqueta_id);
+
+-- ============================================================================
 -- Fin del esquema de dominio. Las proyecciones de lectura (patrimonio_individual,
 -- patrimonio_familiar_consolidado, progreso_objetivo, desviacion_presupuestaria)
 -- son vistas SQL o tablas materializadas — no forman parte de este DDL de dominio.

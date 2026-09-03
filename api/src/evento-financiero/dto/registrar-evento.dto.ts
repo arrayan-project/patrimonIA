@@ -1,4 +1,6 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsISO8601,
   IsNumber,
@@ -62,4 +64,11 @@ export class RegistrarEventoDto {
   @IsString()
   @MaxLength(140)
   glosa?: string;
+
+  /** Etiquetas personales a adjuntar (0..N). Opcional. Ver GAPS.md G23. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  etiquetaIds?: string[];
 }

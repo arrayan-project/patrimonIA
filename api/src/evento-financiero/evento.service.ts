@@ -11,6 +11,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
 import { NotificacionService } from '../notificacion/notificacion.service.js';
 import { ConversionService } from '../tipo-cambio/conversion.service.js';
+import { EtiquetaService } from '../etiqueta/etiqueta.service.js';
 import { derivarValorPendiente } from '../common/deuda.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
@@ -30,6 +31,7 @@ export class EventoFinancieroService {
     private readonly progreso: ProgresoService,
     private readonly notificaciones: NotificacionService,
     private readonly conversion: ConversionService,
+    private readonly etiquetas: EtiquetaService,
   ) {}
 
   /**
@@ -55,7 +57,7 @@ export class EventoFinancieroService {
 
     const categoriaId = await this.#validarCategoria(dto, actorId);
 
-    const { evento, impactos } = await this.prisma.$transaction(async (tx) => {
+    const resultado = await this.prisma.$transaction(async (tx) => {
       const evento = await tx.evento_financiero.create({
         data: {
           tipo: dto.tipo,
@@ -141,10 +143,17 @@ export class EventoFinancieroService {
         );
       }
 
-      return { evento, impactos };
+      const etiquetaIds = await this.etiquetas.adjuntarEnTx(
+        tx,
+        evento.id,
+        dto.etiquetaIds ?? [],
+        actorId,
+      );
+
+      return { evento, impactos, etiquetaIds };
     });
 
-    return toEventoDTO(evento, impactos);
+    return toEventoDTO(resultado.evento, resultado.impactos, resultado.etiquetaIds);
   }
 
   /**
@@ -192,7 +201,8 @@ export class EventoFinancieroService {
       return actualizado;
     });
 
-    return toEventoDTO(anulado, impactos);
+    const etqs = (await this.etiquetas.deEventos([anulado.id])).get(anulado.id) ?? [];
+    return toEventoDTO(anulado, impactos, etqs);
   }
 
   /**
@@ -221,6 +231,9 @@ export class EventoFinancieroService {
     if (delta.isZero()) {
       throw new BadRequestException('El nuevo monto es igual al actual — no hay nada que corregir');
     }
+
+    // La corrección hereda las etiquetas del original (como la glosa/categoría).
+    const etiquetasOriginal = (await this.etiquetas.deEventos([evento.id])).get(evento.id) ?? [];
 
     const resultado = await this.prisma.$transaction(async (tx) => {
       const compensatorio = await tx.evento_financiero.create({
@@ -271,10 +284,14 @@ export class EventoFinancieroService {
         entidadRelacionadaId: compensatorio.id,
       });
 
+      if (etiquetasOriginal.length > 0) {
+        await this.etiquetas.adjuntarEnTx(tx, compensatorio.id, etiquetasOriginal, actorId);
+      }
+
       return { compensatorio, nuevosImpactos };
     });
 
-    return toEventoDTO(resultado.compensatorio, resultado.nuevosImpactos);
+    return toEventoDTO(resultado.compensatorio, resultado.nuevosImpactos, etiquetasOriginal);
   }
 
   // ── Consultas ─────────────────────────────────────────────────────────────
@@ -288,7 +305,8 @@ export class EventoFinancieroService {
     if (!(await this.actorVeAlgunElemento(impactos.map((i) => i.elemento_id), actorId))) {
       throw new NotFoundException('Evento no encontrado');
     }
-    return toEventoDTO(evento, impactos);
+    const etqs = (await this.etiquetas.deEventos([eventoId])).get(eventoId) ?? [];
+    return toEventoDTO(evento, impactos, etqs);
   }
 
   async listarPorElemento(elementoId: string, actorId: string): Promise<EventoFinancieroDTO[]> {
@@ -307,7 +325,10 @@ export class EventoFinancieroService {
       arr.push(i);
       impactosPorEvento.set(i.origen_id, arr);
     }
-    return eventos.map((e) => toEventoDTO(e, impactosPorEvento.get(e.id) ?? []));
+    const etqs = await this.etiquetas.deEventos(eventos.map((e) => e.id));
+    return eventos.map((e) =>
+      toEventoDTO(e, impactosPorEvento.get(e.id) ?? [], etqs.get(e.id) ?? []),
+    );
   }
 
   // ── Armado y validación del plan de impactos ──────────────────────────────
