@@ -69,6 +69,17 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Registrar valorización | `POST /comandos/RegistrarValorizacion` |
 | Detalle de valorización | `POST /comandos/CorregirValorizacion` · `POST /comandos/AnularValorizacion` (solo la última vigente) |
 
+### Fase 5 — ajustes, ciclo de vida, objetivos
+
+| Pantalla | Qué hace |
+|----------|----------|
+| Detalle de elemento → Ajustes | RegistrarAjuste / detalle con Corregir / Anular |
+| Detalle de elemento → Editar / estado | ActualizarDatos, CambiarVisibilidad, Desactivar/Reactivar, Eliminar |
+| Dashboard → Gestionar hogar | editar nombre, roles, remover miembro, salir / eliminar |
+| Dashboard → Mi perfil | ActualizarDatosUsuario, DesactivarUsuario |
+| Dashboard → Objetivos financieros | lista + crear; detalle con barra de progreso, asignaciones, estado |
+| Detalle de asignación | reservas activas, crear/liberar reserva, eliminar asignación |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

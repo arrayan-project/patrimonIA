@@ -139,6 +139,15 @@ export function SelectRow({
   );
 }
 
+export function ProgressBar({ pct }: { pct: number }) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <View style={styles.progressTrack}>
+      <View style={[styles.progressFill, { width: `${clamped}%` }]} />
+    </View>
+  );
+}
+
 export function Row({ left, right }: { left: string; right: string }) {
   return (
     <View style={styles.dataRow}>
@@ -223,4 +232,11 @@ const styles = StyleSheet.create({
   },
   dataLeft: { fontSize: 14, color: colors.muted },
   dataRight: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  progressTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.faint,
+    overflow: 'hidden',
+  },
+  progressFill: { height: 10, borderRadius: 5, backgroundColor: colors.primary },
 });

@@ -49,7 +49,19 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     #19 CorregirValorizacion. e2e en verde.
   - [x] Móvil: toggle "se valoriza" al crear el elemento; sección Valorizaciones
     en el detalle con Registrar / Corregir / Anular.
-- [ ] Fase 5 — se define al cerrar Fase 4 (BUILD_INSTRUCTIONS §3).
+- [x] **Fase 5** (backend + app, e2e en verde):
+  - [x] **5a** — Ajuste Patrimonial (AS #20/#21/#22). Cierra el trío del patrón
+    de corrección (Evento, Valorización, Ajuste).
+  - [x] **5b** — comandos de ciclo de vida: Elemento (#2-#9), Hogar
+    (#35/#36/#40/#41/#42/#45), Usuario (#44/#46).
+  - [x] **5c** — Flujo 5: Objetivo (#30-#33) + Asignación (#23-#26) + Reserva
+    (#27-#29) + proyección progreso + políticas "Completar objetivo" /
+    "Consumir reserva". Migración 001 (columna `usuario_id`).
+- [ ] Fase 6 — se define al cerrar Fase 5 (BUILD_INSTRUCTIONS §3).
+
+**Cobertura de los 52 Application Services**: 42 implementados (#1–#12, #17–#46).
+Faltan 10: Movimiento Programado (#13–#16), Deuda/Crédito (#47/#48),
+Presupuesto (#49–#52).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

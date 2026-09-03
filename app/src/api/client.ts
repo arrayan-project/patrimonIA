@@ -155,3 +155,33 @@ export interface AjustePatrimonialDTO {
   correccionDeId: string | null;
   createdAt: string;
 }
+
+export interface ObjetivoFinancieroDTO {
+  id: string;
+  nombre: string;
+  montoObjetivo: number;
+  fechaObjetivo: string | null;
+  estado: string;
+  progreso: number;
+  progresoPorcentaje: number;
+  createdAt: string;
+}
+
+export interface ReservaDTO {
+  id: string;
+  asignacionId: string;
+  elementoOrigenId: string;
+  monto: number;
+  estado: string;
+  createdAt: string;
+}
+
+export interface AsignacionDTO {
+  id: string;
+  nombre: string;
+  montoObjetivo: number | null;
+  objetivoId: string | null;
+  totalReservado: number;
+  createdAt: string;
+  reservas?: ReservaDTO[];
+}

@@ -18,6 +18,9 @@ import { AjusteDetalleScreen } from './screens/AjusteDetalleScreen';
 import { EditarElementoScreen } from './screens/EditarElementoScreen';
 import { GestionHogarScreen } from './screens/GestionHogarScreen';
 import { PerfilScreen } from './screens/PerfilScreen';
+import { ObjetivosScreen } from './screens/ObjetivosScreen';
+import { ObjetivoDetalleScreen } from './screens/ObjetivoDetalleScreen';
+import { AsignacionDetalleScreen } from './screens/AsignacionDetalleScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -51,6 +54,12 @@ function Routes() {
       return <GestionHogarScreen />;
     case 'Perfil':
       return <PerfilScreen />;
+    case 'Objetivos':
+      return <ObjetivosScreen />;
+    case 'ObjetivoDetalle':
+      return <ObjetivoDetalleScreen />;
+    case 'AsignacionDetalle':
+      return <AsignacionDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }

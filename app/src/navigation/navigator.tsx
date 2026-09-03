@@ -21,7 +21,10 @@ export type RouteName =
   | 'AjusteDetalle'
   | 'EditarElemento'
   | 'GestionHogar'
-  | 'Perfil';
+  | 'Perfil'
+  | 'Objetivos'
+  | 'ObjetivoDetalle'
+  | 'AsignacionDetalle';
 
 export interface Route {
   name: RouteName;
