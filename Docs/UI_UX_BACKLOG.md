@@ -77,9 +77,9 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| D1 | **Barra de tabs inferior** (Inicio · Movimientos · Objetivos · Hogar · Ajustes) | 🟡 | P1 |
-| D2 | **Header de navegación** nativo (título + atrás) en vez de `headerShown:false` + un `LinkButton "Volver"` al fondo de cada pantalla | 🟡 | P1 |
-| D3 | **Jerarquía en el Dashboard**: acciones frecuentes arriba (registrar movimiento, ver patrimonio), config/avanzado bajo "Más" o en la tab Ajustes | 🟡 | P1 |
+| D1 | ✅ 15e — **barra de tabs inferior** (Inicio · Movimientos · Objetivos · Hogar · Ajustes), cada una raíz de su navegación; `createBottomTabNavigator` dentro del `Tabs` del root stack | 🟡 | P1 |
+| D2 | ✅ 15e — **header nativo** (título + atrás) en las ~24 pantallas apiladas; se borraron los 38 `LinkButton "Volver"`; `Screen` detecta el header (`HeaderHeightContext`) y ajusta el padding superior | 🟡 | P1 |
+| D3 | ✅ 15e — Dashboard queda con patrimonio + elementos + acciones; el resto se repartió en los hubs `MovimientosScreen` / `HogarScreen` y en `AjustesScreen` (con `MenuLink` / `GroupLabel`) | 🟡 | P1 |
 | D4 | **FAB "+"** global para "registrar movimiento" / "agregar elemento" | 🟡 | P2 |
 | D5 | **Deep-link desde notificaciones** — tocar "Objetivo completado" abre ese objetivo (el DTO ya trae `entidadTipo`/`entidadId`, hoy no se usa) | 🟡 | P2 |
 | D6 | **Contexto / breadcrumb** en pantallas de detalle (a qué elemento/hogar pertenece lo que editas) | 🟡 | P2 |
@@ -275,7 +275,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15b~~ ✅ | B1 (`DateField`), B2 (campo fecha en Registrar movimiento/ajuste/Valorizar), B3 (`MoneyField`), E1 (`ToastProvider`/`useToast`), E2 (`confirmar()` en acciones destructivas), E3 (`Button variant="danger"`), + `fechaLegible()`. Pendiente de B: B4 selector dropdown, B5 `tipo` picker, B6 moneda, B7 buscador de elementos, B8 co-propietarios. | — |
 | ~~15c~~ ✅ | C1 (glosa en `evento_financiero`), C2 (tabla `categoria_movimiento` del hogar + comandos Crear/Actualizar/Archivar/Reordenar + seed de 11 al crear hogar + selector al registrar), pantalla Ajustes → Categorías, `GET /usuarios/me` devuelve `preferencias`. Migración 009. Pendiente de C: C3 (presupuesto por rubro → 15d), C4/C5/C6 (plantillas, etiquetas, agrupaciones → 15h). | GAPS G22, G23, G25 |
 | ~~15d~~ ✅ | 🔴 C3 — `presupuesto_linea` (migr. 010, GAPS G26) + `DefinirLineasPresupuesto` + `GET /presupuestos/:id/lineas` + `desviacion.porRubro`/`sinClasificar`; app: pantalla `PresupuestoRubros` (editor) + sección "Por rubro" con barra de distribución apilada (`BarraDistribucion`) en el detalle. La dona SVG real queda para 15g. | 15c |
-| **15e** | D1–D3 (tabs, header nativo, jerarquía del dashboard) + Ajustes como tab | — |
+| ~~15e~~ ✅ | D1 (tabs inferiores: Inicio·Movimientos·Objetivos·Hogar·Ajustes) + D2 (header nativo, sin `LinkButton "Volver"`) + D3 (jerarquía del dashboard: hubs `MovimientosScreen`/`HogarScreen`, `MenuLink`/`GroupLabel`). `@react-navigation/bottom-tabs`. Faltan de D: D4 (FAB), D5 (deep-link notificación), D6 (breadcrumb). | — |
 | **15f** | F1–F3 (traducir enums, fechas legibles, montos) + G1–G2 (design tokens, iconos) | — |
 | **15g** | G3–G4 (gráficos, tarjeta resumen) + J1–J2 (onboarding) | 15c, 15d |
 | **15h** | 🔴 C4 (plantillas), C5 (etiquetas), C6 (agrupaciones) + B7, B8, H1–H5 | 15c |

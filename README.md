@@ -142,7 +142,11 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `GAPS.md` G26), comando `DefinirLineasPresupuesto`, `desviacion` con desglose
     `porRubro` + `sinClasificar`, pantalla editor de rubros + barra de
     distribución apilada en el detalle del presupuesto.
-  - [ ] 15e+ — tabs y header nativo, traducción de enums, gráficos SVG,
+  - [x] **15e** — navegación: barra de tabs inferior (Inicio · Movimientos ·
+    Objetivos · Hogar · Ajustes), header nativo con botón atrás en las pantallas
+    apiladas (se quitaron los enlaces "Volver"), Dashboard jerarquizado con hubs
+    `Movimientos` / `Hogar`. `@react-navigation/bottom-tabs`.
+  - [ ] 15f+ — traducción de enums, design tokens, gráficos SVG,
     plantillas/etiquetas/agrupaciones (`GAPS.md` G24).
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
