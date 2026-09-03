@@ -4,6 +4,14 @@ import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { CrearHogarDto } from './dto/crear-hogar.dto.js';
 import { InvitarMiembroDto } from './dto/invitar-miembro.dto.js';
 import { InvitacionIdDto } from './dto/invitacion-id.dto.js';
+import {
+  ActualizarDatosHogarDto,
+  AsignarRolDto,
+  CambiarMonedaConsolidacionDto,
+  EliminarHogarDto,
+  RemoverMiembroDto,
+  SalirDeHogarDto,
+} from './dto/comandos-hogar.dto.js';
 import { HogarService } from './hogar.service.js';
 import type { HogarDTO, InvitacionDTO, MembresiaDTO, MiembroDTO } from './hogar.dto.js';
 
@@ -64,6 +72,42 @@ export class HogarController {
       usuarioId: user.id,
       invitacionId: dto.invitacionId,
     });
+  }
+
+  @Post('comandos/ActualizarDatosHogar')
+  @HttpCode(200)
+  actualizarDatosHogar(@CurrentUser() u: UsuarioAutenticado, @Body() dto: ActualizarDatosHogarDto) {
+    return this.hogares.actualizarDatosHogar(u.id, dto.hogarId, dto.nombre);
+  }
+
+  @Post('comandos/CambiarMonedaConsolidacion')
+  @HttpCode(200)
+  cambiarMoneda(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CambiarMonedaConsolidacionDto) {
+    return this.hogares.cambiarMonedaConsolidacion(u.id, dto.hogarId, dto.moneda);
+  }
+
+  @Post('comandos/AsignarRol')
+  @HttpCode(200)
+  asignarRol(@CurrentUser() u: UsuarioAutenticado, @Body() dto: AsignarRolDto) {
+    return this.hogares.asignarRol(u.id, dto.hogarId, dto.usuarioId, dto.rol);
+  }
+
+  @Post('comandos/RemoverMiembro')
+  @HttpCode(200)
+  removerMiembro(@CurrentUser() u: UsuarioAutenticado, @Body() dto: RemoverMiembroDto) {
+    return this.hogares.removerMiembro(u.id, dto.hogarId, dto.usuarioId, dto.motivo);
+  }
+
+  @Post('comandos/SalirDeHogar')
+  @HttpCode(200)
+  salirDeHogar(@CurrentUser() u: UsuarioAutenticado, @Body() dto: SalirDeHogarDto) {
+    return this.hogares.salirDeHogar(u.id, dto.hogarId);
+  }
+
+  @Post('comandos/EliminarHogar')
+  @HttpCode(200)
+  eliminarHogar(@CurrentUser() u: UsuarioAutenticado, @Body() dto: EliminarHogarDto) {
+    return this.hogares.eliminarHogar(u.id, dto.hogarId, dto.motivo);
   }
 
   // ── Consultas ─────────────────────────────────────────────────────────────

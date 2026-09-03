@@ -9,13 +9,16 @@ import { Prisma } from '@prisma/client';
  * Campos condicionales: valor anterior/posterior, motivo, entidad relacionada,
  * encadenamiento a otra entrada.
  */
+/** Valor JSON serializable para los campos valor_anterior / valor_posterior. */
+export type ValorAuditoria = Record<string, unknown>;
+
 export type EntradaAuditoria = {
   comando: string;
   usuarioId: string;
   entidadTipo: string;
   entidadId: string;
-  valorAnterior?: Prisma.InputJsonValue;
-  valorPosterior?: Prisma.InputJsonValue;
+  valorAnterior?: ValorAuditoria;
+  valorPosterior?: ValorAuditoria;
   motivo?: string;
   entidadRelacionadaTipo?: string;
   entidadRelacionadaId?: string;
@@ -36,8 +39,8 @@ export class AuditoriaService {
         fecha_hora: new Date(),
         entidad_tipo: e.entidadTipo,
         entidad_id: e.entidadId,
-        valor_anterior: e.valorAnterior,
-        valor_posterior: e.valorPosterior,
+        valor_anterior: e.valorAnterior as Prisma.InputJsonValue | undefined,
+        valor_posterior: e.valorPosterior as Prisma.InputJsonValue | undefined,
         motivo: e.motivo,
         entidad_relacionada_tipo: e.entidadRelacionadaTipo,
         entidad_relacionada_id: e.entidadRelacionadaId,

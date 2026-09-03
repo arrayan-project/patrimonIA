@@ -15,6 +15,9 @@ import { ValorizarScreen } from './screens/ValorizarScreen';
 import { ValorizacionDetalleScreen } from './screens/ValorizacionDetalleScreen';
 import { RegistrarAjusteScreen } from './screens/RegistrarAjusteScreen';
 import { AjusteDetalleScreen } from './screens/AjusteDetalleScreen';
+import { EditarElementoScreen } from './screens/EditarElementoScreen';
+import { GestionHogarScreen } from './screens/GestionHogarScreen';
+import { PerfilScreen } from './screens/PerfilScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -42,6 +45,12 @@ function Routes() {
       return <RegistrarAjusteScreen />;
     case 'AjusteDetalle':
       return <AjusteDetalleScreen />;
+    case 'EditarElemento':
+      return <EditarElementoScreen />;
+    case 'GestionHogar':
+      return <GestionHogarScreen />;
+    case 'Perfil':
+      return <PerfilScreen />;
     default:
       return <BienvenidaScreen />;
   }

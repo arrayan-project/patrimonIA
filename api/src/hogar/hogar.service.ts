@@ -214,6 +214,185 @@ export class HogarService {
     return { ok: true };
   }
 
+  /** AS #35 — ActualizarDatosHogar. Solo un administrador. */
+  async actualizarDatosHogar(actorId: string, hogarId: string, nombre: string): Promise<HogarDTO> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const hogar = await this.prisma.hogar.findUniqueOrThrow({ where: { id: hogarId } });
+    if (hogar.nombre === nombre) throw new ConflictException('Sin cambios');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.hogar.update({ where: { id: hogarId }, data: { nombre } });
+      await this.auditoria.registrar(tx, {
+        comando: 'ActualizarDatosHogar',
+        usuarioId: actorId,
+        entidadTipo: 'HOGAR',
+        entidadId: hogarId,
+        valorAnterior: { nombre: hogar.nombre },
+        valorPosterior: { nombre },
+      });
+    });
+    return this.obtenerHogar(hogarId, actorId);
+  }
+
+  /**
+   * AS #36 — CambiarMonedaConsolidacion. Solo un administrador. El recálculo de
+   * consolidaciones en la nueva moneda (W) queda pendiente: no hay proyección de
+   * consolidación ni tipos de cambio todavía (GAPS.md G7).
+   */
+  async cambiarMonedaConsolidacion(
+    actorId: string,
+    hogarId: string,
+    moneda: string,
+  ): Promise<HogarDTO> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const hogar = await this.prisma.hogar.findUniqueOrThrow({ where: { id: hogarId } });
+    const nueva = moneda.toUpperCase();
+    if (hogar.moneda_consolidacion === nueva) throw new ConflictException('Sin cambios');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.hogar.update({ where: { id: hogarId }, data: { moneda_consolidacion: nueva } });
+      await this.auditoria.registrar(tx, {
+        comando: 'CambiarMonedaConsolidacion',
+        usuarioId: actorId,
+        entidadTipo: 'HOGAR',
+        entidadId: hogarId,
+        valorAnterior: { moneda_consolidacion: hogar.moneda_consolidacion },
+        valorPosterior: { moneda_consolidacion: nueva },
+      });
+    });
+    return this.obtenerHogar(hogarId, actorId);
+  }
+
+  /** AS #40 — AsignarRol. Debe quedar ≥1 administrador tras el cambio. */
+  async asignarRol(
+    actorId: string,
+    hogarId: string,
+    usuarioId: string,
+    rol: 'ADMINISTRADOR' | 'MIEMBRO',
+  ): Promise<MiembroDTO[]> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const membresia = await this.prisma.membresia.findFirst({
+      where: { hogar_id: hogarId, usuario_id: usuarioId, estado: 'ACTIVA' },
+    });
+    if (!membresia) throw new NotFoundException('El usuario no es miembro activo del hogar');
+    if (membresia.rol === rol) throw new ConflictException('El miembro ya tiene ese rol');
+
+    if (rol === 'MIEMBRO') {
+      const admins = await this.prisma.membresia.count({
+        where: { hogar_id: hogarId, estado: 'ACTIVA', rol: 'ADMINISTRADOR' },
+      });
+      if (admins <= 1) {
+        throw new ConflictException('El hogar debe quedar con al menos un administrador');
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.membresia.update({ where: { id: membresia.id }, data: { rol } });
+      await this.auditoria.registrar(tx, {
+        comando: 'AsignarRol',
+        usuarioId: actorId,
+        entidadTipo: 'MEMBRESIA',
+        entidadId: membresia.id,
+        valorAnterior: { rol: membresia.rol },
+        valorPosterior: { rol },
+        entidadRelacionadaTipo: 'HOGAR',
+        entidadRelacionadaId: hogarId,
+      });
+    });
+    return this.listarMiembros(hogarId, actorId);
+  }
+
+  /** AS #41 — RemoverMiembro. No puede ser el último administrador. */
+  async removerMiembro(
+    actorId: string,
+    hogarId: string,
+    usuarioId: string,
+    motivo: string,
+  ): Promise<{ ok: true }> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const membresia = await this.prisma.membresia.findFirst({
+      where: { hogar_id: hogarId, usuario_id: usuarioId, estado: 'ACTIVA' },
+    });
+    if (!membresia) throw new NotFoundException('El usuario no es miembro activo del hogar');
+    await this.#exigirNoUltimoAdministrador(hogarId, membresia.rol);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.membresia.update({ where: { id: membresia.id }, data: { estado: 'SALIDA' } });
+      await this.auditoria.registrar(tx, {
+        comando: 'RemoverMiembro',
+        usuarioId: actorId,
+        entidadTipo: 'MEMBRESIA',
+        entidadId: membresia.id,
+        motivo,
+        valorAnterior: { estado: 'ACTIVA' },
+        valorPosterior: { estado: 'SALIDA' },
+        entidadRelacionadaTipo: 'HOGAR',
+        entidadRelacionadaId: hogarId,
+      });
+    });
+    return { ok: true };
+  }
+
+  /** AS #45 — SalirDeHogar. No puede ser el último administrador. */
+  async salirDeHogar(actorId: string, hogarId: string): Promise<{ ok: true }> {
+    const membresia = await this.prisma.membresia.findFirst({
+      where: { hogar_id: hogarId, usuario_id: actorId, estado: 'ACTIVA' },
+    });
+    if (!membresia) throw new NotFoundException('No perteneces a este hogar');
+    await this.#exigirNoUltimoAdministrador(hogarId, membresia.rol);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.membresia.update({ where: { id: membresia.id }, data: { estado: 'SALIDA' } });
+      await this.auditoria.registrar(tx, {
+        comando: 'SalirDeHogar',
+        usuarioId: actorId,
+        entidadTipo: 'MEMBRESIA',
+        entidadId: membresia.id,
+        valorAnterior: { estado: 'ACTIVA' },
+        valorPosterior: { estado: 'SALIDA' },
+        entidadRelacionadaTipo: 'HOGAR',
+        entidadRelacionadaId: hogarId,
+      });
+    });
+    return { ok: true };
+  }
+
+  /**
+   * AS #42 — EliminarHogar. Solo un administrador. Desaparece la entidad
+   * organizativa y sus vínculos; los elementos patrimoniales sobreviven
+   * (Principio 3: la app no es dueña del patrimonio).
+   */
+  async eliminarHogar(actorId: string, hogarId: string, motivo: string): Promise<{ ok: true }> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const miembros = await this.prisma.membresia.findMany({
+      where: { hogar_id: hogarId, estado: 'ACTIVA' },
+      select: { usuario_id: true },
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.invitacion.deleteMany({ where: { hogar_id: hogarId } });
+      await tx.membresia.deleteMany({ where: { hogar_id: hogarId } });
+      await tx.hogar.delete({ where: { id: hogarId } });
+      await this.auditoria.registrar(tx, {
+        comando: 'EliminarHogar',
+        usuarioId: actorId,
+        entidadTipo: 'HOGAR',
+        entidadId: hogarId,
+        motivo,
+        valorAnterior: { miembros_desvinculados: miembros.map((m) => m.usuario_id) },
+      });
+    });
+    return { ok: true };
+  }
+
+  async #exigirNoUltimoAdministrador(hogarId: string, rol: string): Promise<void> {
+    if (rol !== 'ADMINISTRADOR') return;
+    const admins = await this.prisma.membresia.count({
+      where: { hogar_id: hogarId, estado: 'ACTIVA', rol: 'ADMINISTRADOR' },
+    });
+    if (admins <= 1) {
+      throw new ConflictException('No puede salir el último administrador del hogar');
+    }
+  }
+
   // ── Consultas ─────────────────────────────────────────────────────────────
 
   async obtenerHogar(hogarId: string, solicitanteId: string): Promise<HogarDTO> {

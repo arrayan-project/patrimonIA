@@ -18,7 +18,10 @@ export type RouteName =
   | 'Valorizar'
   | 'ValorizacionDetalle'
   | 'RegistrarAjuste'
-  | 'AjusteDetalle';
+  | 'AjusteDetalle'
+  | 'EditarElemento'
+  | 'GestionHogar'
+  | 'Perfil';
 
 export interface Route {
   name: RouteName;

@@ -207,6 +207,11 @@ export function ElementoDetalleScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
+      <Button
+        title="Editar / estado"
+        variant="secondary"
+        onPress={() => nav.go('EditarElemento', { elementoId })}
+      />
       <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>

@@ -117,6 +117,20 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿anular/corregir valorizaciones intermedias re-encadenando?
   ¿un comando para cambiar `admite_valorizacion`?
 
+### G12 — Fase 5b: comandos de ciclo de vida — detalles
+- `CambiarMonedaConsolidacion` (#36) cambia el campo pero **no recalcula
+  consolidaciones** en la nueva moneda (W) — no hay proyección de consolidación
+  ni tipos de cambio (ver G7).
+- `EliminarHogar` (#42) hace **delete físico** de hogar + membresías +
+  invitaciones. El registro de "quién estuvo" queda solo en `auditoria`
+  (`valor_anterior.miembros_desvinculados`).
+- `RemoverMiembro` / `SalirDeHogar` marcan `membresia.estado = 'SALIDA'`
+  (conservan la fila).
+- `EliminarElementoPatrimonial` (#9) solo si el elemento no tiene ningún
+  `impacto_patrimonial` ni reserva. `CorregirDatosElementoPatrimonial` (#3) es
+  un `UPDATE` idéntico a #2 con `comando` distinto + motivo (la config no es
+  hecho económico; su historial vive en auditoría — DATABASE_DESIGN §3).
+
 ### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
 - **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
   solo implementa INGRESO/GASTO/TRANSFERENCIA.

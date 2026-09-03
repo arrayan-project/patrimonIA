@@ -148,6 +148,11 @@ export function DashboardScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
+      <LinkButton
+        title="Gestionar hogar"
+        onPress={() => nav.go('GestionHogar', { hogarId: hogar.id })}
+      />
+      <LinkButton title="Mi perfil" onPress={() => nav.go('Perfil')} />
       <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
     </Screen>

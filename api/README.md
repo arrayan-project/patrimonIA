@@ -114,6 +114,18 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
 - `GET /ajustes-patrimoniales?elemento=:id`.
 - Verificado: `test/ajuste-patrimonial.e2e-spec.ts`.
 
+### Fase 5b — comandos de ciclo de vida y edición
+
+- Elemento: `ActualizarDatos` (#2), `CorregirDatos` (#3), `CambiarVisibilidad`
+  (#5), `CambiarParticipacionEnConsolidacion` (#6), `Desactivar` (#7),
+  `Reactivar` (#8), `Eliminar` (#9), `CambiarPropiedad` (#4).
+  `GET /elementos-patrimoniales?propietario=me&incluirInactivos=true`.
+- Hogar: `ActualizarDatosHogar` (#35), `CambiarMonedaConsolidacion` (#36),
+  `AsignarRol` (#40), `RemoverMiembro` (#41), `SalirDeHogar` (#45),
+  `EliminarHogar` (#42). Invariante "≥1 administrador" validado en el AS.
+- Usuario: `ActualizarDatosUsuario` (#44), `DesactivarUsuario` (#46).
+- Verificado: `test/fase5b-ciclo-vida.e2e-spec.ts`. Ver GAPS.md G12.
+
 Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
 de los 52 Application Services entra en fases siguientes, un flujo vertical a la
 vez. Ver `Docs/BUILD_INSTRUCTIONS.docx` y `../GAPS.md`.
