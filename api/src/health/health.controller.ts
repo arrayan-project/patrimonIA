@@ -6,11 +6,13 @@ import {
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { Public } from '../auth/public.decorator.js';
 
 /**
  * Healthcheck de Fase 0: confirma que el proceso responde y que la conexión a
  * PostgreSQL está viva. Sin autenticación — es infraestructura, no dominio.
  */
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(
