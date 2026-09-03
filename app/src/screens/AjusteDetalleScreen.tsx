@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type AjustePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -38,9 +39,7 @@ export function AjusteDetalleScreen() {
     }
   }, [elementoId, ajusteId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const ejecutar = async () => {
     setEnviando(true);
@@ -80,7 +79,7 @@ export function AjusteDetalleScreen() {
   const accionable = !ajuste.anulado && ajuste.correccionDeId === null && !tieneCorreccion;
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Ajuste patrimonial</Title>
       <Text style={styles.monto}>{money(ajuste.monto, moneda)}</Text>
       <View style={styles.card}>

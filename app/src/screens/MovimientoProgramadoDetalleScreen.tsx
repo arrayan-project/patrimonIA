@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type MovimientoProgramadoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -34,9 +35,7 @@ export function MovimientoProgramadoDetalleScreen() {
     }
   }, [movimientoId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const ejecutar = async () => {
     setBusy(true);
@@ -90,7 +89,7 @@ export function MovimientoProgramadoDetalleScreen() {
   const pendiente = m.estado === 'PENDIENTE';
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Movimiento programado</Title>
       <Text style={styles.monto}>{money(m.montoPlanificado, m.moneda)}</Text>
 
@@ -146,7 +145,6 @@ export function MovimientoProgramadoDetalleScreen() {
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

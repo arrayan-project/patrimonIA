@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type TipoCambioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -26,9 +27,7 @@ export function TiposCambioScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const registrar = async () => {
     setBusy(true);
@@ -55,7 +54,7 @@ export function TiposCambioScreen() {
   };
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Tipos de cambio</Title>
       <Text style={styles.muted}>
         1 unidad de la moneda origen = tasa unidades de la destino. Se conservan
@@ -94,7 +93,6 @@ export function TiposCambioScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

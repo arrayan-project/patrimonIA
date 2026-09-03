@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -46,9 +47,7 @@ export function AsignacionDetalleScreen() {
     }
   }, [asignacionId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const run = async (fn: () => Promise<unknown>, salir = false) => {
     setBusy(true);
@@ -78,7 +77,7 @@ export function AsignacionDetalleScreen() {
   const reservasActivas = (asg.reservas ?? []).filter((r) => r.estado === 'ACTIVA');
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>{asg.nombre}</Title>
       <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, 'CLP')}</Text>
 
@@ -164,7 +163,6 @@ export function AsignacionDetalleScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

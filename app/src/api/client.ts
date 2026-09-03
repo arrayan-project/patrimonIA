@@ -10,12 +10,27 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { token?: string | null; body?: unknown; headers?: Record<string, string> };
+type Options = {
+  token?: string | null;
+  body?: unknown;
+  headers?: Record<string, string>;
+  idempotencyKey?: string;
+};
+
+/**
+ * Se invoca cuando una request autenticada recibe 401 (token expirado o
+ * revocado). La app lo usa para cerrar sesión y volver al login.
+ */
+let alExpirarSesion: (() => void) | null = null;
+export function registrarManejadorSesionExpirada(fn: (() => void) | null): void {
+  alExpirarSesion = fn;
+}
 
 async function req<T>(method: string, path: string, opts: Options = {}): Promise<T> {
   const headers: Record<string, string> = { ...opts.headers };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+  if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
 
   let res: Response;
   try {
@@ -32,6 +47,7 @@ async function req<T>(method: string, path: string, opts: Options = {}): Promise
   const data = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
+    if (res.status === 401 && opts.token) alExpirarSesion?.();
     const msg = data?.message;
     throw new ApiError(res.status, Array.isArray(msg) ? msg.join('\n') : (msg ?? res.statusText));
   }
@@ -46,6 +62,9 @@ export const api = {
     req<T>('POST', path, { body, headers }),
   del: <T>(path: string, body?: unknown, token?: string | null) =>
     req<T>('DELETE', path, { body, token }),
+  /** POST de comando con Idempotency-Key para que un reintento no duplique. */
+  comando: <T>(path: string, body: unknown, token: string | null | undefined, idempotencyKey: string) =>
+    req<T>('POST', path, { body, token, idempotencyKey }),
 };
 
 // ── Tipos de respuesta del backend ──────────────────────────────────────────

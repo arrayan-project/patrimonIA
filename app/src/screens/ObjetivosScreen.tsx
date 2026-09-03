@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -24,9 +25,7 @@ export function ObjetivosScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const crear = async () => {
     setBusy(true);
@@ -48,7 +47,7 @@ export function ObjetivosScreen() {
   };
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Objetivos financieros</Title>
 
       {objetivos === null ? (
@@ -80,7 +79,6 @@ export function ObjetivosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

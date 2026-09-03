@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type PresupuestoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -39,9 +40,7 @@ export function PresupuestosScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const num = (s: string) => (s.trim() === '' ? undefined : Number(s));
 
@@ -74,7 +73,7 @@ export function PresupuestosScreen() {
   };
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Presupuestos</Title>
 
       {lista === null ? (
@@ -139,7 +138,6 @@ export function PresupuestosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

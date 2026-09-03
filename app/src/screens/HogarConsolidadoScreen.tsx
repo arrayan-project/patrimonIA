@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -34,9 +35,7 @@ export function HogarConsolidadoScreen() {
     }
   }, [hogarId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   if (!cons || !met) {
     return (
@@ -49,7 +48,7 @@ export function HogarConsolidadoScreen() {
   }
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Patrimonio del hogar</Title>
       <Text style={styles.muted}>
         {cons.elementos} elementos consolidados · {cons.miembros} miembros.
@@ -126,7 +125,6 @@ export function HogarConsolidadoScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

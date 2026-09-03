@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -23,9 +24,7 @@ export function InvitacionesScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const aceptar = async (id: string) => {
     setActuando(id);
@@ -53,7 +52,7 @@ export function InvitacionesScreen() {
   };
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Invitaciones pendientes</Title>
       <ErrorText>{error}</ErrorText>
 
@@ -81,8 +80,6 @@ export function InvitacionesScreen() {
           </View>
         ))
       )}
-
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       {nav.canGoBack && <LinkButton title="Volver" onPress={nav.back} />}
     </Screen>
   );

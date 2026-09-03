@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -54,9 +55,7 @@ export function ElementoDetalleScreen() {
     }
   }, [elementoId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const esDeuda = elemento?.categoriaFuncional === 'DEUDA';
   const esCredito = elemento?.categoriaFuncional === 'CREDITO';
@@ -90,7 +89,7 @@ export function ElementoDetalleScreen() {
   }
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>{elemento.nombre}</Title>
       <Text style={styles.valor}>{money(elemento.valorVigente, elemento.moneda)}</Text>
 
@@ -264,7 +263,6 @@ export function ElementoDetalleScreen() {
         variant="secondary"
         onPress={() => nav.go('EditarElemento', { elementoId })}
       />
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

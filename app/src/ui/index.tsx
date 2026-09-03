@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,8 +23,29 @@ export const colors = {
   faint: '#f3f4f6',
 };
 
-export function Screen({ children }: { children: ReactNode }) {
+/**
+ * Contenedor scrollable de cada pantalla. Si se pasa `onRefresh`, habilita
+ * "deslizar para actualizar" (y gestiona su propio estado de spinner).
+ */
+export function Screen({
+  children,
+  onRefresh,
+}: {
+  children: ReactNode;
+  onRefresh?: () => void | Promise<void>;
+}) {
   const insets = useSafeAreaInsets();
+  const [refrescando, setRefrescando] = useState(false);
+
+  const alRefrescar = async () => {
+    setRefrescando(true);
+    try {
+      await onRefresh?.();
+    } finally {
+      setRefrescando(false);
+    }
+  };
+
   return (
     <ScrollView
       style={styles.screen}
@@ -32,6 +54,11 @@ export function Screen({ children }: { children: ReactNode }) {
         { paddingTop: 24 + insets.top, paddingBottom: 24 + insets.bottom },
       ]}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refrescando} onRefresh={alRefrescar} tintColor={colors.primary} />
+        ) : undefined
+      }
     >
       {children}
     </ScrollView>

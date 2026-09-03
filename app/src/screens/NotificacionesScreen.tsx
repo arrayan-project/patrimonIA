@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -20,9 +21,7 @@ export function NotificacionesScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const leer = async (id: string) => {
     try {
@@ -43,7 +42,7 @@ export function NotificacionesScreen() {
   };
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Notificaciones</Title>
 
       {lista === null ? (
@@ -73,7 +72,6 @@ export function NotificacionesScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

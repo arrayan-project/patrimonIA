@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
 
 export function CrearHogarScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const { key } = useIdempotencyKey();
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,12 @@ export function CrearHogarScreen() {
     setError('');
     setLoading(true);
     try {
-      const hogar = await api.post<HogarDTO>('/comandos/CrearHogar', { nombre: nombre.trim() }, token);
+      const hogar = await api.comando<HogarDTO>(
+        '/comandos/CrearHogar',
+        { nombre: nombre.trim() },
+        token,
+        key,
+      );
       // "usuario = Administrador" es resultado automático del comando.
       nav.reset('Dashboard', { hogarId: hogar.id });
     } catch (e) {

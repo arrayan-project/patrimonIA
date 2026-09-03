@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type EventoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -39,9 +40,7 @@ export function MovimientoDetalleScreen() {
     }
   }, [eventoId, elementoId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const ejecutar = async () => {
     setEnviando(true);
@@ -83,7 +82,7 @@ export function MovimientoDetalleScreen() {
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>{evento.tipo}</Title>
       <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Segmented, Title } from '../ui';
 
 const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
@@ -9,6 +10,7 @@ const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CRED
 export function AgregarElementoScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const { key } = useIdempotencyKey();
 
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('cuenta_corriente');
@@ -31,7 +33,7 @@ export function AgregarElementoScreen() {
     setError('');
     setLoading(true);
     try {
-      await api.post<ElementoPatrimonialDTO>(
+      await api.comando<ElementoPatrimonialDTO>(
         '/comandos/RegistrarElementoPatrimonial',
         {
           nombre: nombre.trim(),
@@ -47,6 +49,7 @@ export function AgregarElementoScreen() {
               }),
         },
         token,
+        key,
       );
       nav.back();
     } catch (e) {

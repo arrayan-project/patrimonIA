@@ -8,7 +8,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api, ApiError, type LoginResult, type UsuarioDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  registrarManejadorSesionExpirada,
+  type LoginResult,
+  type UsuarioDTO,
+} from '../api/client';
 import { obtenerExpoPushToken } from '../push/registerPush';
 import { borrar, guardar, leer } from './secureStorage';
 
@@ -127,6 +133,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     void borrar(CLAVE_SESION);
   }, [session]);
+
+  // Si una request autenticada recibe 401 (token expirado), cerrar sesión.
+  useEffect(() => {
+    registrarManejadorSesionExpirada(cerrarSesion);
+    return () => registrarManejadorSesionExpirada(null);
+  }, [cerrarSesion]);
 
   const value = useMemo(
     () => ({ session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion }),

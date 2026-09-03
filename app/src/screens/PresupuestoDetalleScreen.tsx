@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -44,9 +45,7 @@ export function PresupuestoDetalleScreen() {
     }
   }, [presupuestoId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const num = (s: string) => (s.trim() === '' ? undefined : Number(s));
 
@@ -91,7 +90,7 @@ export function PresupuestoDetalleScreen() {
   const puedeCerrar = p.periodicidad === 'ESPECIFICO' && p.estado === 'ACTIVO';
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>
         Presupuesto {p.tipo.toLowerCase()}
       </Title>
@@ -165,7 +164,6 @@ export function PresupuestoDetalleScreen() {
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

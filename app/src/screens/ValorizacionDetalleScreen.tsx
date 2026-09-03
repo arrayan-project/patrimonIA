@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -38,9 +39,7 @@ export function ValorizacionDetalleScreen() {
     }
   }, [elementoId, valorizacionId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const ejecutar = async () => {
     setEnviando(true);
@@ -80,7 +79,7 @@ export function ValorizacionDetalleScreen() {
   const accionable = !val.anulada && val.correccionDeId === null && esUltimaVigente;
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Valorización</Title>
       <Text style={styles.valor}>
         {money(val.valorAnterior, moneda)} → {money(val.valorNuevo, moneda)}

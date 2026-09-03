@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -38,9 +39,7 @@ export function MovimientosProgramadosScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const destino = elementos.find((e) => e.id === destinoId);
 
@@ -75,7 +74,7 @@ export function MovimientosProgramadosScreen() {
   const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(fecha.trim());
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Movimientos programados</Title>
 
       {lista === null ? (
@@ -122,7 +121,6 @@ export function MovimientosProgramadosScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

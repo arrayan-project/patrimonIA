@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -74,9 +75,7 @@ export function DashboardScreen() {
     }
   }, [token, nav, claveHogar]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   // recarga el detalle al cambiar de hogar activo
   useEffect(() => {
@@ -122,7 +121,7 @@ export function DashboardScreen() {
   }
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>{hogar.nombre}</Title>
 
       {hogares.length > 1 && (
@@ -220,7 +219,6 @@ export function DashboardScreen() {
         onPress={() => nav.go('GestionHogar', { hogarId: hogar.id })}
       />
       <LinkButton title="Mi perfil" onPress={() => nav.go('Perfil')} />
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
     </Screen>
   );

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
@@ -49,9 +50,7 @@ export function ObjetivoDetalleScreen() {
     }
   }, [objetivoId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const run = async (fn: () => Promise<unknown>, salir = false) => {
     setBusy(true);
@@ -78,7 +77,7 @@ export function ObjetivoDetalleScreen() {
   }
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>{obj.nombre}</Title>
       <ProgressBar pct={obj.progresoPorcentaje} />
       <Text style={styles.muted}>
@@ -154,7 +153,6 @@ export function ObjetivoDetalleScreen() {
       </View>
 
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Actualizar" onPress={() => void cargar()} />
       <LinkButton title="Volver" onPress={nav.back} />
     </Screen>
   );

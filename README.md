@@ -128,9 +128,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     push real.
 
 - [ ] **Fase 15 — UI / UX** (backlog en `Docs/UI_UX_BACKLOG.md`):
-  auto-refresh y UI optimista, date pickers, glosa + categorías de movimiento
-  (🔴 migración, `GAPS.md` G22–G24), presupuesto por rubro, sección de Ajustes
-  + `usuario.preferencias` (`GAPS.md` G25), tabs, traducción de enums, gráficos.
+  - [x] **15a** — auto-refresh al enfocar (`useCargaAlEnfocar`), pull-to-refresh
+    (`Screen onRefresh=`), `Idempotency-Key` en las altas (`api.comando`),
+    401 → logout automático.
+  - [ ] 15b+ — date pickers, glosa + categorías de movimiento (🔴 migración,
+    `GAPS.md` G22–G24), presupuesto por rubro, sección de Ajustes +
+    `usuario.preferencias` (`GAPS.md` G25), tabs, traducción de enums, gráficos.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.

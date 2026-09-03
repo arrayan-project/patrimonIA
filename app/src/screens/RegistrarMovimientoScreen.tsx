@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO, type EventoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
+import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { money } from '../format';
 import {
   Button,
@@ -23,6 +24,7 @@ type Tipo = (typeof TIPOS)[number];
 export function RegistrarMovimientoScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const { key } = useIdempotencyKey();
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [tipo, setTipo] = useState<Tipo>('GASTO');
@@ -51,7 +53,7 @@ export function RegistrarMovimientoScreen() {
     setError('');
     setLoading(true);
     try {
-      await api.post<EventoFinancieroDTO>(
+      await api.comando<EventoFinancieroDTO>(
         '/comandos/RegistrarEventoFinanciero',
         {
           tipo,
@@ -61,6 +63,7 @@ export function RegistrarMovimientoScreen() {
           ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
         },
         token,
+        key,
       );
       nav.back();
     } catch (e) {

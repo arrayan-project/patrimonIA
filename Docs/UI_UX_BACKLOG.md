@@ -28,14 +28,14 @@ hija con `nav.back()` el padre no re-consulta. El usuario tiene que apretar el
 link "Actualizar". (Esto causó que se crearan 2 cuentas demo: se guardó, no se
 vio el elemento, se asumió que falló.)
 
-| # | Item | Tipo | Prioridad |
-|---|------|------|-----------|
-| A1 | Auto-refresh al enfocar una pantalla (`useFocusEffect`) en todas las listas | 🟡 | P0 |
-| A2 | Pull-to-refresh (`RefreshControl`) — reemplaza el link "Actualizar" | 🟡 | P0 |
-| A3 | UI optimista: mostrar el ítem recién creado de inmediato (estado "guardando…") y confirmar/revertir | 🟡 | P0 |
-| A4 | Store / caché con invalidación tras mutación (`@tanstack/react-query` o similar) — hoy cada pantalla re-pide todo | 🟡 | P1 |
-| A5 | `Idempotency-Key` en los `POST /comandos/*` de creación (el backend ya lo soporta, Fase 12) — evita duplicados por doble tap / reintento | 🟡 | P1 |
-| A6 | Manejo de JWT expirado a mitad de sesión → redirigir a login, no error genérico por request | 🟡 | P1 |
+| # | Item | Tipo | Prioridad | Estado |
+|---|------|------|-----------|--------|
+| A1 | Auto-refresh al enfocar una pantalla (`useFocusEffect`) en todas las listas | 🟡 | P0 | ✅ 15a — `useCargaAlEnfocar` en las 17 pantallas |
+| A2 | Pull-to-refresh (`RefreshControl`) — reemplaza el link "Actualizar" | 🟡 | P0 | ✅ 15a — `Screen onRefresh=`; links "Actualizar" borrados |
+| A3 | UI optimista: mostrar el ítem recién creado de inmediato (estado "guardando…") y confirmar/revertir | 🟡 | P0 | ⚠️ 15a parcial — con A1 el ítem aparece al volver sin apretar nada; el "mostrar antes de confirmar" queda para 15b |
+| A4 | Store / caché con invalidación tras mutación (`@tanstack/react-query` o similar) — hoy cada pantalla re-pide todo | 🟡 | P1 | |
+| A5 | `Idempotency-Key` en los `POST /comandos/*` de creación (el backend ya lo soporta, Fase 12) — evita duplicados por doble tap / reintento | 🟡 | P1 | ✅ 15a — `api.comando()` + `useIdempotencyKey` en Agregar elemento / Registrar movimiento / Crear hogar |
+| A6 | Manejo de JWT expirado a mitad de sesión → redirigir a login, no error genérico por request | 🟡 | P1 | ✅ 15a — 401 en request autenticada → `cerrarSesion` |
 
 ---
 
@@ -271,7 +271,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 
 | Fase | Contenido | Depende de |
 |------|-----------|------------|
-| **15a** | A1–A3 (auto-refresh, pull-to-refresh, UI optimista) + A5 (Idempotency-Key) + A6 (token expirado) | — |
+| ~~15a~~ ✅ | A1 (auto-refresh al enfocar), A2 (pull-to-refresh), A5 (Idempotency-Key en altas), A6 (401 → logout). A3 completo queda para 15b. | — |
 | **15b** | B1–B3 (date picker, campo fecha, input de monto) + E1–E3 (toast, confirmación, botón danger) | — |
 | **15c** | 🔴 C1 (glosa) + C2 (categorías: tabla, comandos, seed, selector) + Ajustes → Categorías. Exponer `preferencias` en `GET /usuarios/me`. Migración 009 (+010) | GAPS G22, G23, G25 |
 | **15d** | 🔴 C3 (presupuesto por categoría) + reportes de distribución por rubro (gráfico dona) | 15c |

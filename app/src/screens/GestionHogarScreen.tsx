@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -28,9 +29,7 @@ export function GestionHogarScreen() {
     }
   }, [hogarId, token]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
+  useCargaAlEnfocar(cargar);
 
   const run = async (fn: () => Promise<unknown>, salir = false) => {
     setBusy(true);
@@ -61,7 +60,7 @@ export function GestionHogarScreen() {
   );
 
   return (
-    <Screen>
+    <Screen onRefresh={cargar}>
       <Title>Gestionar hogar</Title>
 
       {soyAdmin && (
