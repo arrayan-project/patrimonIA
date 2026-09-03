@@ -146,6 +146,8 @@ docker compose down -v && docker compose up -d
 | `http://<ip>:3000/health` no carga en el teléfono, sí en el PC | Firewall | `sudo ufw allow 3000/tcp` y `sudo ufw allow 8081/tcp` |
 | No carga ni en el PC | El backend se cayó | Mira la Terminal 1. ¿Dice algo de Node? → `nvm use` y de nuevo `./scripts/api.sh` |
 | Expo Go: *"There was a problem running the requested project"* | El teléfono no llega a Metro (8081) | Mismo WiFi + firewall (8081). Última opción: `./scripts/app.sh --tunnel` |
+| Expo Go: **"timed out"** y en la Terminal 2 dice *"port 8081 in use, using 8082"* | Metro quedó en un puerto que el firewall bloquea | `./scripts/parar.sh` y de nuevo `./scripts/app.sh` — ahora fuerza el 8081. Si sigue: `./scripts/app.sh --tunnel` |
+| Expo Go: "timed out" y `./scripts/estado.sh` muestra tu IP como `10.x.x.x` | Red de campus/oficina/hotel que aísla los dispositivos | `./scripts/app.sh --tunnel` (obligatorio en estas redes) |
 | El backend arranca y se muere sin decir nada | Node 20 en vez de 22 | `node -v` debe decir `v22.x`. `nvm use` en `api/`. |
 | El router separa los dispositivos ("AP isolation") | Red del hogar/hotel | `./scripts/app.sh --tunnel` (más lento, pasa por servidores de Expo) |
 | `EADDRINUSE: address already in use :::3000` | Quedó un backend viejo corriendo | `./scripts/parar.sh` y de nuevo `./scripts/api.sh` (que ya libera el puerto solo) |
