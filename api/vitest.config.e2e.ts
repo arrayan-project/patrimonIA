@@ -7,5 +7,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // Los e2e comparten la misma base de datos real y hacen TRUNCATE en
+    // beforeAll — deben correr en serie, no en paralelo.
+    fileParallelism: false,
   },
 });

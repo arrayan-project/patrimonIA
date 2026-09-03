@@ -52,6 +52,40 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   un token de registro de corta duración, p. ej. tras un captcha o un email) —
   es infraestructura de auth, se puede resolver sin tocar el DDD.
 
+### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)
+- **Qué falta**: el DDD (Sección M) define visibilidad "por tipo de información"
+  (existencia, valor, movimientos, reservas...). El esquema colapsó eso a un solo
+  enum `visibilidad` (PRIVADA/COMPARTIDA/FAMILIAR). No hay tabla "compartido con
+  quién", así que COMPARTIDA y FAMILIAR se tratan igual.
+- **Decisión provisional (Fase 2)**:
+  - `GET /elementos-patrimoniales/:id` y `/impactos`: visibles para los
+    propietarios; y para co-miembros de hogar si `visibilidad != PRIVADA`.
+  - `GET /elementos-patrimoniales?propietario=X`: solo `X = actor`.
+  - `RegistrarEventoFinanciero` TRANSFERENCIA: el actor debe ser propietario del
+    origen; el destino debe ser propio o de un co-miembro de hogar.
+  - `RegistrarElementoPatrimonial`: el actor debe figurar entre los propietarios
+    declarados (no puede crear un elemento 100% ajeno). Cualquier co-propietario
+    debe ser un usuario ACTIVO — no se exige (todavía) que comparta hogar.
+- **Para decidir**: ¿visibilidad granular por tipo de info?, ¿tabla de
+  "compartido con"?, ¿reglas de co-propiedad más estrictas?
+
+### G7 — Proyección patrimonio_individual: en vivo vs. materializada, y sin total
+- **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan
+  pendiente si las proyecciones son vista SQL en vivo o tabla materializada
+  (decisión de performance). Además, sin tipos de cambio (Sección S REQUISITES)
+  no hay un total consolidado entre monedas.
+- **Decisión provisional**: `GET /usuarios/me/patrimonio-individual` se calcula
+  **en vivo** desde la info primaria (Principio 1) y devuelve un desglose
+  `porMoneda`, sin total único.
+- **Para decidir**: materializar si el cálculo en vivo escala mal; subsistema de
+  tipos de cambio para consolidar.
+
+### G8 — CONVERSION y PRESTAMO (tipos de Evento Financiero no cubiertos en Fase 2)
+- **Qué falta**: `evento_financiero.tipo` admite CONVERSION y PRESTAMO. Fase 2
+  solo implementa INGRESO/GASTO/TRANSFERENCIA.
+- **Por qué**: CONVERSION necesita tipo de cambio (ver G7); PRESTAMO se cruza con
+  Deuda/Crédito (Flujo 4, y el vacío G1). Ambos son ciclos verticales aparte.
+
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN

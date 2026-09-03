@@ -58,14 +58,32 @@ src/
   hogar/               AS #34 CrearHogar · #37 InvitarMiembro ·
                        #38 AceptarInvitacion · #39 RechazarInvitacion
                        + consultas de hogar/miembros/invitaciones
+  elemento/            AS #1 RegistrarElementoPatrimonial + consultas
+  evento-financiero/   AS #10 RegistrarEventoFinanciero (INGRESO/GASTO/TRANSFERENCIA)
+  proyecciones/        GET /usuarios/me/patrimonio-individual (cálculo en vivo)
 ```
+
+Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`),
+`entidad_tipo` / `entidad_relacionada_tipo` en SCREAMING_SNAKE
+(`ELEMENTO_PATRIMONIAL`, `EVENTO_FINANCIERO`, `HOGAR`…) — DATABASE_DESIGN §11/U.
 
 ### Fase 1 — Flujo 2 (Alta de hogar)
 
-Comandos (`POST /comandos/{Nombre}`, nombres literales del dominio):
 `RegistrarUsuario`, `CrearHogar`, `InvitarMiembro`, `AceptarInvitacion`,
-`RechazarInvitacion`. Cada comando escribe su entrada de `auditoria` en la misma
-transacción. Verificado end-to-end: `test/flujo2-alta-hogar.e2e-spec.ts`.
+`RechazarInvitacion`. Verificado: `test/flujo2-alta-hogar.e2e-spec.ts`.
 
-El resto de los 52 Application Services entra en fases siguientes, un flujo
-vertical a la vez. Ver `Docs/BUILD_INSTRUCTIONS.docx` y `../GAPS.md`.
+### Fase 2 — Flujo 1 (día a día financiero)
+
+- `POST /comandos/RegistrarElementoPatrimonial` (#1) — categorías LIQUIDEZ /
+  RESERVA / INVERSION / ACTIVO; propietarios[] con % (suma 100).
+- `POST /comandos/RegistrarEventoFinanciero` (#10) — INGRESO / GASTO /
+  TRANSFERENCIA. Genera `impacto_patrimonial`, actualiza `valor_vigente`
+  (desnormalizado), todo en una transacción con su auditoría.
+- Consultas: `GET /elementos-patrimoniales[?propietario=me]`,
+  `/elementos-patrimoniales/:id[/impactos]`, `/eventos-financieros?elemento=:id`,
+  `/eventos-financieros/:id`, `/usuarios/me/patrimonio-individual`.
+- Verificado: `test/flujo1-dia-a-dia.e2e-spec.ts`.
+
+Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
+de los 52 Application Services entra en fases siguientes, un flujo vertical a la
+vez. Ver `Docs/BUILD_INSTRUCTIONS.docx` y `../GAPS.md`.

@@ -41,7 +41,7 @@ export class UsuarioService {
       await this.auditoria.registrar(tx, {
         comando: 'RegistrarUsuario',
         usuarioId: creado.id,
-        entidadTipo: 'Usuario',
+        entidadTipo: 'USUARIO',
         entidadId: creado.id,
         valorPosterior: { email: creado.email, nombre: creado.nombre },
       });

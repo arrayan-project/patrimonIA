@@ -56,7 +56,7 @@ export class HogarService {
       await this.auditoria.registrar(tx, {
         comando: 'CrearHogar',
         usuarioId: input.creadorId,
-        entidadTipo: 'Hogar',
+        entidadTipo: 'HOGAR',
         entidadId: creado.id,
         valorPosterior: { nombre: creado.nombre, moneda_consolidacion: moneda },
       });
@@ -115,7 +115,7 @@ export class HogarService {
       await this.auditoria.registrar(tx, {
         comando: 'InvitarMiembro',
         usuarioId: input.emisorId,
-        entidadTipo: 'Invitacion',
+        entidadTipo: 'INVITACION',
         entidadId: creada.id,
         valorPosterior: {
           hogar_id: creada.hogar_id,
@@ -123,7 +123,7 @@ export class HogarService {
           invitado_id: creada.invitado_id,
           estado: creada.estado,
         },
-        entidadRelacionadaTipo: 'Hogar',
+        entidadRelacionadaTipo: 'HOGAR',
         entidadRelacionadaId: input.hogarId,
       });
 
@@ -169,11 +169,11 @@ export class HogarService {
       await this.auditoria.registrar(tx, {
         comando: 'AceptarInvitacion',
         usuarioId: input.usuarioId,
-        entidadTipo: 'Invitacion',
+        entidadTipo: 'INVITACION',
         entidadId: invitacion.id,
         valorAnterior: { estado: 'PENDIENTE' },
         valorPosterior: { estado: 'ACEPTADA' },
-        entidadRelacionadaTipo: 'Membresia',
+        entidadRelacionadaTipo: 'MEMBRESIA',
         entidadRelacionadaId: nueva.id,
       });
 
@@ -202,11 +202,11 @@ export class HogarService {
       await this.auditoria.registrar(tx, {
         comando: 'RechazarInvitacion',
         usuarioId: input.usuarioId,
-        entidadTipo: 'Invitacion',
+        entidadTipo: 'INVITACION',
         entidadId: invitacion.id,
         valorAnterior: { estado: 'PENDIENTE' },
         valorPosterior: { estado: 'RECHAZADA' },
-        entidadRelacionadaTipo: 'Hogar',
+        entidadRelacionadaTipo: 'HOGAR',
         entidadRelacionadaId: invitacion.hogar_id,
       });
     });

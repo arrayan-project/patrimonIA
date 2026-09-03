@@ -6,6 +6,9 @@ import { AuditoriaModule } from './auditoria/auditoria.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { UsuarioModule } from './usuario/usuario.module.js';
 import { HogarModule } from './hogar/hogar.module.js';
+import { ElementoModule } from './elemento/elemento.module.js';
+import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
+import { ProyeccionesModule } from './proyecciones/proyecciones.module.js';
 
 @Module({
   imports: [
@@ -16,6 +19,9 @@ import { HogarModule } from './hogar/hogar.module.js';
     HealthModule,
     UsuarioModule,
     HogarModule,
+    ElementoModule,
+    EventoFinancieroModule,
+    ProyeccionesModule,
   ],
 })
 export class AppModule {}

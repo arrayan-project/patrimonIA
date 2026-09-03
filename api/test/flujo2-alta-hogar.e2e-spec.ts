@@ -119,14 +119,14 @@ describe('Flujo 2 — Alta de hogar (e2e)', () => {
 
     const crearHogar = entradas.find((e) => e.comando === 'CrearHogar')!;
     expect(crearHogar.usuario_id).toBe(anaId);
-    expect(crearHogar.entidad_tipo).toBe('Hogar');
+    expect(crearHogar.entidad_tipo).toBe('HOGAR');
     expect(crearHogar.entidad_id).toBe(hogarId);
 
     // AceptarInvitacion embebe la política UnirseAHogar (entidad relacionada = Membresia)
     const aceptar = entradas.find((e) => e.comando === 'AceptarInvitacion')!;
     expect(aceptar.valor_anterior).toEqual({ estado: 'PENDIENTE' });
     expect(aceptar.valor_posterior).toEqual({ estado: 'ACEPTADA' });
-    expect(aceptar.entidad_relacionada_tipo).toBe('Membresia');
+    expect(aceptar.entidad_relacionada_tipo).toBe('MEMBRESIA');
     expect(aceptar.entidad_relacionada_id).toBe(membresia.body.id);
   });
 
