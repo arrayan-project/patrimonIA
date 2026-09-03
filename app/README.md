@@ -175,6 +175,11 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 - **15j — agrupaciones**: `AgrupacionesScreen` (Ajustes → Cuenta): carpetas
   personales para tus elementos (una por elemento). La lista de "Elementos" del
   Inicio se muestra agrupada por carpeta, con "Sin agrupar" al final.
+- **15k — controles de entrada**: componente `Select` (hoja modal con lista
+  scrollable + opción "Otro…" para texto libre) — usado para categoría
+  funcional, `tipo` de elemento (presets de `labels.ts`) y moneda (ISO 4217).
+  `Screen` envuelve el scroll en `KeyboardAvoidingView`. `MoneyText` pinta los
+  montos negativos en rojo (opción `contable` = paréntesis).
 
 ### Decisiones aún provisionales
 

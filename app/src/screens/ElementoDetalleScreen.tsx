@@ -14,7 +14,18 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, etiqueta, Field, fechaLegible, Row, Screen, Title } from '../ui';
+import {
+  Button,
+  colors,
+  ErrorText,
+  etiqueta,
+  Field,
+  fechaLegible,
+  MoneyText,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
@@ -102,7 +113,7 @@ export function ElementoDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>{elemento.nombre}</Title>
-      <Text style={styles.valor}>{money(elemento.valorVigente, elemento.moneda)}</Text>
+      <MoneyText monto={elemento.valorVigente} moneda={elemento.moneda} style={styles.valor} />
 
       <View style={styles.card}>
         <Row left="Categoría" right={etiqueta(elemento.categoriaFuncional)} />
@@ -283,7 +294,7 @@ export function ElementoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  valor: { fontSize: 28, fontWeight: '800', color: colors.text },
+  valor: { fontSize: 28, fontWeight: '800' },
   card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 16, gap: 4 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
   muted: { fontSize: 13, color: colors.muted },

@@ -46,12 +46,12 @@ vio el elemento, se asumió que falló.)
 | B1 | **Date picker nativo** en todos los campos de fecha (hoy son texto libre `YYYY-MM-DD`): Presupuestos, Movimientos programados, Evolución, Tipos de cambio, Materializar | 🟡 | P0 |
 | B2 | **Exponer el campo fecha** donde el comando lo acepta pero la UI lo fuerza a hoy: Registrar movimiento, Registrar ajuste, Valorizar (no puedes cargar un gasto de ayer) | 🟡 | P1 |
 | B3 | **Input de monto con formato**: separador de miles en vivo, símbolo de moneda, decimales, teclado numérico correcto | 🟡 | P1 |
-| B4 | **Selector real** (dropdown / bottom-sheet) en vez de `Segmented` de 6+ opciones (categoría funcional queda ilegible en un teléfono, sin scroll) | 🟡 | P1 |
-| B5 | **`tipo` de elemento como picker curado** + "Otro (especificar)". Hoy es texto libre y hay que escribir `cuenta_corriente` exacto. Presets: cuenta corriente, cuenta vista, cuenta ahorro, APV, fondo mutuo, depósito a plazo, efectivo, inmueble, vehículo, deuda, crédito por cobrar (REQUISITES §D — son ejemplos, no un enum del esquema) | 🟡 | P1 |
-| B6 | **Selector de moneda** conocido (ISO 4217) en vez de campo de texto | 🟡 | P2 |
+| B4 | ✅ 15k — componente `Select` (hoja modal con lista scrollable, opción "Otro…"); categoría funcional del elemento pasó de `Segmented` a `Select` | 🟡 | P1 |
+| B5 | ✅ 15k — `tipo` de elemento = `Select` con presets (`TIPOS_ELEMENTO_SUGERIDOS` en `labels.ts`) + "Otro…" para texto libre; en Agregar y Editar elemento | 🟡 | P1 |
+| B6 | ✅ 15k — `Select` de moneda (`MONEDAS_FRECUENTES` ISO 4217 + "Otro…") en Agregar elemento | 🟡 | P2 |
 | B7 | **Buscador / filtro** en los pickers de elementos (Registrar movimiento lista *todos* como radios verticales; no escala > 6) | 🟡 | P2 |
 | B8 | **UI de co-propietarios con %** — el backend soporta `propietarios[]` desde Fase 2; hoy solo se puede crear al 100 % propio | 🟡 | P2 |
-| B9 | `KeyboardAvoidingView` — en forms largos el teclado tapa el botón de guardar | 🟡 | P1 |
+| B9 | ✅ 15k — `Screen` envuelve el scroll en `KeyboardAvoidingView` (+ `keyboardDismissMode="interactive"`) | 🟡 | P1 |
 
 ---
 
@@ -106,7 +106,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 |---|------|------|-----------|
 | F1 | ✅ 15f — `src/labels.ts` (`etiqueta()` + `humanizar()` de fallback) traduce todos los enums del dominio; `Segmented` formatea las opciones por defecto; aplicado en las ~12 pantallas que mostraban valores crudos | 🟡 | P1 |
 | F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
-| F3 | **Montos negativos / deudas** — `money()` antepone `-`; para deudas: color rojo + "debes" o paréntesis contables | 🟡 | P2 |
+| F3 | ⚠️ 15k parcial — componente `MoneyText` (rojo para negativos, opción `contable` con paréntesis); aplicado al valor destacado del detalle de elemento. Falta extenderlo a más listas/pantallas | 🟡 | P2 |
 | F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
 | F5 | **Ayuda contextual** compacta en vez de `Paragraph` largos que explican el modelo de dominio en cada form | 🟡 | P2 |
 | F6 | Infra de i18n (aunque sea es-CL única al inicio) para no tener strings hardcodeados por toda la app | 🟡 | P3 |
@@ -281,7 +281,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15g~~ ✅ | G3 (`react-native-svg` + `src/ui/charts.tsx`: `Dona`, `GraficoLinea`; aplicados en presupuesto por rubro, patrimonio del hogar, evolución + `GET /usuarios/me/serie-patrimonial`) + G4 (tarjeta resumen del Dashboard: neto + líquido + variación 30d) + G2 parcial (Ionicons en las tabs). Pendiente: F3 (montos contables), G1 (tokens completos), J1–J2 (onboarding), gráfico de avance de objetivos → 15h/más adelante. | 15c, 15d |
 | ~~15h~~ ✅ | 🔴 C4 — `plantilla_movimiento` (migr. 011, GAPS G24), comandos Crear/Actualizar/Eliminar, `GET /usuarios/me/plantillas-movimiento`; app: `PlantillasScreen` + "Desde una plantilla" al registrar + "Guardar como plantilla" en el detalle. | 15c |
 | ~~15i~~ ✅ | 🔴 C5 — `etiqueta` + `evento_etiqueta` (migr. 012, GAPS G23); comandos `CrearEtiqueta`/`ActualizarEtiqueta`/`EliminarEtiqueta`/`EtiquetarEvento`; `RegistrarEventoFinanciero.etiquetaIds`, la corrección las hereda; DTO de evento con `etiquetaIds`. App: `EtiquetasScreen` (Ajustes → Cuenta), componente `Chip`, chips al registrar y en el detalle. | 15c |
-| ~~15j~~ ✅ | 🔴 C6 — `agrupacion_elemento` + `agrupacion_miembro` (migr. 013, GAPS G23, una carpeta por elemento); comandos `CrearAgrupacion`/`ActualizarAgrupacion`/`EliminarAgrupacion`/`DefinirElementosAgrupacion`; `GET /usuarios/me/agrupaciones`. App: `AgrupacionesScreen` (Ajustes → Cuenta), la lista "Elementos" del Dashboard se agrupa por carpeta con subtítulos + "Sin agrupar". **Bloque C del backlog cerrado.** Pendiente suelto: B4/B5/B7/B8, H1–H5, F3, G1, J1/J2. | 15i |
+| ~~15j~~ ✅ | 🔴 C6 — `agrupacion_elemento` + `agrupacion_miembro` (migr. 013, GAPS G23, una carpeta por elemento); comandos `CrearAgrupacion`/`ActualizarAgrupacion`/`EliminarAgrupacion`/`DefinirElementosAgrupacion`; `GET /usuarios/me/agrupaciones`. App: `AgrupacionesScreen` (Ajustes → Cuenta), la lista "Elementos" del Dashboard se agrupa por carpeta con subtítulos + "Sin agrupar". **Bloque C del backlog cerrado.** | 15i |
+| ~~15k~~ ✅ | Controles de entrada: componente `Select` (hoja modal + "Otro…") → B4 (categoría funcional), B5 (`tipo` de elemento con presets), B6 (moneda ISO); B9 (`KeyboardAvoidingView` en `Screen`); F3 parcial (`MoneyText` rojo/contable en el detalle de elemento). Pendiente suelto: B7 (buscador en pickers), B8 (co-propietarios %), H1–H5, F3 completo, G1 (design tokens), J1/J2 (onboarding), E4–E7. | — |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

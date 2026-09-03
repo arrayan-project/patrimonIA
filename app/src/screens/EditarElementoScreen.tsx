@@ -5,7 +5,10 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, Paragraph, Screen, Segmented, Title } from '../ui';
+import { Button, colors, ErrorText, Field, Paragraph, Screen, Segmented, Select, Title } from '../ui';
+import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
+
+const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
 
 const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 
@@ -67,7 +70,7 @@ export function EditarElementoScreen() {
       {activo && (
         <View style={styles.card}>
           <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
-          <Field label="Tipo" value={tipo} onChangeText={setTipo} />
+          <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
           <Button
             title="Guardar datos"
             onPress={() =>

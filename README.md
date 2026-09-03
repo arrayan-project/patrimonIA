@@ -170,8 +170,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     y la lista de "Elementos" del Inicio agrupada por carpeta. Bloque C del
     backlog cerrado (glosa, categorías, presupuesto por rubro, plantillas,
     etiquetas, agrupaciones).
-  - [ ] 15k+ — montos contables, design tokens completos, onboarding, selector
-    de tipo de elemento, buscadores en pickers.
+  - [x] **15k** — controles de entrada: componente `Select` (hoja modal +
+    "Otro…") para categoría funcional, tipo de elemento (con presets) y moneda
+    (ISO 4217); `KeyboardAvoidingView` en `Screen`; `MoneyText` (rojo/contable
+    para negativos) en el detalle de elemento.
+  - [ ] 15l+ — design tokens completos, onboarding, buscadores en pickers,
+    co-propietarios con %, F3 en más pantallas.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.

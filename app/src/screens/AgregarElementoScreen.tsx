@@ -8,15 +8,27 @@ import {
   Button,
   ErrorText,
   Field,
-  LinkButton,
   MoneyField,
   Paragraph,
   Screen,
   Segmented,
+  Select,
   Title,
 } from '../ui';
+import {
+  etiqueta,
+  MONEDAS_FRECUENTES,
+  NOMBRE_MONEDA,
+  TIPOS_ELEMENTO_SUGERIDOS,
+} from '../labels';
 
 const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
+const OPC_CATEGORIA = CATEGORIAS.map((c) => ({ value: c, label: etiqueta(c) }));
+const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
+const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
+  value: m,
+  label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
+}));
 
 export function AgregarElementoScreen() {
   const { token } = useSession();
@@ -77,9 +89,14 @@ export function AgregarElementoScreen() {
       <Title>Agregar elemento patrimonial</Title>
       <Paragraph>Una cuenta, un activo, una inversión. Quedas como propietario al 100%.</Paragraph>
 
-      <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Cuenta Corriente" autoCapitalize="sentences" />
-      <Field label="Tipo" value={tipo} onChangeText={setTipo} placeholder="cuenta_corriente" />
-      <Segmented label="Categoría funcional" options={CATEGORIAS} value={categoria} onChange={onCategoria} />
+      <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Cuenta corriente" autoCapitalize="sentences" />
+      <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
+      <Select
+        label="Categoría funcional"
+        value={categoria}
+        options={OPC_CATEGORIA}
+        onChange={(c) => onCategoria(c as (typeof CATEGORIAS)[number])}
+      />
       {esDeudaOCredito ? (
         <>
           <MoneyField
@@ -111,7 +128,7 @@ export function AgregarElementoScreen() {
           <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
         </>
       )}
-      <Field label="Moneda (ISO 4217)" value={moneda} onChangeText={setMoneda} placeholder="CLP" maxLength={3} />
+      <Select label="Moneda" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
 
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar elemento" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />

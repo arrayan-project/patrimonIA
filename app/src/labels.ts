@@ -87,3 +87,33 @@ export function etiqueta(valor: string | null | undefined): string {
   if (valor == null || valor === '') return '—';
   return DICCIONARIO[valor] ?? humanizar(valor);
 }
+
+/** Presets del `tipo` de un elemento (texto libre, ver REQUISITES §D). */
+export const TIPOS_ELEMENTO_SUGERIDOS = [
+  'cuenta_corriente',
+  'cuenta_vista',
+  'cuenta_ahorro',
+  'deposito_plazo',
+  'fondo_mutuo',
+  'apv',
+  'afp',
+  'efectivo',
+  'inmueble',
+  'vehiculo',
+] as const;
+
+/** Monedas ISO 4217 de uso frecuente. `Select` permite escribir otra. */
+export const MONEDAS_FRECUENTES = ['CLP', 'USD', 'EUR', 'GBP', 'ARS', 'BRL', 'PEN', 'MXN', 'COP', 'UYU'] as const;
+
+export const NOMBRE_MONEDA: Record<string, string> = {
+  CLP: 'Peso chileno',
+  USD: 'Dólar estadounidense',
+  EUR: 'Euro',
+  GBP: 'Libra esterlina',
+  ARS: 'Peso argentino',
+  BRL: 'Real brasileño',
+  PEN: 'Sol peruano',
+  MXN: 'Peso mexicano',
+  COP: 'Peso colombiano',
+  UYU: 'Peso uruguayo',
+};

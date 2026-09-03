@@ -1,6 +1,8 @@
 import { useContext, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -93,24 +95,30 @@ export function Screen({
   };
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.screen}
-      contentContainerStyle={[
-        styles.screenContent,
-        {
-          paddingTop: conHeader ? 16 : 24 + insets.top,
-          paddingBottom: 24 + (conHeader ? insets.bottom : 0),
-        },
-      ]}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={
-        onRefresh ? (
-          <RefreshControl refreshing={refrescando} onRefresh={alRefrescar} tintColor={colors.primary} />
-        ) : undefined
-      }
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {children}
-    </ScrollView>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={[
+          styles.screenContent,
+          {
+            paddingTop: conHeader ? 16 : 24 + insets.top,
+            paddingBottom: 24 + (conHeader ? insets.bottom : 0),
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl refreshing={refrescando} onRefresh={alRefrescar} tintColor={colors.primary} />
+          ) : undefined
+        }
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -323,6 +331,114 @@ export function SelectRow({
   );
 }
 
+export interface OpcionSelect {
+  value: string;
+  label: string;
+}
+
+/**
+ * Selector con hoja modal — para listas largas que como `Segmented` no caben.
+ * Con `permiteOtro`, agrega la opción "Otro…" con un campo de texto libre.
+ */
+export function Select({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder = 'Elegir…',
+  permiteOtro,
+}: {
+  label?: string;
+  value: string;
+  options: OpcionSelect[];
+  onChange: (v: string) => void;
+  placeholder?: string;
+  permiteOtro?: boolean;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const [modoOtro, setModoOtro] = useState(false);
+  const [otro, setOtro] = useState('');
+
+  const conocida = options.find((o) => o.value === value);
+  const texto = conocida ? conocida.label : value ? value : placeholder;
+
+  const cerrar = () => {
+    setAbierto(false);
+    setModoOtro(false);
+    setOtro('');
+  };
+
+  return (
+    <View style={styles.field}>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
+      <Pressable style={styles.selectBox} onPress={() => setAbierto(true)}>
+        <Text style={{ fontSize: 16, color: conocida || value ? colors.text : colors.muted }}>
+          {texto}
+        </Text>
+        <Text style={styles.selectCaret}>▾</Text>
+      </Pressable>
+
+      <Modal visible={abierto} transparent animationType="slide" onRequestClose={cerrar}>
+        <Pressable style={styles.modalFondo} onPress={cerrar}>
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()}>
+            {label ? <Text style={styles.modalTitulo}>{label}</Text> : null}
+            {modoOtro ? (
+              <View style={{ gap: 10 }}>
+                <TextInput
+                  style={styles.input}
+                  value={otro}
+                  onChangeText={setOtro}
+                  autoFocus
+                  placeholder="Escribe el valor"
+                  placeholderTextColor={colors.muted}
+                />
+                <Button
+                  title="Usar"
+                  onPress={() => {
+                    if (otro.trim()) {
+                      onChange(otro.trim());
+                      cerrar();
+                    }
+                  }}
+                />
+                <LinkButton title="Volver a la lista" onPress={() => setModoOtro(false)} />
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 360 }}>
+                {options.map((o) => (
+                  <Pressable
+                    key={o.value}
+                    style={styles.modalOpcion}
+                    onPress={() => {
+                      onChange(o.value);
+                      cerrar();
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOpcionTxt,
+                        o.value === value && { color: colors.primary, fontWeight: '700' },
+                      ]}
+                    >
+                      {o.label}
+                    </Text>
+                  </Pressable>
+                ))}
+                {permiteOtro && (
+                  <Pressable style={styles.modalOpcion} onPress={() => setModoOtro(true)}>
+                    <Text style={[styles.modalOpcionTxt, { color: colors.primary }]}>Otro…</Text>
+                  </Pressable>
+                )}
+              </ScrollView>
+            )}
+            <LinkButton title="Cancelar" onPress={cerrar} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
 export function ProgressBar({ pct }: { pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
@@ -393,6 +509,27 @@ export function Chip({
     </View>
   );
   return onPress ? <Pressable onPress={onPress}>{cuerpo}</Pressable> : cuerpo;
+}
+
+/**
+ * Monto con formato es-CL. Los negativos (deudas, saldos en contra) van en rojo
+ * y, si `contable`, entre paréntesis en vez de con signo "−".
+ */
+export function MoneyText({
+  monto,
+  moneda,
+  style,
+  contable,
+}: {
+  monto: number;
+  moneda: string;
+  style?: object;
+  contable?: boolean;
+}) {
+  const abs = Math.abs(monto).toLocaleString('es-CL', { maximumFractionDigits: 2 });
+  const neg = monto < 0;
+  const texto = neg ? (contable ? `(${abs} ${moneda})` : `−${abs} ${moneda}`) : `${abs} ${moneda}`;
+  return <Text style={[{ color: neg ? colors.danger : colors.text }, style]}>{texto}</Text>;
 }
 
 export function Row({ left, right }: { left: string; right: string }) {
@@ -511,6 +648,29 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   selectRowActive: { borderColor: colors.primary, backgroundColor: '#eff6ff' },
+  selectBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectCaret: { fontSize: 14, color: colors.muted },
+  modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  modalHoja: {
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    paddingBottom: 32,
+    gap: 8,
+  },
+  modalTitulo: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.faint },
+  modalOpcionTxt: { fontSize: 16, color: colors.text },
   selectRowText: { fontSize: 15, color: colors.text },
   selectRowTextActive: { color: colors.primary, fontWeight: '600' },
   dataRow: {
