@@ -24,6 +24,12 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 
 - [x] **Fase 0 — DB**: esquema PostgreSQL ejecutado y verificado en Docker
   (`postgres:16`). Ver `api/db/README.md`.
-- [ ] Fase 0 — backend NestJS inicializado + healthcheck.
-- [ ] Fase 0 — app Expo inicializada.
+- [x] **Fase 0 — backend**: NestJS 12 + Prisma 7 sobre PostgreSQL. `GET /health`
+  responde 200 con ping real a la DB. Ver `api/README.md`.
+- [x] **Fase 0 — app**: Expo SDK 57 + TypeScript, pantalla en blanco. Ver `app/README.md`.
 - [ ] Fase 1 — esqueleto vertical Flujo 2 (Alta de hogar): AS #34, #37, #38, #39, #43.
+
+## Requisitos de entorno
+
+- Node 22 (`.nvmrc` en `api/` y `app/`) — el toolchain (NestJS 12, Expo 57) lo exige.
+- Docker (para PostgreSQL local, no requiere Postgres instalado).
