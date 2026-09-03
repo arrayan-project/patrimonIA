@@ -58,6 +58,7 @@ export class ValorizacionService {
           monto: delta,
           origen_tipo: 'VALORIZACION',
           origen_id: creada.id,
+          fecha,
         },
       });
       await tx.elemento_patrimonial.update({
@@ -168,6 +169,7 @@ export class ValorizacionService {
           monto: delta,
           origen_tipo: 'VALORIZACION',
           origen_id: creada.id,
+          fecha: original.fecha,
         },
       });
       await tx.elemento_patrimonial.update({

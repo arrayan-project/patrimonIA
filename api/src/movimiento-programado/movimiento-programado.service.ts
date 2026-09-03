@@ -181,6 +181,7 @@ export class MovimientoProgramadoService {
           monto,
           origen_tipo: 'EVENTO_FINANCIERO',
           origen_id: evento.id,
+          fecha: fechaEfectiva,
         },
       });
       await tx.elemento_patrimonial.update({

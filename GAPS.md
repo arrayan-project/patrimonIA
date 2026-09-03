@@ -241,6 +241,23 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
   TRANSFERENCIA hacia el elemento crédito? ¿intereses como Ajuste o como evento?
 
+### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)
+- **Qué falta**: DDD Sección V pide reconstruir el estado a una fecha pasada
+  aplicando los hechos con `fecha <= X`. El modelo no guarda "fecha de alta" ni
+  "fecha de baja" del elemento (Registrar/Desactivar/Reactivar son config, y la
+  Sección V dice que la auditoría no participa).
+- **Decisión provisional (Fase 9)**:
+  - La reconstrucción retrocede desde `valor_vigente` restando los impactos con
+    `fecha > X` (columna `impacto_patrimonial.fecha`, migración 004).
+  - Para fechas anteriores a toda actividad devuelve el **valor inicial** del
+    elemento — no distingue "no existía todavía".
+  - Usa el `estado` ACTIVO/INACTIVO **actual** (un elemento hoy inactivo no
+    aparece en el patrimonio histórico aunque estuviera activo en X).
+  - Un evento hoy anulado se considera inexistente en toda la línea de tiempo
+    (la anulación no tiene fecha de hecho económico).
+- **Para decidir**: ¿agregar `fecha_alta` / `fecha_baja` al elemento? ¿fecha a la
+  anulación para reconstruirla en el tiempo?
+
 ### G5 — Consulta "mis invitaciones recibidas"
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN

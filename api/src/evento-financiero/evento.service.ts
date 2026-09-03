@@ -70,6 +70,7 @@ export class EventoFinancieroService {
               monto: p.monto,
               origen_tipo: 'EVENTO_FINANCIERO',
               origen_id: evento.id,
+              fecha,
             },
           }),
         );
@@ -220,6 +221,7 @@ export class EventoFinancieroService {
               monto: montoComp,
               origen_tipo: 'EVENTO_FINANCIERO',
               origen_id: compensatorio.id,
+              fecha: evento.fecha,
             },
           }),
         );

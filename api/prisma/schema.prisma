@@ -146,10 +146,12 @@ model impacto_patrimonial {
   origen_tipo          String
   origen_id            String               @db.Uuid
   created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  fecha                DateTime             @db.Date
   elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([elemento_id], map: "ix_impacto_elemento")
   @@index([origen_tipo, origen_id], map: "ix_impacto_origen")
+  @@index([fecha], map: "ix_impacto_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

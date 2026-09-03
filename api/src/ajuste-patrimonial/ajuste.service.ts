@@ -43,6 +43,7 @@ export class AjustePatrimonialService {
           monto,
           origen_tipo: 'AJUSTE_PATRIMONIAL',
           origen_id: creado.id,
+          fecha,
         },
       });
       await tx.elemento_patrimonial.update({
@@ -142,6 +143,7 @@ export class AjustePatrimonialService {
           monto: delta,
           origen_tipo: 'AJUSTE_PATRIMONIAL',
           origen_id: creado.id,
+          fecha: original.fecha,
         },
       });
       const el = await tx.elemento_patrimonial.findUniqueOrThrow({

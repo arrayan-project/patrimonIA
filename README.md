@@ -81,7 +81,17 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] Móvil: alta de deuda/crédito; en el detalle, saldo pendiente + acción
     Condonar / Declarar incobrable.
 
-**Cobertura de los 52 Application Services**: 52 / 52.
+- [x] **Fase 9 — Reconstrucción histórica (DDD Sección V)**:
+  - [x] Backend: `impacto_patrimonial.fecha` (migración 004). Valor de un elemento
+    a una fecha (`GET /elementos-patrimoniales/:id/valor-historico?fecha=`),
+    patrimonio individual a una fecha, y variación patrimonial entre dos fechas.
+    e2e en verde.
+  - [ ] Móvil: pendiente.
+- [ ] Fase 10 — consolidación y métricas del hogar.
+
+**Cobertura de los 52 Application Services**: 52 / 52. Falta la capa de
+consolidación/métricas del hogar y el subsistema de tipos de cambio (ver GAPS.md
+G7/G8) — planificadas como Fases 10–13.
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.
 

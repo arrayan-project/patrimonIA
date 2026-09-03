@@ -436,6 +436,7 @@ export class ElementoService {
           monto: delta,
           origen_tipo: origenTipo,
           origen_id: entradaId,
+          fecha: new Date(),
         },
       });
     });

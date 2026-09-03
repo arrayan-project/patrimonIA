@@ -49,6 +49,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `003_impacto_origen_condonacion.sql` — amplía el CHECK de
   `impacto_patrimonial.origen_tipo` con `CONDONACION` / `DECLARACION_INCOBRABLE`
   (GAPS.md G17). Ya incluida en `init/01_schema.sql`.
+- `004_impacto_fecha.sql` — columna `fecha` (fecha del hecho económico origen)
+  en `impacto_patrimonial`, para la reconstrucción histórica (DDD §V, GAPS.md
+  G18). Backfill desde los orígenes. Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

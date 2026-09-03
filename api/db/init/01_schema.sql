@@ -206,11 +206,13 @@ CREATE TABLE impacto_patrimonial (
                    ('EVENTO_FINANCIERO', 'VALORIZACION', 'AJUSTE_PATRIMONIAL',
                     'CONDONACION', 'DECLARACION_INCOBRABLE')),  -- migración 003
     origen_id     UUID NOT NULL,  -- FK polimórfica: resuelta en Application Service, no en DB
+    fecha         DATE NOT NULL,  -- migración 004: fecha del hecho económico origen (reconstrucción histórica, DDD §V)
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ix_impacto_elemento ON impacto_patrimonial (elemento_id);
 CREATE INDEX ix_impacto_origen ON impacto_patrimonial (origen_tipo, origen_id);
+CREATE INDEX ix_impacto_fecha ON impacto_patrimonial (fecha);
 
 -- ============================================================================
 -- 6. Valorización (Agregado G)
