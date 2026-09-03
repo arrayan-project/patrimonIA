@@ -5,11 +5,12 @@ import {
   ApiError,
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
+  type ValorizacionDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { colors, ErrorText, LinkButton, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, LinkButton, Row, Screen, Title } from '../ui';
 
 export function ElementoDetalleScreen() {
   const { token } = useSession();
@@ -18,18 +19,29 @@ export function ElementoDetalleScreen() {
 
   const [elemento, setElemento] = useState<ElementoPatrimonialDTO | null>(null);
   const [eventos, setEventos] = useState<EventoFinancieroDTO[]>([]);
+  const [valorizaciones, setValorizaciones] = useState<ValorizacionDTO[]>([]);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
     if (!elementoId) return;
     setError('');
     try {
-      const [el, evs] = await Promise.all([
-        api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token),
-        api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token),
-      ]);
+      const el = await api.get<ElementoPatrimonialDTO>(
+        `/elementos-patrimoniales/${elementoId}`,
+        token,
+      );
       setElemento(el);
-      setEventos(evs);
+      setEventos(
+        await api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token),
+      );
+      if (el.admiteValorizacion) {
+        setValorizaciones(
+          await api.get<ValorizacionDTO[]>(
+            `/elementos-patrimoniales/${elementoId}/valorizaciones`,
+            token,
+          ),
+        );
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -108,6 +120,49 @@ export function ElementoDetalleScreen() {
           })
         )}
       </View>
+
+      {elemento.admiteValorizacion && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Valorizaciones</Text>
+          {valorizaciones.length === 0 ? (
+            <Text style={styles.muted}>Sin valorizaciones.</Text>
+          ) : (
+            valorizaciones.map((v) => (
+              <Pressable
+                key={v.id}
+                style={styles.mov}
+                onPress={() =>
+                  nav.go('ValorizacionDetalle', {
+                    valorizacionId: v.id,
+                    elementoId,
+                    moneda: elemento.moneda,
+                  })
+                }
+              >
+                <Text style={[styles.muted, v.anulada && styles.tachado]}>
+                  {v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : v.fecha}
+                </Text>
+                <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
+                  {money(v.valorNuevo, elemento.moneda)}
+                </Text>
+              </Pressable>
+            ))
+          )}
+          <View style={{ marginTop: 8 }}>
+            <Button
+              title="Registrar valorización"
+              variant="secondary"
+              onPress={() =>
+                nav.go('Valorizar', {
+                  elementoId,
+                  valorActual: elemento.valorVigente,
+                  moneda: elemento.moneda,
+                })
+              }
+            />
+          </View>
+        </View>
+      )}
 
       <ErrorText>{error}</ErrorText>
       <LinkButton title="Actualizar" onPress={() => void cargar()} />

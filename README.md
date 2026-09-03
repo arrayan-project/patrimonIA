@@ -47,7 +47,8 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 - [x] **Fase 4 — Flujo 3 (activo no líquido + valorización)**:
   - [x] Backend: AS #17 RegistrarValorizacion, #18 AnularValorizacion,
     #19 CorregirValorizacion. e2e en verde.
-  - [ ] Móvil: valorizar un elemento e historial de valorizaciones.
+  - [x] Móvil: toggle "se valoriza" al crear el elemento; sección Valorizaciones
+    en el detalle con Registrar / Corregir / Anular.
 - [ ] Fase 5 — se define al cerrar Fase 4 (BUILD_INSTRUCTIONS §3).
 
 Vacíos y decisiones pendientes: ver `GAPS.md`.

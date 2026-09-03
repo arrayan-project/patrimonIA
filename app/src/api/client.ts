@@ -133,3 +133,14 @@ export interface PatrimonioIndividualDTO {
   elementos: number;
   porMoneda: { moneda: string; patrimonio: number; valorLiquido: number }[];
 }
+
+export interface ValorizacionDTO {
+  id: string;
+  elementoId: string;
+  valorAnterior: number;
+  valorNuevo: number;
+  fecha: string;
+  anulada: boolean;
+  correccionDeId: string | null;
+  createdAt: string;
+}

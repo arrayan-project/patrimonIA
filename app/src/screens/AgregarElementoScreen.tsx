@@ -15,8 +15,14 @@ export function AgregarElementoScreen() {
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('LIQUIDEZ');
   const [valorInicial, setValorInicial] = useState('0');
   const [moneda, setMoneda] = useState('CLP');
+  const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const onCategoria = (c: (typeof CATEGORIAS)[number]) => {
+    setCategoria(c);
+    setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
+  };
 
   const onSubmit = async () => {
     setError('');
@@ -31,6 +37,7 @@ export function AgregarElementoScreen() {
           valorInicial: Number(valorInicial) || 0,
           moneda: moneda.trim().toUpperCase(),
           participaValorLiquido: categoria === 'LIQUIDEZ',
+          admiteValorizacion: valorizable === 'Sí',
         },
         token,
       );
@@ -49,7 +56,7 @@ export function AgregarElementoScreen() {
 
       <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Cuenta Corriente" autoCapitalize="sentences" />
       <Field label="Tipo" value={tipo} onChangeText={setTipo} placeholder="cuenta_corriente" />
-      <Segmented label="Categoría funcional" options={CATEGORIAS} value={categoria} onChange={setCategoria} />
+      <Segmented label="Categoría funcional" options={CATEGORIAS} value={categoria} onChange={onCategoria} />
       <Field
         label="Valor inicial"
         keyboardType="numeric"
@@ -58,6 +65,13 @@ export function AgregarElementoScreen() {
         placeholder="0"
       />
       <Field label="Moneda (ISO 4217)" value={moneda} onChangeText={setMoneda} placeholder="CLP" maxLength={3} />
+      <Segmented
+        label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
+        options={['No', 'Sí'] as const}
+        value={valorizable}
+        onChange={setValorizable}
+      />
+      <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
 
       <ErrorText>{error}</ErrorText>
       <Button title="Registrar elemento" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />

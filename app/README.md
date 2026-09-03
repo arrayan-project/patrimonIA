@@ -60,6 +60,15 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
 | Detalle de elemento | movimientos tappables; anulados tachados, correcciones etiquetadas |
 | Detalle de movimiento | `GET /eventos-financieros/:id` · `POST /comandos/CorregirEventoFinanciero` · `POST /comandos/AnularEventoFinanciero` |
 
+### Fase 4 — Flujo 3 (valorización)
+
+| Pantalla | Comando/consulta |
+|----------|------------------|
+| Agregar elemento | toggle "¿se valoriza en el tiempo?" → `admiteValorizacion` |
+| Detalle de elemento | sección Valorizaciones (si el elemento la admite) + botón Registrar |
+| Registrar valorización | `POST /comandos/RegistrarValorizacion` |
+| Detalle de valorización | `POST /comandos/CorregirValorizacion` · `POST /comandos/AnularValorizacion` (solo la última vigente) |
+
 ### Decisiones del esqueleto (provisionales)
 
 - Navegación por pila mínima hecha a mano (`src/navigation/`) — se reemplaza por

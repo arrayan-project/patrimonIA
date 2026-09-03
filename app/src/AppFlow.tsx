@@ -11,6 +11,8 @@ import { ElementoDetalleScreen } from './screens/ElementoDetalleScreen';
 import { InvitacionesScreen } from './screens/InvitacionesScreen';
 import { MovimientoDetalleScreen } from './screens/MovimientoDetalleScreen';
 import { RegistrarMovimientoScreen } from './screens/RegistrarMovimientoScreen';
+import { ValorizarScreen } from './screens/ValorizarScreen';
+import { ValorizacionDetalleScreen } from './screens/ValorizacionDetalleScreen';
 import { colors } from './ui';
 
 function Routes() {
@@ -30,6 +32,10 @@ function Routes() {
       return <ElementoDetalleScreen />;
     case 'MovimientoDetalle':
       return <MovimientoDetalleScreen />;
+    case 'Valorizar':
+      return <ValorizarScreen />;
+    case 'ValorizacionDetalle':
+      return <ValorizacionDetalleScreen />;
     default:
       return <BienvenidaScreen />;
   }
