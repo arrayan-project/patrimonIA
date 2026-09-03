@@ -53,6 +53,8 @@ export class EventoFinancieroService {
       ? await this.#asignacionPropia(dto.asignacionId, actorId)
       : null;
 
+    const categoriaId = await this.#validarCategoria(dto, actorId);
+
     const { evento, impactos } = await this.prisma.$transaction(async (tx) => {
       const evento = await tx.evento_financiero.create({
         data: {
@@ -62,6 +64,8 @@ export class EventoFinancieroService {
           fecha,
           anulado: false,
           asignacion_id: asignacion?.id ?? null,
+          categoria_id: categoriaId,
+          glosa: dto.glosa?.trim() || null,
         },
       });
 
@@ -227,6 +231,8 @@ export class EventoFinancieroService {
           fecha: evento.fecha,
           correccion_de_id: evento.id,
           anulado: false,
+          categoria_id: evento.categoria_id,
+          glosa: evento.glosa,
         },
       });
 
@@ -435,6 +441,32 @@ export class EventoFinancieroService {
       throw new NotFoundException('Evento no encontrado');
     }
     return { evento, impactos };
+  }
+
+  /**
+   * Valida la categoría (GAPS.md G23): debe ser ACTIVA, de un hogar del actor, y
+   * su `tipo_aplicable` compatible con el tipo del evento. Solo INGRESO/GASTO se
+   * categorizan. Devuelve el id validado o null.
+   */
+  async #validarCategoria(dto: RegistrarEventoDto, actorId: string): Promise<string | null> {
+    if (!dto.categoriaId) return null;
+    if (dto.tipo !== 'INGRESO' && dto.tipo !== 'GASTO') {
+      throw new BadRequestException('Solo los ingresos y gastos se categorizan');
+    }
+    const cat = await this.prisma.categoria_movimiento.findUnique({
+      where: { id: dto.categoriaId },
+    });
+    if (!cat || cat.estado !== 'ACTIVA') throw new BadRequestException('Categoría no válida');
+    const m = await this.prisma.membresia.findFirst({
+      where: { hogar_id: cat.hogar_id, usuario_id: actorId, estado: 'ACTIVA' },
+    });
+    if (!m) throw new ForbiddenException('La categoría no pertenece a un hogar tuyo');
+    if (cat.tipo_aplicable !== 'AMBOS' && cat.tipo_aplicable !== dto.tipo) {
+      throw new BadRequestException(
+        `La categoría "${cat.nombre}" no aplica a ${dto.tipo.toLowerCase()}s`,
+      );
+    }
+    return cat.id;
   }
 
   async #asignacionPropia(asignacionId: string, actorId: string) {

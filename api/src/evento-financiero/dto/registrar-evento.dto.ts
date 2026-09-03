@@ -1,4 +1,14 @@
-import { IsIn, IsISO8601, IsNumber, IsOptional, IsPositive, IsUUID, Length } from 'class-validator';
+import {
+  IsIn,
+  IsISO8601,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  Length,
+  MaxLength,
+} from 'class-validator';
 
 /**
  * INGRESO / GASTO / TRANSFERENCIA (Fase 2) + CONVERSION (Fase 13, cambio de
@@ -41,4 +51,15 @@ export class RegistrarEventoDto {
   @IsOptional()
   @IsUUID()
   asignacionId?: string;
+
+  /** Categoría del hogar (solo INGRESO/GASTO). Opcional. Ver GAPS.md G23. */
+  @IsOptional()
+  @IsUUID()
+  categoriaId?: string;
+
+  /** Anotación libre corta ("pago internet marzo"). Opcional. Ver GAPS.md G22. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(140)
+  glosa?: string;
 }

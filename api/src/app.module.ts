@@ -12,6 +12,7 @@ import { ElementoModule } from './elemento/elemento.module.js';
 import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
 import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
+import { CategoriaMovimientoModule } from './categoria-movimiento/categoria-movimiento.module.js';
 import { ConsolidacionModule } from './consolidacion/consolidacion.module.js';
 import { MovimientoProgramadoModule } from './movimiento-programado/movimiento-programado.module.js';
 import { NotificacionModule } from './notificacion/notificacion.module.js';
@@ -33,6 +34,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     EventoFinancieroModule,
     ValorizacionModule,
     AjustePatrimonialModule,
+    CategoriaMovimientoModule,
     ConsolidacionModule,
     MovimientoProgramadoModule,
     NotificacionModule,

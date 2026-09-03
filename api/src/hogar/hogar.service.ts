@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { NotificacionService } from '../notificacion/notificacion.service.js';
+import { CategoriaMovimientoService } from '../categoria-movimiento/categoria-movimiento.service.js';
 import {
   toHogarDTO,
   toInvitacionDTO,
@@ -25,6 +26,7 @@ export class HogarService {
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
     private readonly notificaciones: NotificacionService,
+    private readonly categorias: CategoriaMovimientoService,
   ) {}
 
   // ── Comandos ──────────────────────────────────────────────────────────────
@@ -54,6 +56,8 @@ export class HogarService {
           estado: 'ACTIVA',
         },
       });
+
+      await this.categorias.sembrarPorDefecto(tx, creado.id);
 
       await this.auditoria.registrar(tx, {
         comando: 'CrearHogar',
@@ -381,6 +385,13 @@ export class HogarService {
     await this.prisma.$transaction(async (tx) => {
       await tx.invitacion.deleteMany({ where: { hogar_id: hogarId } });
       await tx.membresia.deleteMany({ where: { hogar_id: hogarId } });
+      // Categorías del hogar: si algún evento las usa, se desvincula (no se borra
+      // el hecho económico); las categorías en sí son config y se eliminan.
+      await tx.evento_financiero.updateMany({
+        where: { categoria_movimiento: { hogar_id: hogarId } },
+        data: { categoria_id: null },
+      });
+      await tx.categoria_movimiento.deleteMany({ where: { hogar_id: hogarId } });
       await tx.hogar.delete({ where: { id: hogarId } });
       await this.auditoria.registrar(tx, {
         comando: 'EliminarHogar',
