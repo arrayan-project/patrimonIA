@@ -35,6 +35,14 @@ export interface VariacionPatrimonialDTO {
   }[];
 }
 
+export interface SeriePatrimonialDTO {
+  usuarioId: string;
+  desde: string;
+  hasta: string;
+  /** Un punto por fecha muestreada, en orden cronológico. */
+  puntos: { fecha: string; porMoneda: PatrimonioHistoricoPorMoneda[] }[];
+}
+
 /**
  * Reconstrucción histórica de estado (DDD Sección V): responde "¿cuál era el
  * valor de esta entidad en un momento pasado?" aplicando en orden los hechos
@@ -132,6 +140,46 @@ export class ReconstruccionService {
             pd === 0 ? null : Math.round(((ph - pd) / Math.abs(pd)) * 1000) / 10,
         };
       }),
+    };
+  }
+
+  /**
+   * Serie temporal del patrimonio individual: `pasos` fechas equiespaciadas
+   * entre `desde` y `hasta` (ambas incluidas), cada una reconstruida como en
+   * `patrimonioIndividualHistorico`. Para el gráfico de evolución.
+   */
+  async seriePatrimonial(
+    usuarioId: string,
+    desdeISO: string,
+    hastaISO: string | undefined,
+    pasos: number,
+  ): Promise<SeriePatrimonialDTO> {
+    const desde = new Date(`${this.#soloFecha(desdeISO)}T00:00:00.000Z`);
+    const hasta = new Date(
+      `${hastaISO ? this.#soloFecha(hastaISO) : this.#soloFecha(new Date().toISOString())}T00:00:00.000Z`,
+    );
+    const n = Math.max(2, Math.min(24, Math.floor(pasos) || 12));
+    const span = hasta.getTime() - desde.getTime();
+
+    const fechas: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const t = span <= 0 ? hasta.getTime() : desde.getTime() + Math.round((span * i) / (n - 1));
+      fechas.push(new Date(t).toISOString().slice(0, 10));
+    }
+    const unicas = [...new Set(fechas)];
+
+    const puntos = await Promise.all(
+      unicas.map(async (fecha) => {
+        const p = await this.patrimonioIndividualHistorico(usuarioId, fecha);
+        return { fecha, porMoneda: p.porMoneda };
+      }),
+    );
+
+    return {
+      usuarioId,
+      desde: unicas[0],
+      hasta: unicas[unicas.length - 1],
+      puntos,
     };
   }
 

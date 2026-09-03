@@ -5,6 +5,7 @@ import { ProyeccionesService, type PatrimonioIndividualDTO } from './proyeccione
 import {
   ReconstruccionService,
   type PatrimonioHistoricoDTO,
+  type SeriePatrimonialDTO,
   type ValorHistoricoElementoDTO,
   type VariacionPatrimonialDTO,
 } from './reconstruccion.service.js';
@@ -53,6 +54,21 @@ export class ProyeccionesController {
       user.id,
       exigirFecha(desde, 'desde'),
       hasta && FECHA_ISO.test(hasta) ? hasta : undefined,
+    );
+  }
+
+  @Get('usuarios/me/serie-patrimonial')
+  seriePatrimonial(
+    @CurrentUser() user: UsuarioAutenticado,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('pasos') pasos?: string,
+  ): Promise<SeriePatrimonialDTO> {
+    return this.reconstruccion.seriePatrimonial(
+      user.id,
+      exigirFecha(desde, 'desde'),
+      hasta && FECHA_ISO.test(hasta) ? hasta : undefined,
+      Number(pasos) || 12,
     );
   }
 

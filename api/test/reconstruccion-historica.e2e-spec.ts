@@ -105,6 +105,28 @@ describe('Reconstrucción histórica (e2e)', () => {
     expect(clp.variacion).toBe(220_000);
   });
 
+  it('serie-patrimonial devuelve puntos equiespaciados y crecientes', async () => {
+    const s = await auth(
+      request(http).get('/usuarios/me/serie-patrimonial?desde=2026-01-01&hasta=2026-04-01&pasos=4'),
+    ).expect(200);
+    expect(s.body.puntos).toHaveLength(4);
+    expect(s.body.puntos[0].fecha).toBe('2026-01-01');
+    expect(s.body.puntos[3].fecha).toBe('2026-04-01');
+    const clpDe = (i: number) =>
+      s.body.puntos[i].porMoneda.find((m: { moneda: string }) => m.moneda === 'CLP').patrimonio;
+    expect(clpDe(0)).toBe(1_100_000);
+    expect(clpDe(3)).toBe(1_320_000);
+    expect(clpDe(3)).toBeGreaterThanOrEqual(clpDe(0));
+  });
+
+  it('serie-patrimonial acota los pasos a [2, 24]', async () => {
+    const s = await auth(
+      request(http).get('/usuarios/me/serie-patrimonial?desde=2026-01-01&pasos=99'),
+    ).expect(200);
+    expect(s.body.puntos.length).toBeLessThanOrEqual(24);
+    expect(s.body.puntos.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('exige el parámetro fecha con formato válido', async () => {
     await auth(request(http).get('/usuarios/me/patrimonio-individual/historico')).expect(400);
     await auth(
