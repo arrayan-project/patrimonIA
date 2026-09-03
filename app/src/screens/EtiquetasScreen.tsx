@@ -10,6 +10,7 @@ import {
   Button,
   Chip,
   colors,
+  EmptyState,
   ErrorText,
   Field,
   LinkButton,
@@ -151,7 +152,13 @@ export function EtiquetasScreen() {
         <Button title="Crear etiqueta" onPress={crear} loading={busy} disabled={!nombre.trim()} />
       </View>
 
-      {lista.length === 0 && <Text style={styles.muted}>Aún no tienes etiquetas.</Text>}
+      {lista.length === 0 && (
+        <EmptyState
+          icon="pricetags-outline"
+          titulo="Aún no tienes etiquetas"
+          descripcion="Crea marcas como #reembolsable o #viaje-2026 para cortar tus movimientos de forma transversal."
+        />
+      )}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

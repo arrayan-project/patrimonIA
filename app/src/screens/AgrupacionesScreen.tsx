@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
+import { Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
 
 export function AgrupacionesScreen() {
   const { token } = useSession();
@@ -157,7 +157,13 @@ export function AgrupacionesScreen() {
         <Button title="Crear agrupación" onPress={crear} loading={busy} disabled={!nombre.trim()} />
       </View>
 
-      {lista.length === 0 && <Text style={styles.muted}>Aún no tienes agrupaciones.</Text>}
+      {lista.length === 0 && (
+        <EmptyState
+          icon="folder-outline"
+          titulo="Aún no tienes agrupaciones"
+          descripcion="Crea carpetas como “Inversiones” para ordenar tus cuentas y activos en el Inicio."
+        />
+      )}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

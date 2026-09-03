@@ -15,6 +15,7 @@ import {
   Button,
   colors,
   DateField,
+  EmptyState,
   ErrorText,
   etiqueta,
   Field,
@@ -96,7 +97,11 @@ export function MovimientosProgramadosScreen() {
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : lista.length === 0 ? (
-        <Text style={styles.muted}>No tienes movimientos programados.</Text>
+        <EmptyState
+          icon="calendar-outline"
+          titulo="No tienes movimientos programados"
+          descripcion="Un movimiento programado es un ingreso futuro con fecha (un sueldo, un arriendo por cobrar). Al llegar la fecha lo materializas."
+        />
       ) : (
         lista.map((m) => (
           <Pressable

@@ -174,8 +174,11 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     "Otro…") para categoría funcional, tipo de elemento (con presets) y moneda
     (ISO 4217); `KeyboardAvoidingView` en `Screen`; `MoneyText` (rojo/contable
     para negativos) en el detalle de elemento.
-  - [ ] 15l+ — design tokens completos, onboarding, buscadores en pickers,
-    co-propietarios con %, F3 en más pantallas.
+  - [x] **15l** — pulido: iconos en los menús (hubs), `EmptyState` en las
+    listas principales, deep-link al tocar una notificación, card "Primeros
+    pasos" en el Dashboard.
+  - [ ] 15m+ — design tokens completos, buscadores en pickers, co-propietarios
+    con %, F3 en más pantallas, FAB.
 
 **Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
 Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.

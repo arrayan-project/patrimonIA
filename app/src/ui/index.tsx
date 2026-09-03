@@ -18,7 +18,10 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
+import { Ionicons } from '@expo/vector-icons';
 import { etiqueta } from '../labels';
+
+export type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
 
 export { etiqueta, humanizar } from '../labels';
 
@@ -559,11 +562,13 @@ export function MenuLink({
   title,
   subtitle,
   badge,
+  icon,
   onPress,
 }: {
   title: string;
   subtitle?: string;
   badge?: number;
+  icon?: NombreIcono;
   onPress: () => void;
 }) {
   return (
@@ -571,6 +576,11 @@ export function MenuLink({
       onPress={onPress}
       style={({ pressed }) => [styles.menuLink, pressed && styles.buttonPressed]}
     >
+      {icon ? (
+        <View style={styles.menuIcono}>
+          <Ionicons name={icon} size={20} color={colors.primary} />
+        </View>
+      ) : null}
       <View style={{ flex: 1 }}>
         <Text style={styles.menuLinkTitle}>{title}</Text>
         {subtitle ? <Text style={styles.menuLinkSub}>{subtitle}</Text> : null}
@@ -588,6 +598,34 @@ export function MenuLink({
 /** Encabezado de grupo dentro de una pantalla hub. */
 export function GroupLabel({ children }: { children: ReactNode }) {
   return <Text style={styles.groupLabel}>{children}</Text>;
+}
+
+/** Estado vacío con ícono, texto y (opcional) una acción para empezar. */
+export function EmptyState({
+  icon,
+  titulo,
+  descripcion,
+  accion,
+  onAccion,
+}: {
+  icon?: NombreIcono;
+  titulo: string;
+  descripcion?: string;
+  accion?: string;
+  onAccion?: () => void;
+}) {
+  return (
+    <View style={styles.empty}>
+      {icon ? <Ionicons name={icon} size={40} color={colors.muted} /> : null}
+      <Text style={styles.emptyTitulo}>{titulo}</Text>
+      {descripcion ? <Text style={styles.emptyDesc}>{descripcion}</Text> : null}
+      {accion && onAccion ? (
+        <View style={{ alignSelf: 'stretch', marginTop: 4 }}>
+          <Button title={accion} onPress={onAccion} />
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -714,6 +752,14 @@ const styles = StyleSheet.create({
   },
   menuLinkTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   menuLinkSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  menuIcono: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: colors.faint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menuChevron: { fontSize: 22, color: colors.muted },
   menuBadge: {
     minWidth: 22,
@@ -732,4 +778,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: 'uppercase',
   },
+  empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
+  emptyTitulo: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  emptyDesc: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },
 });

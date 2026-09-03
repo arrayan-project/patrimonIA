@@ -17,6 +17,7 @@ import { useToast } from '../ui/Toast';
 import {
   Button,
   colors,
+  EmptyState,
   ErrorText,
   etiqueta,
   Field,
@@ -313,7 +314,11 @@ export function PlantillasScreen() {
       )}
 
       {modo === null && lista.length === 0 && (
-        <Text style={styles.muted}>Aún no tienes plantillas.</Text>
+        <EmptyState
+          icon="copy-outline"
+          titulo="Aún no tienes plantillas"
+          descripcion="Guarda el gasto o ingreso de siempre como molde y regístralo después en dos toques."
+        />
       )}
       {modo === null && <ErrorText>{error}</ErrorText>}
     </Screen>

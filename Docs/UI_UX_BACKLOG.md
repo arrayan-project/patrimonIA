@@ -81,7 +81,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | D2 | ✅ 15e — **header nativo** (título + atrás) en las ~24 pantallas apiladas; se borraron los 38 `LinkButton "Volver"`; `Screen` detecta el header (`HeaderHeightContext`) y ajusta el padding superior | 🟡 | P1 |
 | D3 | ✅ 15e — Dashboard queda con patrimonio + elementos + acciones; el resto se repartió en los hubs `MovimientosScreen` / `HogarScreen` y en `AjustesScreen` (con `MenuLink` / `GroupLabel`) | 🟡 | P1 |
 | D4 | **FAB "+"** global para "registrar movimiento" / "agregar elemento" | 🟡 | P2 |
-| D5 | **Deep-link desde notificaciones** — tocar "Objetivo completado" abre ese objetivo (el DTO ya trae `entidadTipo`/`entidadId`, hoy no se usa) | 🟡 | P2 |
+| D5 | ✅ 15l — tocar una notificación abre la entidad (`OBJETIVO_FINANCIERO`→detalle, `ASIGNACION`→detalle, `INVITACION`→Invitaciones, `EVENTO_FINANCIERO`→detalle) | 🟡 | P2 |
 | D6 | **Contexto / breadcrumb** en pantallas de detalle (a qué elemento/hogar pertenece lo que editas) | 🟡 | P2 |
 
 ---
@@ -93,7 +93,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | E1 | **Toast / Snackbar de éxito** al guardar (hoy solo se vuelve atrás, sin confirmación) | 🟡 | P1 |
 | E2 | **Diálogo de confirmación** para acciones destructivas (Eliminar elemento/hogar, Anular, Condonar, Cerrar sesión) | 🟡 | P1 |
 | E3 | **Variante `danger` en `Button`** — hoy "Eliminar" usa el estilo `secondary` gris, igual que "Cancelar" | 🟡 | P1 |
-| E4 | **Estados vacíos con acción** — "Aún no tienes elementos" → botón "Agregar el primero" | 🟡 | P2 |
+| E4 | ✅ 15l — componente `EmptyState` (ícono + texto + acción opcional); en Dashboard (con botón), Objetivos, Presupuestos, Movimientos programados, Plantillas, Etiquetas, Agrupaciones, Notificaciones | 🟡 | P2 |
 | E5 | **Skeleton loaders** en vez de un spinner centrado que tapa la pantalla | 🟡 | P2 |
 | E6 | **Errores por campo** — hoy todo cae en un solo `ErrorText` al fondo (a veces un string multilínea del backend) | 🟡 | P2 |
 | E7 | **Estado offline / sin backend** — mensaje claro + reintento | 🟡 | P2 |
@@ -152,7 +152,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| J1 | **Checklist de primer uso** tras crear el hogar ("agrega tu primera cuenta → registra un movimiento → crea un objetivo") | 🟡 | P2 |
+| J1 | ✅ 15l — card "Primeros pasos" en el Dashboard (agregar cuenta → registrar movimiento → crear objetivo), cada paso navega y se tacha solo; se oculta al completar los 3 o con "Ocultar" (recordado en secure-store por usuario) | 🟡 | P2 |
 | J2 | **Explicar categoría funcional** con ejemplos en el momento de elegir, no en un párrafo aparte | 🟡 | P2 |
 
 ---
@@ -282,7 +282,8 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~15h~~ ✅ | 🔴 C4 — `plantilla_movimiento` (migr. 011, GAPS G24), comandos Crear/Actualizar/Eliminar, `GET /usuarios/me/plantillas-movimiento`; app: `PlantillasScreen` + "Desde una plantilla" al registrar + "Guardar como plantilla" en el detalle. | 15c |
 | ~~15i~~ ✅ | 🔴 C5 — `etiqueta` + `evento_etiqueta` (migr. 012, GAPS G23); comandos `CrearEtiqueta`/`ActualizarEtiqueta`/`EliminarEtiqueta`/`EtiquetarEvento`; `RegistrarEventoFinanciero.etiquetaIds`, la corrección las hereda; DTO de evento con `etiquetaIds`. App: `EtiquetasScreen` (Ajustes → Cuenta), componente `Chip`, chips al registrar y en el detalle. | 15c |
 | ~~15j~~ ✅ | 🔴 C6 — `agrupacion_elemento` + `agrupacion_miembro` (migr. 013, GAPS G23, una carpeta por elemento); comandos `CrearAgrupacion`/`ActualizarAgrupacion`/`EliminarAgrupacion`/`DefinirElementosAgrupacion`; `GET /usuarios/me/agrupaciones`. App: `AgrupacionesScreen` (Ajustes → Cuenta), la lista "Elementos" del Dashboard se agrupa por carpeta con subtítulos + "Sin agrupar". **Bloque C del backlog cerrado.** | 15i |
-| ~~15k~~ ✅ | Controles de entrada: componente `Select` (hoja modal + "Otro…") → B4 (categoría funcional), B5 (`tipo` de elemento con presets), B6 (moneda ISO); B9 (`KeyboardAvoidingView` en `Screen`); F3 parcial (`MoneyText` rojo/contable en el detalle de elemento). Pendiente suelto: B7 (buscador en pickers), B8 (co-propietarios %), H1–H5, F3 completo, G1 (design tokens), J1/J2 (onboarding), E4–E7. | — |
+| ~~15k~~ ✅ | Controles de entrada: componente `Select` (hoja modal + "Otro…") → B4 (categoría funcional), B5 (`tipo` de elemento con presets), B6 (moneda ISO); B9 (`KeyboardAvoidingView` en `Screen`); F3 parcial (`MoneyText` rojo/contable en el detalle de elemento). | — |
+| ~~15l~~ ✅ | Pulido: iconos en `MenuLink` (G2, todos los hubs); `EmptyState` en las 8 listas principales (E4); deep-link desde notificaciones (D5); card "Primeros pasos" en el Dashboard (J1). Pendiente suelto: B7, B8, H1–H5, F3 completo, G1 (design tokens), J2, E5–E7, D4 (FAB), D6. | — |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

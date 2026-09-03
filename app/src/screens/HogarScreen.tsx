@@ -47,6 +47,7 @@ export function HogarScreen() {
       <Title>{hogar?.nombre ?? 'Hogar'}</Title>
 
       <MenuLink
+        icon="notifications-outline"
         title="Notificaciones"
         subtitle={noLeidas > 0 ? `${noLeidas} sin leer` : 'Al día'}
         badge={noLeidas || undefined}
@@ -55,6 +56,7 @@ export function HogarScreen() {
 
       <GroupLabel>Patrimonio</GroupLabel>
       <MenuLink
+        icon="home-outline"
         title="Patrimonio del hogar"
         subtitle="Vista consolidada de todos los miembros"
         onPress={() => hogar && nav.go('HogarConsolidado', { hogarId: hogar.id })}
@@ -62,11 +64,13 @@ export function HogarScreen() {
 
       <GroupLabel>Administración</GroupLabel>
       <MenuLink
+        icon="people-outline"
         title="Gestionar hogar"
         subtitle="Nombre, miembros, roles e invitaciones"
         onPress={() => hogar && nav.go('GestionHogar', { hogarId: hogar.id })}
       />
       <MenuLink
+        icon="mail-outline"
         title="Invitaciones recibidas"
         subtitle="Hogares a los que te invitaron"
         onPress={() => nav.go('Invitaciones')}

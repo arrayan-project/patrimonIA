@@ -43,16 +43,19 @@ export function MovimientosScreen() {
 
       <GroupLabel>Planificación</GroupLabel>
       <MenuLink
+        icon="copy-outline"
         title="Plantillas de movimiento"
         subtitle="Moldes para el gasto o ingreso de siempre"
         onPress={() => nav.go('Plantillas')}
       />
       <MenuLink
+        icon="pie-chart-outline"
         title="Presupuestos"
         subtitle="Cuánto esperas ingresar y gastar, con seguimiento por rubro"
         onPress={() => nav.go('Presupuestos')}
       />
       <MenuLink
+        icon="calendar-outline"
         title="Movimientos programados"
         subtitle="Ingresos futuros con fecha, listos para materializar"
         onPress={() => nav.go('MovimientosProgramados')}
@@ -60,11 +63,13 @@ export function MovimientosScreen() {
 
       <GroupLabel>Seguimiento</GroupLabel>
       <MenuLink
+        icon="trending-up-outline"
         title="Evolución de mi patrimonio"
         subtitle="Variación entre dos fechas"
         onPress={() => nav.go('EvolucionPatrimonio')}
       />
       <MenuLink
+        icon="swap-horizontal-outline"
         title="Tipos de cambio"
         subtitle="Tasas para convertir entre monedas"
         onPress={() => nav.go('TiposCambio')}

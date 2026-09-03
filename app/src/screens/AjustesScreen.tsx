@@ -19,16 +19,19 @@ export function AjustesScreen() {
 
       <GroupLabel>Cuenta</GroupLabel>
       <MenuLink
+        icon="person-outline"
         title="Mi perfil"
         subtitle="Nombre y datos de la cuenta"
         onPress={() => nav.go('Perfil')}
       />
       <MenuLink
+        icon="pricetags-outline"
         title="Etiquetas"
         subtitle="Marcas personales transversales para tus movimientos"
         onPress={() => nav.go('Etiquetas')}
       />
       <MenuLink
+        icon="folder-outline"
         title="Agrupaciones de elementos"
         subtitle="Carpetas para ordenar tus cuentas y activos"
         onPress={() => nav.go('Agrupaciones')}
@@ -36,11 +39,13 @@ export function AjustesScreen() {
 
       <GroupLabel>Hogar</GroupLabel>
       <MenuLink
+        icon="list-outline"
         title="Categorías de movimiento"
         subtitle="Rubros para clasificar ingresos y gastos"
         onPress={() => nav.go('Categorias')}
       />
       <MenuLink
+        icon="swap-horizontal-outline"
         title="Tipos de cambio"
         subtitle="Tasas para convertir entre monedas"
         onPress={() => nav.go('TiposCambio')}

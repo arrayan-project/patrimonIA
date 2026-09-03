@@ -10,6 +10,7 @@ import {
   Button,
   colors,
   DateField,
+  EmptyState,
   ErrorText,
   etiqueta,
   LinkButton,
@@ -93,7 +94,11 @@ export function PresupuestosScreen() {
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : lista.length === 0 ? (
-        <Text style={styles.muted}>Todavía no tienes presupuestos.</Text>
+        <EmptyState
+          icon="pie-chart-outline"
+          titulo="Todavía no tienes presupuestos"
+          descripcion="Un presupuesto compara lo que esperas ingresar/gastar con lo real, y opcionalmente por rubro. Crea uno abajo."
+        />
       ) : (
         lista.map((p) => (
           <Pressable

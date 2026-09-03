@@ -180,6 +180,11 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   funcional, `tipo` de elemento (presets de `labels.ts`) y moneda (ISO 4217).
   `Screen` envuelve el scroll en `KeyboardAvoidingView`. `MoneyText` pinta los
   montos negativos en rojo (opción `contable` = paréntesis).
+- **15l — pulido**: `icon` (Ionicons) en `MenuLink` — aplicado en los hubs;
+  componente `EmptyState` (ícono + texto + acción) en las 8 listas principales;
+  las notificaciones abren su entidad al tocarlas (`destino()` mapea
+  `entidadTipo` → ruta); card "Primeros pasos" en el Dashboard (secure-store
+  `patrimonia.onboarding.<uid>`).
 
 ### Decisiones aún provisionales
 

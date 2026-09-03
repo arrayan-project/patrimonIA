@@ -6,7 +6,18 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, etiqueta, Field, MoneyField, ProgressBar, Screen, Title } from '../ui';
+import {
+  Button,
+  colors,
+  EmptyState,
+  ErrorText,
+  etiqueta,
+  Field,
+  MoneyField,
+  ProgressBar,
+  Screen,
+  Title,
+} from '../ui';
 
 export function ObjetivosScreen() {
   const { token } = useSession();
@@ -55,6 +66,12 @@ export function ObjetivosScreen() {
 
       {objetivos === null ? (
         <ActivityIndicator color={colors.primary} />
+      ) : objetivos.length === 0 ? (
+        <EmptyState
+          icon="flag-outline"
+          titulo="Aún no tienes objetivos"
+          descripcion="Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje). Créalo abajo y luego asígnale reservas."
+        />
       ) : (
         objetivos.map((o) => (
           <Pressable

@@ -15,7 +15,19 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
-import { Button, colors, ErrorText, etiqueta, Field, MenuLink, Row, Screen, SelectRow, Title } from '../ui';
+import {
+  Button,
+  colors,
+  EmptyState,
+  ErrorText,
+  etiqueta,
+  Field,
+  MenuLink,
+  Row,
+  Screen,
+  SelectRow,
+  Title,
+} from '../ui';
 
 export function DashboardScreen() {
   const { token, usuario } = useSession();
@@ -30,6 +42,9 @@ export function DashboardScreen() {
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [agrupaciones, setAgrupaciones] = useState<AgrupacionDTO[]>([]);
+  const [pasos, setPasos] = useState({ cuenta: false, movimiento: false, objetivo: false });
+  const [onbOculto, setOnbOculto] = useState(true);
+  const claveOnb = `patrimonia.onboarding.${usuario.id}`;
   const [error, setError] = useState('');
   const [noLeidas, setNoLeidas] = useState(0);
   const [email, setEmail] = useState('');
@@ -67,6 +82,24 @@ export function DashboardScreen() {
       setPatrimonio(p);
       setElementos(els);
       setAgrupaciones(ags);
+
+      try {
+        const onbHecho = (await leer(claveOnb)) === 'ok';
+        const [objs, evs] = await Promise.all([
+          api.get<unknown[]>('/objetivos-financieros', token).catch(() => []),
+          api.get<unknown[]>(`/hogares/${activo}/eventos-financieros`, token).catch(() => []),
+        ]);
+        const p3 = {
+          cuenta: els.length > 0,
+          movimiento: evs.length > 0,
+          objetivo: objs.length > 0,
+        };
+        setPasos(p3);
+        setOnbOculto(onbHecho || (p3.cuenta && p3.movimiento && p3.objetivo));
+      } catch {
+        setOnbOculto(true);
+      }
+
       try {
         const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
         setVariacion(
@@ -90,7 +123,7 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav, claveHogar]);
+  }, [token, nav, claveHogar, claveOnb]);
 
   useCargaAlEnfocar(cargar);
 
@@ -137,9 +170,37 @@ export function DashboardScreen() {
     );
   }
 
+  const cerrarOnboarding = () => {
+    setOnbOculto(true);
+    void guardar(claveOnb, 'ok');
+  };
+
+  const PasoOnb = ({ hecho, texto, onPress }: { hecho: boolean; texto: string; onPress: () => void }) => (
+    <Pressable style={styles.paso} onPress={onPress}>
+      <Text style={{ fontSize: 16 }}>{hecho ? '✅' : '⬜️'}</Text>
+      <Text style={[styles.pasoTexto, hecho && { color: colors.muted, textDecorationLine: 'line-through' }]}>
+        {texto}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <Screen onRefresh={cargar}>
       <Title>{hogar.nombre}</Title>
+
+      {!onbOculto && (
+        <View style={styles.card}>
+          <View style={styles.head}>
+            <Text style={styles.sectionTitle}>Primeros pasos</Text>
+            <Pressable hitSlop={8} onPress={cerrarOnboarding}>
+              <Text style={styles.muted}>Ocultar</Text>
+            </Pressable>
+          </View>
+          <PasoOnb hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} />
+          <PasoOnb hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
+          <PasoOnb hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos')} />
+        </View>
+      )}
 
       {hogares.length > 1 && (
         <View style={styles.card}>
@@ -202,6 +263,17 @@ export function DashboardScreen() {
               <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
             </Pressable>
           );
+          if (elementos.length === 0) {
+            return (
+              <EmptyState
+                icon="wallet-outline"
+                titulo="Aún no tienes cuentas ni bienes"
+                descripcion="Agrega tu primera cuenta, inversión o deuda para empezar a llevar tu patrimonio."
+                accion="Agregar mi primera cuenta"
+                onAccion={() => nav.go('AgregarElemento')}
+              />
+            );
+          }
           const agrupados = new Set(agrupaciones.flatMap((a) => a.elementoIds));
           const sinAgrupar = elementos.filter((el) => !agrupados.has(el.id));
           return (
@@ -223,12 +295,12 @@ export function DashboardScreen() {
             </>
           );
         })()}
-        <View style={styles.actions}>
-          <Button title="Agregar elemento" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
-          {elementos.length > 0 && (
+        {elementos.length > 0 && (
+          <View style={styles.actions}>
+            <Button title="Agregar elemento" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
             <Button title="Registrar movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
-          )}
-        </View>
+          </View>
+        )}
       </View>
 
       <View style={styles.card}>
@@ -258,6 +330,7 @@ export function DashboardScreen() {
 
       {noLeidas > 0 && (
         <MenuLink
+          icon="notifications-outline"
           title="Notificaciones"
           subtitle={`${noLeidas} sin leer`}
           badge={noLeidas}
@@ -290,6 +363,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 10,
   },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  pasoTexto: { fontSize: 14, color: colors.text },
   elemento: {
     flexDirection: 'row',
     justifyContent: 'space-between',

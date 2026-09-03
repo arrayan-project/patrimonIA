@@ -4,7 +4,25 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, fechaRelativa, Screen, Title } from '../ui';
+import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Title } from '../ui';
+import type { RouteName } from '../navigation/navigator';
+
+/** entidadTipo de una notificación → a qué pantalla lleva. */
+function destino(n: NotificacionDTO): { name: RouteName; params?: Record<string, unknown> } | null {
+  if (!n.entidadId) return null;
+  switch (n.entidadTipo) {
+    case 'OBJETIVO_FINANCIERO':
+      return { name: 'ObjetivoDetalle', params: { objetivoId: n.entidadId } };
+    case 'ASIGNACION':
+      return { name: 'AsignacionDetalle', params: { asignacionId: n.entidadId } };
+    case 'INVITACION':
+      return { name: 'Invitaciones' };
+    case 'EVENTO_FINANCIERO':
+      return { name: 'MovimientoDetalle', params: { eventoId: n.entidadId } };
+    default:
+      return null;
+  }
+}
 
 export function NotificacionesScreen() {
   const { token } = useSession();
@@ -48,26 +66,33 @@ export function NotificacionesScreen() {
       {lista === null ? (
         <ActivityIndicator color={colors.primary} />
       ) : lista.length === 0 ? (
-        <Text style={styles.muted}>Sin notificaciones.</Text>
+        <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes un objetivo, se consuma una reserva o te inviten a un hogar." />
       ) : (
         <>
           {lista.some((n) => !n.leida) && (
             <Button title="Marcar todas como leídas" variant="secondary" onPress={leerTodas} />
           )}
-          {lista.map((n) => (
-            <Pressable
-              key={n.id}
-              style={[styles.card, !n.leida && styles.noLeida]}
-              onPress={() => !n.leida && leer(n.id)}
-            >
-              <Text style={styles.titulo}>{n.titulo}</Text>
-              <Text style={styles.cuerpo}>{n.cuerpo}</Text>
-              <Text style={styles.muted}>
-                {fechaRelativa(n.createdAt)}
-                {!n.leida ? ' · nueva (toca para marcar leída)' : ''}
-              </Text>
-            </Pressable>
-          ))}
+          {lista.map((n) => {
+            const d = destino(n);
+            return (
+              <Pressable
+                key={n.id}
+                style={[styles.card, !n.leida && styles.noLeida]}
+                onPress={() => {
+                  if (!n.leida) void leer(n.id);
+                  if (d) nav.go(d.name, d.params);
+                }}
+              >
+                <Text style={styles.titulo}>{n.titulo}</Text>
+                <Text style={styles.cuerpo}>{n.cuerpo}</Text>
+                <Text style={styles.muted}>
+                  {fechaRelativa(n.createdAt)}
+                  {!n.leida ? ' · nueva' : ''}
+                  {d ? ' · toca para abrir' : ''}
+                </Text>
+              </Pressable>
+            );
+          })}
         </>
       )}
 
