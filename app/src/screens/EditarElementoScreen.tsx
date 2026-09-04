@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -17,6 +17,7 @@ import {
   Segmented,
   Select,
   Title,
+  Skeleton,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
@@ -80,7 +81,7 @@ export function EditarElementoScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type EtiquetaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -18,6 +18,7 @@ import {
   PALETA_CATEGORIA,
   Screen,
   Title,
+  Skeleton,
 } from '../ui';
 
 export function EtiquetasScreen() {
@@ -90,7 +91,7 @@ export function EtiquetasScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

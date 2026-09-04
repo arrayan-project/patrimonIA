@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -28,6 +28,7 @@ import {
   Segmented,
   SelectRow,
   Title,
+  Skeleton,
 } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const;
@@ -162,7 +163,7 @@ export function PlantillasScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

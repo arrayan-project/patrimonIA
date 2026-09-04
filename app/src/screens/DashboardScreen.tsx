@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -28,6 +28,7 @@ import {
   Screen,
   SelectRow,
   Title,
+  Skeleton,
 } from '../ui';
 
 export function DashboardScreen() {
@@ -138,7 +139,7 @@ export function DashboardScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }
@@ -240,7 +241,8 @@ export function DashboardScreen() {
                 <Text style={styles.elementoNombre}>{el.nombre}</Text>
                 <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
               </View>
-              <Text style={styles.elementoValor}>{money(el.valorVigente, el.moneda)}</Text>
+              <MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.elementoValor} />
+
               <Ionicons name="chevron-forward" size={16} color={colors.muted} />
             </Pressable>
           );
@@ -337,6 +339,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   elementoNombre: { fontSize: 15, color: colors.text, fontWeight: '600' },
-  elementoValor: { fontSize: 15, color: colors.text },
+  elementoValor: { fontSize: 15 },
   actions: { gap: 8, marginTop: 8 },
 });

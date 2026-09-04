@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -12,7 +12,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title } from '../ui';
+import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
@@ -74,7 +74,7 @@ export function PresupuestoRubrosScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
+import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
 
 export function AgrupacionesScreen() {
   const { token } = useSession();
@@ -84,7 +84,7 @@ export function AgrupacionesScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

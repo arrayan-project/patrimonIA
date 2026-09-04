@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -24,6 +24,7 @@ import {
   Screen,
   SelectRow,
   Title,
+  Skeleton,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
@@ -72,7 +73,7 @@ export function AsignacionDetalleScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }

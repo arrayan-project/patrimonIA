@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -10,7 +10,18 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { colorCategoria, colors, ErrorText, etiqueta, ProgressBar, Row, Screen, Title } from '../ui';
+import {
+  Skeleton,
+  colorCategoria,
+  colors,
+  ErrorText,
+  etiqueta,
+  MoneyText,
+  ProgressBar,
+  Row,
+  Screen,
+  Title,
+} from '../ui';
 import { Dona } from '../ui/charts';
 
 export function HogarConsolidadoScreen() {
@@ -42,7 +53,7 @@ export function HogarConsolidadoScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }
@@ -57,7 +68,11 @@ export function HogarConsolidadoScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Total ({cons.monedaConsolidacion})</Text>
         {cons.total != null ? (
-          <Text style={styles.total}>{money(cons.total, cons.monedaConsolidacion)}</Text>
+          <MoneyText
+            monto={cons.total}
+            moneda={cons.monedaConsolidacion}
+            style={styles.total}
+          />
         ) : (
           <Text style={styles.muted}>
             Falta tipo de cambio para: {cons.conversionesFaltantes.join(', ')}. Regístralo
@@ -71,10 +86,19 @@ export function HogarConsolidadoScreen() {
         return (
           <View key={pm.moneda} style={styles.card}>
             <Text style={styles.sectionTitle}>{pm.moneda}</Text>
-            <Row left="Patrimonio neto" right={money(pm.patrimonioNeto, pm.moneda)} />
+            <Row
+              left="Patrimonio neto"
+              right={<MoneyText monto={pm.patrimonioNeto} moneda={pm.moneda} style={styles.montoRow} />}
+            />
             <Row left="Activos" right={money(pm.activos, pm.moneda)} />
-            <Row left="Pasivos" right={money(pm.pasivos, pm.moneda)} />
-            <Row left="Valor líquido" right={money(pm.valorLiquido, pm.moneda)} />
+            <Row
+              left="Pasivos"
+              right={<MoneyText monto={pm.pasivos} moneda={pm.moneda} style={styles.montoRow} />}
+            />
+            <Row
+              left="Valor líquido"
+              right={<MoneyText monto={pm.valorLiquido} moneda={pm.moneda} style={styles.montoRow} />}
+            />
             {metricas?.liquidez != null && (
               <Row left="Liquidez" right={`${Math.round(metricas.liquidez * 100)}%`} />
             )}
@@ -136,5 +160,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
   muted: { fontSize: 13, color: colors.muted },
-  total: { fontSize: 22, fontWeight: '800', color: colors.text },
+  total: { fontSize: 22, fontWeight: '800' },
+  montoRow: { fontSize: 14, fontWeight: '600' },
 });

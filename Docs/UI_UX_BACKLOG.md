@@ -94,8 +94,8 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | E2 | **Diálogo de confirmación** para acciones destructivas (Eliminar elemento/hogar, Anular, Condonar, Cerrar sesión) | 🟡 | P1 |
 | E3 | **Variante `danger` en `Button`** — hoy "Eliminar" usa el estilo `secondary` gris, igual que "Cancelar" | 🟡 | P1 |
 | E4 | ✅ 15l — componente `EmptyState` (ícono + texto + acción opcional); en Dashboard (con botón), Objetivos, Presupuestos, Movimientos programados, Plantillas, Etiquetas, Agrupaciones, Notificaciones | 🟡 | P2 |
-| E5 | ⚠️ 19 parcial — componente `Skeleton` (tarjetas gris con pulso); reemplazó el spinner en 8 pantallas de lista (Presupuestos, Objetivos, Mov. programados, Categorías, Notificaciones, Tipos de cambio, Invitaciones, Movimientos, Registrar movimiento). Falta: pantallas de detalle | 🟡 | P2 |
-| E6 | ⚠️ 20 parcial — `Field`/`MoneyField` tienen `error?` para el mensaje junto al campo; usado en la validación en vivo de Agregar elemento / Registrar movimiento. Falta: mapear errores del backend por campo | 🟡 | P2 |
+| E5 | ✅ 21 — componente `Skeleton` (tarjetas gris con pulso) reemplazó el `<ActivityIndicator>` de carga en todas las pantallas de lista **y de detalle** (16 más en Fase 21). Quedan a propósito con spinner: el bootstrap de sesión (`RootNavigator`), el `loading` de `Button` y el "recalculando" inline de Evolución | 🟡 | P2 |
+| E6 | ⚠️ 20/21 parcial — `Field`/`MoneyField` tienen `error?` (borde rojo + mensaje al pie); validación en vivo en Agregar/Editar elemento, Registrar movimiento/ajuste, Valorizar, Crear hogar, Perfil. Falta: mapear los errores del backend a cada campo | 🟡 | P2 |
 | E7 | **Estado offline / sin backend** — mensaje claro + reintento | 🟡 | P2 |
 
 ---
@@ -106,7 +106,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 |---|------|------|-----------|
 | F1 | ✅ 15f — `src/labels.ts` (`etiqueta()` + `humanizar()` de fallback) traduce todos los enums del dominio; `Segmented` formatea las opciones por defecto; aplicado en las ~12 pantallas que mostraban valores crudos | 🟡 | P1 |
 | F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
-| F3 | ⚠️ 15k/18 parcial — `MoneyText` (rojo para negativos) en el valor destacado del detalle de elemento y en el patrimonio neto del Inicio. Falta: listas de movimientos, consolidado del hogar | 🟡 | P2 |
+| F3 | ✅ 21 — `MoneyText` (rojo para negativos) en el valor destacado y los ajustes del detalle de elemento, el patrimonio neto y la lista de elementos del Inicio, y el total / neto / pasivos / líquido del patrimonio del hogar. Las listas de movimientos ya marcaban el gasto en rojo con signo | 🟡 | P2 |
 | F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
 | F5 | ✅ 17 — componente `Ayuda` (ícono info + texto sobre fondo azul tenue); reemplazó los `Paragraph`/`Text` explicativos en Objetivos, Asignación, Presupuestos, Categorías, Etiquetas, Agrupaciones, Plantillas, Movimientos programados | 🟡 | P2 |
 | F6 | Infra de i18n (aunque sea es-CL única al inicio) para no tener strings hardcodeados por toda la app | 🟡 | P3 |
@@ -123,7 +123,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
 | G2 | ✅ 15g (parcial) — `@expo/vector-icons` (Ionicons) en la barra de tabs. Falta: iconos en `MenuLink`, categorías, listas | 🟡 | P2 |
 | G5 | **Modo oscuro** | 🟡 | P3 |
-| G6 | Contraste — `colors.muted` (#6b7280 sobre blanco) está al límite AA | 🟡 | P2 |
+| G6 | ✅ 21 — `colors.muted` pasó de `#6b7280` a `#4b5563` (gray-600): ~4.6:1 sobre blanco y sobre `colors.fondo`, cumple AA para texto normal | 🟡 | P2 |
 
 ---
 
@@ -289,6 +289,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~18~~ ✅ | Acciones y explicaciones: `FAB` (D4) para "Registrar movimiento" en Inicio/Movimientos; H5 (toggle "cuenta en el patrimonio del hogar" en editar elemento); J2 (ayuda de categoría funcional al agregar); visibilidad con ayuda; F3 en el patrimonio neto del Inicio. | 17 |
 | ~~19~~ ✅ | Carga y pickers: componente `Skeleton` (E5, 8 pantallas de lista); "Buscar elemento" en los pickers de Registrar movimiento (B7); barra de avance total en la lista de Objetivos; `fix`: el título quedaba bajo el notch en iPhone (native-stack exponía `HeaderHeightContext` = 0 con header oculto). Pendiente suelto: B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5 detalle, E6–E7, D6. | 18 |
 | ~~20~~ ✅ | Formularios: **H2** `useConfirmarDescarte` (guard `beforeRemove` + `confirmar()`) en 7 formularios; **H3/E6 parcial** `Field`/`MoneyField` con `error?` (borde rojo + mensaje al pie) + validación en vivo (`tocado`/`intento`) en Agregar elemento y Registrar movimiento. Pendiente suelto: B8, H1, H3/E6 resto, H4, F3 completo, G1, E5 detalle, E7, D6. | 19 |
+| ~~21~~ ✅ | Pulido mecánico: **G6** `colors.muted` → `#4b5563` (AA); **E5** `Skeleton` en las 16 pantallas de detalle que quedaban; **F3** `MoneyText` en la lista de elementos del Inicio, los ajustes del detalle y el patrimonio del hogar (`Row` acepta `ReactNode`); **H3/E6** validación en vivo + `error?` en Registrar ajuste, Valorizar, Crear hogar y Perfil. Pendiente suelto: B8, H1, H4, F4, I1, D6, E7, G1, G5. | 20 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

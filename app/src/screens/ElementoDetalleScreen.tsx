@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -26,6 +26,7 @@ import {
   Row,
   Screen,
   Title,
+  Skeleton,
 } from '../ui';
 
 export function ElementoDetalleScreen() {
@@ -106,7 +107,7 @@ export function ElementoDetalleScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }
@@ -270,9 +271,13 @@ export function ElementoDetalleScreen() {
                 {a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
               </Text>
               <View style={styles.movDer}>
-                <Text style={[styles.movMonto, a.anulado && styles.tachado]}>
-                  {money(a.monto, elemento.moneda)}
-                </Text>
+                {a.anulado ? (
+                  <Text style={[styles.movMonto, styles.tachado]}>
+                    {money(a.monto, elemento.moneda)}
+                  </Text>
+                ) : (
+                  <MoneyText monto={a.monto} moneda={elemento.moneda} style={styles.movMonto} />
+                )}
                 <Ionicons name="chevron-forward" size={15} color={colors.muted} />
               </View>
             </Pressable>

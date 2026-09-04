@@ -68,7 +68,8 @@ export const colors = {
   /** Fondo de tarjetas, inputs y modales. */
   bg: '#ffffff',
   text: '#111827',
-  muted: '#6b7280',
+  /** Texto secundario. gray-600: contraste AA (4.6:1) sobre blanco y sobre `fondo`. */
+  muted: '#4b5563',
   border: '#e5e7eb',
   primary: '#1d4ed8',
   primaryText: '#ffffff',
@@ -622,11 +623,11 @@ export function MoneyText({
   return <Text style={[{ color: neg ? colors.danger : colors.text }, style]}>{texto}</Text>;
 }
 
-export function Row({ left, right }: { left: string; right: string }) {
+export function Row({ left, right }: { left: string; right: ReactNode }) {
   return (
     <View style={styles.dataRow}>
       <Text style={styles.dataLeft}>{left}</Text>
-      <Text style={styles.dataRight}>{right}</Text>
+      {typeof right === 'string' ? <Text style={styles.dataRight}>{right}</Text> : right}
     </View>
   );
 }

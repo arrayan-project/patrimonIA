@@ -19,11 +19,16 @@ export function ValorizarScreen() {
   const [fecha, setFecha] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
   const permitirSalida = useConfirmarDescarte(
     (valorNuevo.trim() !== '' || fecha.trim() !== '') && !loading,
   );
+  const errValor =
+    valorNuevo.trim() !== '' && Number(valorNuevo) >= 0 ? '' : 'Ingresa el nuevo valor (0 o más).';
 
   const onSubmit = async () => {
+    setIntento(true);
+    if (errValor) return;
     setError('');
     setLoading(true);
     try {
@@ -57,16 +62,17 @@ export function ValorizarScreen() {
         historial.
       </Paragraph>
 
-      <MoneyField label="Nuevo valor" value={valorNuevo} onChange={setValorNuevo} moneda={moneda} />
+      <MoneyField
+        label="Nuevo valor"
+        value={valorNuevo}
+        onChange={setValorNuevo}
+        moneda={moneda}
+        error={intento ? errValor : undefined}
+      />
       <DateField label="Fecha (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
 
       <ErrorText>{error}</ErrorText>
-      <Button
-        title="Registrar valorización"
-        onPress={onSubmit}
-        loading={loading}
-        disabled={!(Number(valorNuevo) >= 0 && valorNuevo.trim() !== '')}
-      />
+      <Button title="Registrar valorización" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

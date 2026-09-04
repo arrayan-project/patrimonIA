@@ -19,8 +19,10 @@ export function PerfilScreen() {
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intento, setIntento] = useState(false);
   const sucio = (!!me && nombre.trim() !== me.nombre) || motivo.trim().length > 0;
   const permitirSalida = useConfirmarDescarte(sucio && !busy);
+  const errNombre = nombre.trim() ? '' : 'El nombre no puede quedar vacío.';
 
   useEffect(() => {
     api
@@ -33,6 +35,8 @@ export function PerfilScreen() {
   }, [token]);
 
   const guardar = async () => {
+    setIntento(true);
+    if (errNombre) return;
     setBusy(true);
     setError('');
     try {
@@ -74,8 +78,14 @@ export function PerfilScreen() {
       {me && (
         <View style={styles.card}>
           <Row left="Email" right={me.email} />
-          <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
-          <Button title="Guardar" onPress={guardar} loading={busy} disabled={!nombre.trim()} />
+          <Field
+            label="Nombre"
+            value={nombre}
+            onChangeText={setNombre}
+            autoCapitalize="sentences"
+            error={intento ? errNombre : undefined}
+          />
+          <Button title="Guardar" onPress={guardar} loading={busy} />
         </View>
       )}
 

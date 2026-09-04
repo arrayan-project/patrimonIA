@@ -33,13 +33,18 @@ export function RegistrarAjusteScreen() {
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
 
   const monto = (direccion === 'Menor' ? -1 : 1) * (Number(magnitud) || 0);
+  const errMagnitud = Number(magnitud) > 0 ? '' : 'Ingresa la diferencia (mayor a 0).';
+  const errMotivo = motivo.trim().length >= 3 ? '' : 'Explica brevemente el motivo (mínimo 3 letras).';
   const permitirSalida = useConfirmarDescarte(
     (Number(magnitud) > 0 || motivo.trim().length > 0) && !loading,
   );
 
   const onSubmit = async () => {
+    setIntento(true);
+    if (errMagnitud || errMotivo) return;
     setError('');
     setLoading(true);
     try {
@@ -80,6 +85,7 @@ export function RegistrarAjusteScreen() {
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
+        error={intento ? errMagnitud : undefined}
       />
       {valorActual !== undefined && Number(magnitud) > 0 && (
         <Paragraph>
@@ -93,15 +99,11 @@ export function RegistrarAjusteScreen() {
         onChangeText={setMotivo}
         placeholder="Por qué hay una diferencia"
         autoCapitalize="sentences"
+        error={intento ? errMotivo : undefined}
       />
 
       <ErrorText>{error}</ErrorText>
-      <Button
-        title="Registrar ajuste"
-        onPress={onSubmit}
-        loading={loading}
-        disabled={motivo.trim().length < 3 || !(Number(magnitud) > 0)}
-      />
+      <Button title="Registrar ajuste" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

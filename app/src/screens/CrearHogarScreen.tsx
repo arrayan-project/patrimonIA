@@ -13,9 +13,13 @@ export function CrearHogarScreen() {
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
   const permitirSalida = useConfirmarDescarte(nombre.trim().length > 0 && !loading);
+  const errNombre = nombre.trim() ? '' : 'Escribe un nombre para el hogar.';
 
   const onSubmit = async () => {
+    setIntento(true);
+    if (errNombre) return;
     setError('');
     setLoading(true);
     try {
@@ -46,10 +50,11 @@ export function CrearHogarScreen() {
         onChangeText={setNombre}
         placeholder="p. ej. Familia Pérez"
         autoCapitalize="sentences"
+        error={intento ? errNombre : undefined}
       />
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Crear hogar" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />
+      <Button title="Crear hogar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

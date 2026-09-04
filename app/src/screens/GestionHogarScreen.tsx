@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title } from '../ui';
 
 export function GestionHogarScreen() {
   const { token, usuario } = useSession();
@@ -54,7 +54,7 @@ export function GestionHogarScreen() {
     return (
       <Screen>
         <ErrorText>{error}</ErrorText>
-        {!error && <ActivityIndicator color={colors.primary} />}
+        {!error && <Skeleton />}
       </Screen>
     );
   }
