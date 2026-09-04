@@ -8,6 +8,7 @@ import {
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type ReservaDeElementoDTO,
+  type ValorHistoricoElementoDTO,
   type ValorizacionDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -17,6 +18,7 @@ import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
   Button,
+  DateField,
   ErrorText,
   etiqueta,
   Field,
@@ -51,6 +53,9 @@ export function ElementoDetalleScreen() {
   const [error, setError] = useState('');
   const [saldarMotivo, setSaldarMotivo] = useState('');
   const [saldando, setSaldando] = useState(false);
+  const [fechaHist, setFechaHist] = useState('');
+  const [valorHist, setValorHist] = useState<ValorHistoricoElementoDTO | null>(null);
+  const [histBusy, setHistBusy] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!elementoId) return;
@@ -125,6 +130,23 @@ export function ElementoDetalleScreen() {
       </Screen>
     );
   }
+
+  const consultarHistorico = async () => {
+    setHistBusy(true);
+    setError('');
+    try {
+      setValorHist(
+        await api.get<ValorHistoricoElementoDTO>(
+          `/elementos-patrimoniales/${elementoId}/valor-historico?fecha=${fechaHist.trim()}`,
+          token,
+        ),
+      );
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setHistBusy(false);
+    }
+  };
 
   const el = elemento;
   const reservado = reservas.reduce((acc, r) => acc + r.monto, 0);
@@ -345,6 +367,25 @@ export function ElementoDetalleScreen() {
             }
           />
         </View>
+      </Panel>
+
+      <Panel>
+        <SectionTitle>Valor a una fecha</SectionTitle>
+        <Nota>Reconstruye cuánto valía este elemento en una fecha pasada.</Nota>
+        <DateField label="Fecha" value={fechaHist} onChange={setFechaHist} />
+        <Button
+          title="Consultar"
+          variant="secondary"
+          loading={histBusy}
+          disabled={!/^\d{4}-\d{2}-\d{2}$/.test(fechaHist.trim())}
+          onPress={consultarHistorico}
+        />
+        {valorHist && (
+          <Row
+            left={`Al ${fechaLegible(valorHist.fecha)}`}
+            right={money(valorHist.valor, valorHist.moneda)}
+          />
+        )}
       </Panel>
 
       <ErrorText>{error}</ErrorText>

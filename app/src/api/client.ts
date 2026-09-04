@@ -426,6 +426,20 @@ export interface VariacionPatrimonialDTO {
   }[];
 }
 
+export interface PatrimonioHistoricoDTO {
+  usuarioId: string;
+  fecha: string;
+  porMoneda: { moneda: string; patrimonio: number }[];
+  elementos: number;
+}
+
+export interface ValorHistoricoElementoDTO {
+  elementoId: string;
+  fecha: string;
+  moneda: string;
+  valor: number;
+}
+
 export interface SeriePatrimonialDTO {
   usuarioId: string;
   desde: string;

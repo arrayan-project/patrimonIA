@@ -3,13 +3,14 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import {
   api,
   ApiError,
+  type PatrimonioHistoricoDTO,
   type SeriePatrimonialDTO,
   type VariacionPatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, DateField, ErrorText, fechaLegible, Row, Screen, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Button, DateField, ErrorText, fechaLegible, Nota, Row, Screen, SectionTitle, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
@@ -24,7 +25,29 @@ export function EvolucionPatrimonioScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // A6 — "¿cuánto tenía yo a una fecha?"
+  const [fechaPunto, setFechaPunto] = useState('');
+  const [punto, setPunto] = useState<PatrimonioHistoricoDTO | null>(null);
+  const [busyPunto, setBusyPunto] = useState(false);
+
   const fechaOk = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s.trim());
+
+  const consultarPunto = async () => {
+    setBusyPunto(true);
+    setError('');
+    try {
+      setPunto(
+        await api.get<PatrimonioHistoricoDTO>(
+          `/usuarios/me/patrimonio-individual/historico?fecha=${fechaPunto.trim()}`,
+          token,
+        ),
+      );
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setBusyPunto(false);
+    }
+  };
 
   const consultar = async () => {
     setBusy(true);
@@ -48,6 +71,35 @@ export function EvolucionPatrimonioScreen() {
   return (
     <Screen>
       <Title>Evolución de mi patrimonio</Title>
+
+      <Panel>
+        <SectionTitle>¿Cuánto tenía a una fecha?</SectionTitle>
+        <DateField label="Fecha" value={fechaPunto} onChange={setFechaPunto} />
+        <Button
+          title="Ver patrimonio a esa fecha"
+          variant="secondary"
+          onPress={consultarPunto}
+          loading={busyPunto}
+          disabled={!fechaOk(fechaPunto)}
+        />
+        {punto && (
+          <View style={styles.bloque}>
+            <Text style={styles.muted}>Al {fechaLegible(punto.fecha)}</Text>
+            {punto.porMoneda.length === 0 ? (
+              <Nota>No tenías elementos registrados a esa fecha.</Nota>
+            ) : (
+              punto.porMoneda.map((m) => (
+                <Row
+                  key={m.moneda}
+                  left={`Patrimonio (${m.moneda})`}
+                  right={money(m.patrimonio, m.moneda)}
+                />
+              ))
+            )}
+          </View>
+        )}
+      </Panel>
+
       <Text style={styles.muted}>
         Reconstruye el patrimonio a dos fechas y muestra la variación. Sin fecha de
         fin, se usa hoy.
