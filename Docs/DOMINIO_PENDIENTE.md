@@ -11,11 +11,21 @@ técnicas que hoy limitan la experiencia.
 
 La conclusión para UI/UX está al final (§ "Cómo esto estructura la app").
 
+> **Estado a Fase 30 (2026-09-03).** Todo el bloque §A sin decisiones está
+> implementado: **A1, A2, A3, A5, A6, A7, A9** (Fases 29–30). Quedan en §A solo
+> los que requieren una definición o diseño de UX: **A4** (¿el usuario final
+> distingue "editar" de "corregir"?), **A8** (transferir a elemento de otro
+> miembro — atado a §B1), **A10** (guía proactiva hacia Crédito — diseño de UX),
+> **A11** (consistencia multi-hogar — chore transversal). El resto del trabajo
+> disponible son las **decisiones §B**.
+
 ---
 
 ## A. Ya está en el dominio y en el backend — falta mostrarlo
 
 Esto es **puro trabajo de UI**, sin decisiones pendientes. Es donde más gana la app.
+
+**Implementados en Fases 29–30:** A1, A2, A3, A5, A6, A7, A9.
 
 ### A1 · Disponibilidad financiera: líquido / reservado / **libre**
 `REQUISITES §H` lo define como distinción **obligatoria**:
@@ -246,16 +256,19 @@ esto es central y hoy está 100% invisible:
 
 ### Orden sugerido de trabajo
 
-**Sin decisiones (solo UI + endpoints de lectura):**
-1. Disponibilidad financiera en elemento + Inicio (§A1, §A2) — *chico, alto impacto.*
-2. Historial de auditoría por entidad (§A5) — *endpoint + pantalla; alto impacto para hogar.*
-3. Pantalla de Asignaciones (incluye independientes) (§A7).
-4. Cambiar propiedad post-creación (§A3).
-5. Colapso visual corrección+original (§A9).
+**Sin decisiones (solo UI + endpoints de lectura) — HECHO (Fases 29–30):**
+1. ✅ Disponibilidad financiera en elemento + Inicio (§A1, §A2).
+2. ✅ Historial de auditoría por entidad (§A5).
+3. ✅ Pantalla de Asignaciones, incluye independientes (§A7).
+4. ✅ Cambiar propiedad post-creación (§A3).
+5. ✅ Colapso visual corrección+original (§A9).
+6. ✅ Patrimonio / valor de elemento a una fecha puntual (§A6).
 
-**Necesitan decisión tuya primero:**
-6. **Visibilidad granular** (§B1) — desbloquea "transferir a otro miembro" (§A8) y
+**Necesitan decisión tuya primero (lo que queda):**
+7. **Visibilidad granular** (§B1) — desbloquea "transferir a otro miembro" (§A8) y
    el uso real en hogar. Es la decisión de mayor impacto.
-7. Movimiento Programado con tipo (gasto/transferencia) (§B5).
-8. Info adicional de Deuda/Crédito (§B3).
-9. Estado operativo formal de Deuda/Crédito (§B2).
+8. Movimiento Programado con tipo (gasto/transferencia) (§B5).
+9. Info adicional de Deuda/Crédito (§B3).
+10. Estado operativo formal de Deuda/Crédito (§B2).
+11. "Editar" vs "corregir" para el usuario final (§A4).
+12. Guía proactiva hacia Crédito (§A10) y consistencia multi-hogar (§A11).
