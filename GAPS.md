@@ -44,17 +44,17 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Otras simplificaciones de Fase 7**:
   - El esquema modela `elemento_destino_id` **singular** (AS #13 dice "elemento(s)
     destino"). Se usa singular.
-  - No hay columna `tipo` en `movimiento_programado`. **Materializar genera un
-    evento INGRESO** hacia el elemento destino (el caso natural de un movimiento
-    con un único destino y monto planificado — ej. un abono recurrente).
-    Gastos/transferencias programados quedan como extensión futura.
+  - ~~No hay columna `tipo`~~ → **RESUELTO Fase 33** (§B5). Migración 015 agregó
+    `tipo` (INGRESO/GASTO/TRANSFERENCIA) + `elemento_origen_id`. Materializar
+    genera un evento del mismo tipo (GASTO ← origen; TRANSFERENCIA origen→destino).
+    Sigue escribiendo **una sola** entrada de auditoría bajo
+    `MaterializarMovimientoProgramado`.
   - Materializar exige `fecha_programada <= hoy` y estado PENDIENTE. Escribe **una
     sola** entrada de auditoría (`comando = MaterializarMovimientoProgramado`,
-    entidad = MOVIMIENTO_PROGRAMADO, relacionada = EVENTO_FINANCIERO) — no
-    reutiliza la auditoría de `RegistrarEventoFinanciero` (AS #15: "único caso de
-    uso compartido, se registra bajo el mismo comando").
-- **Para decidir**: ¿MP con `tipo` y origen para programar gastos/transferencias?
-  ¿reglas de visibilidad propias?
+    entidad = MOVIMIENTO_PROGRAMADO, relacionada = EVENTO_FINANCIERO).
+- **Visibilidad/propiedad propias**: sigue heredada — ahora el actor debe ser
+  propietario de **cada** elemento referido (origen y/o destino). Sin columnas
+  propias (DDD §S). Esto puede revisarse junto con §B1 (visibilidad granular).
 
 ---
 

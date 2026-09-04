@@ -2,10 +2,12 @@ import type { movimiento_programado as MovimientoRow } from '@prisma/client';
 
 export interface MovimientoProgramadoDTO {
   id: string;
+  tipo: string;
   montoPlanificado: number;
   moneda: string;
   fechaProgramada: string;
-  elementoDestinoId: string;
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
   observaciones: string | null;
   estado: string;
   /** Presente si estado = MATERIALIZADO. */
@@ -19,9 +21,11 @@ export function toMovimientoProgramadoDTO(
 ): MovimientoProgramadoDTO {
   return {
     id: m.id,
+    tipo: m.tipo,
     montoPlanificado: Number(m.monto_planificado),
     moneda: m.moneda,
     fechaProgramada: m.fecha_programada.toISOString().slice(0, 10),
+    elementoOrigenId: m.elemento_origen_id,
     elementoDestinoId: m.elemento_destino_id,
     observaciones: m.observaciones,
     estado: m.estado,

@@ -502,10 +502,12 @@ export interface ResumenAnualDTO {
 
 export interface MovimientoProgramadoDTO {
   id: string;
+  tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
   montoPlanificado: number;
   moneda: string;
   fechaProgramada: string;
-  elementoDestinoId: string;
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
   observaciones: string | null;
   estado: 'PENDIENTE' | 'MATERIALIZADO' | 'CANCELADO';
   eventoFinancieroId: string | null;

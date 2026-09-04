@@ -5,9 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, type movimiento_programado as MovimientoRow } from '@prisma/client';
+import {
+  Prisma,
+  type elemento_patrimonial as ElementoRow,
+  type movimiento_programado as MovimientoRow,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { derivarValorPendiente } from '../common/deuda.js';
 import {
   toMovimientoProgramadoDTO,
   type MovimientoProgramadoDTO,
@@ -24,8 +29,9 @@ import type {
  * hasta materializarse (DDD Sección S). Vive fuera del árbol de Evento Financiero
  * hasta el momento exacto de materializar.
  *
- * Autorización: hereda del elemento destino — el actor debe ser propietario de
- * `elemento_destino_id` (GAPS.md G2).
+ * Tipo (§B5): INGRESO (→ destino), GASTO (← origen), TRANSFERENCIA (origen →
+ * destino). Autorización: hereda de los elementos referidos — el actor debe ser
+ * propietario de cada uno (GAPS.md G2, DDD §S: sin columnas de visibilidad propias).
  */
 @Injectable()
 export class MovimientoProgramadoService {
@@ -40,20 +46,20 @@ export class MovimientoProgramadoService {
     dto: CrearMovimientoProgramadoDto,
   ): Promise<MovimientoProgramadoDTO> {
     const moneda = dto.moneda.toUpperCase();
-    const destino = await this.#exigirElementoPropio(dto.elementoDestinoId, actorId);
-    if (destino.moneda !== moneda) {
-      throw new BadRequestException(
-        `La moneda (${moneda}) no coincide con la del elemento destino (${destino.moneda})`,
-      );
-    }
+    const { origenId, destinoId } = this.#slots(dto.tipo, dto.elementoOrigenId, dto.elementoDestinoId);
+
+    if (origenId) await this.#exigirElementoCompatible(origenId, actorId, moneda, 'origen');
+    if (destinoId) await this.#exigirElementoCompatible(destinoId, actorId, moneda, 'destino');
 
     const creado = await this.prisma.$transaction(async (tx) => {
       const m = await tx.movimiento_programado.create({
         data: {
+          tipo: dto.tipo,
           monto_planificado: new Prisma.Decimal(dto.montoPlanificado),
           moneda,
           fecha_programada: this.#fecha(dto.fechaProgramada),
-          elemento_destino_id: dto.elementoDestinoId,
+          elemento_origen_id: origenId,
+          elemento_destino_id: destinoId,
           observaciones: dto.observaciones ?? null,
           estado: 'PENDIENTE',
         },
@@ -64,13 +70,15 @@ export class MovimientoProgramadoService {
         entidadTipo: 'MOVIMIENTO_PROGRAMADO',
         entidadId: m.id,
         valorPosterior: {
+          tipo: dto.tipo,
           monto_planificado: dto.montoPlanificado,
           moneda,
           fecha_programada: dto.fechaProgramada.slice(0, 10),
-          elemento_destino_id: dto.elementoDestinoId,
+          elemento_origen_id: origenId,
+          elemento_destino_id: destinoId,
         },
         entidadRelacionadaTipo: 'ELEMENTO_PATRIMONIAL',
-        entidadRelacionadaId: dto.elementoDestinoId,
+        entidadRelacionadaId: destinoId ?? origenId ?? undefined,
       });
       return m;
     });
@@ -78,7 +86,7 @@ export class MovimientoProgramadoService {
     return toMovimientoProgramadoDTO(creado);
   }
 
-  /** AS #14 — ActualizarMovimientoProgramado. Solo en estado PENDIENTE. */
+  /** AS #14 — ActualizarMovimientoProgramado. Solo en estado PENDIENTE. El tipo no cambia. */
   async actualizar(
     actorId: string,
     dto: ActualizarMovimientoProgramadoDto,
@@ -88,7 +96,7 @@ export class MovimientoProgramadoService {
       throw new ConflictException(`El movimiento está ${m.estado.toLowerCase()}, no se puede editar`);
     }
 
-    const data: Prisma.movimiento_programadoUpdateInput = {};
+    const data: Prisma.movimiento_programadoUncheckedUpdateInput = {};
     const anterior: Record<string, unknown> = {};
     const posterior: Record<string, unknown> = {};
 
@@ -105,12 +113,17 @@ export class MovimientoProgramadoService {
         posterior.fecha_programada = dto.fechaProgramada.slice(0, 10);
       }
     }
-    if (dto.elementoDestinoId !== undefined && dto.elementoDestinoId !== m.elemento_destino_id) {
-      const destino = await this.#exigirElementoPropio(dto.elementoDestinoId, actorId);
-      if (destino.moneda !== m.moneda) {
-        throw new BadRequestException('El nuevo elemento destino tiene otra moneda');
-      }
-      data.elemento_patrimonial = { connect: { id: dto.elementoDestinoId } };
+    const usaOrigen = m.tipo === 'GASTO' || m.tipo === 'TRANSFERENCIA';
+    const usaDestino = m.tipo === 'INGRESO' || m.tipo === 'TRANSFERENCIA';
+    if (dto.elementoOrigenId !== undefined && usaOrigen && dto.elementoOrigenId !== m.elemento_origen_id) {
+      await this.#exigirElementoCompatible(dto.elementoOrigenId, actorId, m.moneda, 'origen');
+      data.elemento_origen_id = dto.elementoOrigenId;
+      anterior.elemento_origen_id = m.elemento_origen_id;
+      posterior.elemento_origen_id = dto.elementoOrigenId;
+    }
+    if (dto.elementoDestinoId !== undefined && usaDestino && dto.elementoDestinoId !== m.elemento_destino_id) {
+      await this.#exigirElementoCompatible(dto.elementoDestinoId, actorId, m.moneda, 'destino');
+      data.elemento_destino_id = dto.elementoDestinoId;
       anterior.elemento_destino_id = m.elemento_destino_id;
       posterior.elemento_destino_id = dto.elementoDestinoId;
     }
@@ -121,6 +134,11 @@ export class MovimientoProgramadoService {
     }
 
     if (Object.keys(data).length === 0) throw new BadRequestException('No hay cambios');
+    if (m.tipo === 'TRANSFERENCIA') {
+      const origen = data.elemento_origen_id ?? m.elemento_origen_id;
+      const destino = data.elemento_destino_id ?? m.elemento_destino_id;
+      if (origen === destino) throw new BadRequestException('El origen y el destino no pueden ser el mismo');
+    }
 
     const actualizado = await this.prisma.$transaction(async (tx) => {
       const fila = await tx.movimiento_programado.update({ where: { id: m.id }, data });
@@ -140,8 +158,8 @@ export class MovimientoProgramadoService {
 
   /**
    * AS #15 — MaterializarMovimientoProgramado. Dispara la creación de un Evento
-   * Financiero INGRESO hacia el elemento destino (GAPS.md G2) con los datos
-   * confirmados/ajustados. Una única entrada de auditoría bajo este comando.
+   * Financiero (del mismo tipo) con los datos confirmados/ajustados. Una única
+   * entrada de auditoría bajo este comando.
    */
   async materializar(
     actorId: string,
@@ -152,22 +170,29 @@ export class MovimientoProgramadoService {
       throw new ConflictException(`El movimiento ya está ${m.estado.toLowerCase()}`);
     }
     const fechaEfectiva = dto.fechaEfectiva ? this.#fecha(dto.fechaEfectiva) : this.#hoy();
-    const hoy = this.#hoy();
-    if (m.fecha_programada.getTime() > hoy.getTime()) {
+    if (m.fecha_programada.getTime() > this.#hoy().getTime()) {
       throw new BadRequestException('El movimiento aún no alcanza su fecha programada');
     }
-    const destino = await this.prisma.elemento_patrimonial.findUniqueOrThrow({
-      where: { id: m.elemento_destino_id },
-    });
-    if (destino.estado !== 'ACTIVO') {
-      throw new BadRequestException('El elemento destino no está activo');
-    }
     const monto = new Prisma.Decimal(dto.montoEfectivo ?? Number(m.monto_planificado));
+
+    // Plan de impactos según el tipo.
+    const cargarActivo = async (id: string): Promise<ElementoRow> => {
+      const el = await this.prisma.elemento_patrimonial.findUniqueOrThrow({ where: { id } });
+      if (el.estado !== 'ACTIVO') throw new BadRequestException(`El elemento "${el.nombre}" no está activo`);
+      return el;
+    };
+    const plan: { elemento: ElementoRow; delta: Prisma.Decimal }[] = [];
+    if (m.elemento_origen_id) {
+      plan.push({ elemento: await cargarActivo(m.elemento_origen_id), delta: monto.negated() });
+    }
+    if (m.elemento_destino_id) {
+      plan.push({ elemento: await cargarActivo(m.elemento_destino_id), delta: monto });
+    }
 
     const { evento } = await this.prisma.$transaction(async (tx) => {
       const evento = await tx.evento_financiero.create({
         data: {
-          tipo: 'INGRESO',
+          tipo: m.tipo,
           monto,
           moneda: m.moneda,
           fecha: fechaEfectiva,
@@ -175,19 +200,22 @@ export class MovimientoProgramadoService {
           movimiento_programado_origen_id: m.id,
         },
       });
-      await tx.impacto_patrimonial.create({
-        data: {
-          elemento_id: destino.id,
-          monto,
-          origen_tipo: 'EVENTO_FINANCIERO',
-          origen_id: evento.id,
-          fecha: fechaEfectiva,
-        },
-      });
-      await tx.elemento_patrimonial.update({
-        where: { id: destino.id },
-        data: { valor_vigente: new Prisma.Decimal(destino.valor_vigente).plus(monto) },
-      });
+      for (const { elemento, delta } of plan) {
+        await tx.impacto_patrimonial.create({
+          data: {
+            elemento_id: elemento.id,
+            monto: delta,
+            origen_tipo: 'EVENTO_FINANCIERO',
+            origen_id: evento.id,
+            fecha: fechaEfectiva,
+          },
+        });
+        await tx.elemento_patrimonial.update({
+          where: { id: elemento.id },
+          data: { valor_vigente: new Prisma.Decimal(elemento.valor_vigente).plus(delta) },
+        });
+        await derivarValorPendiente(tx, elemento.id);
+      }
       await tx.movimiento_programado.update({
         where: { id: m.id },
         data: { estado: 'MATERIALIZADO' },
@@ -201,11 +229,12 @@ export class MovimientoProgramadoService {
         valorPosterior: {
           estado: 'MATERIALIZADO',
           evento_financiero_id: evento.id,
-          tipo: 'INGRESO',
+          tipo: m.tipo,
           monto: monto.toNumber(),
           moneda: m.moneda,
           fecha: fechaEfectiva.toISOString().slice(0, 10),
-          elemento_destino_id: destino.id,
+          elemento_origen_id: m.elemento_origen_id,
+          elemento_destino_id: m.elemento_destino_id,
         },
         entidadRelacionadaTipo: 'EVENTO_FINANCIERO',
         entidadRelacionadaId: evento.id,
@@ -259,9 +288,10 @@ export class MovimientoProgramadoService {
       where: { usuario_id: actorId },
       select: { elemento_id: true },
     });
+    const ids = propios.map((p) => p.elemento_id);
     const movimientos = await this.prisma.movimiento_programado.findMany({
       where: {
-        elemento_destino_id: { in: propios.map((p) => p.elemento_id) },
+        OR: [{ elemento_destino_id: { in: ids } }, { elemento_origen_id: { in: ids } }],
         ...(estado ? { estado } : {}),
       },
       orderBy: { fecha_programada: 'asc' },
@@ -275,20 +305,63 @@ export class MovimientoProgramadoService {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
+  /** Devuelve los ids origen/destino que corresponden al tipo, rechazando los que no. */
+  #slots(
+    tipo: string,
+    origenId?: string,
+    destinoId?: string,
+  ): { origenId: string | null; destinoId: string | null } {
+    if (tipo === 'INGRESO') {
+      if (!destinoId) throw new BadRequestException('INGRESO requiere elementoDestinoId');
+      if (origenId) throw new BadRequestException('INGRESO no lleva elementoOrigenId');
+      return { origenId: null, destinoId };
+    }
+    if (tipo === 'GASTO') {
+      if (!origenId) throw new BadRequestException('GASTO requiere elementoOrigenId');
+      if (destinoId) throw new BadRequestException('GASTO no lleva elementoDestinoId');
+      return { origenId, destinoId: null };
+    }
+    // TRANSFERENCIA
+    if (!origenId || !destinoId) {
+      throw new BadRequestException('TRANSFERENCIA requiere elementoOrigenId y elementoDestinoId');
+    }
+    if (origenId === destinoId) {
+      throw new BadRequestException('El origen y el destino no pueden ser el mismo');
+    }
+    return { origenId, destinoId };
+  }
+
   async #cargar(movimientoId: string, actorId: string): Promise<MovimientoRow> {
     const m = await this.prisma.movimiento_programado.findUnique({ where: { id: movimientoId } });
     if (!m) throw new NotFoundException('Movimiento programado no encontrado');
-    await this.#exigirElementoPropio(m.elemento_destino_id, actorId);
+    const ids = [m.elemento_origen_id, m.elemento_destino_id].filter((x): x is string => !!x);
+    const propios = await this.prisma.elemento_propietario.findMany({
+      where: { elemento_id: { in: ids }, usuario_id: actorId },
+      select: { elemento_id: true },
+    });
+    if (propios.length !== ids.length) {
+      throw new ForbiddenException('No eres propietario de los elementos del movimiento');
+    }
     return m;
   }
 
-  async #exigirElementoPropio(elementoId: string, actorId: string) {
+  async #exigirElementoCompatible(
+    elementoId: string,
+    actorId: string,
+    moneda: string,
+    rol: 'origen' | 'destino',
+  ): Promise<ElementoRow> {
     const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id: elementoId } });
-    if (!el) throw new NotFoundException('Elemento destino no encontrado');
+    if (!el) throw new NotFoundException(`Elemento ${rol} no encontrado`);
     const prop = await this.prisma.elemento_propietario.findFirst({
       where: { elemento_id: elementoId, usuario_id: actorId },
     });
-    if (!prop) throw new ForbiddenException('No eres propietario del elemento destino');
+    if (!prop) throw new ForbiddenException(`No eres propietario del elemento ${rol}`);
+    if (el.moneda !== moneda) {
+      throw new BadRequestException(
+        `La moneda (${moneda}) no coincide con la del elemento ${rol} (${el.moneda})`,
+      );
+    }
     return el;
   }
 

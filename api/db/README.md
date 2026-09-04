@@ -81,6 +81,10 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   `cuota_monto`, `tasa_interes`, `observaciones` (REQUISITES §J) +
   `valor_pendiente_inicial` para derivar el estado operativo (GAPS.md G1).
   Ya incluida en `init/01_schema.sql`.
+- `015_movimiento_programado_tipo.sql` — `tipo` (INGRESO/GASTO/TRANSFERENCIA) +
+  `elemento_origen_id` en `movimiento_programado`; `elemento_destino_id` pasa a
+  nullable; CHECK `ck_mov_prog_elementos` amarra los slots al tipo (GAPS.md G2,
+  DOMINIO_PENDIENTE §B5). Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

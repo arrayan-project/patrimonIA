@@ -23,6 +23,7 @@ import {
   fechaLegible,
   LinkButton,
   MoneyField,
+  Segmented,
   Skeleton,
   Screen,
   SelectRow,
@@ -32,6 +33,8 @@ import {
   type Paleta,
   tipoDe,
 } from '../ui';
+
+const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
 
 export function MovimientosProgramadosScreen() {
   const c = useC();
@@ -44,10 +47,15 @@ export function MovimientosProgramadosScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>('INGRESO');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState('');
+  const [origenId, setOrigenId] = useState<string | null>(null);
   const [destinoId, setDestinoId] = useState<string | null>(null);
   const [obs, setObs] = useState('');
+
+  const usaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA';
+  const usaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA';
 
   const cargar = useCallback(async () => {
     setError('');
@@ -65,20 +73,24 @@ export function MovimientosProgramadosScreen() {
 
   useCargaAlEnfocar(cargar);
 
+  const origen = elementos.find((e) => e.id === origenId);
   const destino = elementos.find((e) => e.id === destinoId);
+  const monedaRef = (usaOrigen ? origen : destino)?.moneda;
 
   const crear = async () => {
-    if (!destino) return;
+    if (!monedaRef) return;
     setBusy(true);
     setError('');
     try {
       await api.post(
         '/comandos/CrearMovimientoProgramado',
         {
+          tipo,
           montoPlanificado: Number(monto),
-          moneda: destino.moneda,
+          moneda: monedaRef,
           fechaProgramada: fecha.trim(),
-          elementoDestinoId: destino.id,
+          ...(usaOrigen && origen ? { elementoOrigenId: origen.id } : {}),
+          ...(usaDestino && destino ? { elementoDestinoId: destino.id } : {}),
           ...(obs.trim() ? { observaciones: obs.trim() } : {}),
         },
         token,
@@ -87,6 +99,7 @@ export function MovimientosProgramadosScreen() {
       setMonto('');
       setFecha('');
       setObs('');
+      setOrigenId(null);
       setDestinoId(null);
       await cargar();
     } catch (e) {
@@ -97,15 +110,21 @@ export function MovimientosProgramadosScreen() {
   };
 
   const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(fecha.trim());
+  const puedeCrear =
+    Number(monto) > 0 &&
+    fechaValida &&
+    (!usaOrigen || !!origenId) &&
+    (!usaDestino || !!destinoId) &&
+    (tipo !== 'TRANSFERENCIA' || origenId !== destinoId);
 
   return (
     <Screen onRefresh={cargar}>
       <Title>Movimientos programados</Title>
 
       <Ayuda>
-        Un ingreso futuro con fecha (un sueldo, un arriendo por cobrar). Cuando
-        llega la fecha lo "materializas" y recién ahí entra a tu cuenta como un
-        movimiento real.
+        Un movimiento futuro con fecha: un ingreso (sueldo), un gasto (arriendo) o
+        una transferencia. Cuando llega la fecha lo "materializas" y recién ahí
+        entra como un movimiento real.
       </Ayuda>
 
       {lista === null ? (
@@ -126,7 +145,9 @@ export function MovimientosProgramadosScreen() {
               <Text style={styles.nombre}>{money(m.montoPlanificado, m.moneda)}</Text>
               <Text style={styles.estado}>{etiqueta(m.estado)}</Text>
             </View>
-            <Text style={styles.muted}>Programado para {fechaLegible(m.fechaProgramada)}</Text>
+            <Text style={styles.muted}>
+              {etiqueta(m.tipo)} · programado para {fechaLegible(m.fechaProgramada)}
+            </Text>
             {m.observaciones ? <Text style={styles.muted}>{m.observaciones}</Text> : null}
           </Card>
         ))
@@ -134,24 +155,37 @@ export function MovimientosProgramadosScreen() {
 
       <Panel>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
-        <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={destino?.moneda} />
+        <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
+        <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={monedaRef} />
         <DateField label="Fecha" value={fecha} onChange={setFecha} />
-        <Text style={styles.label}>Cuenta de destino</Text>
-        {elementos.map((el) => (
-          <SelectRow
-            key={el.id}
-            label={`${el.nombre} · ${el.moneda}`}
-            selected={destinoId === el.id}
-            onPress={() => setDestinoId(el.id)}
-          />
-        ))}
+        {usaOrigen && (
+          <>
+            <Text style={styles.label}>Cuenta de origen (de dónde sale)</Text>
+            {elementos.map((el) => (
+              <SelectRow
+                key={el.id}
+                label={`${el.nombre} · ${el.moneda}`}
+                selected={origenId === el.id}
+                onPress={() => setOrigenId(el.id)}
+              />
+            ))}
+          </>
+        )}
+        {usaDestino && (
+          <>
+            <Text style={styles.label}>Cuenta de destino (a dónde entra)</Text>
+            {elementos.map((el) => (
+              <SelectRow
+                key={el.id}
+                label={`${el.nombre} · ${el.moneda}`}
+                selected={destinoId === el.id}
+                onPress={() => setDestinoId(el.id)}
+              />
+            ))}
+          </>
+        )}
         <Field label="Observaciones (opcional)" value={obs} onChangeText={setObs} autoCapitalize="sentences" />
-        <Button
-          title="Programar"
-          onPress={crear}
-          loading={busy}
-          disabled={!(Number(monto) > 0) || !fechaValida || !destinoId}
-        />
+        <Button title="Programar" onPress={crear} loading={busy} disabled={!puedeCrear} />
       </Panel>
 
       <ErrorText>{error}</ErrorText>

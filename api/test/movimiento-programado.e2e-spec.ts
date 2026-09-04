@@ -59,6 +59,7 @@ describe('Movimiento Programado (e2e)', () => {
   it('crea un movimiento PENDIENTE sin tocar el patrimonio', async () => {
     const m = await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
       .send({
+        tipo: 'INGRESO',
         montoPlanificado: 300_000,
         moneda: 'CLP',
         fechaProgramada: '2020-01-15',
@@ -75,14 +76,14 @@ describe('Movimiento Programado (e2e)', () => {
 
   it('rechaza moneda que no calza con el elemento destino', async () => {
     await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-      .send({ montoPlanificado: 100, moneda: 'USD', fechaProgramada: '2020-02-01', elementoDestinoId: cuentaId })
+      .send({ tipo: 'INGRESO', montoPlanificado: 100, moneda: 'USD', fechaProgramada: '2020-02-01', elementoDestinoId: cuentaId })
       .expect(400);
   });
 
   it('actualiza solo mientras esté PENDIENTE', async () => {
     const id = (
       await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-        .send({ montoPlanificado: 100_000, moneda: 'CLP', fechaProgramada: '2020-03-01', elementoDestinoId: cuentaId })
+        .send({ tipo: 'INGRESO', montoPlanificado: 100_000, moneda: 'CLP', fechaProgramada: '2020-03-01', elementoDestinoId: cuentaId })
         .expect(201)
     ).body.id;
     const upd = await auth(request(http).post('/comandos/ActualizarMovimientoProgramado'))
@@ -94,7 +95,7 @@ describe('Movimiento Programado (e2e)', () => {
   it('no materializa antes de la fecha programada', async () => {
     const id = (
       await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-        .send({ montoPlanificado: 50_000, moneda: 'CLP', fechaProgramada: '2999-01-01', elementoDestinoId: cuentaId })
+        .send({ tipo: 'INGRESO', montoPlanificado: 50_000, moneda: 'CLP', fechaProgramada: '2999-01-01', elementoDestinoId: cuentaId })
         .expect(201)
     ).body.id;
     await auth(request(http).post('/comandos/MaterializarMovimientoProgramado'))
@@ -105,7 +106,7 @@ describe('Movimiento Programado (e2e)', () => {
   it('materializa: genera un INGRESO, mueve el valor_vigente y encadena la auditoría', async () => {
     const id = (
       await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-        .send({ montoPlanificado: 300_000, moneda: 'CLP', fechaProgramada: '2020-06-01', elementoDestinoId: cuentaId })
+        .send({ tipo: 'INGRESO', montoPlanificado: 300_000, moneda: 'CLP', fechaProgramada: '2020-06-01', elementoDestinoId: cuentaId })
         .expect(201)
     ).body.id;
 
@@ -146,7 +147,7 @@ describe('Movimiento Programado (e2e)', () => {
   it('cancela un movimiento pendiente y bloquea acciones posteriores', async () => {
     const id = (
       await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-        .send({ montoPlanificado: 10_000, moneda: 'CLP', fechaProgramada: '2020-07-01', elementoDestinoId: cuentaId })
+        .send({ tipo: 'INGRESO', montoPlanificado: 10_000, moneda: 'CLP', fechaProgramada: '2020-07-01', elementoDestinoId: cuentaId })
         .expect(201)
     ).body.id;
     await auth(request(http).post('/comandos/CancelarMovimientoProgramado'))
@@ -160,7 +161,7 @@ describe('Movimiento Programado (e2e)', () => {
   it('otro usuario no ve ni toca un movimiento de un elemento ajeno', async () => {
     const id = (
       await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
-        .send({ montoPlanificado: 1_000, moneda: 'CLP', fechaProgramada: '2020-08-01', elementoDestinoId: cuentaId })
+        .send({ tipo: 'INGRESO', montoPlanificado: 1_000, moneda: 'CLP', fechaProgramada: '2020-08-01', elementoDestinoId: cuentaId })
         .expect(201)
     ).body.id;
     await request(http)
@@ -182,5 +183,78 @@ describe('Movimiento Programado (e2e)', () => {
     ).expect(200);
     expect(Array.isArray(pendientes.body)).toBe(true);
     expect(pendientes.body.every((m: { estado: string }) => m.estado === 'PENDIENTE')).toBe(true);
+  });
+
+  it('§B5 — programa un GASTO y lo materializa (evento GASTO, baja el saldo)', async () => {
+    await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+      .send({ tipo: 'GASTO', montoPlanificado: 1, moneda: 'CLP', fechaProgramada: '2020-01-01', elementoDestinoId: cuentaId })
+      .expect(400); // GASTO no lleva destino
+
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({
+          tipo: 'GASTO',
+          montoPlanificado: 40_000,
+          moneda: 'CLP',
+          fechaProgramada: '2020-05-01',
+          elementoOrigenId: cuentaId,
+          observaciones: 'arriendo',
+        })
+        .expect(201)
+    ).body.id;
+
+    const antes = (await auth(request(http).get(`/elementos-patrimoniales/${cuentaId}`)).expect(200))
+      .body.valorVigente;
+    const mat = await auth(request(http).post('/comandos/MaterializarMovimientoProgramado'))
+      .send({ movimientoId: id })
+      .expect(200);
+    const ev = await auth(
+      request(http).get(`/eventos-financieros/${mat.body.eventoFinancieroId}`),
+    ).expect(200);
+    expect(ev.body.tipo).toBe('GASTO');
+    const despues = (await auth(request(http).get(`/elementos-patrimoniales/${cuentaId}`)).expect(200))
+      .body.valorVigente;
+    expect(despues).toBe(antes - 40_000);
+  });
+
+  it('§B5 — programa una TRANSFERENCIA y la materializa (dos impactos)', async () => {
+    const destino = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'Ahorro', tipo: 'cuenta_ahorro', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'CLP' })
+        .expect(201)
+    ).body.id;
+
+    await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+      .send({ tipo: 'TRANSFERENCIA', montoPlanificado: 10, moneda: 'CLP', fechaProgramada: '2020-01-01', elementoOrigenId: cuentaId, elementoDestinoId: cuentaId })
+      .expect(400); // origen == destino
+
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({
+          tipo: 'TRANSFERENCIA',
+          montoPlanificado: 25_000,
+          moneda: 'CLP',
+          fechaProgramada: '2020-05-01',
+          elementoOrigenId: cuentaId,
+          elementoDestinoId: destino,
+        })
+        .expect(201)
+    ).body.id;
+
+    const origenAntes = (
+      await auth(request(http).get(`/elementos-patrimoniales/${cuentaId}`)).expect(200)
+    ).body.valorVigente;
+    await auth(request(http).post('/comandos/MaterializarMovimientoProgramado'))
+      .send({ movimientoId: id })
+      .expect(200);
+
+    expect(
+      (await auth(request(http).get(`/elementos-patrimoniales/${cuentaId}`)).expect(200)).body
+        .valorVigente,
+    ).toBe(origenAntes - 25_000);
+    expect(
+      (await auth(request(http).get(`/elementos-patrimoniales/${destino}`)).expect(200)).body
+        .valorVigente,
+    ).toBe(25_000);
   });
 });

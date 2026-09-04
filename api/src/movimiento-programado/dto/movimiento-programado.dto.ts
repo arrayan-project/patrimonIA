@@ -1,4 +1,5 @@
 import {
+  IsIn,
   IsISO8601,
   IsNumber,
   IsOptional,
@@ -9,8 +10,15 @@ import {
   MinLength,
 } from 'class-validator';
 
+export const TIPOS_MOV_PROGRAMADO = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
+export type TipoMovProgramado = (typeof TIPOS_MOV_PROGRAMADO)[number];
+
 /** Body de POST /comandos/CrearMovimientoProgramado (API_DESIGN, AS #13). */
 export class CrearMovimientoProgramadoDto {
+  /** INGRESO usa destino; GASTO usa origen; TRANSFERENCIA usa ambos (§B5). */
+  @IsIn(TIPOS_MOV_PROGRAMADO)
+  tipo!: TipoMovProgramado;
+
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   montoPlanificado!: number;
@@ -23,8 +31,13 @@ export class CrearMovimientoProgramadoDto {
   @IsISO8601()
   fechaProgramada!: string;
 
+  @IsOptional()
   @IsUUID()
-  elementoDestinoId!: string;
+  elementoOrigenId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  elementoDestinoId?: string;
 
   @IsOptional()
   @IsString()
@@ -45,6 +58,10 @@ export class ActualizarMovimientoProgramadoDto {
   @IsOptional()
   @IsISO8601()
   fechaProgramada?: string;
+
+  @IsOptional()
+  @IsUUID()
+  elementoOrigenId?: string;
 
   @IsOptional()
   @IsUUID()

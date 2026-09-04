@@ -171,18 +171,27 @@ CREATE INDEX ix_reserva_elemento_activa ON reserva (elemento_origen_id) WHERE es
 
 CREATE TABLE movimiento_programado (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tipo                 TEXT NOT NULL CHECK (tipo IN ('INGRESO', 'GASTO', 'TRANSFERENCIA')),  -- migración 015
     monto_planificado    NUMERIC(18,2) NOT NULL,
     moneda               TEXT NOT NULL,
     fecha_programada     DATE NOT NULL,
-    elemento_destino_id  UUID NOT NULL REFERENCES elemento_patrimonial(id),
+    elemento_origen_id   UUID REFERENCES elemento_patrimonial(id),  -- GASTO / TRANSFERENCIA
+    elemento_destino_id  UUID REFERENCES elemento_patrimonial(id),  -- INGRESO / TRANSFERENCIA
     observaciones        TEXT,
     estado               TEXT NOT NULL CHECK (estado IN ('PENDIENTE', 'MATERIALIZADO', 'CANCELADO')),
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT ck_mov_prog_elementos CHECK (
+        (tipo = 'INGRESO'       AND elemento_destino_id IS NOT NULL AND elemento_origen_id IS NULL)
+     OR (tipo = 'GASTO'         AND elemento_origen_id  IS NOT NULL AND elemento_destino_id IS NULL)
+     OR (tipo = 'TRANSFERENCIA' AND elemento_origen_id  IS NOT NULL AND elemento_destino_id IS NOT NULL)
+    )
 );
 
 CREATE INDEX ix_movimiento_programado_pendiente ON movimiento_programado (fecha_programada) WHERE estado = 'PENDIENTE';
+CREATE INDEX ix_movimiento_programado_origen ON movimiento_programado (elemento_origen_id) WHERE elemento_origen_id IS NOT NULL;
 
--- Pendiente heredado del DDD (Sección S): sin columnas de visibilidad/propiedad todavía.
+-- Pendiente heredado del DDD (Sección S): sin columnas de visibilidad/propiedad propias — se heredan de los elementos referidos.
 
 -- ============================================================================
 -- 4. Evento Financiero (Agregado D) + Impacto Patrimonial (F)

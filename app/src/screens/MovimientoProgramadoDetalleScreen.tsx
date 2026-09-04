@@ -1,7 +1,12 @@
 import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import { api, ApiError, type MovimientoProgramadoDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type ElementoPatrimonialDTO,
+  type MovimientoProgramadoDTO,
+} from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
@@ -35,6 +40,7 @@ export function MovimientoProgramadoDetalleScreen() {
   const movimientoId = nav.route.params?.movimientoId as string;
 
   const [m, setM] = useState<MovimientoProgramadoDTO | null>(null);
+  const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
   const [modo, setModo] = useState<null | 'editar' | 'materializar' | 'cancelar'>(null);
   const [monto, setMonto] = useState('');
@@ -52,6 +58,11 @@ export function MovimientoProgramadoDetalleScreen() {
       setM(mov);
       setMonto(String(mov.montoPlanificado));
       setFecha(mov.fechaProgramada.slice(0, 10));
+      setElementos(
+        await api
+          .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
+          .catch(() => []),
+      );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -115,6 +126,8 @@ export function MovimientoProgramadoDetalleScreen() {
   }
 
   const pendiente = m.estado === 'PENDIENTE';
+  const nombreEl = (id: string | null) =>
+    id ? (elementos.find((e) => e.id === id)?.nombre ?? id.slice(0, 8)) : '—';
 
   return (
     <Screen onRefresh={cargar}>
@@ -122,8 +135,11 @@ export function MovimientoProgramadoDetalleScreen() {
       <Text style={styles.monto}>{money(m.montoPlanificado, m.moneda)}</Text>
 
       <Panel>
+        <Row left="Tipo" right={etiqueta(m.tipo)} />
         <Row left="Estado" right={etiqueta(m.estado)} />
         <Row left="Fecha programada" right={fechaLegible(m.fechaProgramada)} />
+        {m.elementoOrigenId ? <Row left="Desde" right={nombreEl(m.elementoOrigenId)} /> : null}
+        {m.elementoDestinoId ? <Row left="Hacia" right={nombreEl(m.elementoDestinoId)} /> : null}
         {m.observaciones ? <Row left="Observaciones" right={m.observaciones} /> : null}
         {m.eventoFinancieroId ? <Row left="Evento generado" right={m.eventoFinancieroId.slice(0, 8)} /> : null}
       </Panel>

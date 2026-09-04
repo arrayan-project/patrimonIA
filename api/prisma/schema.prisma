@@ -67,36 +67,37 @@ model auditoria {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model elemento_patrimonial {
-  id                                                                                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nombre                                                                              String
-  tipo                                                                                String
-  categoria_funcional                                                                 String
-  ambito                                                                              String
-  valor_vigente                                                                       Decimal                 @db.Decimal(18, 2)
-  moneda                                                                              String
-  participa_valor_liquido                                                             Boolean                 @default(false)
-  participa_consolidacion                                                             Boolean                 @default(false)
-  admite_valorizacion                                                                 Boolean                 @default(false)
-  visibilidad                                                                         String
-  estado                                                                              String
-  valor_pendiente                                                                     Decimal?                @db.Decimal(18, 2)
-  created_at                                                                          DateTime                @default(now()) @db.Timestamptz(6)
-  contraparte                                                                         String?
-  fecha_inicio                                                                        DateTime?               @db.Date
-  fecha_termino                                                                       DateTime?               @db.Date
-  cuota_monto                                                                         Decimal?                @db.Decimal(18, 2)
-  tasa_interes                                                                        Decimal?                @db.Decimal(9, 4)
-  observaciones                                                                       String?
-  valor_pendiente_inicial                                                             Decimal?                @db.Decimal(18, 2)
-  agrupacion_miembro                                                                  agrupacion_miembro?
-  ajuste_patrimonial                                                                  ajuste_patrimonial[]
-  elemento_propietario                                                                elemento_propietario[]
-  impacto_patrimonial                                                                 impacto_patrimonial[]
-  movimiento_programado                                                               movimiento_programado[]
-  plantilla_movimiento_plantilla_movimiento_elemento_destino_idToelemento_patrimonial plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial")
-  plantilla_movimiento_plantilla_movimiento_elemento_origen_idToelemento_patrimonial  plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial")
-  reserva                                                                             reserva[]
-  valorizacion                                                                        valorizacion[]
+  id                                                                                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                                                                               String
+  tipo                                                                                 String
+  categoria_funcional                                                                  String
+  ambito                                                                               String
+  valor_vigente                                                                        Decimal                 @db.Decimal(18, 2)
+  moneda                                                                               String
+  participa_valor_liquido                                                              Boolean                 @default(false)
+  participa_consolidacion                                                              Boolean                 @default(false)
+  admite_valorizacion                                                                  Boolean                 @default(false)
+  visibilidad                                                                          String
+  estado                                                                               String
+  valor_pendiente                                                                      Decimal?                @db.Decimal(18, 2)
+  created_at                                                                           DateTime                @default(now()) @db.Timestamptz(6)
+  contraparte                                                                          String?
+  fecha_inicio                                                                         DateTime?               @db.Date
+  fecha_termino                                                                        DateTime?               @db.Date
+  cuota_monto                                                                          Decimal?                @db.Decimal(18, 2)
+  tasa_interes                                                                         Decimal?                @db.Decimal(9, 4)
+  observaciones                                                                        String?
+  valor_pendiente_inicial                                                              Decimal?                @db.Decimal(18, 2)
+  agrupacion_miembro                                                                   agrupacion_miembro?
+  ajuste_patrimonial                                                                   ajuste_patrimonial[]
+  elemento_propietario                                                                 elemento_propietario[]
+  impacto_patrimonial                                                                  impacto_patrimonial[]
+  movimiento_programado                                                                movimiento_programado[]
+  movimiento_programado_movimiento_programado_elemento_origen_idToelemento_patrimonial movimiento_programado[] @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial")
+  plantilla_movimiento_plantilla_movimiento_elemento_destino_idToelemento_patrimonial  plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial")
+  plantilla_movimiento_plantilla_movimiento_elemento_origen_idToelemento_patrimonial   plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial")
+  reserva                                                                              reserva[]
+  valorizacion                                                                         valorizacion[]
 
   @@index([categoria_funcional], map: "ix_elemento_categoria")
   @@index([estado], map: "ix_elemento_estado")
@@ -204,18 +205,22 @@ model membresia {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model movimiento_programado {
-  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  monto_planificado    Decimal              @db.Decimal(18, 2)
-  moneda               String
-  fecha_programada     DateTime             @db.Date
-  elemento_destino_id  String               @db.Uuid
-  observaciones        String?
-  estado               String
-  created_at           DateTime             @default(now()) @db.Timestamptz(6)
-  evento_financiero    evento_financiero[]
-  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                                                                                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  monto_planificado                                                                   Decimal               @db.Decimal(18, 2)
+  moneda                                                                              String
+  fecha_programada                                                                    DateTime              @db.Date
+  elemento_destino_id                                                                 String?               @db.Uuid
+  observaciones                                                                       String?
+  estado                                                                              String
+  created_at                                                                          DateTime              @default(now()) @db.Timestamptz(6)
+  tipo                                                                                String
+  elemento_origen_id                                                                  String?               @db.Uuid
+  evento_financiero                                                                   evento_financiero[]
+  elemento_patrimonial                                                                elemento_patrimonial? @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  elemento_patrimonial_movimiento_programado_elemento_origen_idToelemento_patrimonial elemento_patrimonial? @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial", fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([fecha_programada], map: "ix_movimiento_programado_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
+  @@index([elemento_origen_id], map: "ix_movimiento_programado_origen", where: raw("(elemento_origen_id IS NOT NULL)"))
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
