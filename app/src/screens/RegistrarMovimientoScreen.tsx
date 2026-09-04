@@ -239,7 +239,7 @@ export function RegistrarMovimientoScreen() {
 
       {(necesitaOrigen || necesitaDestino) && elementos.length > 6 && (
         <Field
-          label="Buscar elemento"
+          label="Buscar cuenta o bien"
           value={filtroEl}
           onChangeText={setFiltroEl}
           placeholder="Escribe parte del nombre"
@@ -248,7 +248,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaOrigen && (
         <View style={styles.group}>
-          <Text style={styles.label}>Elemento de origen</Text>
+          <Text style={styles.label}>Desde (origen)</Text>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
@@ -262,7 +262,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaDestino && (
         <View style={styles.group}>
-          <Text style={styles.label}>Elemento de destino</Text>
+          <Text style={styles.label}>Hacia (destino)</Text>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}

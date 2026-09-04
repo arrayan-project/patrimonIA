@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
+import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
 
 export function AjusteDetalleScreen() {
   const { token } = useSession();
@@ -16,6 +16,7 @@ export function AjusteDetalleScreen() {
   const ajusteId = nav.route.params?.ajusteId as string;
   const elementoId = nav.route.params?.elementoId as string;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [ajuste, setAjuste] = useState<AjustePatrimonialDTO | null>(null);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
@@ -88,6 +89,7 @@ export function AjusteDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>Ajuste patrimonial</Title>
       <Text style={styles.monto}>{money(ajuste.monto, moneda)}</Text>
       <View style={styles.card}>

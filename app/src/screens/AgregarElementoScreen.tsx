@@ -113,8 +113,8 @@ export function AgregarElementoScreen() {
 
   return (
     <Screen>
-      <Title>Agregar elemento patrimonial</Title>
-      <Paragraph>Una cuenta, un activo, una inversión. Quedas como propietario al 100%.</Paragraph>
+      <Title>Agregar cuenta o bien</Title>
+      <Paragraph>Una cuenta, un activo, una inversión, una deuda. Quedas como propietario al 100%.</Paragraph>
 
       <Field
         label="Nombre"
@@ -188,7 +188,7 @@ export function AgregarElementoScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button
-        title="Registrar elemento"
+        title="Agregar"
         onPress={onSubmit}
         loading={loading}
         disabled={intento && hayErrores}

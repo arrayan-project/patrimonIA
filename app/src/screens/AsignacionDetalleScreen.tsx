@@ -19,6 +19,7 @@ import {
   ErrorText,
   Field,
   LinkButton,
+  Migaja,
   MoneyField,
   Row,
   Screen,
@@ -32,6 +33,7 @@ export function AsignacionDetalleScreen() {
   const nav = useNav();
   const toast = useToast();
   const asignacionId = nav.route.params?.asignacionId as string;
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [asg, setAsg] = useState<AsignacionDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
@@ -83,6 +85,7 @@ export function AsignacionDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{asg.nombre}</Title>
       <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, 'CLP')}</Text>
 

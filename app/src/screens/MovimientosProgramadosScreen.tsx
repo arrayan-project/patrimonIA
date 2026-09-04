@@ -131,7 +131,7 @@ export function MovimientosProgramadosScreen() {
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
         <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={destino?.moneda} />
         <DateField label="Fecha" value={fecha} onChange={setFecha} />
-        <Text style={styles.label}>Elemento destino</Text>
+        <Text style={styles.label}>Cuenta de destino</Text>
         {elementos.map((el) => (
           <SelectRow
             key={el.id}

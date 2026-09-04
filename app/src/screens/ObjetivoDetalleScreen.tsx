@@ -92,7 +92,9 @@ export function ObjetivoDetalleScreen() {
           <Pressable
             key={a.id}
             style={styles.asg}
-            onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id })}
+            onPress={() =>
+              nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
+            }
           >
             <Row left={a.nombre} right={money(a.totalReservado, 'CLP')} />
           </Pressable>

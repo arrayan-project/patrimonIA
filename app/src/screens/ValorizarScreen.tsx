@@ -5,7 +5,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, DateField, ErrorText, MoneyField, Paragraph, Screen, Title } from '../ui';
+import { Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen, Title } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
@@ -14,6 +14,7 @@ export function ValorizarScreen() {
   const elementoId = nav.route.params?.elementoId as string;
   const valorActual = nav.route.params?.valorActual as number | undefined;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [valorNuevo, setValorNuevo] = useState('');
   const [fecha, setFecha] = useState('');
@@ -53,6 +54,7 @@ export function ValorizarScreen() {
 
   return (
     <Screen>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>Registrar valorización</Title>
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>

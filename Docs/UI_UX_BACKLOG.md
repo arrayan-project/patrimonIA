@@ -82,7 +82,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | D3 | ✅ 15e — Dashboard queda con patrimonio + elementos + acciones; el resto se repartió en los hubs `MovimientosScreen` / `HogarScreen` y en `AjustesScreen` (con `MenuLink` / `GroupLabel`) | 🟡 | P1 |
 | D4 | ✅ 18 — componente `FAB` + prop `<Screen fab={...}>` (botón fijo, despeja la barra de tabs); "+" para "Registrar movimiento" en Inicio y Movimientos | 🟡 | P2 |
 | D5 | ✅ 15l — tocar una notificación abre la entidad (`OBJETIVO_FINANCIERO`→detalle, `ASIGNACION`→detalle, `INVITACION`→Invitaciones, `EVENTO_FINANCIERO`→detalle) | 🟡 | P2 |
-| D6 | **Contexto / breadcrumb** en pantallas de detalle (a qué elemento/hogar pertenece lo que editas) | 🟡 | P2 |
+| D6 | ✅ 22 — componente `Migaja` (‹ + nombre del padre, sobre el `Title`); se pasa `contexto` como param al navegar desde el detalle de elemento a Movimiento / Valorización / Ajuste / Valorizar / Registrar ajuste, y desde el objetivo a la asignación | 🟡 | P2 |
 
 ---
 
@@ -107,7 +107,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | F1 | ✅ 15f — `src/labels.ts` (`etiqueta()` + `humanizar()` de fallback) traduce todos los enums del dominio; `Segmented` formatea las opciones por defecto; aplicado en las ~12 pantallas que mostraban valores crudos | 🟡 | P1 |
 | F2 | ✅ 15f (parcial) — `fechaLegible()` ya estaba; `fechaRelativa()` ("hoy" / "ayer" / "hace 3 días") en las notificaciones. Falta extenderlo a más listas | 🟡 | P2 |
 | F3 | ✅ 21 — `MoneyText` (rojo para negativos) en el valor destacado y los ajustes del detalle de elemento, el patrimonio neto y la lista de elementos del Inicio, y el total / neto / pasivos / líquido del patrimonio del hogar. Las listas de movimientos ya marcaban el gasto en rojo con signo | 🟡 | P2 |
-| F4 | **Copys menos técnicos** — "elemento patrimonial" → "cuenta / bien / deuda" para el usuario final | 🟡 | P2 |
+| F4 | ✅ 22 — "elemento patrimonial" salió de la UI: header "Agregar cuenta o bien", sección del Inicio "Cuentas y bienes", botones de estado sin el sustantivo ("Desactivar" / "Eliminar" / "Reactivar"), pickers de movimiento "Desde (origen)" / "Hacia (destino)". El término técnico sigue en el código y en `GAPS.md` | 🟡 | P2 |
 | F5 | ✅ 17 — componente `Ayuda` (ícono info + texto sobre fondo azul tenue); reemplazó los `Paragraph`/`Text` explicativos en Objetivos, Asignación, Presupuestos, Categorías, Etiquetas, Agrupaciones, Plantillas, Movimientos programados | 🟡 | P2 |
 | F6 | Infra de i18n (aunque sea es-CL única al inicio) para no tener strings hardcodeados por toda la app | 🟡 | P3 |
 
@@ -143,7 +143,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| I1 | `accessibilityLabel` / `accessibilityRole` en Pressables; áreas de toque ≥ 44 px | 🟡 | P2 |
+| I1 | ⚠️ 22 parcial — `accessibilityRole="button"` + `accessibilityState` (`selected`/`disabled`/`busy`) en `Button`, `Card`, `MenuLink`, `SelectRow`, `Segmented`, `Select`, `Chip`, `LinkButton`, `DateField`; `accessibilityLabel` en `MenuLink`/`Select`/`DateField`; `Title` con `role="header"`; segmentos con `minHeight: 44`. Falta: barrido por pantalla de los Pressables sueltos | 🟡 | P2 |
 | I2 | Soporte de fuentes grandes del sistema (evitar tamaños fijos que rompen el layout) | 🟡 | P3 |
 
 ---
@@ -290,6 +290,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~19~~ ✅ | Carga y pickers: componente `Skeleton` (E5, 8 pantallas de lista); "Buscar elemento" en los pickers de Registrar movimiento (B7); barra de avance total en la lista de Objetivos; `fix`: el título quedaba bajo el notch en iPhone (native-stack exponía `HeaderHeightContext` = 0 con header oculto). Pendiente suelto: B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5 detalle, E6–E7, D6. | 18 |
 | ~~20~~ ✅ | Formularios: **H2** `useConfirmarDescarte` (guard `beforeRemove` + `confirmar()`) en 7 formularios; **H3/E6 parcial** `Field`/`MoneyField` con `error?` (borde rojo + mensaje al pie) + validación en vivo (`tocado`/`intento`) en Agregar elemento y Registrar movimiento. Pendiente suelto: B8, H1, H3/E6 resto, H4, F3 completo, G1, E5 detalle, E7, D6. | 19 |
 | ~~21~~ ✅ | Pulido mecánico: **G6** `colors.muted` → `#4b5563` (AA); **E5** `Skeleton` en las 16 pantallas de detalle que quedaban; **F3** `MoneyText` en la lista de elementos del Inicio, los ajustes del detalle y el patrimonio del hogar (`Row` acepta `ReactNode`); **H3/E6** validación en vivo + `error?` en Registrar ajuste, Valorizar, Crear hogar y Perfil. Pendiente suelto: B8, H1, H4, F4, I1, D6, E7, G1, G5. | 20 |
+| ~~22~~ ✅ | **F4** copys sin "elemento patrimonial" (header, sección del Inicio, botones de estado, pickers de movimiento); **I1** `accessibilityRole`/`State`/`Label` + `minHeight: 44` en los componentes compartidos de `ui/`; **D6** componente `Migaja` (contexto del padre sobre el `Title`) + `contexto` como param de navegación desde los detalles. Pendiente suelto: B8, H1, H4, E7, G1, G5, I1 (barrido por pantalla). | 21 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

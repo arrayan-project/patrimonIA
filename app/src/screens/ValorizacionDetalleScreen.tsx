@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
+import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
 
 export function ValorizacionDetalleScreen() {
   const { token } = useSession();
@@ -16,6 +16,7 @@ export function ValorizacionDetalleScreen() {
   const valorizacionId = nav.route.params?.valorizacionId as string;
   const elementoId = nav.route.params?.elementoId as string;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [val, setVal] = useState<ValorizacionDTO | null>(null);
   const [esUltimaVigente, setEsUltimaVigente] = useState(false);
@@ -88,6 +89,7 @@ export function ValorizacionDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>Valorización</Title>
       <Text style={styles.valor}>
         {money(val.valorAnterior, moneda)} → {money(val.valorNuevo, moneda)}

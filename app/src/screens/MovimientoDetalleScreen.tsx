@@ -24,6 +24,7 @@ import {
   fechaLegible,
   LinkButton,
   MoneyField,
+  Migaja,
   Row,
   Screen,
   Title,
@@ -36,6 +37,7 @@ export function MovimientoDetalleScreen() {
   const toast = useToast();
   const eventoId = nav.route.params?.eventoId as string;
   const elementoId = nav.route.params?.elementoId as string | undefined;
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
@@ -175,6 +177,7 @@ export function MovimientoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{evento.glosa || etiqueta(evento.tipo)}</Title>
       <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
 

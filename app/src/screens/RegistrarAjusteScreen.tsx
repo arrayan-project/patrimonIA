@@ -12,6 +12,7 @@ import {
   ErrorText,
   Field,
   LinkButton,
+  Migaja,
   MoneyField,
   Paragraph,
   Screen,
@@ -26,6 +27,7 @@ export function RegistrarAjusteScreen() {
   const elementoId = nav.route.params?.elementoId as string;
   const valorActual = nav.route.params?.valorActual as number | undefined;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
+  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [direccion, setDireccion] = useState<'Mayor' | 'Menor'>('Menor');
   const [magnitud, setMagnitud] = useState('');
@@ -65,6 +67,7 @@ export function RegistrarAjusteScreen() {
 
   return (
     <Screen>
+      {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>Registrar ajuste patrimonial</Title>
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>

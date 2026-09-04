@@ -178,7 +178,11 @@ export function ElementoDetalleScreen() {
                 key={ev.id}
                 style={styles.mov}
                 onPress={() =>
-                  nav.go('MovimientoDetalle', { eventoId: ev.id, elementoId })
+                  nav.go('MovimientoDetalle', {
+                    eventoId: ev.id,
+                    elementoId,
+                    contexto: elemento.nombre,
+                  })
                 }
               >
                 <View>
@@ -223,6 +227,7 @@ export function ElementoDetalleScreen() {
                     valorizacionId: v.id,
                     elementoId,
                     moneda: elemento.moneda,
+                    contexto: elemento.nombre,
                   })
                 }
               >
@@ -247,6 +252,7 @@ export function ElementoDetalleScreen() {
                   elementoId,
                   valorActual: elemento.valorVigente,
                   moneda: elemento.moneda,
+                  contexto: elemento.nombre,
                 })
               }
             />
@@ -264,7 +270,12 @@ export function ElementoDetalleScreen() {
               key={a.id}
               style={styles.mov}
               onPress={() =>
-                nav.go('AjusteDetalle', { ajusteId: a.id, elementoId, moneda: elemento.moneda })
+                nav.go('AjusteDetalle', {
+                  ajusteId: a.id,
+                  elementoId,
+                  moneda: elemento.moneda,
+                  contexto: elemento.nombre,
+                })
               }
             >
               <Text style={[styles.muted, a.anulado && styles.tachado]}>
@@ -292,6 +303,7 @@ export function ElementoDetalleScreen() {
                 elementoId,
                 valorActual: elemento.valorVigente,
                 moneda: elemento.moneda,
+                contexto: elemento.nombre,
               })
             }
           />
@@ -302,7 +314,7 @@ export function ElementoDetalleScreen() {
       <Button
         title="Editar / estado"
         variant="secondary"
-        onPress={() => nav.go('EditarElemento', { elementoId })}
+        onPress={() => nav.go('EditarElemento', { elementoId, contexto: elemento.nombre })}
       />
     </Screen>
   );

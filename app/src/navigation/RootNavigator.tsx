@@ -111,7 +111,7 @@ const TITULOS: Record<string, string> = {
   Bienvenida: 'Bienvenido',
   CrearHogar: 'Crear hogar',
   Invitaciones: 'Invitaciones',
-  AgregarElemento: 'Agregar elemento',
+  AgregarElemento: 'Agregar cuenta o bien',
   RegistrarMovimiento: 'Registrar movimiento',
   ElementoDetalle: 'Detalle',
   MovimientoDetalle: 'Movimiento',
@@ -119,7 +119,7 @@ const TITULOS: Record<string, string> = {
   ValorizacionDetalle: 'Valorización',
   RegistrarAjuste: 'Registrar ajuste',
   AjusteDetalle: 'Ajuste',
-  EditarElemento: 'Editar elemento',
+  EditarElemento: 'Editar',
   GestionHogar: 'Gestionar hogar',
   Perfil: 'Mi perfil',
   Objetivos: 'Objetivos financieros',
@@ -137,7 +137,7 @@ const TITULOS: Record<string, string> = {
   TiposCambio: 'Tipos de cambio',
   Categorias: 'Categorías de movimiento',
   Etiquetas: 'Etiquetas',
-  Agrupaciones: 'Agrupaciones de elementos',
+  Agrupaciones: 'Agrupaciones',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */

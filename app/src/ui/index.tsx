@@ -173,7 +173,26 @@ export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void 
 }
 
 export function Title({ children }: { children: ReactNode }) {
-  return <Text style={styles.title}>{children}</Text>;
+  return (
+    <Text style={styles.title} accessibilityRole="header">
+      {children}
+    </Text>
+  );
+}
+
+/**
+ * Migaja de contexto: dice a qué entidad "padre" pertenece lo que se está
+ * viendo (p. ej. "Cuenta corriente" arriba del detalle de un movimiento).
+ */
+export function Migaja({ children }: { children: ReactNode }) {
+  return (
+    <View style={styles.migaja}>
+      <Ionicons name="chevron-back" size={13} color={colors.muted} />
+      <Text style={styles.migajaTexto} numberOfLines={1}>
+        {children}
+      </Text>
+    </View>
+  );
 }
 
 /**
@@ -203,6 +222,7 @@ export function Card({
     return (
       <Pressable
         onPress={onPress}
+        accessibilityRole="button"
         style={({ pressed }) => [styles.card, styles.cardRow, pressed && styles.cardPressed, style]}
       >
         {contenido}
@@ -267,7 +287,12 @@ export function DateField({
         <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
       ) : (
         <>
-          <Pressable style={styles.input} onPress={() => setAbierto(true)}>
+          <Pressable
+            style={styles.input}
+            onPress={() => setAbierto(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`${label}: ${value ? fechaLegible(value) : placeholder}`}
+          >
             <Text style={{ fontSize: 16, color: value ? colors.text : colors.muted }}>
               {value ? fechaLegible(value) : placeholder}
             </Text>
@@ -355,6 +380,8 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       style={({ pressed }) => [
         styles.button,
         variant === 'secondary' && styles.buttonSecondary,
@@ -394,6 +421,8 @@ export function Segmented<T extends string>({
           <Pressable
             key={opt}
             onPress={() => onChange(opt)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: value === opt }}
             style={[styles.segment, value === opt && styles.segmentActive]}
           >
             <Text style={[styles.segmentText, value === opt && styles.segmentTextActive]}>
@@ -416,7 +445,12 @@ export function SelectRow({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.selectRow, selected && styles.selectRowActive]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[styles.selectRow, selected && styles.selectRowActive]}
+    >
       <Text style={[styles.selectRowText, selected && styles.selectRowTextActive]}>{label}</Text>
     </Pressable>
   );
@@ -462,7 +496,12 @@ export function Select({
   return (
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <Pressable style={styles.selectBox} onPress={() => setAbierto(true)}>
+      <Pressable
+        style={styles.selectBox}
+        onPress={() => setAbierto(true)}
+        accessibilityRole="button"
+        accessibilityLabel={label ? `${label}: ${texto}` : texto}
+      >
         <Text style={{ fontSize: 16, color: conocida || value ? colors.text : colors.muted }}>
           {texto}
         </Text>
@@ -599,7 +638,18 @@ export function Chip({
       <Text style={[styles.chipText, activo && { color: colors.primaryText }]}>{label}</Text>
     </View>
   );
-  return onPress ? <Pressable onPress={onPress}>{cuerpo}</Pressable> : cuerpo;
+  return onPress ? (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!activo }}
+      accessibilityLabel={label}
+    >
+      {cuerpo}
+    </Pressable>
+  ) : (
+    cuerpo
+  );
 }
 
 /**
@@ -639,7 +689,7 @@ export function ErrorText({ children }: { children: ReactNode }) {
 
 export function LinkButton({ title, onPress }: { title: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} hitSlop={8}>
+    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button">
       <Text style={styles.link}>{title}</Text>
     </Pressable>
   );
@@ -662,6 +712,8 @@ export function MenuLink({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
       style={({ pressed }) => [styles.menuLink, pressed && styles.buttonPressed]}
     >
       {icon ? (
@@ -788,6 +840,8 @@ const styles = StyleSheet.create({
     width: 4,
   },
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  migaja: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: -8 },
+  migajaTexto: { fontSize: 13, color: colors.muted, fontWeight: '600' },
   paragraph: { fontSize: 15, color: colors.muted, lineHeight: 22 },
   field: { gap: 6 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text },
@@ -833,6 +887,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   segmentActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   segmentText: { fontSize: 13, color: colors.text, fontWeight: '600' },

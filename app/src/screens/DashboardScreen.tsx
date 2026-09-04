@@ -200,7 +200,7 @@ export function DashboardScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Mi patrimonio</Text>
         {patrimonio.porMoneda.length === 0 ? (
-          <Text style={styles.muted}>Aún no tienes elementos patrimoniales.</Text>
+          <Text style={styles.muted}>Aún no tienes cuentas ni bienes.</Text>
         ) : (
           patrimonio.porMoneda.map((m) => {
             const v = variacion?.porMoneda.find((x) => x.moneda === m.moneda);
@@ -229,7 +229,7 @@ export function DashboardScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Elementos</Text>
+        <Text style={styles.sectionTitle}>Cuentas y bienes</Text>
         {(() => {
           const fila = (el: ElementoPatrimonialDTO) => (
             <Pressable

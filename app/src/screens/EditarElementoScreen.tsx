@@ -145,8 +145,8 @@ export function EditarElementoScreen() {
             onChange={setEnConsolidacion}
           />
           <Ayuda>
-            Si está en "Sí", este elemento suma en "Patrimonio del hogar" (la
-            vista consolidada de todos los miembros).
+            Si está en "Sí", esto suma en "Patrimonio del hogar" (la vista
+            consolidada de todos los miembros).
           </Ayuda>
           <Button
             title="Guardar"
@@ -171,11 +171,11 @@ export function EditarElementoScreen() {
         {activo ? (
           <>
             <Button
-              title="Desactivar elemento"
+              title="Desactivar"
               variant="danger"
               loading={busy}
               onPress={async () => {
-                if (!(await confirmar('Desactivar elemento', 'Deja de contar en tu patrimonio. Se puede reactivar después.', 'Desactivar')))
+                if (!(await confirmar('Desactivar', 'Deja de contar en tu patrimonio. Se puede reactivar después.', 'Desactivar')))
                   return;
                 await run(
                   () =>
@@ -184,20 +184,20 @@ export function EditarElementoScreen() {
                       { elementoId, ...(motivo.trim() ? { motivo: motivo.trim() } : {}) },
                       token,
                     ),
-                  'Elemento desactivado',
+                  'Desactivado',
                 );
               }}
             />
             <Paragraph>
-              Eliminar solo si el elemento nunca tuvo movimientos ni valorizaciones.
+              Eliminar solo si nunca tuvo movimientos ni valorizaciones.
             </Paragraph>
             <Button
-              title="Eliminar elemento"
+              title="Eliminar"
               variant="danger"
               loading={busy}
               disabled={motivo.trim().length < 3}
               onPress={async () => {
-                if (!(await confirmar('Eliminar elemento', 'Borrado definitivo. Solo si nunca tuvo movimientos ni valorizaciones.', 'Eliminar')))
+                if (!(await confirmar('Eliminar', 'Borrado definitivo. Solo si nunca tuvo movimientos ni valorizaciones.', 'Eliminar')))
                   return;
                 await run(
                   () =>
@@ -206,14 +206,14 @@ export function EditarElementoScreen() {
                       { elementoId, justificacion: motivo.trim() },
                       token,
                     ),
-                  'Elemento eliminado',
+                  'Eliminado',
                 );
               }}
             />
           </>
         ) : (
           <Button
-            title="Reactivar elemento"
+            title="Reactivar"
             loading={busy}
             disabled={motivo.trim().length < 3}
             onPress={() =>
