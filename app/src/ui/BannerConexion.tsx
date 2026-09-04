@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../api/client';
 import { useConexion } from '../api/useConexion';
-import { colors } from './index';
 
 /**
  * Barra fija arriba cuando se pierde la conexión con el servidor (E7).
@@ -30,11 +29,11 @@ export function BannerConexion() {
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
-      <Ionicons name="cloud-offline-outline" size={18} color={colors.primaryText} />
+      <Ionicons name="cloud-offline-outline" size={18} color="#fff" />
       <Text style={styles.texto}>Sin conexión. Revisa tu internet.</Text>
       <Pressable onPress={reintentar} hitSlop={8} accessibilityRole="button" disabled={probando}>
         {probando ? (
-          <ActivityIndicator color={colors.primaryText} size="small" />
+          <ActivityIndicator color="#fff" size="small" />
         ) : (
           <Text style={styles.accion}>Reintentar</Text>
         )}
@@ -55,8 +54,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingBottom: 10,
-    backgroundColor: colors.danger,
+    backgroundColor: '#b91c1c',
   },
-  texto: { flex: 1, color: colors.primaryText, fontSize: 13, fontWeight: '600' },
-  accion: { color: colors.primaryText, fontSize: 13, fontWeight: '800', textDecorationLine: 'underline' },
+  texto: { flex: 1, color: '#fff', fontSize: 13, fontWeight: '600' },
+  accion: { color: '#fff', fontSize: 13, fontWeight: '800', textDecorationLine: 'underline' },
 });

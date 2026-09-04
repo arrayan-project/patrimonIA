@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { colors } from '../ui';
+import { useC, useTema } from '../ui';
 
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegistroScreen } from '../screens/RegistroScreen';
@@ -50,9 +54,10 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function Cargando() {
+  const c = useC();
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-      <ActivityIndicator color={colors.primary} />
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg }}>
+      <ActivityIndicator color={c.primary} />
     </View>
   );
 }
@@ -68,13 +73,14 @@ const icono = (nombre: NombreIcono) => {
 
 /** Barra de tabs inferior — la navegación principal de la app con hogar. */
 function Tabs() {
+  const c = useC();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border },
+        tabBarActiveTintColor: c.primary,
+        tabBarInactiveTintColor: c.muted,
+        tabBarStyle: { backgroundColor: c.bg, borderTopColor: c.border },
       }}
     >
       <Tab.Screen
@@ -175,7 +181,21 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
 
 export function RootNavigator() {
   const { session, cargando } = useAuth();
+  const c = useC();
+  const { oscuro } = useTema();
   const [inicial, setInicial] = useState<'Tabs' | 'Bienvenida' | null>(null);
+
+  const temaNav = {
+    ...(oscuro ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(oscuro ? DarkTheme : DefaultTheme).colors,
+      primary: c.primary,
+      background: c.fondo,
+      card: c.bg,
+      text: c.text,
+      border: c.border,
+    },
+  };
 
   useEffect(() => {
     if (!session) {
@@ -195,14 +215,15 @@ export function RootNavigator() {
   if (cargando || (session && !inicial)) return <Cargando />;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={temaNav}>
       <Stack.Navigator
         screenOptions={{
           headerShown: true,
           headerBackButtonDisplayMode: 'minimal',
-          headerTintColor: colors.primary,
-          headerTitleStyle: { color: colors.text },
-          contentStyle: { backgroundColor: colors.bg },
+          headerTintColor: c.primary,
+          headerTitleStyle: { color: c.text },
+          headerStyle: { backgroundColor: c.bg },
+          contentStyle: { backgroundColor: c.fondo },
         }}
         initialRouteName={session ? (inicial ?? 'Bienvenida') : 'Registro'}
       >

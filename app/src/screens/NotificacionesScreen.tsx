@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title, panel } from '../ui';
+import { Button, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title, panel, useC, type Paleta } from '../ui';
 import type { RouteName } from '../navigation/navigator';
 
 /** entidadTipo de una notificación → a qué pantalla lleva. */
@@ -25,6 +25,8 @@ function destino(n: NotificacionDTO): { name: RouteName; params?: Record<string,
 }
 
 export function NotificacionesScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const [lista, setLista] = useState<NotificacionDTO[] | null>(null);
@@ -101,10 +103,10 @@ export function NotificacionesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   card: { ...panel, gap: 4 },
-  noLeida: { borderColor: colors.primary, backgroundColor: colors.info },
-  titulo: { fontSize: 15, fontWeight: '700', color: colors.text },
-  cuerpo: { fontSize: 14, color: colors.text },
-  muted: { fontSize: 12, color: colors.muted },
+  noLeida: { borderColor: c.primary, backgroundColor: c.info },
+  titulo: { fontSize: 15, fontWeight: '700', color: c.text },
+  cuerpo: { fontSize: 14, color: c.text },
+  muted: { fontSize: 12, color: c.muted },
 });

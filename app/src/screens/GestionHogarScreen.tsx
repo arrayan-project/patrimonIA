@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO } from '../api/client';
@@ -6,9 +6,11 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, tipo, Panel } from '../ui';
+import { Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 export function GestionHogarScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
   const { cerrarSesion } = useAuth();
   const toast = useToast();
@@ -202,9 +204,9 @@ export function GestionHogarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  miembro: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  miembro: { gap: 6, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
   acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  aviso: { color: colors.primary, fontSize: 14 },
+  aviso: { color: c.primary, fontSize: 14 },
 });

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from './index';
+import { useC } from './tema';
 
 type Tono = 'ok' | 'error';
 interface ToastCtx {
@@ -11,6 +11,7 @@ interface ToastCtx {
 const Ctx = createContext<ToastCtx | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const c = useC();
   const insets = useSafeAreaInsets();
   const [msg, setMsg] = useState<{ texto: string; tono: Tono } | null>(null);
   const opacidad = useRef(new Animated.Value(0)).current;
@@ -38,8 +39,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           pointerEvents="none"
           style={[
             styles.toast,
+            { backgroundColor: msg.tono === 'error' ? c.danger : c.text },
             { bottom: insets.bottom + 24, opacity: opacidad },
-            msg.tono === 'error' && styles.toastError,
           ]}
         >
           <Text style={styles.texto}>{msg.texto}</Text>
@@ -59,11 +60,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     right: 24,
-    backgroundColor: colors.text,
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  toastError: { backgroundColor: colors.danger },
   texto: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center' },
 });

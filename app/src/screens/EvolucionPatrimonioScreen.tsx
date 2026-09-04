@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import {
   api,
@@ -9,10 +9,12 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title, tipo, Panel } from '../ui';
+import { Button, DateField, ErrorText, fechaLegible, Row, Screen, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const [desde, setDesde] = useState('');
@@ -57,7 +59,7 @@ export function EvolucionPatrimonioScreen() {
 
       <ErrorText>{error}</ErrorText>
 
-      {busy && <ActivityIndicator color={colors.primary} />}
+      {busy && <ActivityIndicator color={c.primary} />}
 
       {serie && serie.puntos.length >= 2 && (
         <Panel>
@@ -105,8 +107,8 @@ export function EvolucionPatrimonioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
-  bloque: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
+  bloque: { gap: 4, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
 });

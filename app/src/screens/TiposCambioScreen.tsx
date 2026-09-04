@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type TipoCambioDTO } from '../api/client';
@@ -7,7 +7,6 @@ import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
   Button,
-  colors,
   DateField,
   ErrorText,
   Field,
@@ -17,11 +16,15 @@ import {
   Skeleton,
   Screen,
   Title,
-  tipo,
   Panel,
+  useC,
+  tipoDe,
+  type Paleta,
 } from '../ui';
 
 export function TiposCambioScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -114,7 +117,7 @@ export function TiposCambioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
 });

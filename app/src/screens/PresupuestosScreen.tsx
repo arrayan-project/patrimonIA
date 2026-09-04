@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type PresupuestoDTO } from '../api/client';
@@ -10,7 +10,6 @@ import {
   Ayuda,
   Button,
   Card,
-  colors,
   DateField,
   EmptyState,
   ErrorText,
@@ -21,13 +20,17 @@ import {
   Screen,
   Segmented,
   Title,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
 
 export function PresupuestosScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -171,9 +174,9 @@ export function PresupuestosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between' },
-  nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
-  estado: { fontSize: 12, fontWeight: '600', color: colors.muted },
-  muted: tipo.nota,
+  nombre: { fontSize: 16, fontWeight: '700', color: c.text },
+  estado: { fontSize: 12, fontWeight: '600', color: c.muted },
+  muted: tipoDe(c).nota,
 });

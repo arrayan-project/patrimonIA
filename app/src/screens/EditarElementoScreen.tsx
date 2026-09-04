@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -9,7 +9,6 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
-  colors,
   ErrorText,
   Field,
   Paragraph,
@@ -18,8 +17,10 @@ import {
   Select,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  tipoDe,
+  type Paleta,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
@@ -28,6 +29,8 @@ const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiquet
 const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 
 export function EditarElementoScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -236,6 +239,6 @@ export function EditarElementoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
 });

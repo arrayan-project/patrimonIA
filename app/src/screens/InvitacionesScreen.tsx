@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, Panel, Paragraph, Screen, Skeleton, Title } from '../ui';
+import { Button, ErrorText, Panel, Paragraph, Screen, Skeleton, Title, useC, type Paleta } from '../ui';
 
 export function InvitacionesScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const [invitaciones, setInvitaciones] = useState<InvitacionDTO[] | null>(null);
@@ -84,7 +86,7 @@ export function InvitacionesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  hogar: { fontSize: 17, fontWeight: '600', color: colors.text },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  hogar: { fontSize: 17, fontWeight: '600', color: c.text },
   actions: { gap: 8 },
 });

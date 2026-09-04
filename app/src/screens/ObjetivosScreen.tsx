@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
@@ -10,7 +10,6 @@ import {
   Ayuda,
   Button,
   Card,
-  colors,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -20,11 +19,15 @@ import {
   Skeleton,
   Screen,
   Title,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 export function ObjetivosScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -128,9 +131,9 @@ export function ObjetivosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between' },
-  nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
-  estado: { fontSize: 12, fontWeight: '600', color: colors.muted },
-  muted: tipo.nota,
+  nombre: { fontSize: 16, fontWeight: '700', color: c.text },
+  estado: { fontSize: 12, fontWeight: '600', color: c.muted },
+  muted: tipoDe(c).nota,
 });

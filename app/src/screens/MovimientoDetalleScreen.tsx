@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -17,7 +17,6 @@ import { useToast } from '../ui/Toast';
 import {
   Button,
   Chip,
-  colors,
   ErrorText,
   etiqueta,
   Field,
@@ -31,9 +30,13 @@ import {
   Stat,
   Title,
   Skeleton,
+  useC,
+  type Paleta,
 } from '../ui';
 
 export function MovimientoDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -315,8 +318,8 @@ export function MovimientoDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  formTitle: { fontSize: 16, fontWeight: '700', color: c.text },
+  nota: { fontSize: 13, color: c.muted, fontStyle: 'italic' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
 });

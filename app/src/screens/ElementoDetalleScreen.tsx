@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -16,7 +16,6 @@ import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
   Button,
-  colors,
   ErrorText,
   etiqueta,
   Field,
@@ -31,9 +30,13 @@ import {
   Skeleton,
   Stat,
   Title,
+  useC,
+  type Paleta,
 } from '../ui';
 
 export function ElementoDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -121,7 +124,7 @@ export function ElementoDetalleScreen() {
     <Text
       style={[
         styles.movMonto,
-        anulado ? styles.tachado : { color: monto < 0 ? colors.danger : colors.primary },
+        anulado ? styles.tachado : { color: monto < 0 ? c.danger : c.primary },
       ]}
     >
       {money(monto, moneda)}
@@ -307,8 +310,8 @@ export function ElementoDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   valor: { fontSize: 28, fontWeight: '800' },
   movMonto: { fontSize: 15, fontWeight: '700' },
-  tachado: { textDecorationLine: 'line-through', color: colors.muted },
+  tachado: { textDecorationLine: 'line-through', color: c.muted },
 });

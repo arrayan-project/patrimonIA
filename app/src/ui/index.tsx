@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -21,10 +21,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 import { etiqueta } from '../labels';
+import { CLARO, useC, type Paleta } from './tema';
 
 export type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
 
 export { etiqueta, humanizar } from '../labels';
+export { TemaProvider, useC, useTema, type Paleta, type ModoTema } from './tema';
+
+/** Paleta activa memoizada + estilos derivados. Para los componentes de este archivo. */
+function useEstilos() {
+  const c = useC();
+  return useMemo(() => crearEstilos(c), [c]);
+}
 
 // ── Helpers de formato ──────────────────────────────────────────────────────
 
@@ -62,23 +70,11 @@ function agruparMiles(entero: string): string {
   return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-export const colors = {
-  /** Fondo de la página — gris muy suave, para que las tarjetas blancas resalten. */
-  fondo: '#f3f4f6',
-  /** Fondo de tarjetas, inputs y modales. */
-  bg: '#ffffff',
-  text: '#111827',
-  /** Texto secundario. gray-600: contraste AA (4.6:1) sobre blanco y sobre `fondo`. */
-  muted: '#4b5563',
-  border: '#e5e7eb',
-  primary: '#1d4ed8',
-  primaryText: '#ffffff',
-  danger: '#b91c1c',
-  /** Relleno tenue para chips, íconos, barras de fondo. */
-  faint: '#eef1f5',
-  /** Tinte para cajas de ayuda / información. */
-  info: '#eff6ff',
-};
+/**
+ * @deprecated Paleta clara estática. En componentes usa `useC()` para que
+ * respete el modo oscuro; esto queda solo para código aún sin migrar.
+ */
+export const colors = CLARO;
 
 /** Sombra sutil compartida por las tarjetas (iOS + Android). */
 export const sombra = {
@@ -97,26 +93,32 @@ export const escala = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const
  * tarjeta — antes cada pantalla lo redefinía. El `gap` interno lo pone `Panel`
  * o cada pantalla.
  */
-export const panel = {
-  backgroundColor: colors.bg,
-  borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: 14,
-  padding: escala.lg,
-} as const;
+export const panelDe = (c: Paleta) =>
+  ({
+    backgroundColor: c.bg,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: 14,
+    padding: escala.lg,
+  }) as const;
+/** @deprecated usa `panelDe(useC())` o el componente `<Panel>`. */
+export const panel = panelDe(CLARO);
 
 /**
  * Escala tipográfica. `titulo` = `<Title>`, `seccion` = encabezado de tarjeta,
  * `dato` = valor de una fila, `nota` = texto secundario (13px), `cuerpo` = texto
  * corrido (15px).
  */
-export const tipo = {
-  titulo: { fontSize: 24, fontWeight: '700', color: colors.text },
-  seccion: { fontSize: 16, fontWeight: '700', color: colors.text },
-  cuerpo: { fontSize: 15, color: colors.text, lineHeight: 22 },
-  dato: { fontSize: 14, color: colors.text, fontWeight: '600' },
-  nota: { fontSize: 13, color: colors.muted, lineHeight: 19 },
-} as const;
+export const tipoDe = (c: Paleta) =>
+  ({
+    titulo: { fontSize: 24, fontWeight: '700', color: c.text },
+    seccion: { fontSize: 16, fontWeight: '700', color: c.text },
+    cuerpo: { fontSize: 15, color: c.text, lineHeight: 22 },
+    dato: { fontSize: 14, color: c.text, fontWeight: '600' },
+    nota: { fontSize: 13, color: c.muted, lineHeight: 19 },
+  }) as const;
+/** @deprecated usa `tipoDe(useC())`. */
+export const tipo = tipoDe(CLARO);
 
 /**
  * Contenedor scrollable de cada pantalla. Si se pasa `onRefresh`, habilita
@@ -132,6 +134,8 @@ export function Screen({
   /** Botón flotante fijo (no scrollea) abajo a la derecha. */
   fab?: ReactNode;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const insets = useSafeAreaInsets();
   // Si hay header nativo de navegación (altura > 0), él cubre el área segura
   // superior. Ojo: el native-stack expone el contexto con valor 0 aun cuando
@@ -167,7 +171,7 @@ export function Screen({
         keyboardDismissMode="interactive"
         refreshControl={
           onRefresh ? (
-            <RefreshControl refreshing={refrescando} onRefresh={alRefrescar} tintColor={colors.primary} />
+            <RefreshControl refreshing={refrescando} onRefresh={alRefrescar} tintColor={c.primary} />
           ) : undefined
         }
       >
@@ -190,18 +194,22 @@ export function Screen({
 
 /** Botón de acción flotante. Se pasa a `<Screen fab={...}>`. */
 export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
       accessibilityRole="button"
     >
-      <Ionicons name={icon} size={26} color={colors.primaryText} />
+      <Ionicons name={icon} size={26} color={c.primaryText} />
     </Pressable>
   );
 }
 
 export function Title({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <Text style={styles.title} accessibilityRole="header">
       {children}
@@ -214,9 +222,11 @@ export function Title({ children }: { children: ReactNode }) {
  * viendo (p. ej. "Cuenta corriente" arriba del detalle de un movimiento).
  */
 export function Migaja({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.migaja}>
-      <Ionicons name="chevron-back" size={13} color={colors.muted} />
+      <Ionicons name="chevron-back" size={13} color={c.muted} />
       <Text style={styles.migajaTexto} numberOfLines={1}>
         {children}
       </Text>
@@ -240,11 +250,13 @@ export function Card({
   franja?: string;
   style?: object;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const contenido = (
     <>
       {franja ? <View style={[styles.cardFranja, { backgroundColor: franja }]} /> : null}
       <View style={{ flex: 1, gap: 8 }}>{children}</View>
-      {onPress ? <Ionicons name="chevron-forward" size={18} color={colors.muted} /> : null}
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={c.muted} /> : null}
     </>
   );
   if (onPress) {
@@ -275,16 +287,22 @@ export function Panel({
   gap?: number;
   style?: object;
 }) {
-  return <View style={[panel, { gap }, style]}>{children}</View>;
+  const c = useC();
+  const styles = useEstilos();
+  return <View style={[panelDe(c), { gap }, style]}>{children}</View>;
 }
 
 /** Encabezado de una tarjeta / sección de contenido. */
 export function SectionTitle({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
 /** Texto secundario corto (13px, gris). Para pies de tarjeta y aclaraciones. */
 export function Nota({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return <Text style={styles.nota}>{children}</Text>;
 }
 
@@ -306,6 +324,8 @@ export function ListItem({
   onPress?: () => void;
   tachado?: boolean;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const cuerpo = (
     <>
       <View style={{ flex: 1 }}>
@@ -315,7 +335,7 @@ export function ListItem({
         {subtitle ? <Text style={styles.nota}>{subtitle}</Text> : null}
       </View>
       {typeof right === 'string' ? <Text style={styles.dataRight}>{right}</Text> : right}
-      {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.muted} /> : null}
+      {onPress ? <Ionicons name="chevron-forward" size={16} color={c.muted} /> : null}
     </>
   );
   if (onPress) {
@@ -342,6 +362,8 @@ export function Stat({
   value: ReactNode;
   hint?: string;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={{ gap: 2 }}>
       <Text style={styles.nota}>{label}</Text>
@@ -352,6 +374,8 @@ export function Stat({
 }
 
 export function Paragraph({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return <Text style={styles.paragraph}>{children}</Text>;
 }
 
@@ -360,12 +384,14 @@ export function Field({
   error,
   ...props
 }: TextInputProps & { label: string; error?: string }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={c.muted}
         autoCapitalize="none"
         {...props}
       />
@@ -391,6 +417,8 @@ export function DateField({
   optional?: boolean;
   placeholder?: string;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const [abierto, setAbierto] = useState(false);
   const fecha = value ? new Date(`${value}T00:00:00`) : new Date();
 
@@ -412,7 +440,7 @@ export function DateField({
             accessibilityRole="button"
             accessibilityLabel={`${label}: ${value ? fechaLegible(value) : placeholder}`}
           >
-            <Text style={{ fontSize: 16, color: value ? colors.text : colors.muted }}>
+            <Text style={{ fontSize: 16, color: value ? c.text : c.muted }}>
               {value ? fechaLegible(value) : placeholder}
             </Text>
           </Pressable>
@@ -446,6 +474,8 @@ export function MoneyField({
   placeholder?: string;
   error?: string;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const [entero, dec] = value.split('.');
   const display =
     value === ''
@@ -473,7 +503,7 @@ export function MoneyField({
         value={display}
         onChangeText={alEscribir}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={c.muted}
       />
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </View>
@@ -493,8 +523,10 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const outline = variant === 'secondary' || variant === 'danger';
-  const tinte = variant === 'danger' ? colors.danger : colors.primary;
+  const tinte = variant === 'danger' ? c.danger : c.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -510,7 +542,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={outline ? tinte : colors.primaryText} />
+        <ActivityIndicator color={outline ? tinte : c.primaryText} />
       ) : (
         <Text style={[styles.buttonText, outline && { color: tinte }]}>{title}</Text>
       )}
@@ -532,6 +564,8 @@ export function Segmented<T extends string>({
   /** Cómo se muestra cada opción (por defecto, la etiqueta legible del enum). */
   formatearOpcion?: (v: T) => string;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -563,6 +597,8 @@ export function SelectRow({
   selected: boolean;
   onPress: () => void;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <Pressable
       onPress={onPress}
@@ -599,6 +635,8 @@ export function Select({
   placeholder?: string;
   permiteOtro?: boolean;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const [abierto, setAbierto] = useState(false);
   const [modoOtro, setModoOtro] = useState(false);
   const [otro, setOtro] = useState('');
@@ -621,7 +659,7 @@ export function Select({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <Text style={{ fontSize: 16, color: conocida || value ? colors.text : colors.muted }}>
+        <Text style={{ fontSize: 16, color: conocida || value ? c.text : c.muted }}>
           {texto}
         </Text>
         <Text style={styles.selectCaret}>▾</Text>
@@ -639,7 +677,7 @@ export function Select({
                   onChangeText={setOtro}
                   autoFocus
                   placeholder="Escribe el valor"
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor={c.muted}
                 />
                 <Button
                   title="Usar"
@@ -666,7 +704,7 @@ export function Select({
                     <Text
                       style={[
                         styles.modalOpcionTxt,
-                        o.value === value && { color: colors.primary, fontWeight: '700' },
+                        o.value === value && { color: c.primary, fontWeight: '700' },
                       ]}
                     >
                       {o.label}
@@ -675,7 +713,7 @@ export function Select({
                 ))}
                 {permiteOtro && (
                   <Pressable style={styles.modalOpcion} onPress={() => setModoOtro(true)}>
-                    <Text style={[styles.modalOpcionTxt, { color: colors.primary }]}>Otro…</Text>
+                    <Text style={[styles.modalOpcionTxt, { color: c.primary }]}>Otro…</Text>
                   </Pressable>
                 )}
               </ScrollView>
@@ -690,6 +728,8 @@ export function Select({
 
 /** Cabecera de un formulario por pasos: "Paso N de M" + barra de avance. */
 export function Pasos({ actual, total }: { actual: number; total: number }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={{ gap: 6 }}>
       <Text style={styles.nota}>
@@ -701,6 +741,8 @@ export function Pasos({ actual, total }: { actual: number; total: number }) {
 }
 
 export function ProgressBar({ pct }: { pct: number }) {
+  const c = useC();
+  const styles = useEstilos();
   const clamped = Math.max(0, Math.min(100, pct));
   return (
     <View style={styles.progressTrack}>
@@ -725,6 +767,8 @@ export function BarraDistribucion({
 }: {
   segmentos: { valor: number; color: string }[];
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const total = segmentos.reduce((s, x) => s + Math.max(0, x.valor), 0);
   if (total <= 0) return <View style={[styles.progressTrack, { height: 14 }]} />;
   return (
@@ -743,6 +787,8 @@ export function BarraDistribucion({
 
 /** Punto de color (leyenda de categoría). */
 export function Punto({ color }: { color: string }) {
+  const c = useC();
+  const styles = useEstilos();
   return <View style={[styles.punto, { backgroundColor: color }]} />;
 }
 
@@ -758,15 +804,17 @@ export function Chip({
   color?: string | null;
   onPress?: () => void;
 }) {
-  const tinte = color ?? colors.primary;
+  const c = useC();
+  const styles = useEstilos();
+  const tinte = color ?? c.primary;
   const cuerpo = (
     <View
       style={[
         styles.chip,
-        activo ? { backgroundColor: tinte, borderColor: tinte } : { borderColor: colors.border },
+        activo ? { backgroundColor: tinte, borderColor: tinte } : { borderColor: c.border },
       ]}
     >
-      <Text style={[styles.chipText, activo && { color: colors.primaryText }]}>{label}</Text>
+      <Text style={[styles.chipText, activo && { color: c.primaryText }]}>{label}</Text>
     </View>
   );
   return onPress ? (
@@ -798,13 +846,17 @@ export function MoneyText({
   style?: object;
   contable?: boolean;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   const abs = Math.abs(monto).toLocaleString('es-CL', { maximumFractionDigits: 2 });
   const neg = monto < 0;
   const texto = neg ? (contable ? `(${abs} ${moneda})` : `−${abs} ${moneda}`) : `${abs} ${moneda}`;
-  return <Text style={[{ color: neg ? colors.danger : colors.text }, style]}>{texto}</Text>;
+  return <Text style={[{ color: neg ? c.danger : c.text }, style]}>{texto}</Text>;
 }
 
 export function Row({ left, right }: { left: string; right: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.dataRow}>
       <Text style={styles.dataLeft}>{left}</Text>
@@ -814,11 +866,15 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
 }
 
 export function ErrorText({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   if (!children) return null;
   return <Text style={styles.error}>{children}</Text>;
 }
 
 export function LinkButton({ title, onPress }: { title: string; onPress: () => void }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button">
       <Text style={styles.link}>{title}</Text>
@@ -840,6 +896,8 @@ export function MenuLink({
   icon?: NombreIcono;
   onPress: () => void;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <Pressable
       onPress={onPress}
@@ -849,7 +907,7 @@ export function MenuLink({
     >
       {icon ? (
         <View style={styles.menuIcono}>
-          <Ionicons name={icon} size={20} color={colors.primary} />
+          <Ionicons name={icon} size={20} color={c.primary} />
         </View>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -868,6 +926,8 @@ export function MenuLink({
 
 /** Encabezado de grupo dentro de una pantalla hub. */
 export function GroupLabel({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return <Text style={styles.groupLabel}>{children}</Text>;
 }
 
@@ -877,9 +937,11 @@ export function GroupLabel({ children }: { children: ReactNode }) {
  * asignaciones, reservas…). Discreta, no una tarjeta.
  */
 export function Ayuda({ children }: { children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.ayuda}>
-      <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+      <Ionicons name="information-circle-outline" size={18} color={c.primary} />
       <Text style={styles.ayudaTexto}>{children}</Text>
     </View>
   );
@@ -887,6 +949,8 @@ export function Ayuda({ children }: { children: ReactNode }) {
 
 /** Placeholder mientras carga una lista — mejor que un spinner suelto. */
 export function Skeleton({ filas = 3 }: { filas?: number }) {
+  const c = useC();
+  const styles = useEstilos();
   const pulso = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -925,9 +989,11 @@ export function EmptyState({
   accion?: string;
   onAccion?: () => void;
 }) {
+  const c = useC();
+  const styles = useEstilos();
   return (
     <View style={styles.empty}>
-      {icon ? <Ionicons name={icon} size={40} color={colors.muted} /> : null}
+      {icon ? <Ionicons name={icon} size={40} color={c.muted} /> : null}
       <Text style={styles.emptyTitulo}>{titulo}</Text>
       {descripcion ? <Text style={styles.emptyDesc}>{descripcion}</Text> : null}
       {accion && onAccion ? (
@@ -939,222 +1005,225 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.fondo },
-  screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
-  fabWrap: { position: 'absolute', right: 20 },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...sombra,
-    elevation: 6,
-  },
-  card: {
-    backgroundColor: colors.bg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    ...sombra,
-  },
-  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 10, overflow: 'hidden' },
-  cardPressed: { opacity: 0.7 },
-  cardFranja: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  title: tipo.titulo,
-  sectionTitle: tipo.seccion,
-  nota: tipo.nota,
-  statValue: { fontSize: 20, fontWeight: '800', color: colors.text },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.faint,
-    paddingVertical: 10,
-  },
-  listItemTitle: tipo.dato,
-  listItemTachado: { textDecorationLine: 'line-through', color: colors.muted },
-  migaja: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: -8 },
-  migajaTexto: { fontSize: 13, color: colors.muted, fontWeight: '600' },
-  paragraph: { fontSize: 15, color: colors.muted, lineHeight: 22 },
-  field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colors.text,
-  },
-  inputError: { borderColor: colors.danger },
-  errorInline: { color: colors.danger, fontSize: 12 },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  buttonSecondary: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  buttonDanger: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  buttonDisabled: { opacity: 0.5 },
-  buttonPressed: { opacity: 0.85 },
-  buttonText: { color: colors.primaryText, fontSize: 16, fontWeight: '600' },
-  buttonTextSecondary: { color: colors.primary },
-  error: { color: colors.danger, fontSize: 14 },
-  link: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  segment: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  segmentActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  segmentText: { fontSize: 13, color: colors.text, fontWeight: '600' },
-  segmentTextActive: { color: colors.primaryText },
-  selectRow: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-  },
-  selectRowActive: { borderColor: colors.primary, backgroundColor: '#eff6ff' },
-  selectBox: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectCaret: { fontSize: 14, color: colors.muted },
-  modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
-  modalHoja: {
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    paddingBottom: 32,
-    gap: 8,
-  },
-  modalTitulo: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.faint },
-  modalOpcionTxt: { fontSize: 16, color: colors.text },
-  selectRowText: { fontSize: 15, color: colors.text },
-  selectRowTextActive: { color: colors.primary, fontWeight: '600' },
-  dataRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  dataLeft: { fontSize: 14, color: colors.muted },
-  dataRight: { fontSize: 14, color: colors.text, fontWeight: '600' },
-  progressTrack: {
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.faint,
-    overflow: 'hidden',
-  },
-  progressFill: { height: 10, borderRadius: 5, backgroundColor: colors.primary },
-  distTrack: {
-    flexDirection: 'row',
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.faint,
-    overflow: 'hidden',
-  },
-  punto: { width: 10, height: 10, borderRadius: 5 },
-  chip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-  },
-  chipText: { fontSize: 13, color: colors.text, fontWeight: '600' },
-  menuLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  menuLinkTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
-  menuLinkSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
-  menuIcono: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: colors.faint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuChevron: { fontSize: 22, color: colors.muted },
-  menuBadge: {
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  menuBadgeText: { color: colors.primaryText, fontSize: 12, fontWeight: '700' },
-  groupLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.muted,
-    marginTop: 8,
-    textTransform: 'uppercase',
-  },
-  ayuda: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'flex-start',
-    backgroundColor: colors.info,
-    borderRadius: 10,
-    padding: 12,
-  },
-  ayudaTexto: { flex: 1, fontSize: 13, color: colors.text, lineHeight: 19 },
-  skelCard: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 16,
-    gap: 10,
-  },
-  skelBar: { height: 12, borderRadius: 6, backgroundColor: colors.faint },
-  empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
-  emptyTitulo: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  emptyDesc: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },
-});
+const crearEstilos = (c: Paleta) => {
+  const t = tipoDe(c);
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.fondo },
+    screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
+    fabWrap: { position: 'absolute', right: 20 },
+    fab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...sombra,
+      elevation: 6,
+    },
+    card: {
+      backgroundColor: c.bg,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 16,
+      ...sombra,
+    },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 10, overflow: 'hidden' },
+    cardPressed: { opacity: 0.7 },
+    cardFranja: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 4,
+    },
+    title: t.titulo,
+    sectionTitle: t.seccion,
+    nota: t.nota,
+    statValue: { fontSize: 20, fontWeight: '800', color: c.text },
+    listItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      borderTopWidth: 1,
+      borderTopColor: c.faint,
+      paddingVertical: 10,
+    },
+    listItemTitle: t.dato,
+    listItemTachado: { textDecorationLine: 'line-through', color: c.muted },
+    migaja: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: -8 },
+    migajaTexto: { fontSize: 13, color: c.muted, fontWeight: '600' },
+    paragraph: { fontSize: 15, color: c.muted, lineHeight: 22 },
+    field: { gap: 6 },
+    label: { fontSize: 13, fontWeight: '600', color: c.text },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: c.text,
+    },
+    inputError: { borderColor: c.danger },
+    errorInline: { color: c.danger, fontSize: 12 },
+    button: {
+      backgroundColor: c.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 48,
+    },
+    buttonSecondary: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.primary,
+    },
+    buttonDanger: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.danger,
+    },
+    buttonDisabled: { opacity: 0.5 },
+    buttonPressed: { opacity: 0.85 },
+    buttonText: { color: c.primaryText, fontSize: 16, fontWeight: '600' },
+    buttonTextSecondary: { color: c.primary },
+    error: { color: c.danger, fontSize: 14 },
+    link: { color: c.primary, fontSize: 14, fontWeight: '600' },
+    segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+    segment: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    segmentActive: { backgroundColor: c.primary, borderColor: c.primary },
+    segmentText: { fontSize: 13, color: c.text, fontWeight: '600' },
+    segmentTextActive: { color: c.primaryText },
+    selectRow: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      padding: 12,
+    },
+    selectRowActive: { borderColor: c.primary, backgroundColor: c.info },
+    selectBox: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    selectCaret: { fontSize: 14, color: c.muted },
+    modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+    modalHoja: {
+      backgroundColor: c.bg,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 20,
+      paddingBottom: 32,
+      gap: 8,
+    },
+    modalTitulo: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 4 },
+    modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.faint },
+    modalOpcionTxt: { fontSize: 16, color: c.text },
+    selectRowText: { fontSize: 15, color: c.text },
+    selectRowTextActive: { color: c.primary, fontWeight: '600' },
+    dataRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+    },
+    dataLeft: { fontSize: 14, color: c.muted },
+    dataRight: { fontSize: 14, color: c.text, fontWeight: '600' },
+    progressTrack: {
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: c.faint,
+      overflow: 'hidden',
+    },
+    progressFill: { height: 10, borderRadius: 5, backgroundColor: c.primary },
+    distTrack: {
+      flexDirection: 'row',
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: c.faint,
+      overflow: 'hidden',
+    },
+    punto: { width: 10, height: 10, borderRadius: 5 },
+    chip: {
+      borderWidth: 1,
+      borderRadius: 999,
+      paddingVertical: 5,
+      paddingHorizontal: 12,
+    },
+    chipText: { fontSize: 13, color: c.text, fontWeight: '600' },
+    menuLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    menuLinkTitle: { fontSize: 15, fontWeight: '600', color: c.text },
+    menuLinkSub: { fontSize: 12, color: c.muted, marginTop: 2 },
+    menuIcono: {
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      backgroundColor: c.faint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    menuChevron: { fontSize: 22, color: c.muted },
+    menuBadge: {
+      minWidth: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 6,
+    },
+    menuBadgeText: { color: c.primaryText, fontSize: 12, fontWeight: '700' },
+    groupLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.muted,
+      marginTop: 8,
+      textTransform: 'uppercase',
+    },
+    ayuda: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'flex-start',
+      backgroundColor: c.info,
+      borderRadius: 10,
+      padding: 12,
+    },
+    ayudaTexto: { flex: 1, fontSize: 13, color: c.text, lineHeight: 19 },
+    skelCard: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 14,
+      padding: 16,
+      gap: 10,
+    },
+    skelBar: { height: 12, borderRadius: 6, backgroundColor: c.faint },
+    empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
+    emptyTitulo: { fontSize: 15, fontWeight: '700', color: c.text, textAlign: 'center' },
+    emptyDesc: { fontSize: 13, color: c.muted, textAlign: 'center', lineHeight: 19 },
+  });
+};

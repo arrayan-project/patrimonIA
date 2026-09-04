@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -15,7 +15,6 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
-  colors,
   ErrorText,
   Field,
   LinkButton,
@@ -26,11 +25,15 @@ import {
   SelectRow,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -191,8 +194,8 @@ export function AsignacionDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  reserva: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
-  muted: tipo.nota,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  reserva: { gap: 6, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
+  muted: tipoDe(c).nota,
 });

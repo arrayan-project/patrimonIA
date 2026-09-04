@@ -15,7 +15,6 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import {
   colorCategoria,
-  colors,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -26,8 +25,10 @@ import {
   Screen,
   Segmented,
   Title,
-  tipo,
   Panel,
+  useC,
+  tipoDe,
+  type Paleta,
 } from '../ui';
 import { Dona, GraficoBarras } from '../ui/charts';
 
@@ -36,6 +37,8 @@ const iso = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 export function MovimientosScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
 
@@ -218,13 +221,13 @@ export function MovimientosScreen() {
                   <Text
                     style={[
                       styles.movMonto,
-                      { color: m.tipo === 'GASTO' ? colors.danger : colors.primary },
+                      { color: m.tipo === 'GASTO' ? c.danger : c.primary },
                     ]}
                   >
                     {m.tipo === 'GASTO' ? '−' : '+'}
                     {money(m.monto, m.moneda)}
                   </Text>
-                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+                  <Ionicons name="chevron-forward" size={15} color={c.muted} />
                 </Pressable>
               ))
             )}
@@ -276,6 +279,8 @@ export function MovimientosScreen() {
 }
 
 function Row({ label, valor, moneda }: { label: string; valor: number; moneda: string }) {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   return (
     <View style={styles.dataRow}>
       <Text style={styles.dataLabel}>{label}</Text>
@@ -284,18 +289,18 @@ function Row({ label, valor, moneda }: { label: string; valor: number; moneda: s
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
-  flecha: { fontSize: 30, color: colors.primary, paddingHorizontal: 8 },
-  periodo: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' },
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
-  sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },
+  flecha: { fontSize: 30, color: c.primary, paddingHorizontal: 8 },
+  periodo: { fontSize: 18, fontWeight: '700', color: c.text, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' },
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
+  sep: { height: 1, backgroundColor: c.faint, marginVertical: 4 },
   dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  dataLabel: { fontSize: 14, color: colors.muted },
-  dataValor: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  dataLabel: { fontSize: 14, color: c.muted },
+  dataValor: { fontSize: 14, color: c.text, fontWeight: '600' },
   balFila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  balLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
+  balLabel: { fontSize: 15, fontWeight: '700', color: c.text },
   balMonto: { fontSize: 20, fontWeight: '800' },
   mov: {
     flexDirection: 'row',
@@ -303,9 +308,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.faint,
+    borderTopColor: c.faint,
     paddingTop: 8,
   },
-  movTitulo: { fontSize: 14, fontWeight: '600', color: colors.text },
+  movTitulo: { fontSize: 14, fontWeight: '600', color: c.text },
   movMonto: { fontSize: 15, fontWeight: '700' },
 });

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type CategoriaMovimientoDTO, type HogarDTO } from '../api/client';
@@ -6,11 +6,13 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title, tipo, Panel } from '../ui';
+import { Ayuda, Button, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
 export function CategoriasScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -161,10 +163,10 @@ export function CategoriasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
-  flecha: { fontSize: 16, color: colors.primary },
-  nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: tipo.nota,
+  flecha: { fontSize: 16, color: c.primary },
+  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
+  muted: tipoDe(c).nota,
 });

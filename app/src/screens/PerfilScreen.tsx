@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type UsuarioDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
@@ -6,9 +6,11 @@ import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title, tipo, Panel } from '../ui';
+import { Button, ErrorText, Field, Paragraph, Row, Screen, Title, Panel, useC, tipoDe, type Paleta } from '../ui';
 
 export function PerfilScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const { cerrarSesion } = useAuth();
   const toast = useToast();
@@ -110,6 +112,6 @@ export function PerfilScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
 });

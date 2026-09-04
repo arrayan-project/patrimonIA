@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -18,7 +18,6 @@ import { money } from '../format';
 import {
   Button,
   colorCategoria,
-  colors,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -29,11 +28,15 @@ import {
   SelectRow,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 export function DashboardScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
   const nav = useNav();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
@@ -154,7 +157,7 @@ export function DashboardScreen() {
   const PasoOnb = ({ hecho, texto, onPress }: { hecho: boolean; texto: string; onPress: () => void }) => (
     <Pressable style={styles.paso} onPress={onPress}>
       <Text style={{ fontSize: 16 }}>{hecho ? '✅' : '⬜️'}</Text>
-      <Text style={[styles.pasoTexto, hecho && { color: colors.muted, textDecorationLine: 'line-through' }]}>
+      <Text style={[styles.pasoTexto, hecho && { color: c.muted, textDecorationLine: 'line-through' }]}>
         {texto}
       </Text>
     </Pressable>
@@ -216,7 +219,7 @@ export function DashboardScreen() {
                       style={{
                         fontSize: 13,
                         fontWeight: '600',
-                        color: v.variacion >= 0 ? colors.primary : colors.danger,
+                        color: v.variacion >= 0 ? c.primary : c.danger,
                       }}
                     >
                       {v.variacion >= 0 ? '▲' : '▼'} {money(Math.abs(v.variacion), m.moneda)}
@@ -245,7 +248,7 @@ export function DashboardScreen() {
               </View>
               <MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.elementoValor} />
 
-              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+              <Ionicons name="chevron-forward" size={16} color={c.muted} />
             </Pressable>
           );
           if (elementos.length === 0) {
@@ -307,18 +310,18 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   card: {
-    backgroundColor: colors.bg,
+    backgroundColor: c.bg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: 14,
     padding: 16,
     gap: 8,
   },
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
-  resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
+  resumen: { gap: 4, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
   resumenNeto: { fontSize: 24, fontWeight: '800' },
   resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
   grupoHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
@@ -326,21 +329,21 @@ const styles = StyleSheet.create({
   grupoTitulo: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.muted,
+    color: c.muted,
     textTransform: 'uppercase',
   },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  pasoTexto: { fontSize: 14, color: colors.text },
+  pasoTexto: { fontSize: 14, color: c.text },
   elemento: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.faint,
+    borderTopColor: c.faint,
     paddingVertical: 10,
   },
-  elementoNombre: { fontSize: 15, color: colors.text, fontWeight: '600' },
+  elementoNombre: { fontSize: 15, color: c.text, fontWeight: '600' },
   elementoValor: { fontSize: 15 },
   actions: { gap: 8, marginTop: 8 },
 });

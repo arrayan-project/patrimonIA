@@ -1,6 +1,25 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, G, Polyline, Line, Rect, Text as SvgText } from 'react-native-svg';
-import { colors, Punto } from './index';
+import { Punto, useC } from './index';
+import type { Paleta } from './tema';
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    donaWrap: { flexDirection: 'row', gap: 16, alignItems: 'center', flexWrap: 'wrap' },
+    leyenda: { flex: 1, minWidth: 140, gap: 6 },
+    leyendaFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    leyendaLabel: { flex: 1, fontSize: 13, color: c.text },
+    leyendaValor: { fontSize: 12, color: c.muted, fontWeight: '600' },
+    ejeFila: { flexDirection: 'row', justifyContent: 'space-between' },
+    ejeTxt: { fontSize: 11, color: c.muted },
+    vacio: { fontSize: 13, color: c.muted },
+  });
+
+function useCharts() {
+  const c = useC();
+  return { c, styles: useMemo(() => crearEstilos(c), [c]) };
+}
 
 export interface SegmentoDona {
   label: string;
@@ -23,11 +42,12 @@ export function Dona({
   size?: number;
   formatoValor?: (n: number) => string;
 }) {
+  const { c, styles } = useCharts();
   const datos = segmentos.filter((s) => s.valor > 0);
   const total = datos.reduce((s, x) => s + x.valor, 0);
   const grosor = size * 0.16;
   const r = (size - grosor) / 2;
-  const c = 2 * Math.PI * r;
+  const circ = 2 * Math.PI * r;
 
   let acumulado = 0;
 
@@ -39,14 +59,14 @@ export function Dona({
             cx={size / 2}
             cy={size / 2}
             r={r}
-            stroke={colors.faint}
+            stroke={c.faint}
             strokeWidth={grosor}
             fill="none"
           />
           {total > 0 &&
             datos.map((s, i) => {
               const frac = s.valor / total;
-              const len = frac * c;
+              const len = frac * circ;
               const el = (
                 <Circle
                   key={i}
@@ -56,7 +76,7 @@ export function Dona({
                   stroke={s.color}
                   strokeWidth={grosor}
                   fill="none"
-                  strokeDasharray={`${len} ${c - len}`}
+                  strokeDasharray={`${len} ${circ - len}`}
                   strokeDashoffset={-acumulado}
                   strokeLinecap="butt"
                   transform={`rotate(-90 ${size / 2} ${size / 2})`}
@@ -71,7 +91,7 @@ export function Dona({
               y={size / 2}
               fontSize={size * 0.11}
               fontWeight="700"
-              fill={colors.text}
+              fill={c.text}
               textAnchor="middle"
               alignmentBaseline="middle"
             >
@@ -107,7 +127,7 @@ export function Dona({
 export function GraficoLinea({
   puntos,
   alto = 140,
-  color = colors.primary,
+  color,
   formatoValor = (n) => n.toLocaleString('es-CL'),
 }: {
   puntos: { etiqueta: string; valor: number }[];
@@ -115,6 +135,7 @@ export function GraficoLinea({
   color?: string;
   formatoValor?: (n: number) => string;
 }) {
+  const { c, styles } = useCharts();
   const ancho = 300;
   const padY = 14;
   if (puntos.length < 2) {
@@ -137,12 +158,12 @@ export function GraficoLinea({
       <View style={{ height: alto }}>
         <Svg width="100%" height={alto} viewBox={`0 0 ${ancho} ${alto}`} preserveAspectRatio="none">
           {cero != null && (
-            <Line x1={0} y1={cero} x2={ancho} y2={cero} stroke={colors.border} strokeWidth={1} />
+            <Line x1={0} y1={cero} x2={ancho} y2={cero} stroke={c.border} strokeWidth={1} />
           )}
           <Polyline
             points={coords}
             fill="none"
-            stroke={color}
+            stroke={color ?? c.primary}
             strokeWidth={2}
             strokeLinejoin="round"
           />
@@ -166,14 +187,17 @@ export function GraficoLinea({
 export function GraficoBarras({
   barras,
   alto = 150,
-  colorIngreso = colors.primary,
-  colorGasto = colors.danger,
+  colorIngreso,
+  colorGasto,
 }: {
   barras: { etiqueta: string; ingresos: number; gastos: number }[];
   alto?: number;
   colorIngreso?: string;
   colorGasto?: string;
 }) {
+  const { c, styles } = useCharts();
+  const cIngreso = colorIngreso ?? c.primary;
+  const cGasto = colorGasto ?? c.danger;
   const ancho = 320;
   const padY = 8;
   const max = Math.max(1, ...barras.flatMap((b) => [b.ingresos, b.gastos]));
@@ -194,7 +218,7 @@ export function GraficoBarras({
                   y={alto - padY - h(b.ingresos)}
                   width={anchoBarra}
                   height={h(b.ingresos)}
-                  fill={colorIngreso}
+                  fill={cIngreso}
                   rx={1}
                 />
                 <Rect
@@ -202,13 +226,13 @@ export function GraficoBarras({
                   y={alto - padY - h(b.gastos)}
                   width={anchoBarra}
                   height={h(b.gastos)}
-                  fill={colorGasto}
+                  fill={cGasto}
                   rx={1}
                 />
               </G>
             );
           })}
-          <Line x1={0} y1={alto - padY} x2={ancho} y2={alto - padY} stroke={colors.border} strokeWidth={1} />
+          <Line x1={0} y1={alto - padY} x2={ancho} y2={alto - padY} stroke={c.border} strokeWidth={1} />
         </Svg>
       </View>
       <View style={{ flexDirection: 'row' }}>
@@ -219,22 +243,11 @@ export function GraficoBarras({
         ))}
       </View>
       <View style={styles.leyendaFila}>
-        <Punto color={colorIngreso} />
+        <Punto color={cIngreso} />
         <Text style={styles.ejeTxt}>Ingresos</Text>
-        <Punto color={colorGasto} />
+        <Punto color={cGasto} />
         <Text style={styles.ejeTxt}>Gastos</Text>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  donaWrap: { flexDirection: 'row', gap: 16, alignItems: 'center', flexWrap: 'wrap' },
-  leyenda: { flex: 1, minWidth: 140, gap: 6 },
-  leyendaFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  leyendaLabel: { flex: 1, fontSize: 13, color: colors.text },
-  leyendaValor: { fontSize: 12, color: colors.muted, fontWeight: '600' },
-  ejeFila: { flexDirection: 'row', justifyContent: 'space-between' },
-  ejeTxt: { fontSize: 11, color: colors.muted },
-  vacio: { fontSize: 13, color: colors.muted },
-});

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -12,10 +12,12 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title, tipo, Panel } from '../ui';
+import { Skeleton, Button, ErrorText, LinkButton, MoneyField, Screen, Title, Panel, useC, tipoDe, type Paleta } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -126,8 +128,8 @@ export function PresupuestoRubrosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
 });

@@ -122,7 +122,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | G3 | ✅ 15g/19 — `react-native-svg`; `src/ui/charts.tsx` con `Dona`, `GraficoLinea`, `GraficoBarras`. Dona en presupuesto por rubro / patrimonio del hogar / Movimientos; línea en Evolución; barras en Movimientos (año); barra de avance total en la lista de Objetivos | 🟡 | P2 |
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
 | G2 | ✅ 15g (parcial) — `@expo/vector-icons` (Ionicons) en la barra de tabs. Falta: iconos en `MenuLink`, categorías, listas | 🟡 | P2 |
-| G5 | **Modo oscuro** | 🟡 | P3 |
+| G5 | ✅ 28 — `src/ui/tema.ts` (`Paleta`, `CLARO`/`OSCURO`, `TemaProvider`, `useC()`, `useTema()`, modo persistido: sistema/claro/oscuro). `ui/index.tsx` y las 25 pantallas: `StyleSheet.create` → `crearEstilos(c: Paleta)` + `useMemo`; `colors.` → `useC()`. Header/tabs de navegación y `StatusBar` siguen el tema. Selector "Tema: Automático / Claro / Oscuro" en Ajustes | 🟡 | P3 |
 | G6 | ✅ 21 — `colors.muted` pasó de `#6b7280` a `#4b5563` (gray-600): ~4.6:1 sobre blanco y sobre `colors.fondo`, cumple AA para texto normal | 🟡 | P2 |
 
 ---
@@ -296,6 +296,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~25~~ ✅ | **G1 (parte 1)** — sistema de escala en `ui/index.tsx`: `escala` (espaciado), `tipo` (tipografía), `panel` (look de tarjeta); componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat`. Sweep de las 25 pantallas: `styles.card` → `{ ...panel, gap }`, `sectionTitle`/`muted` → `tipo.seccion`/`tipo.nota`. Pendiente: adoptar los componentes en el JSX; H1, H4, G5, I1 (barrido). | 24 |
 | ~~26~~ ✅ | **G1 (parte 2)** — `<View style={styles.card}>` → `<Panel>` en 24 pantallas (–24 defs locales de `styles.card`); `ElementoDetalleScreen` reescrita con `ListItem`/`Stat`/`SectionTitle`/`Nota` (sus 3 listas a mano → `<ListItem>`); `MovimientoDetalle` con `Stat` + `Panel`. Neto −56 líneas. Pendiente: H1, H4, G5, I1 (barrido), `ListItem` en el resto de listas. | 25 |
 | ~~27~~ ✅ | **H1** — "Agregar cuenta o bien" pasó a wizard de 2-3 pasos (¿Qué es? / ¿Cuánto vale? / ¿De quién es?), componente `Pasos` en `ui/`, validación por paso. Pendiente: H4, G5, I1 (barrido), G1 remanente. | 26 |
+| ~~28~~ ✅ | **G5** — modo oscuro. `tema.ts` (`Paleta`, `CLARO`/`OSCURO`, `TemaProvider`, `useC`, `useTema`, persistido). `ui/index.tsx` + charts + Toast + los 25 screens: estilos por factory `crearEstilos(c)` + `useMemo`. `RootNavigator` themea header/tabs/`NavigationContainer`. Selector en Ajustes. Pendiente: H4, I1 (barrido), G1 remanente. | 27 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

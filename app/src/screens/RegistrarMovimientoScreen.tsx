@@ -20,7 +20,6 @@ import {
   aISO,
   Button,
   Chip,
-  colors,
   DateField,
   ErrorText,
   Field,
@@ -32,12 +31,16 @@ import {
   Segmented,
   SelectRow,
   Title,
+  useC,
+  type Paleta,
 } from '../ui';
 
 const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
 type Tipo = (typeof TIPOS)[number];
 
 export function RegistrarMovimientoScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -303,8 +306,8 @@ export function RegistrarMovimientoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   group: { gap: 8 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
+  label: { fontSize: 13, fontWeight: '600', color: c.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -12,9 +12,11 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, tipo, Panel } from '../ui';
+import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 export function AgrupacionesScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -170,9 +172,9 @@ export function AgrupacionesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: tipo.nota,
-  item: { fontSize: 13, color: colors.text },
+  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
+  muted: tipoDe(c).nota,
+  item: { fontSize: 13, color: c.text },
 });

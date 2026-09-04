@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { BannerConexion } from './src/ui/BannerConexion';
+import { TemaProvider, useTema } from './src/ui/tema';
 import { ToastProvider } from './src/ui/Toast';
 
 /**
@@ -12,13 +13,20 @@ import { ToastProvider } from './src/ui/Toast';
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <RootNavigator />
-          <BannerConexion />
-        </AuthProvider>
-      </ToastProvider>
-      <StatusBar style="auto" />
+      <TemaProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <RootNavigator />
+            <BannerConexion />
+          </AuthProvider>
+        </ToastProvider>
+        <BarraEstado />
+      </TemaProvider>
     </SafeAreaProvider>
   );
+}
+
+function BarraEstado() {
+  const { oscuro } = useTema();
+  return <StatusBar style={oscuro ? 'light' : 'dark'} />;
 }

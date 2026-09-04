@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -13,7 +13,6 @@ import { money } from '../format';
 import {
   Skeleton,
   colorCategoria,
-  colors,
   ErrorText,
   etiqueta,
   MoneyText,
@@ -21,12 +20,16 @@ import {
   Row,
   Screen,
   Title,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
 export function HogarConsolidadoScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const hogarId = nav.route.params?.hogarId as string;
@@ -157,10 +160,10 @@ export function HogarConsolidadoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
-  muted: tipo.nota,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  subTitle: { fontSize: 13, fontWeight: '700', color: c.muted, marginTop: 8 },
+  muted: tipoDe(c).nota,
   total: { fontSize: 22, fontWeight: '800' },
   montoRow: { fontSize: 14, fontWeight: '600' },
 });

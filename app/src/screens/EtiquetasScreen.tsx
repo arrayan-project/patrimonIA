@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type EtiquetaDTO } from '../api/client';
@@ -10,7 +10,6 @@ import {
   Ayuda,
   Button,
   Chip,
-  colors,
   EmptyState,
   ErrorText,
   Field,
@@ -19,11 +18,15 @@ import {
   Screen,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 export function EtiquetasScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -146,7 +149,7 @@ export function EtiquetasScreen() {
         <Text style={styles.muted}>Color (opcional)</Text>
         <View style={styles.colores}>
           <Pressable onPress={() => setColor(null)}>
-            <View style={[styles.swatch, !color && styles.swatchSel, { backgroundColor: colors.faint }]} />
+            <View style={[styles.swatch, !color && styles.swatchSel, { backgroundColor: c.faint }]} />
           </Pressable>
           {PALETA_CATEGORIA.map((c) => (
             <Pressable key={c} onPress={() => setColor(c)}>
@@ -169,12 +172,12 @@ export function EtiquetasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
-  nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: tipo.nota,
+  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
+  muted: tipoDe(c).nota,
   colores: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   swatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
-  swatchSel: { borderColor: colors.text },
+  swatchSel: { borderColor: c.text },
 });

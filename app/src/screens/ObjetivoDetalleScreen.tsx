@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -12,7 +12,6 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import {
   Button,
-  colors,
   ErrorText,
   etiqueta,
   Field,
@@ -23,13 +22,17 @@ import {
   Segmented,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
 
 export function ObjetivoDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const objetivoId = nav.route.params?.objetivoId as string;
@@ -162,8 +165,8 @@ export function ObjetivoDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  asg: { borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 4 },
-  muted: tipo.nota,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  asg: { borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 4 },
+  muted: tipoDe(c).nota,
 });

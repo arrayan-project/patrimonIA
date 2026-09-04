@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -17,7 +17,6 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
-  colors,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -29,8 +28,10 @@ import {
   SelectRow,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const;
@@ -57,6 +58,8 @@ const VACIO: Borrador = {
 };
 
 export function PlantillasScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -330,10 +333,10 @@ export function PlantillasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   group: { gap: 8 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
-  nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: tipo.nota,
+  label: { fontSize: 13, fontWeight: '600', color: c.text },
+  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
+  muted: tipoDe(c).nota,
 });

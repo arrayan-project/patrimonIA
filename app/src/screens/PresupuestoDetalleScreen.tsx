@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -14,7 +14,6 @@ import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
   Button,
-  colors,
   colorCategoria,
   ErrorText,
   etiqueta,
@@ -26,12 +25,16 @@ import {
   Screen,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
 export function PresupuestoDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -122,7 +125,7 @@ export function PresupuestoDetalleScreen() {
       valor: r.real,
       color: colorCategoria(r.color, i),
     })),
-    { label: 'Sin clasificar', valor: desv.sinClasificar.gastos, color: colors.muted },
+    { label: 'Sin clasificar', valor: desv.sinClasificar.gastos, color: c.muted },
   ];
   const rubrosConMeta = desv.porRubro.filter((r) => r.esperado > 0);
 
@@ -190,7 +193,7 @@ export function PresupuestoDetalleScreen() {
                     {money(r.real, 'CLP')} / {money(r.esperado, 'CLP')}
                   </Text>
                   <Text
-                    style={[styles.muted, { color: r.desviacion > 0 ? colors.danger : colors.muted }]}
+                    style={[styles.muted, { color: r.desviacion > 0 ? c.danger : c.muted }]}
                   >
                     {sign(r.desviacion)}
                   </Text>
@@ -252,19 +255,19 @@ export function PresupuestoDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: tipo.seccion,
-  muted: tipo.nota,
-  sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  sectionTitle: tipoDe(c).seccion,
+  muted: tipoDe(c).nota,
+  sep: { height: 1, backgroundColor: c.faint, marginVertical: 4 },
   filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rubro: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: colors.faint,
+    borderTopColor: c.faint,
     paddingTop: 8,
   },
   rubroNombre: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
-  rubroTexto: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  rubroTexto: { fontSize: 14, color: c.text, fontWeight: '600' },
 });

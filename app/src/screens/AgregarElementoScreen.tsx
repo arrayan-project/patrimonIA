@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
   api,
@@ -15,7 +15,6 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
-  colors,
   ErrorText,
   Field,
   LinkButton,
@@ -27,6 +26,8 @@ import {
   Segmented,
   Select,
   Title,
+  useC,
+  type Paleta,
 } from '../ui';
 import {
   etiqueta,
@@ -53,6 +54,8 @@ function limpiarPct(t: string): string {
 }
 
 export function AgregarElementoScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -330,14 +333,14 @@ export function AgregarElementoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   reparto: { gap: 10 },
   filaPct: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  filaNombre: { flex: 1, fontSize: 14, color: colors.text },
+  filaNombre: { flex: 1, fontSize: 14, color: c.text },
   pctInput: { width: 76 },
-  pctSigno: { fontSize: 15, color: colors.muted, fontWeight: '600' },
-  total: { fontSize: 13, fontWeight: '700', color: colors.muted, textAlign: 'right' },
-  totalOk: { color: colors.primary },
+  pctSigno: { fontSize: 15, color: c.muted, fontWeight: '600' },
+  total: { fontSize: 13, fontWeight: '700', color: c.muted, textAlign: 'right' },
+  totalOk: { color: c.primary },
   pie: { gap: 10 },
   atras: { alignItems: 'center' },
 });

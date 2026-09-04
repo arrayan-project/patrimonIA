@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type MovimientoProgramadoDTO } from '../api/client';
@@ -9,7 +9,6 @@ import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
   Button,
-  colors,
   DateField,
   ErrorText,
   etiqueta,
@@ -21,11 +20,15 @@ import {
   Screen,
   Title,
   Skeleton,
-  tipo,
   Panel,
+  useC,
+  type Paleta,
+  tipoDe,
 } from '../ui';
 
 export function MovimientoProgramadoDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -174,7 +177,7 @@ export function MovimientoProgramadoDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  sectionTitle: tipo.seccion,
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  monto: { fontSize: 24, fontWeight: '800', color: c.text },
+  sectionTitle: tipoDe(c).seccion,
 });

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ValorizacionDTO } from '../api/client';
@@ -7,9 +7,11 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, Panel } from '../ui';
+import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, Panel, useC, type Paleta } from '../ui';
 
 export function ValorizacionDetalleScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -141,8 +143,8 @@ export function ValorizacionDetalleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  valor: { fontSize: 20, fontWeight: '800', color: colors.text },
-  formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  valor: { fontSize: 20, fontWeight: '800', color: c.text },
+  formTitle: { fontSize: 16, fontWeight: '700', color: c.text },
+  nota: { fontSize: 13, color: c.muted, fontStyle: 'italic' },
 });
