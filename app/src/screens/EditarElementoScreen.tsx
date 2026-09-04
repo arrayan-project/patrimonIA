@@ -54,6 +54,8 @@ export function EditarElementoScreen() {
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
+  const [modoDato, setModoDato] = useState<'Actualización' | 'Corrección'>('Actualización');
+  const [motivoDato, setMotivoDato] = useState('');
   const [visibilidad, setVisibilidad] = useState<(typeof VIS)[number]>('PRIVADA');
   const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
   const [motivo, setMotivo] = useState('');
@@ -84,6 +86,7 @@ export function EditarElementoScreen() {
       visibilidad !== el.visibilidad ||
       (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
       repartoCambiado ||
+      motivoDato.trim().length > 0 ||
       motivo.trim().length > 0);
   const permitirSalida = useConfirmarDescarte(sucio && !busy);
 
@@ -164,18 +167,53 @@ export function EditarElementoScreen() {
         <Panel>
           <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
           <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
+          <Segmented
+            label="¿Por qué cambias esto?"
+            options={['Actualización', 'Corrección'] as const}
+            value={modoDato}
+            onChange={setModoDato}
+            formatearOpcion={(v) => v}
+          />
+          <Ayuda>
+            {modoDato === 'Actualización'
+              ? 'Actualización: el dato cambió en la realidad (le pusiste otro nombre, cambió de tipo).'
+              : 'Corrección: el dato estaba mal registrado desde el principio. Queda constancia en el historial de que fue una corrección y por qué.'}
+          </Ayuda>
+          {modoDato === 'Corrección' && (
+            <Field
+              label="Motivo de la corrección"
+              value={motivoDato}
+              onChangeText={setMotivoDato}
+              autoCapitalize="sentences"
+              placeholder="Estaba mal escrito el nombre del banco"
+            />
+          )}
           <Button
-            title="Guardar datos"
+            title={modoDato === 'Corrección' ? 'Guardar corrección' : 'Guardar datos'}
+            loading={busy}
+            disabled={modoDato === 'Corrección' && motivoDato.trim().length < 3}
             onPress={() =>
-              run(() =>
-                api.post(
-                  '/comandos/ActualizarDatosElementoPatrimonial',
-                  { elementoId, nombre: nombre.trim(), tipo: tipo.trim() },
-                  token,
-                ),
+              run(
+                () =>
+                  modoDato === 'Corrección'
+                    ? api.post(
+                        '/comandos/CorregirDatosElementoPatrimonial',
+                        {
+                          elementoId,
+                          nombre: nombre.trim(),
+                          tipo: tipo.trim(),
+                          motivo: motivoDato.trim(),
+                        },
+                        token,
+                      )
+                    : api.post(
+                        '/comandos/ActualizarDatosElementoPatrimonial',
+                        { elementoId, nombre: nombre.trim(), tipo: tipo.trim() },
+                        token,
+                      ),
+                modoDato === 'Corrección' ? 'Corrección guardada' : undefined,
               )
             }
-            loading={busy}
           />
         </Panel>
       )}

@@ -5,7 +5,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen, Title } from '../ui';
+import { Ayuda, Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen, Title } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
@@ -59,10 +59,11 @@ export function ValorizarScreen() {
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
       )}
-      <Paragraph>
-        El nuevo valor reemplaza al vigente (no se suma). El cambio queda en el
-        historial.
-      </Paragraph>
+      <Ayuda>
+        Una valorización actualiza cuánto vale hoy un bien o inversión (precio de
+        mercado, tasación). No es un movimiento de dinero. El nuevo valor
+        reemplaza al vigente —no se suma— y el cambio queda en el historial.
+      </Ayuda>
 
       <MoneyField
         label="Nuevo valor"

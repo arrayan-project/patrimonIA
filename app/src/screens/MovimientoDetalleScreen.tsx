@@ -15,6 +15,7 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   Chip,
   ErrorText,
@@ -213,6 +214,14 @@ export function MovimientoDetalleScreen() {
           <Text style={styles.nota}>Este movimiento ya fue corregido — corrige o anula esa corrección.</Text>
         )}
       </Panel>
+
+      {modo === null && accionable && (
+        <Ayuda>
+          Corregir: el movimiento ocurrió pero con otro monto. Se registra la
+          diferencia y el original queda enlazado a su corrección. Anular: el
+          movimiento no ocurrió — se revierte su efecto por completo.
+        </Ayuda>
+      )}
 
       {modo === null && (
         <View style={{ gap: 8 }}>

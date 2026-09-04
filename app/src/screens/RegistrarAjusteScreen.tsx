@@ -7,6 +7,7 @@ import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
   aISO,
+  Ayuda,
   Button,
   DateField,
   ErrorText,
@@ -72,10 +73,11 @@ export function RegistrarAjusteScreen() {
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
       )}
-      <Paragraph>
-        Solo cuando no puedes reconstruir la causa exacta de una diferencia entre el valor
-        registrado y el real.
-      </Paragraph>
+      <Ayuda>
+        Un ajuste corrige el valor cuando no puedes reconstruir la causa exacta
+        de una diferencia (el saldo del banco no cuadra con lo registrado, un
+        error viejo). Si sabes qué pasó, registra el movimiento en su lugar.
+      </Ayuda>
 
       <Segmented
         label="El valor real es…"
