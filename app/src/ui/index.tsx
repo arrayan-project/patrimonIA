@@ -243,7 +243,7 @@ export function Field({
 }: TextInputProps & { label: string; error?: string }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         placeholderTextColor={colors.muted}

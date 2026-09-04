@@ -50,7 +50,7 @@ vio el elemento, se asumió que falló.)
 | B5 | ✅ 15k — `tipo` de elemento = `Select` con presets (`TIPOS_ELEMENTO_SUGERIDOS` en `labels.ts`) + "Otro…" para texto libre; en Agregar y Editar elemento | 🟡 | P1 |
 | B6 | ✅ 15k — `Select` de moneda (`MONEDAS_FRECUENTES` ISO 4217 + "Otro…") en Agregar elemento | 🟡 | P2 |
 | B7 | ✅ 19 — campo "Buscar elemento" (filtra por nombre) sobre los pickers de origen/destino en "Registrar movimiento", visible solo con > 6 elementos | 🟡 | P2 |
-| B8 | **UI de co-propietarios con %** — el backend soporta `propietarios[]` desde Fase 2; hoy solo se puede crear al 100 % propio | 🟡 | P2 |
+| B8 | ✅ 23 — en "Agregar cuenta o bien", si el hogar tiene más miembros aparece "Propiedad: Solo mía / Compartida"; en compartida, un campo de % por miembro + total en vivo (verde a los 100 %). Valida suma 100, que quedes con ≥ 1 % y que haya otra persona. e2e `copropiedad.e2e-spec.ts` (3) | 🟡 | P2 |
 | B9 | ✅ 15k — `Screen` envuelve el scroll en `KeyboardAvoidingView` (+ `keyboardDismissMode="interactive"`) | 🟡 | P1 |
 
 ---
@@ -291,6 +291,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~20~~ ✅ | Formularios: **H2** `useConfirmarDescarte` (guard `beforeRemove` + `confirmar()`) en 7 formularios; **H3/E6 parcial** `Field`/`MoneyField` con `error?` (borde rojo + mensaje al pie) + validación en vivo (`tocado`/`intento`) en Agregar elemento y Registrar movimiento. Pendiente suelto: B8, H1, H3/E6 resto, H4, F3 completo, G1, E5 detalle, E7, D6. | 19 |
 | ~~21~~ ✅ | Pulido mecánico: **G6** `colors.muted` → `#4b5563` (AA); **E5** `Skeleton` en las 16 pantallas de detalle que quedaban; **F3** `MoneyText` en la lista de elementos del Inicio, los ajustes del detalle y el patrimonio del hogar (`Row` acepta `ReactNode`); **H3/E6** validación en vivo + `error?` en Registrar ajuste, Valorizar, Crear hogar y Perfil. Pendiente suelto: B8, H1, H4, F4, I1, D6, E7, G1, G5. | 20 |
 | ~~22~~ ✅ | **F4** copys sin "elemento patrimonial" (header, sección del Inicio, botones de estado, pickers de movimiento); **I1** `accessibilityRole`/`State`/`Label` + `minHeight: 44` en los componentes compartidos de `ui/`; **D6** componente `Migaja` (contexto del padre sobre el `Title`) + `contexto` como param de navegación desde los detalles. Pendiente suelto: B8, H1, H4, E7, G1, G5, I1 (barrido por pantalla). | 21 |
+| ~~23~~ ✅ | **B8** — UI de co-propietarios con % en "Agregar cuenta o bien" (toggle Solo mía / Compartida, un % por miembro del hogar, total en vivo, validación suma-100 / actor ≥ 1 % / ≥ 2 personas); `Field` acepta `label` vacío. e2e `copropiedad.e2e-spec.ts` (+3 → **115 e2e**). Pendiente suelto: H1, H4, E7, G1, G5, I1 (barrido). | 22 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.
