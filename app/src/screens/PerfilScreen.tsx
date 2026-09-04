@@ -4,6 +4,7 @@ import { api, ApiError, type UsuarioDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title } from '../ui';
 
@@ -18,6 +19,8 @@ export function PerfilScreen() {
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const sucio = (!!me && nombre.trim() !== me.nombre) || motivo.trim().length > 0;
+  const permitirSalida = useConfirmarDescarte(sucio && !busy);
 
   useEffect(() => {
     api
@@ -35,6 +38,7 @@ export function PerfilScreen() {
     try {
       await api.post('/comandos/ActualizarDatosUsuario', { nombre: nombre.trim() }, token);
       toast.mostrar('Perfil actualizado');
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -56,6 +60,7 @@ export function PerfilScreen() {
     setError('');
     try {
       await api.post('/comandos/DesactivarUsuario', { motivo: motivo.trim() }, token);
+      permitirSalida();
       cerrarSesion();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

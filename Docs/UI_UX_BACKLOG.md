@@ -95,7 +95,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | E3 | **Variante `danger` en `Button`** — hoy "Eliminar" usa el estilo `secondary` gris, igual que "Cancelar" | 🟡 | P1 |
 | E4 | ✅ 15l — componente `EmptyState` (ícono + texto + acción opcional); en Dashboard (con botón), Objetivos, Presupuestos, Movimientos programados, Plantillas, Etiquetas, Agrupaciones, Notificaciones | 🟡 | P2 |
 | E5 | ⚠️ 19 parcial — componente `Skeleton` (tarjetas gris con pulso); reemplazó el spinner en 8 pantallas de lista (Presupuestos, Objetivos, Mov. programados, Categorías, Notificaciones, Tipos de cambio, Invitaciones, Movimientos, Registrar movimiento). Falta: pantallas de detalle | 🟡 | P2 |
-| E6 | **Errores por campo** — hoy todo cae en un solo `ErrorText` al fondo (a veces un string multilínea del backend) | 🟡 | P2 |
+| E6 | ⚠️ 20 parcial — `Field`/`MoneyField` tienen `error?` para el mensaje junto al campo; usado en la validación en vivo de Agregar elemento / Registrar movimiento. Falta: mapear errores del backend por campo | 🟡 | P2 |
 | E7 | **Estado offline / sin backend** — mensaje claro + reintento | 🟡 | P2 |
 
 ---
@@ -132,8 +132,8 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
 | H1 | **Wizard para "Agregar elemento"** — hoy un form largo con campos que aparecen/desaparecen según la categoría; mejor 2-3 pasos | 🟡 | P2 |
-| H2 | **No perder lo escrito** al navegar atrás por accidente (confirmar descarte) | 🟡 | P2 |
-| H3 | **Validación en vivo** (monto > 0, moneda coincide con el elemento) con mensajes junto al campo | 🟡 | P2 |
+| H2 | ✅ 20 — `useConfirmarDescarte(hayCambios)` intercepta el "atrás" (gesto/flecha/botón físico) con `beforeRemove` y pide confirmar; en Agregar/Editar elemento, Registrar movimiento/ajuste, Valorizar, Crear hogar, Perfil | 🟡 | P2 |
+| H3 | ⚠️ 20 parcial — `Field`/`MoneyField` aceptan `error?` (borde rojo + mensaje bajo el campo); validación en vivo (nombre, moneda 3 letras, monto > 0, origen ≠ destino) en Agregar elemento y Registrar movimiento, con `tocado`/`intento`. Falta: resto de formularios | 🟡 | P2 |
 | H4 | **Transferencia a otro miembro del hogar** — hoy la UI dice "hay que conocer el id de su elemento"; debería listar los elementos visibles de co-miembros (cruza con G6) | 🟡 | P2 |
 | H5 | ✅ 18 — `EditarElementoScreen` ya tenía visibilidad; se agregó "¿Cuenta en el patrimonio del hogar?" (`CambiarParticipacionEnConsolidacion`), ambos con caja `Ayuda` | 🟡 | P2 |
 
@@ -288,6 +288,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~17~~ ✅ | **Sistema visual + ayuda contextual**: `colors.fondo` (página gris suave) + `colors.info` + `sombra`; sweep de `styles.card` (fondo blanco + `borderRadius: 14`) en 26 pantallas → las tarjetas resaltan; componente `Card` (chevron "ver más" + `franja` de color) usado en las listas de Objetivos/Presupuestos/Mov. programados; chevron en las filas tocables (Inicio, detalle de elemento, Movimientos); puntos de color por agrupación en el Inicio; componente `Ayuda` (F5) en 8 pantallas. | 16 |
 | ~~18~~ ✅ | Acciones y explicaciones: `FAB` (D4) para "Registrar movimiento" en Inicio/Movimientos; H5 (toggle "cuenta en el patrimonio del hogar" en editar elemento); J2 (ayuda de categoría funcional al agregar); visibilidad con ayuda; F3 en el patrimonio neto del Inicio. | 17 |
 | ~~19~~ ✅ | Carga y pickers: componente `Skeleton` (E5, 8 pantallas de lista); "Buscar elemento" en los pickers de Registrar movimiento (B7); barra de avance total en la lista de Objetivos; `fix`: el título quedaba bajo el notch en iPhone (native-stack exponía `HeaderHeightContext` = 0 con header oculto). Pendiente suelto: B8, H1–H4, F3 completo, G1 (tipografía/espaciado), E5 detalle, E6–E7, D6. | 18 |
+| ~~20~~ ✅ | Formularios: **H2** `useConfirmarDescarte` (guard `beforeRemove` + `confirmar()`) en 7 formularios; **H3/E6 parcial** `Field`/`MoneyField` con `error?` (borde rojo + mensaje al pie) + validación en vivo (`tocado`/`intento`) en Agregar elemento y Registrar movimiento. Pendiente suelto: B8, H1, H3/E6 resto, H4, F3 completo, G1, E5 detalle, E7, D6. | 19 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

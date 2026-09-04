@@ -3,6 +3,7 @@ import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { Button, ErrorText, Field, Paragraph, Screen, Title } from '../ui';
 
 export function CrearHogarScreen() {
@@ -12,6 +13,7 @@ export function CrearHogarScreen() {
   const [nombre, setNombre] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const permitirSalida = useConfirmarDescarte(nombre.trim().length > 0 && !loading);
 
   const onSubmit = async () => {
     setError('');
@@ -24,6 +26,7 @@ export function CrearHogarScreen() {
         key,
       );
       // "usuario = Administrador" es resultado automático del comando.
+      permitirSalida();
       nav.reset('Tabs');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

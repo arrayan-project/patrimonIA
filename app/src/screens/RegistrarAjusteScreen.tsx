@@ -3,6 +3,7 @@ import { api, ApiError, type AjustePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
   aISO,
@@ -34,6 +35,9 @@ export function RegistrarAjusteScreen() {
   const [loading, setLoading] = useState(false);
 
   const monto = (direccion === 'Menor' ? -1 : 1) * (Number(magnitud) || 0);
+  const permitirSalida = useConfirmarDescarte(
+    (Number(magnitud) > 0 || motivo.trim().length > 0) && !loading,
+  );
 
   const onSubmit = async () => {
     setError('');
@@ -45,6 +49,7 @@ export function RegistrarAjusteScreen() {
         token,
       );
       toast.mostrar('Ajuste registrado');
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

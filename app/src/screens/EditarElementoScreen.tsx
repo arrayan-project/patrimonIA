@@ -4,6 +4,7 @@ import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
   Ayuda,
@@ -38,6 +39,15 @@ export function EditarElementoScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const sucio =
+    !!el &&
+    (nombre.trim() !== el.nombre ||
+      tipo.trim() !== el.tipo ||
+      visibilidad !== el.visibilidad ||
+      (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
+      motivo.trim().length > 0);
+  const permitirSalida = useConfirmarDescarte(sucio && !busy);
+
   useEffect(() => {
     api
       .get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token)
@@ -57,6 +67,7 @@ export function EditarElementoScreen() {
     try {
       await fn();
       if (aviso) toast.mostrar(aviso);
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

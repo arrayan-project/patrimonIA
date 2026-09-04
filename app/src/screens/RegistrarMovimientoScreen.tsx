@@ -13,6 +13,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
@@ -57,6 +58,16 @@ export function RegistrarMovimientoScreen() {
   const [glosa, setGlosa] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
+
+  const sucio =
+    Number(monto) > 0 ||
+    !!origenId ||
+    !!destinoId ||
+    glosa.trim() !== '' ||
+    categoriaId !== null ||
+    etiquetaIds.length > 0;
+  const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
   useEffect(() => {
     api
@@ -109,7 +120,15 @@ export function RegistrarMovimientoScreen() {
     return ref?.moneda ?? 'CLP';
   }, [elementos, origenId, destinoId, necesitaOrigen]);
 
+  const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
+  const errMismo =
+    necesitaOrigen && necesitaDestino && origenId && origenId === destinoId
+      ? 'El origen y el destino no pueden ser el mismo.'
+      : '';
+
   const onSubmit = async () => {
+    setIntento(true);
+    if (errMonto || errMismo || !puedeEnviar) return;
     setError('');
     setLoading(true);
     try {
@@ -130,6 +149,7 @@ export function RegistrarMovimientoScreen() {
         key,
       );
       toast.mostrar('Movimiento registrado');
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -181,7 +201,13 @@ export function RegistrarMovimientoScreen() {
           equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
         </Paragraph>
       )}
-      <MoneyField label="Monto" value={monto} onChange={setMonto} moneda={monedaEvento} />
+      <MoneyField
+        label="Monto"
+        value={monto}
+        onChange={setMonto}
+        moneda={monedaEvento}
+        error={intento ? errMonto : undefined}
+      />
       <DateField label="Fecha" value={fecha} onChange={setFecha} />
       <Field
         label="Detalle (opcional)"
@@ -270,8 +296,9 @@ export function RegistrarMovimientoScreen() {
         </View>
       )}
 
+      {intento && errMismo ? <ErrorText>{errMismo}</ErrorText> : null}
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar" onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
+      <Button title="Registrar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

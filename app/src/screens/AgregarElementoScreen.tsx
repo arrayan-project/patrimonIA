@@ -3,6 +3,7 @@ import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
   Ayuda,
@@ -46,15 +47,39 @@ export function AgregarElementoScreen() {
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
+  const [tocado, setTocado] = useState<Record<string, boolean>>({});
 
   const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';
+  const sucio =
+    nombre.trim().length > 0 ||
+    tipo !== 'cuenta_corriente' ||
+    categoria !== 'LIQUIDEZ' ||
+    valorInicial !== '0' ||
+    valorPendiente !== '' ||
+    moneda !== 'CLP';
+  const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
-  const onCategoria = (c: (typeof CATEGORIAS)[number]) => {
-    setCategoria(c);
-    setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
-  };
+  // ── Validación en vivo ────────────────────────────────────────────────────
+  const errNombre = nombre.trim() ? '' : 'Escribe un nombre para identificarlo.';
+  const errMoneda = /^[A-Za-z]{3}$/.test(moneda.trim())
+    ? ''
+    : 'Usa el código de 3 letras (CLP, USD, EUR…).';
+  const errPendiente =
+    esDeudaOCredito && !(Number(valorPendiente) > 0)
+      ? categoria === 'DEUDA'
+        ? 'Indica cuánto debes.'
+        : 'Indica cuánto te deben.'
+      : '';
+
+  const ver = (campo: string, msg: string) => ((tocado[campo] || intento) && msg ? msg : undefined);
+  const marcar = (campo: string) => setTocado((t) => ({ ...t, [campo]: true }));
+
+  const hayErrores = !!(errNombre || errMoneda || errPendiente);
 
   const onSubmit = async () => {
+    setIntento(true);
+    if (hayErrores) return;
     setError('');
     setLoading(true);
     try {
@@ -77,6 +102,7 @@ export function AgregarElementoScreen() {
         key,
       );
       toast.mostrar('Elemento agregado');
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -90,13 +116,24 @@ export function AgregarElementoScreen() {
       <Title>Agregar elemento patrimonial</Title>
       <Paragraph>Una cuenta, un activo, una inversión. Quedas como propietario al 100%.</Paragraph>
 
-      <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Cuenta corriente" autoCapitalize="sentences" />
+      <Field
+        label="Nombre"
+        value={nombre}
+        onChangeText={setNombre}
+        onBlur={() => marcar('nombre')}
+        placeholder="Cuenta corriente"
+        autoCapitalize="sentences"
+        error={ver('nombre', errNombre)}
+      />
       <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
       <Select
         label="Categoría funcional"
         value={categoria}
         options={OPC_CATEGORIA}
-        onChange={(c) => onCategoria(c as (typeof CATEGORIAS)[number])}
+        onChange={(c) => {
+          setCategoria(c as (typeof CATEGORIAS)[number]);
+          setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
+        }}
       />
       <Ayuda>
         {categoria === 'LIQUIDEZ'
@@ -116,8 +153,12 @@ export function AgregarElementoScreen() {
           <MoneyField
             label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
             value={valorPendiente}
-            onChange={setValorPendiente}
+            onChange={(v) => {
+              setValorPendiente(v);
+              marcar('pendiente');
+            }}
             moneda={moneda.trim().toUpperCase() || undefined}
+            error={ver('pendiente', errPendiente)}
           />
           <Paragraph>
             {categoria === 'DEUDA'
@@ -143,9 +184,15 @@ export function AgregarElementoScreen() {
         </>
       )}
       <Select label="Moneda" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
+      {intento && errMoneda ? <ErrorText>{errMoneda}</ErrorText> : null}
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar elemento" onPress={onSubmit} loading={loading} disabled={!nombre.trim()} />
+      <Button
+        title="Registrar elemento"
+        onPress={onSubmit}
+        loading={loading}
+        disabled={intento && hayErrores}
+      />
     </Screen>
   );
 }

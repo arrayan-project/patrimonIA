@@ -3,6 +3,7 @@ import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import { Button, DateField, ErrorText, MoneyField, Paragraph, Screen, Title } from '../ui';
 
@@ -18,6 +19,9 @@ export function ValorizarScreen() {
   const [fecha, setFecha] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const permitirSalida = useConfirmarDescarte(
+    (valorNuevo.trim() !== '' || fecha.trim() !== '') && !loading,
+  );
 
   const onSubmit = async () => {
     setError('');
@@ -33,6 +37,7 @@ export function ValorizarScreen() {
         token,
       );
       toast.mostrar('Valorización registrada');
+      permitirSalida();
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

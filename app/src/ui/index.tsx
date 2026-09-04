@@ -217,17 +217,19 @@ export function Paragraph({ children }: { children: ReactNode }) {
 
 export function Field({
   label,
+  error,
   ...props
-}: TextInputProps & { label: string }) {
+}: TextInputProps & { label: string; error?: string }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, error ? styles.inputError : null]}
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         {...props}
       />
+      {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </View>
   );
 }
@@ -290,12 +292,14 @@ export function MoneyField({
   onChange,
   moneda,
   placeholder = '0',
+  error,
 }: {
   label: string;
   value: string;
   onChange: (canonico: string) => void;
   moneda?: string;
   placeholder?: string;
+  error?: string;
 }) {
   const [entero, dec] = value.split('.');
   const display =
@@ -319,13 +323,14 @@ export function MoneyField({
     <View style={styles.field}>
       <Text style={styles.label}>{moneda ? `${label} (${moneda})` : label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, error ? styles.inputError : null]}
         keyboardType="numeric"
         value={display}
         onChangeText={alEscribir}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
       />
+      {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </View>
   );
 }
@@ -794,6 +799,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  inputError: { borderColor: colors.danger },
+  errorInline: { color: colors.danger, fontSize: 12 },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 8,
