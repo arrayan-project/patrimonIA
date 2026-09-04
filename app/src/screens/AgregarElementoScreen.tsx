@@ -18,7 +18,10 @@ import {
   colors,
   ErrorText,
   Field,
+  LinkButton,
   MoneyField,
+  Nota,
+  Pasos,
   Paragraph,
   Screen,
   Segmented,
@@ -64,8 +67,10 @@ export function AgregarElementoScreen() {
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intento, setIntento] = useState(false);
-  const [tocado, setTocado] = useState<Record<string, boolean>>({});
+
+  // Paso actual del wizard y qué pasos ya intentó avanzar (para mostrar errores).
+  const [paso, setPaso] = useState(1);
+  const [intentado, setIntentado] = useState<Record<number, boolean>>({});
 
   // ── Co-propietarios (B8) ──────────────────────────────────────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
@@ -82,6 +87,7 @@ export function AgregarElementoScreen() {
 
   const hayComiembros = miembros.some((m) => m.usuarioId !== usuario.id);
   const compartida = propiedad === 'Compartida' && hayComiembros;
+  const totalPasos = hayComiembros ? 3 : 2;
 
   const pctDe = (id: string) => Number(pcts[id] || 0);
   const propietarios = miembros
@@ -100,7 +106,7 @@ export function AgregarElementoScreen() {
     propiedad !== 'Solo mía';
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
-  // ── Validación en vivo ────────────────────────────────────────────────────
+  // ── Validación por paso ───────────────────────────────────────────────────
   const errNombre = nombre.trim() ? '' : 'Escribe un nombre para identificarlo.';
   const errMoneda = /^[A-Za-z]{3}$/.test(moneda.trim())
     ? ''
@@ -121,10 +127,15 @@ export function AgregarElementoScreen() {
           ? 'Agrega al menos otra persona con un porcentaje.'
           : '';
 
-  const ver = (campo: string, msg: string) => ((tocado[campo] || intento) && msg ? msg : undefined);
-  const marcar = (campo: string) => setTocado((t) => ({ ...t, [campo]: true }));
+  const errorDelPaso = (p: number) =>
+    p === 1 ? errNombre : p === 2 ? errMoneda || errPendiente : errReparto;
+  const mostrar = (p: number, msg: string) => (intentado[p] && msg ? msg : undefined);
 
-  const hayErrores = !!(errNombre || errMoneda || errPendiente || errReparto);
+  const avanzar = () => {
+    setIntentado((x) => ({ ...x, [paso]: true }));
+    if (errorDelPaso(paso)) return;
+    setPaso((p) => Math.min(totalPasos, p + 1));
+  };
 
   const onPropiedad = (v: 'Solo mía' | 'Compartida') => {
     setPropiedad(v);
@@ -134,8 +145,8 @@ export function AgregarElementoScreen() {
   };
 
   const onSubmit = async () => {
-    setIntento(true);
-    if (hayErrores) return;
+    setIntentado((x) => ({ ...x, [paso]: true }));
+    if (errNombre || errMoneda || errPendiente || errReparto) return;
     setError('');
     setLoading(true);
     try {
@@ -168,94 +179,104 @@ export function AgregarElementoScreen() {
     }
   };
 
+  const esUltimo = paso === totalPasos;
+
   return (
     <Screen>
       <Title>Agregar cuenta o bien</Title>
-      <Paragraph>
-        Una cuenta, un activo, una inversión, una deuda.
-        {hayComiembros ? '' : ' Quedas como propietario al 100%.'}
-      </Paragraph>
+      <Pasos actual={paso} total={totalPasos} />
 
-      <Field
-        label="Nombre"
-        value={nombre}
-        onChangeText={setNombre}
-        onBlur={() => marcar('nombre')}
-        placeholder="Cuenta corriente"
-        autoCapitalize="sentences"
-        error={ver('nombre', errNombre)}
-      />
-      <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
-      <Select
-        label="Categoría funcional"
-        value={categoria}
-        options={OPC_CATEGORIA}
-        onChange={(c) => {
-          setCategoria(c as (typeof CATEGORIAS)[number]);
-          setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
-        }}
-      />
-      <Ayuda>
-        {categoria === 'LIQUIDEZ'
-          ? 'Liquidez: efectivo y cuentas de uso diario.'
-          : categoria === 'RESERVA'
-            ? 'Reserva: fondo de emergencia, plata que guardas pero no gastas.'
-            : categoria === 'INVERSION'
-              ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
-              : categoria === 'ACTIVO'
-                ? 'Activo: bienes como un inmueble o un vehículo.'
-                : categoria === 'DEUDA'
-                  ? 'Deuda: lo que debes (un crédito, un préstamo). Resta a tu patrimonio.'
-                  : 'Crédito por cobrar: lo que alguien te debe. Suma a tu patrimonio.'}
-      </Ayuda>
-      {esDeudaOCredito ? (
+      {paso === 1 && (
         <>
-          <MoneyField
-            label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
-            value={valorPendiente}
-            onChange={(v) => {
-              setValorPendiente(v);
-              marcar('pendiente');
+          <Select
+            label="¿Qué es?"
+            value={categoria}
+            options={OPC_CATEGORIA}
+            onChange={(c) => {
+              setCategoria(c as (typeof CATEGORIAS)[number]);
+              setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
             }}
-            moneda={moneda.trim().toUpperCase() || undefined}
-            error={ver('pendiente', errPendiente)}
           />
-          <Paragraph>
-            {categoria === 'DEUDA'
-              ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
-              : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
-          </Paragraph>
-        </>
-      ) : (
-        <>
-          <MoneyField
-            label="Valor inicial"
-            value={valorInicial}
-            onChange={setValorInicial}
-            moneda={moneda.trim().toUpperCase() || undefined}
+          <Ayuda>
+            {categoria === 'LIQUIDEZ'
+              ? 'Liquidez: efectivo y cuentas de uso diario.'
+              : categoria === 'RESERVA'
+                ? 'Reserva: fondo de emergencia, plata que guardas pero no gastas.'
+                : categoria === 'INVERSION'
+                  ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
+                  : categoria === 'ACTIVO'
+                    ? 'Activo: bienes como un inmueble o un vehículo.'
+                    : categoria === 'DEUDA'
+                      ? 'Deuda: lo que debes (un crédito, un préstamo). Resta a tu patrimonio.'
+                      : 'Crédito por cobrar: lo que alguien te debe. Suma a tu patrimonio.'}
+          </Ayuda>
+          <Field
+            label="Nombre"
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Cuenta corriente"
+            autoCapitalize="sentences"
+            error={mostrar(1, errNombre)}
           />
-          <Segmented
-            label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
-            options={['No', 'Sí'] as const}
-            value={valorizable}
-            onChange={setValorizable}
-          />
-          <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
+          <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
         </>
       )}
-      <Select label="Moneda" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
-      {intento && errMoneda ? <ErrorText>{errMoneda}</ErrorText> : null}
 
-      {hayComiembros && (
+      {paso === 2 && (
+        <>
+          <Select
+            label="Moneda"
+            value={moneda}
+            options={OPC_MONEDA}
+            onChange={setMoneda}
+            permiteOtro
+          />
+          {intentado[2] && errMoneda ? <ErrorText>{errMoneda}</ErrorText> : null}
+          {esDeudaOCredito ? (
+            <>
+              <MoneyField
+                label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
+                value={valorPendiente}
+                onChange={setValorPendiente}
+                moneda={moneda.trim().toUpperCase() || undefined}
+                error={mostrar(2, errPendiente)}
+              />
+              <Paragraph>
+                {categoria === 'DEUDA'
+                  ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
+                  : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
+              </Paragraph>
+            </>
+          ) : (
+            <>
+              <MoneyField
+                label="Valor inicial"
+                value={valorInicial}
+                onChange={setValorInicial}
+                moneda={moneda.trim().toUpperCase() || undefined}
+              />
+              <Segmented
+                label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
+                options={['No', 'Sí'] as const}
+                value={valorizable}
+                onChange={setValorizable}
+              />
+              <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
+            </>
+          )}
+        </>
+      )}
+
+      {paso === 3 && (
         <>
           <Segmented
-            label="Propiedad"
+            label="¿De quién es?"
             options={['Solo mía', 'Compartida'] as const}
             value={propiedad}
             onChange={onPropiedad}
             formatearOpcion={(v) => v}
           />
-          {compartida && (
+          {compartida ? (
             <View style={styles.reparto}>
               <Ayuda>
                 Reparte el 100% entre los propietarios. Cada uno verá su parte en su
@@ -283,14 +304,28 @@ export function AgregarElementoScreen() {
               <Text style={[styles.total, Math.abs(totalPct - 100) < 0.001 && styles.totalOk]}>
                 Total: {Math.round(totalPct * 100) / 100}%
               </Text>
-              {intento && errReparto ? <ErrorText>{errReparto}</ErrorText> : null}
+              {intentado[3] && errReparto ? <ErrorText>{errReparto}</ErrorText> : null}
             </View>
+          ) : (
+            <Nota>Quedas como propietario al 100%.</Nota>
           )}
         </>
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Agregar" onPress={onSubmit} loading={loading} disabled={intento && hayErrores} />
+
+      <View style={styles.pie}>
+        {esUltimo ? (
+          <Button title="Agregar" onPress={onSubmit} loading={loading} />
+        ) : (
+          <Button title="Siguiente" onPress={avanzar} />
+        )}
+        {paso > 1 ? (
+          <View style={styles.atras}>
+            <LinkButton title="← Atrás" onPress={() => setPaso((p) => p - 1)} />
+          </View>
+        ) : null}
+      </View>
     </Screen>
   );
 }
@@ -303,4 +338,6 @@ const styles = StyleSheet.create({
   pctSigno: { fontSize: 15, color: colors.muted, fontWeight: '600' },
   total: { fontSize: 13, fontWeight: '700', color: colors.muted, textAlign: 'right' },
   totalOk: { color: colors.primary },
+  pie: { gap: 10 },
+  atras: { alignItems: 'center' },
 });

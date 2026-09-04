@@ -688,6 +688,18 @@ export function Select({
   );
 }
 
+/** Cabecera de un formulario por pasos: "Paso N de M" + barra de avance. */
+export function Pasos({ actual, total }: { actual: number; total: number }) {
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={styles.nota}>
+        Paso {actual} de {total}
+      </Text>
+      <ProgressBar pct={(actual / total) * 100} />
+    </View>
+  );
+}
+
 export function ProgressBar({ pct }: { pct: number }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (

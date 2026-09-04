@@ -131,7 +131,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| H1 | **Wizard para "Agregar elemento"** — hoy un form largo con campos que aparecen/desaparecen según la categoría; mejor 2-3 pasos | 🟡 | P2 |
+| H1 | ✅ 27 — "Agregar cuenta o bien" es un wizard: **1** ¿Qué es? (categoría + ayuda + nombre + tipo) · **2** ¿Cuánto vale? (moneda + valor/monto pendiente + ¿se valoriza?) · **3** ¿De quién es? (solo si el hogar tiene más miembros — solo mía / compartida con %). Componente `Pasos` (contador + barra) en `ui/`; validación por paso al pulsar "Siguiente" | 🟡 | P2 |
 | H2 | ✅ 20 — `useConfirmarDescarte(hayCambios)` intercepta el "atrás" (gesto/flecha/botón físico) con `beforeRemove` y pide confirmar; en Agregar/Editar elemento, Registrar movimiento/ajuste, Valorizar, Crear hogar, Perfil | 🟡 | P2 |
 | H3 | ⚠️ 20 parcial — `Field`/`MoneyField` aceptan `error?` (borde rojo + mensaje bajo el campo); validación en vivo (nombre, moneda 3 letras, monto > 0, origen ≠ destino) en Agregar elemento y Registrar movimiento, con `tocado`/`intento`. Falta: resto de formularios | 🟡 | P2 |
 | H4 | **Transferencia a otro miembro del hogar** — hoy la UI dice "hay que conocer el id de su elemento"; debería listar los elementos visibles de co-miembros (cruza con G6) | 🟡 | P2 |
@@ -295,6 +295,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~24~~ ✅ | **E7** — detección de estado offline en `client.ts` (`estadoRed`/`observarRed`/`esErrorDeRed`), hook `useConexion`, barra `BannerConexion` (App.tsx) con "Reintentar" (ping a `/health`), y `useCargaAlEnfocar` recarga sola al volver la conexión. Pendiente suelto: H1, H4, G1, G5, I1 (barrido). | 23 |
 | ~~25~~ ✅ | **G1 (parte 1)** — sistema de escala en `ui/index.tsx`: `escala` (espaciado), `tipo` (tipografía), `panel` (look de tarjeta); componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat`. Sweep de las 25 pantallas: `styles.card` → `{ ...panel, gap }`, `sectionTitle`/`muted` → `tipo.seccion`/`tipo.nota`. Pendiente: adoptar los componentes en el JSX; H1, H4, G5, I1 (barrido). | 24 |
 | ~~26~~ ✅ | **G1 (parte 2)** — `<View style={styles.card}>` → `<Panel>` en 24 pantallas (–24 defs locales de `styles.card`); `ElementoDetalleScreen` reescrita con `ListItem`/`Stat`/`SectionTitle`/`Nota` (sus 3 listas a mano → `<ListItem>`); `MovimientoDetalle` con `Stat` + `Panel`. Neto −56 líneas. Pendiente: H1, H4, G5, I1 (barrido), `ListItem` en el resto de listas. | 25 |
+| ~~27~~ ✅ | **H1** — "Agregar cuenta o bien" pasó a wizard de 2-3 pasos (¿Qué es? / ¿Cuánto vale? / ¿De quién es?), componente `Pasos` en `ui/`, validación por paso. Pendiente: H4, G5, I1 (barrido), G1 remanente. | 26 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.
