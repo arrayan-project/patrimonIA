@@ -104,6 +104,14 @@ export class PlanificacionController {
     return this.reservas.listarPorAsignacion(id, u.id);
   }
 
+  @Get('elementos-patrimoniales/:id/reservas')
+  reservasDeElemento(
+    @CurrentUser() u: UsuarioAutenticado,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.reservas.listarPorElementoOrigen(id, u.id);
+  }
+
   // ── Reserva ──────────────────────────────────────────────────────────────
 
   @Post('comandos/CrearReserva')

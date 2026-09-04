@@ -7,6 +7,7 @@ import {
   type AjustePatrimonialDTO,
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
+  type ReservaDeElementoDTO,
   type ValorizacionDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -46,6 +47,7 @@ export function ElementoDetalleScreen() {
   const [eventos, setEventos] = useState<EventoFinancieroDTO[]>([]);
   const [valorizaciones, setValorizaciones] = useState<ValorizacionDTO[]>([]);
   const [ajustes, setAjustes] = useState<AjustePatrimonialDTO[]>([]);
+  const [reservas, setReservas] = useState<ReservaDeElementoDTO[]>([]);
   const [error, setError] = useState('');
   const [saldarMotivo, setSaldarMotivo] = useState('');
   const [saldando, setSaldando] = useState(false);
@@ -64,6 +66,11 @@ export function ElementoDetalleScreen() {
       );
       setAjustes(
         await api.get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token),
+      );
+      setReservas(
+        await api
+          .get<ReservaDeElementoDTO[]>(`/elementos-patrimoniales/${elementoId}/reservas`, token)
+          .catch(() => []),
       );
       if (el.admiteValorizacion) {
         setValorizaciones(
@@ -120,6 +127,8 @@ export function ElementoDetalleScreen() {
   }
 
   const el = elemento;
+  const reservado = reservas.reduce((acc, r) => acc + r.monto, 0);
+  const libre = el.valorVigente - reservado;
   const montoMov = (monto: number, moneda: string, anulado: boolean) => (
     <Text
       style={[
@@ -146,6 +155,30 @@ export function ElementoDetalleScreen() {
         <Row left="Visibilidad" right={etiqueta(el.visibilidad)} />
         <Row left="Estado" right={etiqueta(el.estado)} />
       </Panel>
+
+      {reservas.length > 0 && (
+        <Panel>
+          <SectionTitle>Disponibilidad</SectionTitle>
+          <Row left="Valor vigente" right={money(el.valorVigente, el.moneda)} />
+          <Row left="Reservado para metas" right={`− ${money(reservado, el.moneda)}`} />
+          <Row left="Disponible (libre)" right={money(libre, el.moneda)} />
+          <Nota>
+            Lo reservado no salió de la cuenta: sigue ahí, pero está comprometido
+            para tus objetivos. "Disponible" es lo que puedes usar sin tocar una meta.
+          </Nota>
+          {reservas.map((r) => (
+            <ListItem
+              key={r.id}
+              title={r.objetivoNombre ? `${r.objetivoNombre} · ${r.asignacionNombre}` : r.asignacionNombre}
+              subtitle={r.objetivoNombre ? 'Objetivo' : 'Asignación sin objetivo'}
+              right={money(r.monto, el.moneda)}
+              onPress={() =>
+                nav.go('AsignacionDetalle', { asignacionId: r.asignacionId, contexto: el.nombre })
+              }
+            />
+          ))}
+        </Panel>
+      )}
 
       {(esDeuda || esCredito) && (
         <Panel>
@@ -185,30 +218,44 @@ export function ElementoDetalleScreen() {
         {eventos.length === 0 ? (
           <Nota>Sin movimientos.</Nota>
         ) : (
-          eventos.map((ev) => {
-            const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
-            const sufijo = ev.anulado
-              ? 'anulado'
-              : ev.correccionDeId
-                ? 'corrección'
-                : fechaLegible(ev.fecha);
-            return (
-              <ListItem
-                key={ev.id}
-                title={ev.glosa || etiqueta(ev.tipo)}
-                subtitle={ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
-                tachado={ev.anulado}
-                right={montoMov(impacto?.monto ?? ev.monto, ev.moneda, ev.anulado)}
-                onPress={() =>
-                  nav.go('MovimientoDetalle', {
-                    eventoId: ev.id,
-                    elementoId,
-                    contexto: el.nombre,
-                  })
-                }
-              />
-            );
-          })
+          (() => {
+            // A9 — colapsar el par corrección + original en una sola fila con el
+            // monto final; el evento de corrección no se lista aparte.
+            const correccionDe = new Map<string, EventoFinancieroDTO>();
+            for (const ev of eventos) {
+              if (ev.correccionDeId) correccionDe.set(ev.correccionDeId, ev);
+            }
+            return eventos
+              .filter((ev) => !ev.correccionDeId)
+              .map((ev) => {
+                const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
+                const corr = correccionDe.get(ev.id);
+                const corrImpacto = corr?.impactos.find((i) => i.elementoId === elementoId);
+                const monto =
+                  (impacto?.monto ?? ev.monto) + (corr ? (corrImpacto?.monto ?? 0) : 0);
+                const sufijo = ev.anulado
+                  ? 'anulado'
+                  : corr
+                    ? `corregido · ${fechaLegible(ev.fecha)}`
+                    : fechaLegible(ev.fecha);
+                return (
+                  <ListItem
+                    key={ev.id}
+                    title={ev.glosa || etiqueta(ev.tipo)}
+                    subtitle={ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
+                    tachado={ev.anulado}
+                    right={montoMov(monto, ev.moneda, ev.anulado)}
+                    onPress={() =>
+                      nav.go('MovimientoDetalle', {
+                        eventoId: ev.id,
+                        elementoId,
+                        contexto: el.nombre,
+                      })
+                    }
+                  />
+                );
+              });
+          })()
         )}
       </Panel>
 
@@ -305,6 +352,17 @@ export function ElementoDetalleScreen() {
         title="Editar / estado"
         variant="secondary"
         onPress={() => nav.go('EditarElemento', { elementoId, contexto: el.nombre })}
+      />
+      <Button
+        title="Historial de cambios"
+        variant="secondary"
+        onPress={() =>
+          nav.go('Historial', {
+            entidadTipo: 'ELEMENTO_PATRIMONIAL',
+            entidadId: elementoId,
+            contexto: el.nombre,
+          })
+        }
       />
     </Screen>
   );

@@ -100,7 +100,13 @@ describe('Flujo 3 — valorización de un activo (e2e)', () => {
       request(http).get('/usuarios/me/patrimonio-individual'),
     ).expect(200);
     expect(patrimonio.body.porMoneda).toEqual([
-      { moneda: 'CLP', patrimonio: 130_000_000, valorLiquido: 0 },
+      {
+        moneda: 'CLP',
+        patrimonio: 130_000_000,
+        valorLiquido: 0,
+        valorReservado: 0,
+        valorLibre: 0,
+      },
     ]);
   });
 

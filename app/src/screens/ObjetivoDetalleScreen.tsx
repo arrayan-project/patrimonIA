@@ -160,6 +160,18 @@ export function ObjetivoDetalleScreen() {
         />
       </Panel>
 
+      <Button
+        title="Historial de cambios"
+        variant="secondary"
+        onPress={() =>
+          nav.go('Historial', {
+            entidadTipo: 'OBJETIVO_FINANCIERO',
+            entidadId: objetivoId,
+            contexto: obj.nombre,
+          })
+        }
+      />
+
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

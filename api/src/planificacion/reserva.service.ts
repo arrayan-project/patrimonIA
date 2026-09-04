@@ -9,7 +9,11 @@ import { Prisma, type reserva as ReservaRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from './progreso.service.js';
-import { toReservaDTO, type ReservaDTO } from './planificacion.dto.js';
+import {
+  toReservaDTO,
+  type ReservaDeElementoDTO,
+  type ReservaDTO,
+} from './planificacion.dto.js';
 import type {
   AjustarMontoReservaDto,
   CrearReservaDto,
@@ -162,6 +166,31 @@ export class ReservaService {
       orderBy: { created_at: 'desc' },
     });
     return reservas.map(toReservaDTO);
+  }
+
+  /**
+   * A2 — reservas ACTIVAS que financian un elemento, con la meta que las
+   * compromete. Trazabilidad elemento → reserva (REQUISITES §F).
+   */
+  async listarPorElementoOrigen(
+    elementoId: string,
+    actorId: string,
+  ): Promise<ReservaDeElementoDTO[]> {
+    await this.#exigirPropietarioElemento(elementoId, actorId);
+    const reservas = await this.prisma.reserva.findMany({
+      where: { elemento_origen_id: elementoId, estado: 'ACTIVA' },
+      include: { asignacion: { include: { objetivo_financiero: true } } },
+      orderBy: { created_at: 'desc' },
+    });
+    return reservas.map((r) => ({
+      id: r.id,
+      monto: Number(r.monto),
+      asignacionId: r.asignacion_id,
+      asignacionNombre: r.asignacion.nombre,
+      objetivoId: r.asignacion.objetivo_financiero_id,
+      objetivoNombre: r.asignacion.objetivo_financiero?.nombre ?? null,
+      createdAt: r.created_at.toISOString(),
+    }));
   }
 
   async #cargar(reservaId: string, actorId: string): Promise<ReservaRow> {

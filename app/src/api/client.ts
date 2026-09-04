@@ -225,7 +225,35 @@ export interface EventoFinancieroDTO {
 export interface PatrimonioIndividualDTO {
   usuarioId: string;
   elementos: number;
-  porMoneda: { moneda: string; patrimonio: number; valorLiquido: number }[];
+  porMoneda: {
+    moneda: string;
+    patrimonio: number;
+    valorLiquido: number;
+    valorReservado: number;
+    valorLibre: number;
+  }[];
+}
+
+/** Reserva ACTIVA vista desde el elemento que la financia (A2). */
+export interface ReservaDeElementoDTO {
+  id: string;
+  monto: number;
+  asignacionId: string;
+  asignacionNombre: string;
+  objetivoId: string | null;
+  objetivoNombre: string | null;
+  createdAt: string;
+}
+
+export interface EntradaHistorialDTO {
+  id: string;
+  comando: string;
+  fecha: string;
+  usuarioId: string;
+  usuarioNombre: string;
+  valorAnterior: Record<string, unknown> | null;
+  valorPosterior: Record<string, unknown> | null;
+  motivo: string | null;
 }
 
 export interface ValorizacionDTO {

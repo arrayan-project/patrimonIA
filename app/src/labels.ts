@@ -75,6 +75,41 @@ const DICCIONARIO: Record<string, string> = {
   afp: 'AFP',
 };
 
+/**
+ * Nombre de comando (auditoría) → frase legible para el historial de cambios.
+ * Comunica la acción sin exponer el mecanismo (UX_FLOWS Flujo 3/6).
+ */
+const COMANDOS_AUDITORIA: Record<string, string> = {
+  RegistrarElementoPatrimonial: 'Creó este elemento',
+  ActualizarDatosElementoPatrimonial: 'Actualizó los datos',
+  CorregirDatosElementoPatrimonial: 'Corrigió los datos',
+  CambiarVisibilidadElementoPatrimonial: 'Cambió la visibilidad',
+  CambiarParticipacionEnConsolidacion: 'Cambió si cuenta en el patrimonio del hogar',
+  CambiarPropiedadElementoPatrimonial: 'Cambió los propietarios',
+  DesactivarElementoPatrimonial: 'Desactivó el elemento',
+  ReactivarElementoPatrimonial: 'Reactivó el elemento',
+  EliminarElementoPatrimonial: 'Eliminó el elemento',
+  CondonarDeuda: 'Condonó la deuda',
+  DeclararIncobrable: 'Declaró el crédito incobrable',
+  CrearObjetivoFinanciero: 'Creó el objetivo',
+  ActualizarDatosObjetivoFinanciero: 'Actualizó el objetivo',
+  CambiarEstadoObjetivoFinanciero: 'Cambió el estado',
+  CompletarObjetivo: 'El objetivo se completó',
+  EliminarObjetivoFinanciero: 'Eliminó el objetivo',
+  CrearAsignacion: 'Creó la asignación',
+  ActualizarDatosAsignacion: 'Actualizó la asignación',
+  CambiarAsociacionAObjetivo: 'Cambió el objetivo asociado',
+  EliminarAsignacion: 'Eliminó la asignación',
+  CrearReserva: 'Reservó dinero',
+  AjustarMontoReserva: 'Ajustó el monto reservado',
+  LiberarReserva: 'Liberó la reserva',
+};
+
+/** Frase legible de una acción de auditoría (cae al humanizado del comando). */
+export function accionAuditoria(comando: string): string {
+  return COMANDOS_AUDITORIA[comando] ?? humanizar(comando);
+}
+
 /** `EN_PROGRESO` → "En progreso"; `cuenta_corriente` → "Cuenta corriente". */
 export function humanizar(valor: string): string {
   if (!valor) return valor;

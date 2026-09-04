@@ -189,6 +189,18 @@ export function AsignacionDetalleScreen() {
         />
       </Panel>
 
+      <Button
+        title="Historial de cambios"
+        variant="secondary"
+        onPress={() =>
+          nav.go('Historial', {
+            entidadTipo: 'ASIGNACION',
+            entidadId: asignacionId,
+            contexto: asg.nombre,
+          })
+        }
+      />
+
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

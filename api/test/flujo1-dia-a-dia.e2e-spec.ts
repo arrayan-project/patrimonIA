@@ -92,7 +92,13 @@ describe('Flujo 1 — día a día financiero (e2e)', () => {
       request(http).get('/usuarios/me/patrimonio-individual'),
     ).expect(200);
     expect(patrimonio.body.porMoneda).toEqual([
-      { moneda: 'CLP', patrimonio: 950_000, valorLiquido: 950_000 },
+      {
+        moneda: 'CLP',
+        patrimonio: 950_000,
+        valorLiquido: 950_000,
+        valorReservado: 0,
+        valorLibre: 950_000,
+      },
     ]);
   });
 

@@ -30,10 +30,12 @@ import { ValorizacionDetalleScreen } from '../screens/ValorizacionDetalleScreen'
 import { RegistrarAjusteScreen } from '../screens/RegistrarAjusteScreen';
 import { AjusteDetalleScreen } from '../screens/AjusteDetalleScreen';
 import { EditarElementoScreen } from '../screens/EditarElementoScreen';
+import { HistorialScreen } from '../screens/HistorialScreen';
 import { GestionHogarScreen } from '../screens/GestionHogarScreen';
 import { PerfilScreen } from '../screens/PerfilScreen';
 import { ObjetivosScreen } from '../screens/ObjetivosScreen';
 import { ObjetivoDetalleScreen } from '../screens/ObjetivoDetalleScreen';
+import { AsignacionesScreen } from '../screens/AsignacionesScreen';
 import { AsignacionDetalleScreen } from '../screens/AsignacionDetalleScreen';
 import { PresupuestosScreen } from '../screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from '../screens/PresupuestoDetalleScreen';
@@ -126,10 +128,12 @@ const TITULOS: Record<string, string> = {
   RegistrarAjuste: 'Registrar ajuste',
   AjusteDetalle: 'Ajuste',
   EditarElemento: 'Editar',
+  Historial: 'Historial de cambios',
   GestionHogar: 'Gestionar hogar',
   Perfil: 'Mi perfil',
   Objetivos: 'Objetivos financieros',
   ObjetivoDetalle: 'Objetivo',
+  Asignaciones: 'Asignaciones',
   AsignacionDetalle: 'Asignación',
   Presupuestos: 'Presupuestos',
   PresupuestoDetalle: 'Presupuesto',
@@ -159,10 +163,12 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['RegistrarAjuste', RegistrarAjusteScreen],
   ['AjusteDetalle', AjusteDetalleScreen],
   ['EditarElemento', EditarElementoScreen],
+  ['Historial', HistorialScreen],
   ['GestionHogar', GestionHogarScreen],
   ['Perfil', PerfilScreen],
   ['Objetivos', ObjetivosScreen],
   ['ObjetivoDetalle', ObjetivoDetalleScreen],
+  ['Asignaciones', AsignacionesScreen],
   ['AsignacionDetalle', AsignacionDetalleScreen],
   ['Presupuestos', PresupuestosScreen],
   ['PresupuestoDetalle', PresupuestoDetalleScreen],

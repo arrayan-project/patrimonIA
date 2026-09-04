@@ -34,6 +34,17 @@ export interface AsignacionDTO {
   reservas?: ReservaDTO[];
 }
 
+/** Reserva ACTIVA vista desde el elemento que la financia (REQUISITES §F, §A2). */
+export interface ReservaDeElementoDTO {
+  id: string;
+  monto: number;
+  asignacionId: string;
+  asignacionNombre: string;
+  objetivoId: string | null;
+  objetivoNombre: string | null;
+  createdAt: string;
+}
+
 export function toObjetivoDTO(o: ObjetivoRow, progreso: number): ObjetivoFinancieroDTO {
   const monto = Number(o.monto_objetivo);
   return {

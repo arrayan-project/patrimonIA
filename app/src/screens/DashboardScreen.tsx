@@ -213,7 +213,11 @@ export function DashboardScreen() {
               <View key={m.moneda} style={styles.resumen}>
                 <MoneyText monto={m.patrimonio} moneda={m.moneda} style={styles.resumenNeto} />
                 <View style={styles.resumenFila}>
-                  <Text style={styles.muted}>Líquido {money(m.valorLiquido, m.moneda)}</Text>
+                  <Text style={styles.muted}>
+                    {m.valorReservado > 0
+                      ? `Libre ${money(m.valorLibre, m.moneda)} · líquido ${money(m.valorLiquido, m.moneda)} − reservado ${money(m.valorReservado, m.moneda)}`
+                      : `Líquido ${money(m.valorLiquido, m.moneda)}`}
+                  </Text>
                   {v && v.variacion !== 0 && (
                     <Text
                       style={{

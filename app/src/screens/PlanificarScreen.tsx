@@ -15,6 +15,12 @@ export function PlanificarScreen() {
         subtitle="Metas de ahorro con reservas y progreso"
         onPress={() => nav.go('Objetivos')}
       />
+      <MenuLink
+        icon="bookmark-outline"
+        title="Asignaciones"
+        subtitle="Dinero apartado — con objetivo o suelto (fondo de emergencia…)"
+        onPress={() => nav.go('Asignaciones')}
+      />
 
       <GroupLabel>Presupuesto y flujo</GroupLabel>
       <MenuLink

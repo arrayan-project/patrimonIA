@@ -25,7 +25,7 @@ import { CLARO, useC, type Paleta } from './tema';
 
 export type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
 
-export { etiqueta, humanizar } from '../labels';
+export { etiqueta, humanizar, accionAuditoria } from '../labels';
 export { TemaProvider, useC, useTema, type Paleta, type ModoTema } from './tema';
 
 /** Paleta activa memoizada + estilos derivados. Para los componentes de este archivo. */
