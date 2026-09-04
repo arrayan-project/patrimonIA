@@ -117,7 +117,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| G1 | ⚠️ 17/25 — Fase 17: tokens `colors.fondo`/`info` + `sombra`. Fase 25: escala exportada (`escala` de espaciado, `tipo` tipográfica, `panel` para el look de tarjeta) y sweep de las 25 pantallas — cada `styles.card` local pasó a `{ ...panel, gap }`, `sectionTitle`/`muted` a `tipo.seccion`/`tipo.nota`. Componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat` exportados. Falta: adoptar `ListItem`/`Stat`/`Panel` en las pantallas (hoy solo se unificaron los estilos, no el JSX) | 🟡 | P2 |
+| G1 | ✅ 17/25/26 — Fase 17: tokens `colors.fondo`/`info` + `sombra`. Fase 25: escala exportada (`escala`, `tipo`, `panel`) + sweep de estilos (`styles.card` → `{...panel}`, `sectionTitle`/`muted` → `tipo.*`). Fase 26: los `<View style={styles.card}>` de 24 pantallas pasaron a `<Panel>` (se borraron 24 defs locales de `styles.card`); `ElementoDetalle` adoptó `ListItem`/`Stat`/`SectionTitle`/`Nota` a fondo, `MovimientoDetalle` usa `Stat`. Queda opcional: `ListItem` en las demás listas hechas a mano | 🟡 | P2 |
 | G2 | **Iconografía** — cero iconos; categorías, tipos de movimiento y navegación se leen mucho mejor con iconos | 🟡 | P2 |
 | G3 | ✅ 15g/19 — `react-native-svg`; `src/ui/charts.tsx` con `Dona`, `GraficoLinea`, `GraficoBarras`. Dona en presupuesto por rubro / patrimonio del hogar / Movimientos; línea en Evolución; barras en Movimientos (año); barra de avance total en la lista de Objetivos | 🟡 | P2 |
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
@@ -294,6 +294,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~23~~ ✅ | **B8** — UI de co-propietarios con % en "Agregar cuenta o bien" (toggle Solo mía / Compartida, un % por miembro del hogar, total en vivo, validación suma-100 / actor ≥ 1 % / ≥ 2 personas); `Field` acepta `label` vacío. e2e `copropiedad.e2e-spec.ts` (+3 → **115 e2e**). Pendiente suelto: H1, H4, E7, G1, G5, I1 (barrido). | 22 |
 | ~~24~~ ✅ | **E7** — detección de estado offline en `client.ts` (`estadoRed`/`observarRed`/`esErrorDeRed`), hook `useConexion`, barra `BannerConexion` (App.tsx) con "Reintentar" (ping a `/health`), y `useCargaAlEnfocar` recarga sola al volver la conexión. Pendiente suelto: H1, H4, G1, G5, I1 (barrido). | 23 |
 | ~~25~~ ✅ | **G1 (parte 1)** — sistema de escala en `ui/index.tsx`: `escala` (espaciado), `tipo` (tipografía), `panel` (look de tarjeta); componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat`. Sweep de las 25 pantallas: `styles.card` → `{ ...panel, gap }`, `sectionTitle`/`muted` → `tipo.seccion`/`tipo.nota`. Pendiente: adoptar los componentes en el JSX; H1, H4, G5, I1 (barrido). | 24 |
+| ~~26~~ ✅ | **G1 (parte 2)** — `<View style={styles.card}>` → `<Panel>` en 24 pantallas (–24 defs locales de `styles.card`); `ElementoDetalleScreen` reescrita con `ListItem`/`Stat`/`SectionTitle`/`Nota` (sus 3 listas a mano → `<ListItem>`); `MovimientoDetalle` con `Stat` + `Panel`. Neto −56 líneas. Pendiente: H1, H4, G5, I1 (barrido), `ListItem` en el resto de listas. | 25 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

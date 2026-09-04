@@ -19,8 +19,8 @@ import {
   Screen,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function EtiquetasScreen() {
@@ -108,7 +108,7 @@ export function EtiquetasScreen() {
       </Ayuda>
 
       {lista.map((e) => (
-        <View key={e.id} style={styles.card}>
+        <Panel key={e.id}>
           {editId === e.id ? (
             <>
               <Field label="Nombre" value={editNombre} onChangeText={setEditNombre} />
@@ -132,10 +132,10 @@ export function EtiquetasScreen() {
               </View>
             </View>
           )}
-        </View>
+        </Panel>
       ))}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nueva etiqueta</Text>
         <Field
           label="Nombre"
@@ -155,7 +155,7 @@ export function EtiquetasScreen() {
           ))}
         </View>
         <Button title="Crear etiqueta" onPress={crear} loading={busy} disabled={!nombre.trim()} />
-      </View>
+      </Panel>
 
       {lista.length === 0 && (
         <EmptyState
@@ -170,7 +170,6 @@ export function EtiquetasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },

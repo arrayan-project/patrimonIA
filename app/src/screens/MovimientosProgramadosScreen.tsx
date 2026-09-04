@@ -28,8 +28,8 @@ import {
   Screen,
   SelectRow,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function MovimientosProgramadosScreen() {
@@ -129,7 +129,7 @@ export function MovimientosProgramadosScreen() {
         ))
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
         <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={destino?.moneda} />
         <DateField label="Fecha" value={fecha} onChange={setFecha} />
@@ -149,7 +149,7 @@ export function MovimientosProgramadosScreen() {
           loading={busy}
           disabled={!(Number(monto) > 0) || !fechaValida || !destinoId}
         />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -157,7 +157,6 @@ export function MovimientosProgramadosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

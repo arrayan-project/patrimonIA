@@ -21,8 +21,8 @@ import {
   Row,
   Screen,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
@@ -67,7 +67,7 @@ export function HogarConsolidadoScreen() {
         {cons.elementos} elementos consolidados · {cons.miembros} miembros.
       </Text>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Total ({cons.monedaConsolidacion})</Text>
         {cons.total != null ? (
           <MoneyText
@@ -81,12 +81,12 @@ export function HogarConsolidadoScreen() {
             en "Tipos de cambio".
           </Text>
         )}
-      </View>
+      </Panel>
 
       {cons.porMoneda.map((pm) => {
         const metricas = met.porMoneda.find((x) => x.moneda === pm.moneda);
         return (
-          <View key={pm.moneda} style={styles.card}>
+          <Panel key={pm.moneda}>
             <Text style={styles.sectionTitle}>{pm.moneda}</Text>
             <Row
               left="Patrimonio neto"
@@ -131,11 +131,11 @@ export function HogarConsolidadoScreen() {
                 ))}
               </>
             )}
-          </View>
+          </Panel>
         );
       })}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Objetivos del hogar</Text>
         <Row
           left="Objetivos"
@@ -150,7 +150,7 @@ export function HogarConsolidadoScreen() {
             </Text>
           </>
         )}
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -158,7 +158,6 @@ export function HogarConsolidadoScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 6 },
   sectionTitle: tipo.seccion,
   subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
   muted: tipo.nota,

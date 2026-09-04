@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -22,13 +21,16 @@ import {
   etiqueta,
   Field,
   fechaLegible,
+  ListItem,
   MoneyText,
+  Nota,
+  Panel,
   Row,
   Screen,
-  Title,
+  SectionTitle,
   Skeleton,
-  panel,
-  tipo,
+  Stat,
+  Title,
 } from '../ui';
 
 export function ElementoDetalleScreen() {
@@ -114,33 +116,45 @@ export function ElementoDetalleScreen() {
     );
   }
 
+  const el = elemento;
+  const montoMov = (monto: number, moneda: string, anulado: boolean) => (
+    <Text
+      style={[
+        styles.movMonto,
+        anulado ? styles.tachado : { color: monto < 0 ? colors.danger : colors.primary },
+      ]}
+    >
+      {money(monto, moneda)}
+    </Text>
+  );
+
   return (
     <Screen onRefresh={cargar}>
-      <Title>{elemento.nombre}</Title>
-      <MoneyText monto={elemento.valorVigente} moneda={elemento.moneda} style={styles.valor} />
+      <Title>{el.nombre}</Title>
+      <Stat
+        label="Valor vigente"
+        value={<MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.valor} />}
+      />
 
-      <View style={styles.card}>
-        <Row left="Categoría" right={etiqueta(elemento.categoriaFuncional)} />
-        <Row left="Tipo" right={etiqueta(elemento.tipo)} />
-        <Row left="Ámbito" right={etiqueta(elemento.ambito)} />
-        <Row left="Visibilidad" right={etiqueta(elemento.visibilidad)} />
-        <Row left="Estado" right={etiqueta(elemento.estado)} />
-      </View>
+      <Panel>
+        <Row left="Categoría" right={etiqueta(el.categoriaFuncional)} />
+        <Row left="Tipo" right={etiqueta(el.tipo)} />
+        <Row left="Ámbito" right={etiqueta(el.ambito)} />
+        <Row left="Visibilidad" right={etiqueta(el.visibilidad)} />
+        <Row left="Estado" right={etiqueta(el.estado)} />
+      </Panel>
 
       {(esDeuda || esCredito) && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{esDeuda ? 'Deuda' : 'Crédito'}</Text>
-          <Row
-            left="Saldo pendiente"
-            right={money(elemento.valorPendiente ?? 0, elemento.moneda)}
-          />
-          {(elemento.valorPendiente ?? 0) > 0 ? (
+        <Panel>
+          <SectionTitle>{esDeuda ? 'Deuda' : 'Crédito'}</SectionTitle>
+          <Row left="Saldo pendiente" right={money(el.valorPendiente ?? 0, el.moneda)} />
+          {(el.valorPendiente ?? 0) > 0 ? (
             <View style={{ gap: 8, marginTop: 8 }}>
-              <Text style={styles.muted}>
+              <Nota>
                 {esDeuda
                   ? 'Condonar: el acreedor perdona el saldo (tu patrimonio sube).'
                   : 'Declarar incobrable: reconoces que no se recuperará (tu patrimonio baja).'}
-              </Text>
+              </Nota>
               <Field label="Motivo" value={saldarMotivo} onChangeText={setSaldarMotivo} autoCapitalize="sentences" />
               <Button
                 title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}
@@ -151,22 +165,22 @@ export function ElementoDetalleScreen() {
               />
             </View>
           ) : (
-            <Text style={styles.muted}>Saldada.</Text>
+            <Nota>Saldada.</Nota>
           )}
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Propietarios</Text>
-        {elemento.propietarios.map((p) => (
+      <Panel>
+        <SectionTitle>Propietarios</SectionTitle>
+        {el.propietarios.map((p) => (
           <Row key={p.usuarioId} left={p.nombre ?? p.usuarioId} right={`${p.porcentaje}%`} />
         ))}
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Movimientos</Text>
+      <Panel>
+        <SectionTitle>Movimientos</SectionTitle>
         {eventos.length === 0 ? (
-          <Text style={styles.muted}>Sin movimientos.</Text>
+          <Nota>Sin movimientos.</Nota>
         ) : (
           eventos.map((ev) => {
             const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
@@ -176,73 +190,50 @@ export function ElementoDetalleScreen() {
                 ? 'corrección'
                 : fechaLegible(ev.fecha);
             return (
-              <Pressable
+              <ListItem
                 key={ev.id}
-                style={styles.mov}
+                title={ev.glosa || etiqueta(ev.tipo)}
+                subtitle={ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
+                tachado={ev.anulado}
+                right={montoMov(impacto?.monto ?? ev.monto, ev.moneda, ev.anulado)}
                 onPress={() =>
                   nav.go('MovimientoDetalle', {
                     eventoId: ev.id,
                     elementoId,
-                    contexto: elemento.nombre,
+                    contexto: el.nombre,
                   })
                 }
-              >
-                <View>
-                  <Text style={[styles.movTipo, ev.anulado && styles.tachado]}>
-                    {ev.glosa || etiqueta(ev.tipo)}
-                  </Text>
-                  <Text style={styles.muted}>
-                    {ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
-                  </Text>
-                </View>
-                <View style={styles.movDer}>
-                  <Text
-                    style={[
-                      styles.movMonto,
-                      ev.anulado
-                        ? styles.tachado
-                        : { color: (impacto?.monto ?? 0) < 0 ? colors.danger : colors.primary },
-                    ]}
-                  >
-                    {money(impacto?.monto ?? ev.monto, ev.moneda)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
-                </View>
-              </Pressable>
+              />
             );
           })
         )}
-      </View>
+      </Panel>
 
-      {elemento.admiteValorizacion && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Valorizaciones</Text>
+      {el.admiteValorizacion && (
+        <Panel>
+          <SectionTitle>Valorizaciones</SectionTitle>
           {valorizaciones.length === 0 ? (
-            <Text style={styles.muted}>Sin valorizaciones.</Text>
+            <Nota>Sin valorizaciones.</Nota>
           ) : (
             valorizaciones.map((v) => (
-              <Pressable
+              <ListItem
                 key={v.id}
-                style={styles.mov}
+                title={v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
+                tachado={v.anulada}
+                right={
+                  <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
+                    {money(v.valorNuevo, el.moneda)}
+                  </Text>
+                }
                 onPress={() =>
                   nav.go('ValorizacionDetalle', {
                     valorizacionId: v.id,
                     elementoId,
-                    moneda: elemento.moneda,
-                    contexto: elemento.nombre,
+                    moneda: el.moneda,
+                    contexto: el.nombre,
                   })
                 }
-              >
-                <Text style={[styles.muted, v.anulada && styles.tachado]}>
-                  {v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
-                </Text>
-                <View style={styles.movDer}>
-                  <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
-                    {money(v.valorNuevo, elemento.moneda)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
-                </View>
-              </Pressable>
+              />
             ))
           )}
           <View style={{ marginTop: 8 }}>
@@ -252,48 +243,42 @@ export function ElementoDetalleScreen() {
               onPress={() =>
                 nav.go('Valorizar', {
                   elementoId,
-                  valorActual: elemento.valorVigente,
-                  moneda: elemento.moneda,
-                  contexto: elemento.nombre,
+                  valorActual: el.valorVigente,
+                  moneda: el.moneda,
+                  contexto: el.nombre,
                 })
               }
             />
           </View>
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Ajustes patrimoniales</Text>
+      <Panel>
+        <SectionTitle>Ajustes patrimoniales</SectionTitle>
         {ajustes.length === 0 ? (
-          <Text style={styles.muted}>Sin ajustes.</Text>
+          <Nota>Sin ajustes.</Nota>
         ) : (
           ajustes.map((a) => (
-            <Pressable
+            <ListItem
               key={a.id}
-              style={styles.mov}
+              title={a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
+              tachado={a.anulado}
+              right={
+                a.anulado ? (
+                  <Text style={[styles.movMonto, styles.tachado]}>{money(a.monto, el.moneda)}</Text>
+                ) : (
+                  <MoneyText monto={a.monto} moneda={el.moneda} style={styles.movMonto} />
+                )
+              }
               onPress={() =>
                 nav.go('AjusteDetalle', {
                   ajusteId: a.id,
                   elementoId,
-                  moneda: elemento.moneda,
-                  contexto: elemento.nombre,
+                  moneda: el.moneda,
+                  contexto: el.nombre,
                 })
               }
-            >
-              <Text style={[styles.muted, a.anulado && styles.tachado]}>
-                {a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
-              </Text>
-              <View style={styles.movDer}>
-                {a.anulado ? (
-                  <Text style={[styles.movMonto, styles.tachado]}>
-                    {money(a.monto, elemento.moneda)}
-                  </Text>
-                ) : (
-                  <MoneyText monto={a.monto} moneda={elemento.moneda} style={styles.movMonto} />
-                )}
-                <Ionicons name="chevron-forward" size={15} color={colors.muted} />
-              </View>
-            </Pressable>
+            />
           ))
         )}
         <View style={{ marginTop: 8 }}>
@@ -303,20 +288,20 @@ export function ElementoDetalleScreen() {
             onPress={() =>
               nav.go('RegistrarAjuste', {
                 elementoId,
-                valorActual: elemento.valorVigente,
-                moneda: elemento.moneda,
-                contexto: elemento.nombre,
+                valorActual: el.valorVigente,
+                moneda: el.moneda,
+                contexto: el.nombre,
               })
             }
           />
         </View>
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
       <Button
         title="Editar / estado"
         variant="secondary"
-        onPress={() => nav.go('EditarElemento', { elementoId, contexto: elemento.nombre })}
+        onPress={() => nav.go('EditarElemento', { elementoId, contexto: el.nombre })}
       />
     </Screen>
   );
@@ -324,19 +309,6 @@ export function ElementoDetalleScreen() {
 
 const styles = StyleSheet.create({
   valor: { fontSize: 28, fontWeight: '800' },
-  card: { ...panel, gap: 4 },
-  sectionTitle: { ...tipo.seccion, marginBottom: 4 },
-  muted: tipo.nota,
-  mov: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.faint,
-    paddingVertical: 10,
-  },
-  movTipo: { fontSize: 14, fontWeight: '600', color: colors.text },
   movMonto: { fontSize: 15, fontWeight: '700' },
-  movDer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   tachado: { textDecorationLine: 'line-through', color: colors.muted },
 });

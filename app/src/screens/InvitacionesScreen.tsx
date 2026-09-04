@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, ErrorText, Paragraph, Screen, Skeleton, Title } from '../ui';
+import { Button, colors, ErrorText, Panel, Paragraph, Screen, Skeleton, Title } from '../ui';
 
 export function InvitacionesScreen() {
   const { token } = useSession();
@@ -62,7 +62,7 @@ export function InvitacionesScreen() {
         <Paragraph>No tienes invitaciones pendientes por ahora.</Paragraph>
       ) : (
         invitaciones.map((inv) => (
-          <View key={inv.id} style={styles.card}>
+          <Panel key={inv.id} gap={12}>
             <Text style={styles.hogar}>{inv.hogarNombre ?? 'Hogar'}</Text>
             <View style={styles.actions}>
               <Button
@@ -77,7 +77,7 @@ export function InvitacionesScreen() {
                 disabled={actuando === inv.id}
               />
             </View>
-          </View>
+          </Panel>
         ))
       )}
     </Screen>
@@ -85,14 +85,6 @@ export function InvitacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 16,
-    gap: 12,
-  },
   hogar: { fontSize: 17, fontWeight: '600', color: colors.text },
   actions: { gap: 8 },
 });

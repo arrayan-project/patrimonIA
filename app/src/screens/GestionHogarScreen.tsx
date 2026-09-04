@@ -6,7 +6,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, panel, tipo } from '../ui';
+import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, tipo, Panel } from '../ui';
 
 export function GestionHogarScreen() {
   const { token, usuario } = useSession();
@@ -68,7 +68,7 @@ export function GestionHogarScreen() {
       <Title>Gestionar hogar</Title>
 
       {soyAdmin && (
-        <View style={styles.card}>
+        <Panel>
           <Field label="Nombre del hogar" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
           <Button
             title="Guardar nombre"
@@ -84,10 +84,10 @@ export function GestionHogarScreen() {
               })
             }
           />
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Miembros</Text>
         {hogar.miembros?.map((m) => (
           <View key={m.usuarioId} style={styles.miembro}>
@@ -134,10 +134,10 @@ export function GestionHogarScreen() {
         {soyAdmin && (
           <Field label="Motivo (para remover)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         )}
-      </View>
+      </Panel>
 
       {soyAdmin && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Invitar a alguien</Text>
           <Field
             label="Email"
@@ -163,10 +163,10 @@ export function GestionHogarScreen() {
               })
             }
           />
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Salir</Text>
         <Button
           title="Salir del hogar"
@@ -194,7 +194,7 @@ export function GestionHogarScreen() {
             }}
           />
         )}
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
       <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
@@ -203,7 +203,6 @@ export function GestionHogarScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   sectionTitle: tipo.seccion,
   miembro: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },

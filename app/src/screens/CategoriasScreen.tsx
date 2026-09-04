@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title, panel, tipo } from '../ui';
+import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title, tipo, Panel } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -108,7 +108,7 @@ export function CategoriasScreen() {
         <Skeleton />
       ) : (
         lista.map((c, i) => (
-          <View key={c.id} style={styles.card}>
+          <Panel key={c.id}>
             {editId === c.id ? (
               <>
                 <Field label="Nombre" value={editNombre} onChangeText={setEditNombre} autoCapitalize="sentences" />
@@ -145,16 +145,16 @@ export function CategoriasScreen() {
                 </View>
               </>
             )}
-          </View>
+          </Panel>
         ))
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nueva categoría</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="p. ej. Mascotas" />
         <Segmented label="Aplica a" options={TIPOS} value={tipo} onChange={setTipo} />
         <Button title="Crear categoría" onPress={crear} loading={busy} disabled={!nombre.trim() || !hogarId} />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -162,7 +162,6 @@ export function CategoriasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   flecha: { fontSize: 16, color: colors.primary },

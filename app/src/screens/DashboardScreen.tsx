@@ -30,6 +30,7 @@ import {
   Title,
   Skeleton,
   tipo,
+  Panel,
 } from '../ui';
 
 export function DashboardScreen() {
@@ -171,7 +172,7 @@ export function DashboardScreen() {
       <Title>{hogar.nombre}</Title>
 
       {!onbOculto && (
-        <View style={styles.card}>
+        <Panel>
           <View style={styles.head}>
             <Text style={styles.sectionTitle}>Primeros pasos</Text>
             <Pressable hitSlop={8} onPress={cerrarOnboarding}>
@@ -181,11 +182,11 @@ export function DashboardScreen() {
           <PasoOnb hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} />
           <PasoOnb hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
           <PasoOnb hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos')} />
-        </View>
+        </Panel>
       )}
 
       {hogares.length > 1 && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Hogar activo</Text>
           {hogares.map((h) => (
             <SelectRow
@@ -195,10 +196,10 @@ export function DashboardScreen() {
               onPress={() => elegirHogar(h.id)}
             />
           ))}
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Mi patrimonio</Text>
         {patrimonio.porMoneda.length === 0 ? (
           <Text style={styles.muted}>Aún no tienes cuentas ni bienes.</Text>
@@ -227,9 +228,9 @@ export function DashboardScreen() {
             );
           })
         )}
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Cuentas y bienes</Text>
         {(() => {
           const fila = (el: ElementoPatrimonialDTO) => (
@@ -289,7 +290,7 @@ export function DashboardScreen() {
             <Button title="Registrar movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
           </View>
         )}
-      </View>
+      </Panel>
 
       {noLeidas > 0 && (
         <MenuLink

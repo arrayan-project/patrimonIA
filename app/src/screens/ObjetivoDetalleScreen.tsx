@@ -23,8 +23,8 @@ import {
   Segmented,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
@@ -88,7 +88,7 @@ export function ObjetivoDetalleScreen() {
         {etiqueta(obj.estado)}
       </Text>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Asignaciones</Text>
         {asignaciones.map((a) => (
           <Pressable
@@ -118,9 +118,9 @@ export function ObjetivoDetalleScreen() {
             })
           }
         />
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <Segmented label="Estado" options={ESTADOS} value={nuevoEstado} onChange={setNuevoEstado} />
         <Button
           title="Cambiar estado"
@@ -155,7 +155,7 @@ export function ObjetivoDetalleScreen() {
             )
           }
         />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -163,7 +163,6 @@ export function ObjetivoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   sectionTitle: tipo.seccion,
   asg: { borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 4 },
   muted: tipo.nota,

@@ -26,8 +26,8 @@ import {
   Screen,
   Segmented,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 import { Dona, GraficoBarras } from '../ui/charts';
 
@@ -161,7 +161,7 @@ export function MovimientosScreen() {
 
       {modo === 'Mes' && resumen && (
         <>
-          <View style={styles.card}>
+          <Panel>
             <Row label="Ingresos" valor={totales!.ingresos} moneda={monedaPrincipal} />
             <Row label="Gastos" valor={totales!.gastos} moneda={monedaPrincipal} />
             <View style={styles.sep} />
@@ -178,10 +178,10 @@ export function MovimientosScreen() {
             {multiMoneda && (
               <Text style={styles.muted}>Hay movimientos en varias monedas — se muestran sumados sin conversión.</Text>
             )}
-          </View>
+          </Panel>
 
           {gastosRubro.length > 0 && (
-            <View style={styles.card}>
+            <Panel>
               <Text style={styles.sectionTitle}>Gastos por rubro</Text>
               <Dona
                 segmentos={gastosRubro.map((r, i) => ({
@@ -192,10 +192,10 @@ export function MovimientosScreen() {
                 centro={money(totales!.gastos, monedaPrincipal).replace(` ${monedaPrincipal}`, '')}
                 formatoValor={(n) => money(n, monedaPrincipal)}
               />
-            </View>
+            </Panel>
           )}
 
-          <View style={styles.card}>
+          <Panel>
             <Text style={styles.sectionTitle}>
               {resumen.movimientos.length} movimiento{resumen.movimientos.length === 1 ? '' : 's'}
             </Text>
@@ -228,12 +228,12 @@ export function MovimientosScreen() {
                 </Pressable>
               ))
             )}
-          </View>
+          </Panel>
         </>
       )}
 
       {modo === 'Año' && anual && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Ingresos vs. gastos por mes</Text>
           {anual.meses.every((m) => m.porMoneda.length === 0) ? (
             <Text style={styles.muted}>Sin movimientos en {anual.anio}.</Text>
@@ -259,7 +259,7 @@ export function MovimientosScreen() {
               />
             </>
           )}
-        </View>
+        </Panel>
       )}
 
       {modo === 'Mes' && resumen && resumen.movimientos.length === 0 && (
@@ -285,7 +285,6 @@ function Row({ label, valor, moneda }: { label: string; valor: number; moneda: s
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
   flecha: { fontSize: 30, color: colors.primary, paddingHorizontal: 8 },
   periodo: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' },

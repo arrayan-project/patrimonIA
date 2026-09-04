@@ -6,7 +6,7 @@ import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title, panel, tipo } from '../ui';
+import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title, tipo, Panel } from '../ui';
 
 export function PerfilScreen() {
   const { token } = useSession();
@@ -76,7 +76,7 @@ export function PerfilScreen() {
     <Screen>
       <Title>Mi perfil</Title>
       {me && (
-        <View style={styles.card}>
+        <Panel>
           <Row left="Email" right={me.email} />
           <Field
             label="Nombre"
@@ -86,10 +86,10 @@ export function PerfilScreen() {
             error={intento ? errNombre : undefined}
           />
           <Button title="Guardar" onPress={guardar} loading={busy} />
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Desactivar cuenta</Text>
         <Paragraph>
           Tus elementos patrimoniales y membresías históricas se conservan, pero no podrás
@@ -103,7 +103,7 @@ export function PerfilScreen() {
           loading={busy}
           disabled={motivo.trim().length < 3}
         />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -111,6 +111,5 @@ export function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   sectionTitle: tipo.seccion,
 });

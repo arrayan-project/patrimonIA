@@ -17,8 +17,8 @@ import {
   Skeleton,
   Screen,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function TiposCambioScreen() {
@@ -78,7 +78,7 @@ export function TiposCambioScreen() {
         históricamente; la conversión usa la más reciente vigente a la fecha.
       </Text>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Registrar tasa</Text>
         <Field label="Moneda origen" value={origen} onChangeText={setOrigen} maxLength={3} />
         <Field label="Moneda destino" value={destino} onChangeText={setDestino} maxLength={3} />
@@ -90,14 +90,14 @@ export function TiposCambioScreen() {
           loading={busy}
           disabled={!(Number(tasa) > 0) || origen.trim().length !== 3 || destino.trim().length !== 3}
         />
-      </View>
+      </Panel>
 
       {lista === null ? (
         <Skeleton />
       ) : lista.length === 0 ? (
         <Text style={styles.muted}>Sin tipos de cambio registrados.</Text>
       ) : (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Registradas</Text>
           {lista.map((t) => (
             <Row
@@ -106,7 +106,7 @@ export function TiposCambioScreen() {
               right={String(t.tasa)}
             />
           ))}
-        </View>
+        </Panel>
       )}
 
       <ErrorText>{error}</ErrorText>
@@ -115,7 +115,6 @@ export function TiposCambioScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   sectionTitle: tipo.seccion,
   muted: tipo.nota,
 });

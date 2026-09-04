@@ -12,7 +12,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title, panel, tipo } from '../ui';
+import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title, tipo, Panel } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
@@ -86,7 +86,7 @@ export function PresupuestoRubrosScreen() {
 
   const grupo = (titulo: string, arr: CategoriaMovimientoDTO[], suma: number) =>
     arr.length === 0 ? null : (
-      <View style={styles.card}>
+      <Panel>
         <View style={styles.filaTitulo}>
           <Text style={styles.sectionTitle}>{titulo}</Text>
           <Text style={styles.muted}>{suma.toLocaleString('es-CL')}</Text>
@@ -99,7 +99,7 @@ export function PresupuestoRubrosScreen() {
             onChange={(v) => setMontos((m) => ({ ...m, [c.id]: v }))}
           />
         ))}
-      </View>
+      </Panel>
     );
 
   return (
@@ -127,7 +127,6 @@ export function PresupuestoRubrosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: tipo.seccion,
   muted: tipo.nota,

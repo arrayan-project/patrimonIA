@@ -21,8 +21,8 @@ import {
   Screen,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function MovimientoProgramadoDetalleScreen() {
@@ -118,12 +118,12 @@ export function MovimientoProgramadoDetalleScreen() {
       <Title>Movimiento programado</Title>
       <Text style={styles.monto}>{money(m.montoPlanificado, m.moneda)}</Text>
 
-      <View style={styles.card}>
+      <Panel>
         <Row left="Estado" right={etiqueta(m.estado)} />
         <Row left="Fecha programada" right={fechaLegible(m.fechaProgramada)} />
         {m.observaciones ? <Row left="Observaciones" right={m.observaciones} /> : null}
         {m.eventoFinancieroId ? <Row left="Evento generado" right={m.eventoFinancieroId.slice(0, 8)} /> : null}
-      </View>
+      </Panel>
 
       {pendiente && modo === null && (
         <View style={{ gap: 8 }}>
@@ -134,7 +134,7 @@ export function MovimientoProgramadoDetalleScreen() {
       )}
 
       {(modo === 'editar' || modo === 'materializar') && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>
             {modo === 'editar' ? 'Editar movimiento' : 'Materializar'}
           </Text>
@@ -156,17 +156,17 @@ export function MovimientoProgramadoDetalleScreen() {
             loading={busy}
           />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === 'cancelar' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Cancelar movimiento</Text>
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Cancelar movimiento" onPress={ejecutar} loading={busy} disabled={motivo.trim().length < 3} />
           <LinkButton title="Descartar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
@@ -176,6 +176,5 @@ export function MovimientoProgramadoDetalleScreen() {
 
 const styles = StyleSheet.create({
   monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  card: { ...panel, gap: 8 },
   sectionTitle: tipo.seccion,
 });

@@ -26,8 +26,8 @@ import {
   Screen,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
@@ -130,7 +130,7 @@ export function PresupuestoDetalleScreen() {
     <Screen onRefresh={cargar}>
       <Title>Presupuesto {etiqueta(p.tipo).toLowerCase()}</Title>
 
-      <View style={styles.card}>
+      <Panel>
         <Row left="Periodicidad" right={etiqueta(p.periodicidad)} />
         {p.intervalo && <Row left="Intervalo" right={etiqueta(p.intervalo)} />}
         <Row
@@ -141,9 +141,9 @@ export function PresupuestoDetalleScreen() {
           left="Estado"
           right={p.estado ? etiqueta(p.estado) : p.vigente ? 'Vigente (calendario)' : 'Fuera de vigencia'}
         />
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Presupuestado vs. real</Text>
         <Row left="Ingresos esperados" right={money(desv.esperado.ingresos, 'CLP')} />
         <Row left="Ingresos reales" right={money(desv.real.ingresos, 'CLP')} />
@@ -156,9 +156,9 @@ export function PresupuestoDetalleScreen() {
         <Row left="Ahorro esperado" right={money(desv.esperado.ahorro, 'CLP')} />
         <Row left="Ahorro real" right={money(desv.real.ahorro, 'CLP')} />
         <Row left="Desviación ahorro" right={sign(desv.desviacion.ahorro)} />
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <View style={styles.filaTitulo}>
           <Text style={styles.sectionTitle}>Por rubro</Text>
           {p.estado !== 'CERRADO' && (
@@ -199,7 +199,7 @@ export function PresupuestoDetalleScreen() {
             ))}
           </>
         )}
-      </View>
+      </Panel>
 
       {modo === null && (
         <View style={{ gap: 8 }}>
@@ -214,7 +214,7 @@ export function PresupuestoDetalleScreen() {
       )}
 
       {modo === 'editar' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>Editar montos esperados</Text>
           <MoneyField label="Ingresos" value={ingresos} onChange={setIngresos} />
           <MoneyField label="Gastos" value={gastos} onChange={setGastos} />
@@ -222,11 +222,11 @@ export function PresupuestoDetalleScreen() {
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar" onPress={ejecutar} loading={busy} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {(modo === 'cerrar' || modo === 'eliminar') && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>
             {modo === 'cerrar' ? 'Cerrar presupuesto' : 'Eliminar presupuesto'}
           </Text>
@@ -244,7 +244,7 @@ export function PresupuestoDetalleScreen() {
             disabled={motivo.trim().length < 3}
           />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
@@ -253,7 +253,6 @@ export function PresupuestoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   sectionTitle: tipo.seccion,
   muted: tipo.nota,
   sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },

@@ -21,8 +21,8 @@ import {
   Screen,
   Segmented,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
@@ -135,7 +135,7 @@ export function PresupuestosScreen() {
         ))
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nuevo presupuesto</Text>
         <Segmented label="Tipo" options={['INDIVIDUAL', 'FAMILIAR'] as const} value={tipo} onChange={setTipo} />
         {tipo === 'FAMILIAR' && !hogarId && (
@@ -164,7 +164,7 @@ export function PresupuestosScreen() {
           loading={busy}
           disabled={tipo === 'FAMILIAR' && !hogarId}
         />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -172,7 +172,6 @@ export function PresupuestosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

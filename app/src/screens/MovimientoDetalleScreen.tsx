@@ -25,11 +25,12 @@ import {
   LinkButton,
   MoneyField,
   Migaja,
+  Panel,
   Row,
   Screen,
+  Stat,
   Title,
   Skeleton,
-  panel,
 } from '../ui';
 
 export function MovimientoDetalleScreen() {
@@ -180,9 +181,10 @@ export function MovimientoDetalleScreen() {
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{evento.glosa || etiqueta(evento.tipo)}</Title>
-      <Text style={styles.monto}>{money(evento.monto, evento.moneda)}</Text>
+      <Stat label={etiqueta(evento.tipo)} value={money(evento.monto, evento.moneda)} />
 
-      <View style={styles.card}>
+
+      <Panel>
         <Row left="Fecha" right={fechaLegible(evento.fecha)} />
         {evento.glosa ? <Row left="Detalle" right={evento.glosa} /> : null}
         {evento.categoriaId ? (
@@ -207,7 +209,7 @@ export function MovimientoDetalleScreen() {
         {tieneCorreccion && (
           <Text style={styles.nota}>Este movimiento ya fue corregido — corrige o anula esa corrección.</Text>
         )}
-      </View>
+      </Panel>
 
       {modo === null && (
         <View style={{ gap: 8 }}>
@@ -239,7 +241,7 @@ export function MovimientoDetalleScreen() {
       )}
 
       {modo === 'etiquetas' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Etiquetas</Text>
           <View style={styles.chips}>
             {etiquetas.map((e) => (
@@ -259,11 +261,11 @@ export function MovimientoDetalleScreen() {
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar" onPress={guardarEtiquetas} loading={enviando} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === 'plantilla' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Guardar como plantilla</Text>
           <Text style={styles.nota}>
             Se guarda el tipo, el monto, las cuentas, la categoría y el detalle para
@@ -284,28 +286,28 @@ export function MovimientoDetalleScreen() {
             disabled={!nombrePlantilla.trim()}
           />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === 'corregir' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Corregir monto</Text>
           <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={evento.moneda} />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se corrige" autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === 'anular' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Anular movimiento</Text>
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
@@ -314,8 +316,6 @@ export function MovimientoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  monto: { fontSize: 28, fontWeight: '800', color: colors.text },
-  card: { ...panel, gap: 8 },
   formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },

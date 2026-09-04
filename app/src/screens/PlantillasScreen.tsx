@@ -29,8 +29,8 @@ import {
   SelectRow,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const;
@@ -192,7 +192,7 @@ export function PlantillasScreen() {
 
       {modo === null &&
         lista.map((p) => (
-          <View key={p.id} style={styles.card}>
+          <Panel key={p.id}>
             <View style={styles.fila}>
               <Text style={styles.nombre}>{p.nombre}</Text>
               <Text style={styles.muted}>{etiqueta(p.tipo)}</Text>
@@ -212,7 +212,7 @@ export function PlantillasScreen() {
               <LinkButton title="Editar" onPress={() => abrirEdicion(p)} />
               <LinkButton title="Eliminar" onPress={() => borrar(p)} />
             </View>
-          </View>
+          </Panel>
         ))}
 
       {modo === null && (
@@ -226,7 +226,7 @@ export function PlantillasScreen() {
       )}
 
       {modo !== null && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.nombre}>{modo === 'nueva' ? 'Nueva plantilla' : 'Editar plantilla'}</Text>
           <Field
             label="Nombre"
@@ -315,7 +315,7 @@ export function PlantillasScreen() {
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar" onPress={guardar} loading={busy} disabled={!b.nombre.trim()} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === null && lista.length === 0 && (
@@ -331,7 +331,6 @@ export function PlantillasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   group: { gap: 8 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text },

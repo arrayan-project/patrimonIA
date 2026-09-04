@@ -9,7 +9,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title, panel, tipo } from '../ui';
+import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title, tipo, Panel } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
@@ -60,7 +60,7 @@ export function EvolucionPatrimonioScreen() {
       {busy && <ActivityIndicator color={colors.primary} />}
 
       {serie && serie.puntos.length >= 2 && (
-        <View style={styles.card}>
+        <Panel>
           {[...new Set(serie.puntos.flatMap((p) => p.porMoneda.map((m) => m.moneda)))].map(
             (moneda) => (
               <View key={moneda} style={{ gap: 6 }}>
@@ -75,11 +75,11 @@ export function EvolucionPatrimonioScreen() {
               </View>
             ),
           )}
-        </View>
+        </Panel>
       )}
 
       {data && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.sectionTitle}>
             {fechaLegible(data.desde)} → {fechaLegible(data.hasta)}
           </Text>
@@ -99,14 +99,13 @@ export function EvolucionPatrimonioScreen() {
               </View>
             ))
           )}
-        </View>
+        </Panel>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   sectionTitle: tipo.seccion,
   muted: tipo.nota,
   bloque: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },

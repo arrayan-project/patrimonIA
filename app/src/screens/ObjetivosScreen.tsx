@@ -20,8 +20,8 @@ import {
   Skeleton,
   Screen,
   Title,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function ObjetivosScreen() {
@@ -90,13 +90,13 @@ export function ObjetivosScreen() {
           const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
           const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
           return enProgreso.length > 1 ? (
-            <View style={styles.card}>
+            <Panel>
               <Text style={styles.nombre}>Avance total ({enProgreso.length} objetivos activos)</Text>
               <ProgressBar pct={pct} />
               <Text style={styles.muted}>
                 {money(avance, 'CLP')} de {money(meta, 'CLP')} · {pct}%
               </Text>
-            </View>
+            </Panel>
           ) : null;
         })()
       )}
@@ -116,12 +116,12 @@ export function ObjetivosScreen() {
           </Card>
         ))}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nuevo objetivo</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="Pie vivienda" />
         <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} />
         <Button title="Crear objetivo" onPress={crear} loading={busy} disabled={!nombre.trim() || !(Number(monto) > 0)} />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -129,7 +129,6 @@ export function ObjetivosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },

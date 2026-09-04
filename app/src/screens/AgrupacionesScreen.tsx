@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, panel, tipo } from '../ui';
+import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, tipo, Panel } from '../ui';
 
 export function AgrupacionesScreen() {
   const { token } = useSession();
@@ -102,7 +102,7 @@ export function AgrupacionesScreen() {
       </Ayuda>
 
       {lista.map((a) => (
-        <View key={a.id} style={styles.card}>
+        <Panel key={a.id}>
           {editId === a.id ? (
             <>
               <Text style={styles.nombre}>Elementos de "{a.nombre}"</Text>
@@ -149,14 +149,14 @@ export function AgrupacionesScreen() {
               </View>
             </>
           )}
-        </View>
+        </Panel>
       ))}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.nombre}>Nueva agrupación</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="p. ej. Inversiones" />
         <Button title="Crear agrupación" onPress={crear} loading={busy} disabled={!nombre.trim()} />
-      </View>
+      </Panel>
 
       {lista.length === 0 && (
         <EmptyState
@@ -171,7 +171,6 @@ export function AgrupacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
   muted: tipo.nota,

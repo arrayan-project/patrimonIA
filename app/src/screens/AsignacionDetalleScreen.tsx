@@ -26,8 +26,8 @@ import {
   SelectRow,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
@@ -97,7 +97,7 @@ export function AsignacionDetalleScreen() {
         marcado como comprometido para esta meta.
       </Ayuda>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Reservas activas</Text>
         {reservasActivas.length === 0 ? (
           <Text style={styles.muted}>Sin reservas.</Text>
@@ -126,9 +126,9 @@ export function AsignacionDetalleScreen() {
             </View>
           ))
         )}
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Nueva reserva</Text>
         {elementos.map((el) => (
           <SelectRow
@@ -156,9 +156,9 @@ export function AsignacionDetalleScreen() {
             })
           }
         />
-      </View>
+      </Panel>
 
-      <View style={styles.card}>
+      <Panel>
         <Field label="Motivo (liberar / eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         <Button
           title="Eliminar asignación"
@@ -184,7 +184,7 @@ export function AsignacionDetalleScreen() {
             }, true);
           }}
         />
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -192,7 +192,6 @@ export function AsignacionDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   sectionTitle: tipo.seccion,
   reserva: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   muted: tipo.nota,

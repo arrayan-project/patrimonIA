@@ -18,8 +18,8 @@ import {
   Select,
   Title,
   Skeleton,
-  panel,
   tipo,
+  Panel,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
@@ -95,7 +95,7 @@ export function EditarElementoScreen() {
       <Title>Editar {el.nombre}</Title>
 
       {activo && (
-        <View style={styles.card}>
+        <Panel>
           <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
           <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
           <Button
@@ -111,11 +111,11 @@ export function EditarElementoScreen() {
             }
             loading={busy}
           />
-        </View>
+        </Panel>
       )}
 
       {activo && (
-        <View style={styles.card}>
+        <Panel>
           <Segmented label="Visibilidad" options={VIS} value={visibilidad} onChange={setVisibilidad} />
           <Ayuda>
             Privada: solo tú la ves. Compartida / Familiar: los miembros de tu
@@ -135,11 +135,11 @@ export function EditarElementoScreen() {
             }
             loading={busy}
           />
-        </View>
+        </Panel>
       )}
 
       {activo && (
-        <View style={styles.card}>
+        <Panel>
           <Segmented
             label="¿Cuenta en el patrimonio del hogar?"
             options={['No', 'Sí'] as const}
@@ -164,10 +164,10 @@ export function EditarElementoScreen() {
               )
             }
           />
-        </View>
+        </Panel>
       )}
 
-      <View style={styles.card}>
+      <Panel>
         <Text style={styles.sectionTitle}>Estado</Text>
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" placeholder="Requerido para reactivar/eliminar" />
         {activo ? (
@@ -229,7 +229,7 @@ export function EditarElementoScreen() {
             }
           />
         )}
-      </View>
+      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -237,6 +237,5 @@ export function EditarElementoScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...panel, gap: 10 },
   sectionTitle: tipo.seccion,
 });

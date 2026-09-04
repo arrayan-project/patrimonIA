@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, panel } from '../ui';
+import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, Panel } from '../ui';
 
 export function AjusteDetalleScreen() {
   const { token } = useSession();
@@ -92,12 +92,12 @@ export function AjusteDetalleScreen() {
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>Ajuste patrimonial</Title>
       <Text style={styles.monto}>{money(ajuste.monto, moneda)}</Text>
-      <View style={styles.card}>
+      <Panel>
         <Row left="Fecha" right={fechaLegible(ajuste.fecha)} />
         <Row left="Motivo" right={ajuste.motivo} />
         <Row left="Estado" right={ajuste.anulado ? 'Anulado' : 'Vigente'} />
         {ajuste.correccionDeId && <Text style={styles.nota}>Es la corrección de un ajuste anterior.</Text>}
-      </View>
+      </Panel>
 
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
@@ -107,24 +107,24 @@ export function AjusteDetalleScreen() {
       )}
 
       {modo === 'corregir' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Corregir monto</Text>
           <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={moneda} />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === 'anular' && (
-        <View style={styles.card}>
+        <Panel>
           <Text style={styles.formTitle}>Anular ajuste</Text>
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
           <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </View>
+        </Panel>
       )}
 
       {modo === null && <ErrorText>{error}</ErrorText>}
@@ -134,7 +134,6 @@ export function AjusteDetalleScreen() {
 
 const styles = StyleSheet.create({
   monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  card: { ...panel, gap: 8 },
   formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
 });
