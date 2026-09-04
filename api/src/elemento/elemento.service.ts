@@ -93,6 +93,18 @@ export class ElementoService {
       valorVigente = new Prisma.Decimal(dto.valorInicial ?? 0);
     }
 
+    const detalle = esDeudaOCredito
+      ? {
+          contraparte: dto.contraparte ?? null,
+          fecha_inicio: dto.fechaInicio ? new Date(dto.fechaInicio) : null,
+          fecha_termino: dto.fechaTermino ? new Date(dto.fechaTermino) : null,
+          cuota_monto: dto.cuotaMonto === undefined ? null : new Prisma.Decimal(dto.cuotaMonto),
+          tasa_interes: dto.tasaInteres === undefined ? null : new Prisma.Decimal(dto.tasaInteres),
+          observaciones: dto.observaciones ?? null,
+          valor_pendiente_inicial: valorPendiente,
+        }
+      : {};
+
     const elemento = await this.prisma.$transaction(async (tx) => {
       const creado = await tx.elemento_patrimonial.create({
         data: {
@@ -108,6 +120,7 @@ export class ElementoService {
           visibilidad: dto.visibilidad ?? 'PRIVADA',
           estado: 'ACTIVO',
           valor_pendiente: valorPendiente,
+          ...detalle,
         },
       });
 
@@ -175,6 +188,54 @@ export class ElementoService {
       anterior.tipo = el.tipo;
       posterior.tipo = dto.tipo;
     }
+
+    // Info adicional de DEUDA/CREDITO (§B3). Solo para esas categorías.
+    const esDeudaOCredito =
+      el.categoria_funcional === 'DEUDA' || el.categoria_funcional === 'CREDITO';
+    const detalleTexto: [keyof ActualizarDatosElementoDto, 'contraparte' | 'observaciones'][] = [
+      ['contraparte', 'contraparte'],
+      ['observaciones', 'observaciones'],
+    ];
+    const detalleFecha: [keyof ActualizarDatosElementoDto, 'fecha_inicio' | 'fecha_termino'][] = [
+      ['fechaInicio', 'fecha_inicio'],
+      ['fechaTermino', 'fecha_termino'],
+    ];
+    const detalleNum: [keyof ActualizarDatosElementoDto, 'cuota_monto' | 'tasa_interes'][] = [
+      ['cuotaMonto', 'cuota_monto'],
+      ['tasaInteres', 'tasa_interes'],
+    ];
+    if (esDeudaOCredito) {
+      for (const [dtoKey, col] of detalleTexto) {
+        const nuevo = dto[dtoKey] as string | undefined;
+        if (nuevo !== undefined && nuevo !== (el[col] ?? undefined)) {
+          cambios[col] = nuevo === '' ? null : nuevo;
+          anterior[col] = el[col];
+          posterior[col] = nuevo === '' ? null : nuevo;
+        }
+      }
+      for (const [dtoKey, col] of detalleFecha) {
+        const nuevo = dto[dtoKey] as string | undefined;
+        if (nuevo === undefined) continue;
+        const actual = el[col] ? el[col]!.toISOString().slice(0, 10) : null;
+        const nuevoNorm = nuevo === '' ? null : nuevo;
+        if (nuevoNorm !== actual) {
+          cambios[col] = nuevoNorm ? new Date(nuevoNorm) : null;
+          anterior[col] = actual;
+          posterior[col] = nuevoNorm;
+        }
+      }
+      for (const [dtoKey, col] of detalleNum) {
+        const nuevo = dto[dtoKey] as number | undefined;
+        if (nuevo === undefined) continue;
+        const actual = el[col] === null ? null : Number(el[col]);
+        if (nuevo !== actual) {
+          cambios[col] = new Prisma.Decimal(nuevo);
+          anterior[col] = actual;
+          posterior[col] = nuevo;
+        }
+      }
+    }
+
     if (Object.keys(cambios).length === 0) {
       throw new BadRequestException('No hay cambios');
     }
@@ -505,7 +566,34 @@ export class ElementoService {
     return toElementoDTO(
       elemento,
       propietarios.map((p) => ({ ...p, nombre: nombrePorId.get(p.usuario_id) })),
+      await this.#estadoOperativoDeuda(elemento),
     );
+  }
+
+  /**
+   * §B2 — estado operativo derivado de DEUDA/CREDITO (DDD: "se deriva del valor
+   * pendiente"). VIGENTE · PARCIALMENTE_PAGADA · EN_MORA · SALDADA · CONDONADA ·
+   * INCOBRABLE. `null` si no es deuda ni crédito.
+   */
+  async #estadoOperativoDeuda(e: ElementoRow): Promise<string | null> {
+    if (e.categoria_funcional !== 'DEUDA' && e.categoria_funcional !== 'CREDITO') return null;
+    const pendiente = Number(e.valor_pendiente ?? 0);
+    if (pendiente > 0) {
+      const hoy = new Date().toISOString().slice(0, 10);
+      if (e.fecha_termino && e.fecha_termino.toISOString().slice(0, 10) < hoy) return 'EN_MORA';
+      const inicial = e.valor_pendiente_inicial === null ? null : Number(e.valor_pendiente_inicial);
+      if (inicial !== null && pendiente < inicial) return 'PARCIALMENTE_PAGADA';
+      return 'VIGENTE';
+    }
+    const cierre = await this.prisma.impacto_patrimonial.findFirst({
+      where: {
+        elemento_id: e.id,
+        origen_tipo: { in: ['CONDONACION', 'DECLARACION_INCOBRABLE'] },
+      },
+    });
+    if (cierre?.origen_tipo === 'CONDONACION') return 'CONDONADA';
+    if (cierre?.origen_tipo === 'DECLARACION_INCOBRABLE') return 'INCOBRABLE';
+    return 'SALDADA';
   }
 
   async listarImpactos(elementoId: string, actorId: string): Promise<ImpactoPatrimonialDTO[]> {

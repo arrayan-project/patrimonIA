@@ -9,10 +9,30 @@ import {
   IsString,
   IsUUID,
   Length,
+  Matches,
   Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
+
+/** Campos opcionales de DEUDA/CREDITO (REQUISITES §J). Compartidos por Registrar y Actualizar. */
+export class DetalleDeudaDto {
+  /** Acreedor (DEUDA) o deudor (CREDITO). */
+  @IsOptional() @IsString() @MinLength(1) contraparte?: string;
+
+  @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'fechaInicio debe ser YYYY-MM-DD' })
+  fechaInicio?: string;
+
+  @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'fechaTermino debe ser YYYY-MM-DD' })
+  fechaTermino?: string;
+
+  @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) cuotaMonto?: number;
+
+  /** % anual. */
+  @IsOptional() @IsNumber({ maxDecimalPlaces: 4 }) @Min(0) tasaInteres?: number;
+
+  @IsOptional() @IsString() observaciones?: string;
+}
 
 /**
  * Categorías de activo (Fase 2, Flujo 1) + DEUDA/CREDITO (Fase 8, Flujo 4).
@@ -38,7 +58,7 @@ export class PropietarioDto {
   porcentaje!: number;
 }
 
-export class RegistrarElementoDto {
+export class RegistrarElementoDto extends DetalleDeudaDto {
   @IsString()
   @MinLength(1)
   nombre!: string;

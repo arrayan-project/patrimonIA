@@ -27,6 +27,17 @@ export interface ElementoPatrimonialDTO {
   valorPendiente: number | null;
   createdAt: string;
   propietarios: PropietarioDTO[];
+
+  // Info adicional de DEUDA/CREDITO (§B3). NULL fuera de esas categorías.
+  contraparte: string | null;
+  fechaInicio: string | null;
+  fechaTermino: string | null;
+  cuotaMonto: number | null;
+  tasaInteres: number | null;
+  observaciones: string | null;
+  valorPendienteInicial: number | null;
+  /** Estado operativo derivado (§B2): VIGENTE·PARCIALMENTE_PAGADA·EN_MORA·SALDADA·CONDONADA·INCOBRABLE. */
+  estadoOperativo: string | null;
 }
 
 export interface ImpactoPatrimonialDTO {
@@ -41,7 +52,10 @@ export interface ImpactoPatrimonialDTO {
 export function toElementoDTO(
   e: ElementoRow,
   propietarios: (PropietarioRow & { nombre?: string })[],
+  estadoOperativo: string | null = null,
 ): ElementoPatrimonialDTO {
+  const fecha = (d: Date | null) => (d === null ? null : d.toISOString().slice(0, 10));
+  const num = (d: unknown) => (d === null || d === undefined ? null : Number(d));
   return {
     id: e.id,
     nombre: e.nombre,
@@ -62,6 +76,14 @@ export function toElementoDTO(
       ...(p.nombre ? { nombre: p.nombre } : {}),
       porcentaje: Number(p.porcentaje),
     })),
+    contraparte: e.contraparte ?? null,
+    fechaInicio: fecha(e.fecha_inicio),
+    fechaTermino: fecha(e.fecha_termino),
+    cuotaMonto: num(e.cuota_monto),
+    tasaInteres: num(e.tasa_interes),
+    observaciones: e.observaciones ?? null,
+    valorPendienteInicial: num(e.valor_pendiente_inicial),
+    estadoOperativo,
   };
 }
 

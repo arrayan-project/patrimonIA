@@ -205,6 +205,16 @@ export interface ElementoPatrimonialDTO {
   valorPendiente: number | null;
   createdAt: string;
   propietarios: PropietarioDTO[];
+  // Info adicional de DEUDA/CREDITO (§B3). null fuera de esas categorías.
+  contraparte: string | null;
+  fechaInicio: string | null;
+  fechaTermino: string | null;
+  cuotaMonto: number | null;
+  tasaInteres: number | null;
+  observaciones: string | null;
+  valorPendienteInicial: number | null;
+  /** §B2: VIGENTE · PARCIALMENTE_PAGADA · EN_MORA · SALDADA · CONDONADA · INCOBRABLE · null. */
+  estadoOperativo: string | null;
 }
 
 export interface EventoFinancieroDTO {

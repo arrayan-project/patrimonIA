@@ -80,9 +80,19 @@ describe('Flujo 4 — Deuda / Crédito (e2e)', () => {
       categoriaFuncional: 'DEUDA',
       valorPendiente: 1_000_000,
       moneda: 'CLP',
+      contraparte: 'Banco Estado',
+      fechaTermino: '2030-12-01',
+      cuotaMonto: 45_000,
+      tasaInteres: 12.5,
+      observaciones: 'crédito automotriz a 36 meses',
     }).expect(201);
     expect(d.body.valorVigente).toBe(-1_000_000);
     expect(d.body.valorPendiente).toBe(1_000_000);
+    expect(d.body.contraparte).toBe('Banco Estado');
+    expect(d.body.fechaTermino).toBe('2030-12-01');
+    expect(d.body.cuotaMonto).toBe(45_000);
+    expect(d.body.tasaInteres).toBe(12.5);
+    expect(d.body.estadoOperativo).toBe('VIGENTE');
   });
 
   it('pagar parte de la deuda (transferencia) reduce el pendiente por el invariante', async () => {
@@ -121,6 +131,11 @@ describe('Flujo 4 — Deuda / Crédito (e2e)', () => {
       .expect(200);
     expect(res.body.valorVigente).toBe(0);
     expect(res.body.valorPendiente).toBe(0);
+
+    expect(
+      (await auth(request(http).get(`/elementos-patrimoniales/${deudaId}`)).expect(200)).body
+        .estadoOperativo,
+    ).toBe('CONDONADA');
 
     const impactos = await prisma.impacto_patrimonial.findMany({
       where: { elemento_id: deudaId, origen_tipo: 'CONDONACION' },

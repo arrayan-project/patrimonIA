@@ -81,6 +81,13 @@ model elemento_patrimonial {
   estado                                                                              String
   valor_pendiente                                                                     Decimal?                @db.Decimal(18, 2)
   created_at                                                                          DateTime                @default(now()) @db.Timestamptz(6)
+  contraparte                                                                         String?
+  fecha_inicio                                                                        DateTime?               @db.Date
+  fecha_termino                                                                       DateTime?               @db.Date
+  cuota_monto                                                                         Decimal?                @db.Decimal(18, 2)
+  tasa_interes                                                                        Decimal?                @db.Decimal(9, 4)
+  observaciones                                                                       String?
+  valor_pendiente_inicial                                                             Decimal?                @db.Decimal(18, 2)
   agrupacion_miembro                                                                  agrupacion_miembro?
   ajuste_patrimonial                                                                  ajuste_patrimonial[]
   elemento_propietario                                                                elemento_propietario[]

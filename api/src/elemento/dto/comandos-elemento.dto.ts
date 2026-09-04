@@ -10,9 +10,9 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { PropietarioDto, VISIBILIDADES } from './registrar-elemento.dto.js';
+import { DetalleDeudaDto, PropietarioDto, VISIBILIDADES } from './registrar-elemento.dto.js';
 
-export class ActualizarDatosElementoDto {
+export class ActualizarDatosElementoDto extends DetalleDeudaDto {
   @IsUUID() elementoId!: string;
   @IsOptional() @IsString() @MinLength(1) nombre?: string;
   @IsOptional() @IsString() @MinLength(1) tipo?: string;

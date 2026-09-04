@@ -46,6 +46,14 @@ const DICCIONARIO: Record<string, string> = {
   CANCELADO: 'Cancelado',
   LIBERADA: 'Liberada',
   CONSUMIDA: 'Consumida',
+
+  // Estado operativo de deuda/crédito (§B2)
+  VIGENTE: 'Vigente',
+  PARCIALMENTE_PAGADA: 'Parcialmente pagada',
+  EN_MORA: 'En mora',
+  SALDADA: 'Saldada',
+  CONDONADA: 'Condonada',
+  INCOBRABLE: 'Incobrable',
   MATERIALIZADO: 'Materializado',
   CERRADO: 'Cerrado',
 

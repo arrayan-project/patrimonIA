@@ -15,6 +15,7 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
+  DateField,
   ErrorText,
   Field,
   LinkButton,
@@ -66,6 +67,9 @@ export function AgregarElementoScreen() {
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('LIQUIDEZ');
   const [valorInicial, setValorInicial] = useState('0');
   const [valorPendiente, setValorPendiente] = useState('');
+  const [contraparte, setContraparte] = useState('');
+  const [fechaTermino, setFechaTermino] = useState('');
+  const [cuota, setCuota] = useState('');
   const [moneda, setMoneda] = useState('CLP');
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
@@ -105,6 +109,9 @@ export function AgregarElementoScreen() {
     categoria !== 'LIQUIDEZ' ||
     valorInicial !== '0' ||
     valorPendiente !== '' ||
+    contraparte !== '' ||
+    fechaTermino !== '' ||
+    cuota !== '' ||
     moneda !== 'CLP' ||
     propiedad !== 'Solo mía';
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
@@ -162,7 +169,12 @@ export function AgregarElementoScreen() {
           moneda: moneda.trim().toUpperCase(),
           ...(compartida && propietarios.length > 1 ? { propietarios } : {}),
           ...(esDeudaOCredito
-            ? { valorPendiente: Number(valorPendiente) || 0 }
+            ? {
+                valorPendiente: Number(valorPendiente) || 0,
+                ...(contraparte.trim() ? { contraparte: contraparte.trim() } : {}),
+                ...(fechaTermino.trim() ? { fechaTermino: fechaTermino.trim() } : {}),
+                ...(Number(cuota) > 0 ? { cuotaMonto: Number(cuota) } : {}),
+              }
             : {
                 valorInicial: Number(valorInicial) || 0,
                 participaValorLiquido: categoria === 'LIQUIDEZ',
@@ -249,6 +261,20 @@ export function AgregarElementoScreen() {
                   ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
                   : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
               </Paragraph>
+              <Field
+                label={categoria === 'DEUDA' ? 'Acreedor (opcional)' : 'Deudor (opcional)'}
+                value={contraparte}
+                onChangeText={setContraparte}
+                autoCapitalize="sentences"
+                placeholder={categoria === 'DEUDA' ? 'Banco, persona…' : 'A quién le prestaste'}
+              />
+              <DateField
+                label="Fecha de término (opcional)"
+                value={fechaTermino}
+                onChange={setFechaTermino}
+                optional
+              />
+              <MoneyField label="Cuota (opcional)" value={cuota} onChange={setCuota} moneda={moneda.trim().toUpperCase() || undefined} />
             </>
           ) : (
             <>

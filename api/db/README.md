@@ -76,6 +76,11 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `013_agrupacion_elemento.sql` — tablas `agrupacion_elemento` (personal) y
   `agrupacion_miembro` (`elemento_id` único → una carpeta por elemento) —
   carpetas de visualización (GAPS.md G23). Ya incluida en `init/01_schema.sql`.
+- `014_detalle_deuda_credito.sql` — columnas opcionales en `elemento_patrimonial`
+  para DEUDA/CREDITO: `contraparte`, `fecha_inicio`, `fecha_termino`,
+  `cuota_monto`, `tasa_interes`, `observaciones` (REQUISITES §J) +
+  `valor_pendiente_inicial` para derivar el estado operativo (GAPS.md G1).
+  Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

@@ -15,11 +15,15 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
+  DateField,
   ErrorText,
   Field,
+  MoneyField,
+  Nota,
   Paragraph,
   Screen,
   Segmented,
+  SectionTitle,
   Select,
   Title,
   Skeleton,
@@ -66,6 +70,14 @@ export function EditarElementoScreen() {
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
   const [pcts, setPcts] = useState<Record<string, string>>({});
 
+  // ── Detalle de deuda/crédito (§B3) ────────────────────────────────────────
+  const [contraparte, setContraparte] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaTermino, setFechaTermino] = useState('');
+  const [cuota, setCuota] = useState('');
+  const [tasa, setTasa] = useState('');
+  const [observaciones, setObservaciones] = useState('');
+
   const propsEditados = Object.entries(pcts)
     .map(([usuarioId, v]) => ({ usuarioId, porcentaje: Number(v || 0) }))
     .filter((p) => p.porcentaje > 0);
@@ -79,6 +91,23 @@ export function EditarElementoScreen() {
     firmaReparto(propsEditados) !==
       firmaReparto(el.propietarios.map((p) => ({ usuarioId: p.usuarioId, porcentaje: p.porcentaje })));
 
+  const esDeudaOCredito =
+    !!el && (el.categoriaFuncional === 'DEUDA' || el.categoriaFuncional === 'CREDITO');
+  const detalleDto: Record<string, string | number> = {};
+  if (el) {
+    if (contraparte.trim() !== (el.contraparte ?? '')) detalleDto.contraparte = contraparte.trim();
+    if (fechaInicio !== (el.fechaInicio ?? '')) detalleDto.fechaInicio = fechaInicio;
+    if (fechaTermino !== (el.fechaTermino ?? '')) detalleDto.fechaTermino = fechaTermino;
+    const cuotaOrig = el.cuotaMonto != null ? String(el.cuotaMonto) : '';
+    if (cuota.trim() !== cuotaOrig && Number(cuota) > 0) detalleDto.cuotaMonto = Number(cuota);
+    const tasaOrig = el.tasaInteres != null ? String(el.tasaInteres) : '';
+    if (tasa.trim() !== tasaOrig && Number(tasa) >= 0 && tasa.trim() !== '')
+      detalleDto.tasaInteres = Number(tasa);
+    if (observaciones.trim() !== (el.observaciones ?? ''))
+      detalleDto.observaciones = observaciones.trim();
+  }
+  const detalleCambiado = Object.keys(detalleDto).length > 0;
+
   const sucio =
     !!el &&
     (nombre.trim() !== el.nombre ||
@@ -86,6 +115,7 @@ export function EditarElementoScreen() {
       visibilidad !== el.visibilidad ||
       (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
       repartoCambiado ||
+      detalleCambiado ||
       motivoDato.trim().length > 0 ||
       motivo.trim().length > 0);
   const permitirSalida = useConfirmarDescarte(sucio && !busy);
@@ -104,6 +134,12 @@ export function EditarElementoScreen() {
             e.propietarios.map((p) => [p.usuarioId, String(p.porcentaje)]),
           ),
         );
+        setContraparte(e.contraparte ?? '');
+        setFechaInicio(e.fechaInicio ?? '');
+        setFechaTermino(e.fechaTermino ?? '');
+        setCuota(e.cuotaMonto != null ? String(e.cuotaMonto) : '');
+        setTasa(e.tasaInteres != null ? String(e.tasaInteres) : '');
+        setObservaciones(e.observaciones ?? '');
       })
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error'));
   }, [elementoId, token]);
@@ -313,6 +349,48 @@ export function EditarElementoScreen() {
                     token,
                   ),
                 'Propietarios actualizados',
+              )
+            }
+          />
+        </Panel>
+      )}
+
+      {activo && esDeudaOCredito && (
+        <Panel>
+          <SectionTitle>
+            Detalle {el.categoriaFuncional === 'DEUDA' ? 'de la deuda' : 'del crédito'}
+          </SectionTitle>
+          <Nota>Todo opcional. Sirve para seguir un crédito real (hipotecario, préstamo).</Nota>
+          <Field
+            label={el.categoriaFuncional === 'DEUDA' ? 'Acreedor (a quién le debes)' : 'Deudor (quién te debe)'}
+            value={contraparte}
+            onChangeText={setContraparte}
+            autoCapitalize="sentences"
+          />
+          <DateField label="Fecha de inicio" value={fechaInicio} onChange={setFechaInicio} optional />
+          <DateField label="Fecha de término" value={fechaTermino} onChange={setFechaTermino} optional />
+          <MoneyField label="Cuota" value={cuota} onChange={setCuota} moneda={el.moneda} />
+          <Field label="Tasa de interés anual (%)" value={tasa} onChangeText={setTasa} keyboardType="numeric" />
+          <Field
+            label="Observaciones"
+            value={observaciones}
+            onChangeText={setObservaciones}
+            autoCapitalize="sentences"
+          />
+          <Button
+            title="Guardar detalle"
+            variant="secondary"
+            loading={busy}
+            disabled={!detalleCambiado}
+            onPress={() =>
+              run(
+                () =>
+                  api.post(
+                    '/comandos/ActualizarDatosElementoPatrimonial',
+                    { elementoId, ...detalleDto },
+                    token,
+                  ),
+                'Detalle guardado',
               )
             }
           />

@@ -27,6 +27,7 @@ import {
   MoneyText,
   Nota,
   Panel,
+  ProgressBar,
   Row,
   Screen,
   SectionTitle,
@@ -36,6 +37,13 @@ import {
   useC,
   type Paleta,
 } from '../ui';
+
+/** Color del estado operativo de una deuda/crédito (§B2). */
+function colorEstadoDeuda(estado: string, c: Paleta): string {
+  if (estado === 'EN_MORA' || estado === 'INCOBRABLE') return c.danger;
+  if (estado === 'PARCIALMENTE_PAGADA' || estado === 'SALDADA') return c.primary;
+  return c.muted;
+}
 
 export function ElementoDetalleScreen() {
   const c = useC();
@@ -205,8 +213,42 @@ export function ElementoDetalleScreen() {
       {(esDeuda || esCredito) && (
         <Panel>
           <SectionTitle>{esDeuda ? 'Deuda' : 'Crédito'}</SectionTitle>
+          {el.estadoOperativo && (
+            <Row
+              left="Estado"
+              right={
+                <Text style={[styles.movMonto, { color: colorEstadoDeuda(el.estadoOperativo, c) }]}>
+                  {etiqueta(el.estadoOperativo)}
+                </Text>
+              }
+            />
+          )}
           <Row left="Saldo pendiente" right={money(el.valorPendiente ?? 0, el.moneda)} />
-          {(el.valorPendiente ?? 0) > 0 ? (
+          {el.valorPendienteInicial != null && el.valorPendienteInicial > 0 && (
+            <View style={{ gap: 4 }}>
+              <ProgressBar
+                pct={
+                  ((el.valorPendienteInicial - (el.valorPendiente ?? 0)) / el.valorPendienteInicial) *
+                  100
+                }
+              />
+              <Nota>
+                Pagado {money(el.valorPendienteInicial - (el.valorPendiente ?? 0), el.moneda)} de{' '}
+                {money(el.valorPendienteInicial, el.moneda)}
+              </Nota>
+            </View>
+          )}
+          {el.contraparte ? (
+            <Row left={esDeuda ? 'Acreedor' : 'Deudor'} right={el.contraparte} />
+          ) : null}
+          {el.fechaInicio ? <Row left="Desde" right={fechaLegible(el.fechaInicio)} /> : null}
+          {el.fechaTermino ? <Row left="Vence" right={fechaLegible(el.fechaTermino)} /> : null}
+          {el.cuotaMonto != null ? (
+            <Row left="Cuota" right={money(el.cuotaMonto, el.moneda)} />
+          ) : null}
+          {el.tasaInteres != null ? <Row left="Tasa anual" right={`${el.tasaInteres}%`} /> : null}
+          {el.observaciones ? <Nota>{el.observaciones}</Nota> : null}
+          {(el.valorPendiente ?? 0) > 0 && (
             <View style={{ gap: 8, marginTop: 8 }}>
               <Nota>
                 {esDeuda
@@ -222,8 +264,6 @@ export function ElementoDetalleScreen() {
                 disabled={saldarMotivo.trim().length < 3}
               />
             </View>
-          ) : (
-            <Nota>Saldada.</Nota>
           )}
         </Panel>
       )}

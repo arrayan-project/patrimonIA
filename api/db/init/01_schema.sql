@@ -78,6 +78,15 @@ CREATE TABLE elemento_patrimonial (
     valor_pendiente           NUMERIC(18,2),  -- solo DEUDA/CREDITO; NULL en el resto
     created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
 
+    -- Info adicional de DEUDA/CREDITO (migración 014, REQUISITES §J). Opcional; NULL en el resto.
+    contraparte               TEXT,           -- acreedor (DEUDA) o deudor (CREDITO)
+    fecha_inicio              DATE,
+    fecha_termino             DATE,
+    cuota_monto               NUMERIC(18,2),
+    tasa_interes              NUMERIC(9,4),   -- % anual
+    observaciones             TEXT,
+    valor_pendiente_inicial   NUMERIC(18,2),  -- saldo al registrar; deriva el estado operativo
+
     CONSTRAINT ck_valor_pendiente_categoria CHECK (
         (categoria_funcional IN ('DEUDA', 'CREDITO') AND valor_pendiente IS NOT NULL)
         OR (categoria_funcional NOT IN ('DEUDA', 'CREDITO') AND valor_pendiente IS NULL)

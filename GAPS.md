@@ -8,17 +8,28 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
 ## Heredados del diseño (documentados en los 6 docs, NO tocados en Fase 1)
 
-### G1 — Estado operativo intermedio de Deuda/Crédito
+### G1 — Estado operativo intermedio de Deuda/Crédito  ✅ RESUELTO (Fase 32)
 - **Qué falta**: un valor entre "activa" y "pagada por completo" para mostrar en UI.
 - **Por qué no está resuelto**: la Sección T del DDD dice que el estado "se deriva
   del valor pendiente" pero no enumera los valores intermedios.
-- **Decisión (Fase 8)**: NO se introduce un estado formal nombrado. La política
-  "Derivar estado operativo" se implementa como el mantenimiento del invariante
-  `valor_pendiente == |valor_vigente|` tras cada impacto (ver G17). El "estado"
-  (activa / parcial / saldada) es un **cálculo de lectura** que la UI hace con
-  `valor_pendiente` y el pendiente inicial (de la auditoría de creación). No hay
-  columna `estado_operativo`.
-- **Para decidir**: ¿hace falta un enum formal para reporting/consolidación?
+- **Decisión (Fase 8)**: NO se introduce un estado formal nombrado. […]
+- **Decisión (Fase 32, §B2 de DOMINIO_PENDIENTE)**: el usuario pidió incluir los
+  conceptos. Sigue **sin columna** `estado_operativo` — es un **cálculo de lectura**
+  fiel al DDD, expuesto en `ElementoPatrimonialDTO.estadoOperativo`:
+  `VIGENTE` · `PARCIALMENTE_PAGADA` (pendiente < pendiente inicial) · `EN_MORA`
+  (`fecha_termino` pasada y pendiente > 0) · `SALDADA` (pendiente 0) · `CONDONADA`
+  / `INCOBRABLE` (pendiente 0 + impacto CONDONACION / DECLARACION_INCOBRABLE).
+  Migración 014 agregó `valor_pendiente_inicial` para no depender de la auditoría.
+  `elemento.service.#estadoOperativoDeuda`.
+
+### G-J — Información adicional de Deuda/Crédito (REQUISITES §J)  ✅ RESUELTO (Fase 32)
+- **Qué faltaba**: acreedor/deudor, fecha inicio/término, cuota, tasa de interés,
+  observaciones — todos **opcionales** (REQUISITES §J).
+- **Decisión (§B3 de DOMINIO_PENDIENTE)**: columnas nullable en
+  `elemento_patrimonial` (migración 014), no tabla hija — mismo patrón que
+  `valor_pendiente`. Se capturan en `RegistrarElementoPatrimonial` y se editan con
+  `ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`
+  (`#editarCampos` extendido). Solo se persisten/leen para categoría DEUDA/CREDITO.
 
 ### G2 — Visibilidad / propiedad de Movimiento Programado
 - **Qué falta**: definir si `movimiento_programado` lleva columnas de

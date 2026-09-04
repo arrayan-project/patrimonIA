@@ -248,7 +248,17 @@ export function DashboardScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.elementoNombre}>{el.nombre}</Text>
-                <Text style={styles.muted}>{etiqueta(el.categoriaFuncional)}</Text>
+                <Text
+                  style={[
+                    styles.muted,
+                    (el.estadoOperativo === 'EN_MORA' || el.estadoOperativo === 'INCOBRABLE') && {
+                      color: c.danger,
+                    },
+                  ]}
+                >
+                  {etiqueta(el.categoriaFuncional)}
+                  {el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : ''}
+                </Text>
               </View>
               <MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.elementoValor} />
 
