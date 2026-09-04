@@ -18,6 +18,8 @@ import {
   Select,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
@@ -235,6 +237,6 @@ export function EditarElementoScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 10 },
+  sectionTitle: tipo.seccion,
 });

@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title } from '../ui';
+import { Skeleton, Ayuda, Button, colors, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, panel, tipo } from '../ui';
 
 export function AgrupacionesScreen() {
   const { token } = useSession();
@@ -171,9 +171,9 @@ export function AgrupacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
   item: { fontSize: 13, color: colors.text },
 });

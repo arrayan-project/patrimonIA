@@ -89,6 +89,35 @@ export const sombra = {
   elevation: 2,
 } as const;
 
+/** Escala de espaciado (múltiplos de 4). Usar para `gap` / `margin` / `padding`. */
+export const escala = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
+
+/**
+ * Contenedor tipo tarjeta (panel blanco con borde). Fuente única del "look" de
+ * tarjeta — antes cada pantalla lo redefinía. El `gap` interno lo pone `Panel`
+ * o cada pantalla.
+ */
+export const panel = {
+  backgroundColor: colors.bg,
+  borderWidth: 1,
+  borderColor: colors.border,
+  borderRadius: 14,
+  padding: escala.lg,
+} as const;
+
+/**
+ * Escala tipográfica. `titulo` = `<Title>`, `seccion` = encabezado de tarjeta,
+ * `dato` = valor de una fila, `nota` = texto secundario (13px), `cuerpo` = texto
+ * corrido (15px).
+ */
+export const tipo = {
+  titulo: { fontSize: 24, fontWeight: '700', color: colors.text },
+  seccion: { fontSize: 16, fontWeight: '700', color: colors.text },
+  cuerpo: { fontSize: 15, color: colors.text, lineHeight: 22 },
+  dato: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  nota: { fontSize: 13, color: colors.muted, lineHeight: 19 },
+} as const;
+
 /**
  * Contenedor scrollable de cada pantalla. Si se pasa `onRefresh`, habilita
  * "deslizar para actualizar" (y gestiona su propio estado de spinner).
@@ -230,6 +259,96 @@ export function Card({
     );
   }
   return <View style={[styles.card, styles.cardRow, style]}>{contenido}</View>;
+}
+
+/**
+ * Contenedor de contenido en tarjeta (vertical, no tocable). Reemplaza el
+ * `<View style={styles.card}>` que cada pantalla redefinía. `gap` controla la
+ * separación entre hijos.
+ */
+export function Panel({
+  children,
+  gap = escala.sm,
+  style,
+}: {
+  children: ReactNode;
+  gap?: number;
+  style?: object;
+}) {
+  return <View style={[panel, { gap }, style]}>{children}</View>;
+}
+
+/** Encabezado de una tarjeta / sección de contenido. */
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return <Text style={styles.sectionTitle}>{children}</Text>;
+}
+
+/** Texto secundario corto (13px, gris). Para pies de tarjeta y aclaraciones. */
+export function Nota({ children }: { children: ReactNode }) {
+  return <Text style={styles.nota}>{children}</Text>;
+}
+
+/**
+ * Fila de una lista de contenido: título + subtítulo opcional + valor a la
+ * derecha + chevron si es tocable. Unifica los `Pressable`/`View` sueltos que
+ * cada pantalla armaba para sus listas.
+ */
+export function ListItem({
+  title,
+  subtitle,
+  right,
+  onPress,
+  tachado,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: ReactNode;
+  onPress?: () => void;
+  tachado?: boolean;
+}) {
+  const cuerpo = (
+    <>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.listItemTitle, tachado && styles.listItemTachado]} numberOfLines={2}>
+          {title}
+        </Text>
+        {subtitle ? <Text style={styles.nota}>{subtitle}</Text> : null}
+      </View>
+      {typeof right === 'string' ? <Text style={styles.dataRight}>{right}</Text> : right}
+      {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.muted} /> : null}
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.listItem, pressed && styles.cardPressed]}
+      >
+        {cuerpo}
+      </Pressable>
+    );
+  }
+  return <View style={styles.listItem}>{cuerpo}</View>;
+}
+
+/** Métrica destacada: valor grande + etiqueta + pista opcional. */
+export function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: string;
+}) {
+  return (
+    <View style={{ gap: 2 }}>
+      <Text style={styles.nota}>{label}</Text>
+      {typeof value === 'string' ? <Text style={styles.statValue}>{value}</Text> : value}
+      {hint ? <Text style={styles.nota}>{hint}</Text> : null}
+    </View>
+  );
 }
 
 export function Paragraph({ children }: { children: ReactNode }) {
@@ -839,7 +958,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 4,
   },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: tipo.titulo,
+  sectionTitle: tipo.seccion,
+  nota: tipo.nota,
+  statValue: { fontSize: 20, fontWeight: '800', color: colors.text },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.faint,
+    paddingVertical: 10,
+  },
+  listItemTitle: tipo.dato,
+  listItemTachado: { textDecorationLine: 'line-through', color: colors.muted },
   migaja: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: -8 },
   migajaTexto: { fontSize: 13, color: colors.muted, fontWeight: '600' },
   paragraph: { fontSize: 15, color: colors.muted, lineHeight: 22 },

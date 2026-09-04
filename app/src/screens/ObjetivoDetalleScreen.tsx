@@ -23,6 +23,8 @@ import {
   Segmented,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
@@ -161,8 +163,8 @@ export function ObjetivoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 10 },
+  sectionTitle: tipo.seccion,
   asg: { borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 4 },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
 });

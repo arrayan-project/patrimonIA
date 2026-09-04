@@ -6,7 +6,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title } from '../ui';
+import { Skeleton, Button, colors, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, panel, tipo } from '../ui';
 
 export function GestionHogarScreen() {
   const { token, usuario } = useSession();
@@ -203,8 +203,8 @@ export function GestionHogarScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 10 },
+  sectionTitle: tipo.seccion,
   miembro: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   aviso: { color: colors.primary, fontSize: 14 },

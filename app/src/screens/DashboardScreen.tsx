@@ -29,6 +29,7 @@ import {
   SelectRow,
   Title,
   Skeleton,
+  tipo,
 } from '../ui';
 
 export function DashboardScreen() {
@@ -314,8 +315,8 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
   resumen: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
   resumenNeto: { fontSize: 24, fontWeight: '800' },
   resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },

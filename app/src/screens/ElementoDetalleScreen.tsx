@@ -27,6 +27,8 @@ import {
   Screen,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 export function ElementoDetalleScreen() {
@@ -322,9 +324,9 @@ export function ElementoDetalleScreen() {
 
 const styles = StyleSheet.create({
   valor: { fontSize: 28, fontWeight: '800' },
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  muted: { fontSize: 13, color: colors.muted },
+  card: { ...panel, gap: 4 },
+  sectionTitle: { ...tipo.seccion, marginBottom: 4 },
+  muted: tipo.nota,
   mov: {
     flexDirection: 'row',
     justifyContent: 'space-between',

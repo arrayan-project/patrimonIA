@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title } from '../ui';
+import { Ayuda, Button, colors, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Skeleton, Title, panel, tipo } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -162,10 +162,10 @@ export function CategoriasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   flecha: { fontSize: 16, color: colors.primary },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
 });

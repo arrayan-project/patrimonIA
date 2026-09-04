@@ -21,6 +21,8 @@ import {
   Row,
   Screen,
   Title,
+  panel,
+  tipo,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
@@ -156,10 +158,10 @@ export function HogarConsolidadoScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 6 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 6 },
+  sectionTitle: tipo.seccion,
   subTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, marginTop: 8 },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
   total: { fontSize: 22, fontWeight: '800' },
   montoRow: { fontSize: 14, fontWeight: '600' },
 });

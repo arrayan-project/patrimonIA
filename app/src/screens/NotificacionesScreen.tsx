@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title } from '../ui';
+import { Button, colors, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title, panel } from '../ui';
 import type { RouteName } from '../navigation/navigator';
 
 /** entidadTipo de una notificación → a qué pantalla lleva. */
@@ -102,7 +102,7 @@ export function NotificacionesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 4 },
+  card: { ...panel, gap: 4 },
   noLeida: { borderColor: colors.primary, backgroundColor: colors.info },
   titulo: { fontSize: 15, fontWeight: '700', color: colors.text },
   cuerpo: { fontSize: 14, color: colors.text },

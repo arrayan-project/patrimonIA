@@ -9,7 +9,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title } from '../ui';
+import { Button, colors, DateField, ErrorText, fechaLegible, Row, Screen, Title, panel, tipo } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
@@ -106,8 +106,8 @@ export function EvolucionPatrimonioScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  card: { ...panel, gap: 8 },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
   bloque: { gap: 4, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
 });

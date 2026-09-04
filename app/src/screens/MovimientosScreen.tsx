@@ -26,6 +26,8 @@ import {
   Screen,
   Segmented,
   Title,
+  panel,
+  tipo,
 } from '../ui';
 import { Dona, GraficoBarras } from '../ui/charts';
 
@@ -283,12 +285,12 @@ function Row({ label, valor, moneda }: { label: string; valor: number; moneda: s
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
   flecha: { fontSize: 30, color: colors.primary, paddingHorizontal: 8 },
   periodo: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
   sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },
   dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
   dataLabel: { fontSize: 14, color: colors.muted },

@@ -17,6 +17,8 @@ import {
   Skeleton,
   Screen,
   Title,
+  panel,
+  tipo,
 } from '../ui';
 
 export function TiposCambioScreen() {
@@ -113,7 +115,7 @@ export function TiposCambioScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  card: { ...panel, gap: 8 },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
 });

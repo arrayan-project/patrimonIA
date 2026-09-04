@@ -19,6 +19,8 @@ import {
   Screen,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 export function EtiquetasScreen() {
@@ -168,11 +170,11 @@ export function EtiquetasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   filaBotones: { flexDirection: 'row', gap: 16 },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
   colores: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   swatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
   swatchSel: { borderColor: colors.text },

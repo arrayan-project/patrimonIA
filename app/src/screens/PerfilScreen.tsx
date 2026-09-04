@@ -6,7 +6,7 @@ import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title } from '../ui';
+import { Button, colors, ErrorText, Field, Paragraph, Row, Screen, Title, panel, tipo } from '../ui';
 
 export function PerfilScreen() {
   const { token } = useSession();
@@ -111,6 +111,6 @@ export function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 10 },
+  sectionTitle: tipo.seccion,
 });

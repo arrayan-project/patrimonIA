@@ -12,7 +12,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title } from '../ui';
+import { Skeleton, Button, colors, ErrorText, LinkButton, MoneyField, Screen, Title, panel, tipo } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
@@ -127,8 +127,8 @@ export function PresupuestoRubrosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
+  card: { ...panel, gap: 10 },
   filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
 });

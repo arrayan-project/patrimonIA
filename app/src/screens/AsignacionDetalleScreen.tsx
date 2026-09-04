@@ -26,6 +26,8 @@ import {
   SelectRow,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
@@ -190,8 +192,8 @@ export function AsignacionDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 10 },
+  sectionTitle: tipo.seccion,
   reserva: { gap: 6, borderTopWidth: 1, borderTopColor: colors.faint, paddingTop: 8 },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
 });

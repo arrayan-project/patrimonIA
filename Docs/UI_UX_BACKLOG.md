@@ -117,7 +117,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 
 | # | Item | Tipo | Prioridad |
 |---|------|------|-----------|
-| G1 | ⚠️ 17 parcial — tokens `colors.fondo` / `colors.info` + `sombra`; el `Screen` va sobre gris suave y las tarjetas blancas resaltan (sweep de `styles.card` en 26 pantallas: `backgroundColor` + `borderRadius: 14`); componentes `Card` (con chevron "ver más" y `franja` de color) y `Chip` ya existen. Falta: escala tipográfica/espaciado, migrar todos los `styles.card` sueltos a `<Card>`, `ListItem`/`Stat` | 🟡 | P2 |
+| G1 | ⚠️ 17/25 — Fase 17: tokens `colors.fondo`/`info` + `sombra`. Fase 25: escala exportada (`escala` de espaciado, `tipo` tipográfica, `panel` para el look de tarjeta) y sweep de las 25 pantallas — cada `styles.card` local pasó a `{ ...panel, gap }`, `sectionTitle`/`muted` a `tipo.seccion`/`tipo.nota`. Componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat` exportados. Falta: adoptar `ListItem`/`Stat`/`Panel` en las pantallas (hoy solo se unificaron los estilos, no el JSX) | 🟡 | P2 |
 | G2 | **Iconografía** — cero iconos; categorías, tipos de movimiento y navegación se leen mucho mejor con iconos | 🟡 | P2 |
 | G3 | ✅ 15g/19 — `react-native-svg`; `src/ui/charts.tsx` con `Dona`, `GraficoLinea`, `GraficoBarras`. Dona en presupuesto por rubro / patrimonio del hogar / Movimientos; línea en Evolución; barras en Movimientos (año); barra de avance total en la lista de Objetivos | 🟡 | P2 |
 | G4 | ✅ 15g — la tarjeta "Mi patrimonio" del Dashboard muestra neto grande + líquido + variación de 30 días (▲/▼, color) por moneda | 🟡 | P2 |
@@ -293,6 +293,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~22~~ ✅ | **F4** copys sin "elemento patrimonial" (header, sección del Inicio, botones de estado, pickers de movimiento); **I1** `accessibilityRole`/`State`/`Label` + `minHeight: 44` en los componentes compartidos de `ui/`; **D6** componente `Migaja` (contexto del padre sobre el `Title`) + `contexto` como param de navegación desde los detalles. Pendiente suelto: B8, H1, H4, E7, G1, G5, I1 (barrido por pantalla). | 21 |
 | ~~23~~ ✅ | **B8** — UI de co-propietarios con % en "Agregar cuenta o bien" (toggle Solo mía / Compartida, un % por miembro del hogar, total en vivo, validación suma-100 / actor ≥ 1 % / ≥ 2 personas); `Field` acepta `label` vacío. e2e `copropiedad.e2e-spec.ts` (+3 → **115 e2e**). Pendiente suelto: H1, H4, E7, G1, G5, I1 (barrido). | 22 |
 | ~~24~~ ✅ | **E7** — detección de estado offline en `client.ts` (`estadoRed`/`observarRed`/`esErrorDeRed`), hook `useConexion`, barra `BannerConexion` (App.tsx) con "Reintentar" (ping a `/health`), y `useCargaAlEnfocar` recarga sola al volver la conexión. Pendiente suelto: H1, H4, G1, G5, I1 (barrido). | 23 |
+| ~~25~~ ✅ | **G1 (parte 1)** — sistema de escala en `ui/index.tsx`: `escala` (espaciado), `tipo` (tipografía), `panel` (look de tarjeta); componentes `Panel`/`SectionTitle`/`Nota`/`ListItem`/`Stat`. Sweep de las 25 pantallas: `styles.card` → `{ ...panel, gap }`, `sectionTitle`/`muted` → `tipo.seccion`/`tipo.nota`. Pendiente: adoptar los componentes en el JSX; H1, H4, G5, I1 (barrido). | 24 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.

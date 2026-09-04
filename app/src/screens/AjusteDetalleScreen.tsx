@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title } from '../ui';
+import { Migaja, Skeleton, Button, colors, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, panel } from '../ui';
 
 export function AjusteDetalleScreen() {
   const { token } = useSession();
@@ -134,7 +134,7 @@ export function AjusteDetalleScreen() {
 
 const styles = StyleSheet.create({
   monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   formTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   nota: { fontSize: 13, color: colors.muted, fontStyle: 'italic' },
 });

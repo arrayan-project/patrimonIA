@@ -26,6 +26,8 @@ import {
   Screen,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 import { Dona } from '../ui/charts';
 
@@ -251,9 +253,9 @@ export function PresupuestoDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  card: { ...panel, gap: 8 },
+  sectionTitle: tipo.seccion,
+  muted: tipo.nota,
   sep: { height: 1, backgroundColor: colors.faint, marginVertical: 4 },
   filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rubro: {

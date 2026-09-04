@@ -21,6 +21,8 @@ import {
   Screen,
   Segmented,
   Title,
+  panel,
+  tipo,
 } from '../ui';
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
@@ -170,9 +172,9 @@ export function PresupuestosScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: colors.text },
   estado: { fontSize: 12, fontWeight: '600', color: colors.muted },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
 });

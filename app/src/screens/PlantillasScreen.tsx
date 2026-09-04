@@ -29,6 +29,8 @@ import {
   SelectRow,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const;
@@ -329,10 +331,10 @@ export function PlantillasScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
+  card: { ...panel, gap: 8 },
   fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   group: { gap: 8 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text },
   nombre: { fontSize: 15, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
+  muted: tipo.nota,
 });

@@ -21,6 +21,8 @@ import {
   Screen,
   Title,
   Skeleton,
+  panel,
+  tipo,
 } from '../ui';
 
 export function MovimientoProgramadoDetalleScreen() {
@@ -174,6 +176,6 @@ export function MovimientoProgramadoDetalleScreen() {
 
 const styles = StyleSheet.create({
   monto: { fontSize: 24, fontWeight: '800', color: colors.text },
-  card: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 16, gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  card: { ...panel, gap: 8 },
+  sectionTitle: tipo.seccion,
 });
