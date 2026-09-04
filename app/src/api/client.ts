@@ -26,6 +26,31 @@ export function registrarManejadorSesionExpirada(fn: (() => void) | null): void 
   alExpirarSesion = fn;
 }
 
+/** `true` cuando el fallo fue de red (no llegó respuesta del servidor). */
+export function esErrorDeRed(e: unknown): e is ApiError {
+  return e instanceof ApiError && e.status === 0;
+}
+
+// ── Estado de conexión (E7) ────────────────────────────────────────────────
+// Se marca sin red cuando un fetch falla sin respuesta, y con red apenas
+// llega cualquier respuesta HTTP (aunque sea un 4xx/5xx: el servidor contestó).
+let hayRed = true;
+const oyentesRed = new Set<(v: boolean) => void>();
+function setHayRed(v: boolean): void {
+  if (v === hayRed) return;
+  hayRed = v;
+  oyentesRed.forEach((fn) => fn(v));
+}
+export function estadoRed(): boolean {
+  return hayRed;
+}
+export function observarRed(fn: (v: boolean) => void): () => void {
+  oyentesRed.add(fn);
+  return () => {
+    oyentesRed.delete(fn);
+  };
+}
+
 async function req<T>(method: string, path: string, opts: Options = {}): Promise<T> {
   const headers: Record<string, string> = { ...opts.headers };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
@@ -40,8 +65,10 @@ async function req<T>(method: string, path: string, opts: Options = {}): Promise
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
   } catch {
+    setHayRed(false);
     throw new ApiError(0, `No se pudo conectar con el servidor (${API_URL})`);
   }
+  setHayRed(true);
 
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;

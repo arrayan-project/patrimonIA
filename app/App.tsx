@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { BannerConexion } from './src/ui/BannerConexion';
 import { ToastProvider } from './src/ui/Toast';
 
 /**
@@ -14,6 +15,7 @@ export default function App() {
       <ToastProvider>
         <AuthProvider>
           <RootNavigator />
+          <BannerConexion />
         </AuthProvider>
       </ToastProvider>
       <StatusBar style="auto" />

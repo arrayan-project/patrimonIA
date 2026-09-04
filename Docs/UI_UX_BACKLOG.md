@@ -96,7 +96,7 @@ visual ("Notificaciones", "Tipos de cambio" y "Cerrar sesión" al mismo nivel).
 | E4 | ✅ 15l — componente `EmptyState` (ícono + texto + acción opcional); en Dashboard (con botón), Objetivos, Presupuestos, Movimientos programados, Plantillas, Etiquetas, Agrupaciones, Notificaciones | 🟡 | P2 |
 | E5 | ✅ 21 — componente `Skeleton` (tarjetas gris con pulso) reemplazó el `<ActivityIndicator>` de carga en todas las pantallas de lista **y de detalle** (16 más en Fase 21). Quedan a propósito con spinner: el bootstrap de sesión (`RootNavigator`), el `loading` de `Button` y el "recalculando" inline de Evolución | 🟡 | P2 |
 | E6 | ⚠️ 20/21 parcial — `Field`/`MoneyField` tienen `error?` (borde rojo + mensaje al pie); validación en vivo en Agregar/Editar elemento, Registrar movimiento/ajuste, Valorizar, Crear hogar, Perfil. Falta: mapear los errores del backend a cada campo | 🟡 | P2 |
-| E7 | **Estado offline / sin backend** — mensaje claro + reintento | 🟡 | P2 |
+| E7 | ✅ 24 — `client.ts` marca "sin red" cuando un `fetch` falla sin respuesta y "con red" apenas llega cualquier respuesta HTTP (`estadoRed`/`observarRed`, helper `esErrorDeRed`); `useConexion()`; barra fija roja `BannerConexion` (arriba, con "Reintentar" → ping a `/health`); `useCargaAlEnfocar` reintenta la carga solo cuando vuelve la conexión y la pantalla está enfocada | 🟡 | P2 |
 
 ---
 
@@ -292,6 +292,7 @@ Pantalla **Ajustes** (tab inferior) con sub-secciones:
 | ~~21~~ ✅ | Pulido mecánico: **G6** `colors.muted` → `#4b5563` (AA); **E5** `Skeleton` en las 16 pantallas de detalle que quedaban; **F3** `MoneyText` en la lista de elementos del Inicio, los ajustes del detalle y el patrimonio del hogar (`Row` acepta `ReactNode`); **H3/E6** validación en vivo + `error?` en Registrar ajuste, Valorizar, Crear hogar y Perfil. Pendiente suelto: B8, H1, H4, F4, I1, D6, E7, G1, G5. | 20 |
 | ~~22~~ ✅ | **F4** copys sin "elemento patrimonial" (header, sección del Inicio, botones de estado, pickers de movimiento); **I1** `accessibilityRole`/`State`/`Label` + `minHeight: 44` en los componentes compartidos de `ui/`; **D6** componente `Migaja` (contexto del padre sobre el `Title`) + `contexto` como param de navegación desde los detalles. Pendiente suelto: B8, H1, H4, E7, G1, G5, I1 (barrido por pantalla). | 21 |
 | ~~23~~ ✅ | **B8** — UI de co-propietarios con % en "Agregar cuenta o bien" (toggle Solo mía / Compartida, un % por miembro del hogar, total en vivo, validación suma-100 / actor ≥ 1 % / ≥ 2 personas); `Field` acepta `label` vacío. e2e `copropiedad.e2e-spec.ts` (+3 → **115 e2e**). Pendiente suelto: H1, H4, E7, G1, G5, I1 (barrido). | 22 |
+| ~~24~~ ✅ | **E7** — detección de estado offline en `client.ts` (`estadoRed`/`observarRed`/`esErrorDeRed`), hook `useConexion`, barra `BannerConexion` (App.tsx) con "Reintentar" (ping a `/health`), y `useCargaAlEnfocar` recarga sola al volver la conexión. Pendiente suelto: H1, H4, G1, G5, I1 (barrido). | 23 |
 
 Cada fase se cierra con e2e/tsc/`expo export` en verde y su commit, como las
 fases 0–14.
