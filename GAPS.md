@@ -4,6 +4,13 @@ Formato tomado de `Docs/UX_FLOWS.docx` § "Resumen y vacíos detectados": qué s
 necesita, por qué no está resuelto, qué opciones existen. Nada de esto se
 resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
+**Estado de cada gap** (revisión 2026-09-04, tras Fases 29–35):
+`✅ RESUELTO` · `🟡 PARCIAL` (núcleo hecho, quedan sub-ítems) · `⬜ PENDIENTE`
+(accionable ya, sin decisión) · `📋 DECISIÓN` (necesita definición del usuario
+antes) · `🔒 EXTERNO` (bloqueado por proveedor externo / build de despliegue).
+
+El resumen ordenado por facilidad está **al final** (§ "Qué queda — por facilidad").
+
 ---
 
 ## Heredados del diseño (documentados en los 6 docs, NO tocados en Fase 1)
@@ -31,7 +38,10 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   `ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`
   (`#editarCampos` extendido). Solo se persisten/leen para categoría DEUDA/CREDITO.
 
-### G2 — Visibilidad / propiedad de Movimiento Programado
+### G2 — Visibilidad / propiedad de Movimiento Programado  🟡 PARCIAL
+- `tipo` (INGRESO/GASTO/TRANSFERENCIA) **RESUELTO en Fase 33**. Lo que queda:
+  las reglas de visibilidad/propiedad propias (hoy heredadas de los elementos)
+  — decisión que DDD §S dejó abierta, se revisaría junto con §B1.
 - **Qué falta**: definir si `movimiento_programado` lleva columnas de
   visibilidad/propiedad propias o hereda las del elemento destino.
 - **Por qué no está resuelto**: DDD Sección S lo deja explícitamente para después
@@ -60,7 +70,10 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
 ## Detectados durante la implementación de Fase 1
 
-### G3 — `moneda_consolidacion` en CrearHogar
+### G3 — `moneda_consolidacion` en CrearHogar  ⬜ PENDIENTE (solo UI)
+- El comando y `CambiarMonedaConsolidacion` (#36) **ya existen** en el backend.
+  Falta que la pantalla "Crear hogar" pida la moneda (hoy manda el placeholder
+  `"CLP"`) y que "Gestionar hogar" deje cambiarla. Cambio chico, solo app.
 - **Qué falta**: el esquema exige `hogar.moneda_consolidacion` (NOT NULL), pero
   el comando `CrearHogar` (API_DESIGN A / AS #34) solo define `nombre` como input,
   y la pantalla "Crear Hogar" (UX_FLOWS) solo pide el nombre.
@@ -73,7 +86,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿la pantalla de alta debería pedir la moneda?, ¿o el default
   es una regla de producto legítima ("hogar chileno → CLP")?
 
-### G4 — "Token de sesión temporal de registro" para RegistrarUsuario
+### G4 — "Token de sesión temporal de registro" para RegistrarUsuario  🔒 EXTERNO
 - **Qué falta**: API_DESIGN dice que `POST /comandos/RegistrarUsuario` va con un
   "token de sesión temporal de registro, no de usuario ya autenticado".
 - **Estado (Fase 12 + 14c)**: **resuelto salvo el captcha**.
@@ -90,7 +103,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
 
-### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)
+### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)  🟡 PARCIAL
 - **Qué falta**: el DDD (Sección M) define visibilidad "por tipo de información"
   (existencia, valor, movimientos, reservas...). El esquema colapsó eso a un solo
   enum `visibilidad` (PRIVADA/COMPARTIDA/FAMILIAR). No hay tabla "compartido con
@@ -121,7 +134,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   visibilidad propia (hoy owner-only); co-propiedad más estricta (co-propietario
   no obligado a compartir hogar).
 
-### G7 — Proyecciones: en vivo vs. materializada
+### G7 — Proyecciones: en vivo vs. materializada  ⬜ PENDIENTE (monitorear)
 - **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan
   pendiente si las proyecciones son vista SQL en vivo o tabla materializada
   (decisión de performance).
@@ -136,7 +149,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   (el usuario no tiene "moneda de consolidación" propia).
 - **Para decidir**: materializar si el cálculo en vivo escala mal.
 
-### G21 — Conversión monetaria (Fase 13 + 14c)
+### G21 — Conversión monetaria (Fase 13 + 14c)  🟡 PARCIAL (falta import de tasas → 🔒 EXTERNO)
 - `ConversionService` (Fase 13): tasa directa más reciente con
   `fecha_vigencia <= fecha`; si no hay, el inverso B→A (`1/tasa`).
 - **Triangulación (Fase 14c)**: si tampoco hay inverso, se busca una moneda
@@ -147,7 +160,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   "corregir" una tasa se registra otra con fecha de vigencia posterior.
 - **Pendiente**: importación automática desde una fuente de tasas.
 
-### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)
+### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)  📋 DECISIÓN
 - **Qué falta**: AS #12 dice "datos corregidos" sin enumerarlos.
 - **Decisión provisional (Fase 3)**: solo se corrige el **monto**. Cambiar tipo,
   fecha o elementos afectados requiere `AnularEventoFinanciero` + registrar de
@@ -156,7 +169,10 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   última corrección.
 - **Para decidir**: ¿permitir corregir fecha?, ¿re-corregir encadenando deltas?
 
-### G10 — AnularEventoFinanciero: impactos y autorización (Fase 3)
+### G10 — AnularEventoFinanciero: impactos y autorización (Fase 3)  ✅ RESUELTO
+- El **colapso visual** original+corrección se hizo en Fase 29 (§A9): el detalle
+  del elemento muestra una sola fila con el monto final y el rótulo "corregido".
+  El resto ya estaba decidido.
 - **Qué falta**: DATABASE_DESIGN §4 dice que Anular "borra o marca" los
   `impacto_patrimonial`; el esquema no tiene flag en esa tabla. El DDD no dice
   quién puede anular/corregir.
@@ -170,7 +186,10 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Colapso visual** original+corrección (UX_FLOWS Flujo 6): la app los muestra
   como filas separadas etiquetadas; el colapso en una sola línea llega después.
 
-### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)
+### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  ⬜ PENDIENTE + 📋
+- ⬜ Un comando para cambiar `admite_valorizacion` después de crear el elemento
+  (hoy si lo creaste sin el flag, nunca lo podés valorizar) — chico.
+- 📋 Anular/corregir valorizaciones **intermedias** (no solo la última) — decisión.
 - **Qué falta**: AS #18 dice que la cadena de valorizaciones "debe ser
   recorrible en orden" pero no acota cuál se puede anular.
 - **Decisión provisional (Fase 4)**: solo se puede **anular o corregir la última
@@ -184,7 +203,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿anular/corregir valorizaciones intermedias re-encadenando?
   ¿un comando para cambiar `admite_valorizacion`?
 
-### G12 — Fase 5b: comandos de ciclo de vida — detalles
+### G12 — Fase 5b: comandos de ciclo de vida — detalles  ✅ (decisiones documentadas)
 - `CambiarMonedaConsolidacion` (#36) cambia el campo pero **no recalcula
   consolidaciones** en la nueva moneda (W) — no hay proyección de consolidación
   ni tipos de cambio (ver G7).
@@ -198,7 +217,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   un `UPDATE` idéntico a #2 con `comando` distinto + motivo (la config no es
   hecho económico; su historial vive en auditoría — DATABASE_DESIGN §3).
 
-### G13 — Propiedad de Objetivo Financiero y Asignación (migración 001)
+### G13 — Propiedad de Objetivo Financiero y Asignación (migración 001)  📋 DECISIÓN (§B6)
 - **Qué falta**: DDD Secciones H y J no definen quién es dueño de un objetivo o
   una asignación, y el esquema original no tenía columna de propiedad.
 - **Decisión**: son **personales** — la migración `api/db/migrations/001_...sql`
@@ -207,7 +226,11 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   `init/01_schema.sql`.
 - **Para decidir**: ¿objetivos/asignaciones compartidos por hogar?
 
-### G14 — Fase 5c: políticas y simplificaciones
+### G14 — Fase 5c: políticas y simplificaciones  ⬜ PENDIENTE + 📋
+- ⬜ **AnularEventoFinanciero no "des-consume" reservas** — anular un gasto que
+  consumió reservas las deja en CONSUMIDA. Corregible sin decisión de dominio.
+- 📋 "Consumir reserva" es grueso (todas las ACTIVAS de la asignación de golpe,
+  no hasta el monto del evento) — refinarlo es decisión + más lógica.
 - **"Completar objetivo"**: solo transiciona EN_PROGRESO → COMPLETADO. Si el
   progreso baja después (LiberarReserva), el objetivo **no** vuelve a
   EN_PROGRESO solo — el usuario lo hace con `CambiarEstadoObjetivoFinanciero`
@@ -222,7 +245,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **AnularEventoFinanciero** de un evento que consumió reservas: no las
   "des-consume" (quedan CONSUMIDA). Pendiente.
 
-### G8 — CONVERSION y PRESTAMO
+### G8 — CONVERSION y PRESTAMO  ✅ RESUELTO
 - **CONVERSION**: **implementado en Fase 13**. `RegistrarEventoFinanciero` con
   `tipo: 'CONVERSION'`, origen y destino en monedas distintas; el destino recibe
   el equivalente vía `ConversionService`. No se corrige (se anula y se registra
@@ -232,7 +255,9 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   TRANSFERENCIA (ver G17). Se mantiene el valor `PRESTAMO` en el CHECK del
   esquema por si más adelante se quiere distinguir por efectos legales.
 
-### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"
+### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"  🟡 PARCIAL
+- Propiedad: ✅ (migración 002). "Asignaciones esperadas" / línea de ahorro por
+  objetivo: 📋 DECISIÓN (§B7) — el presupuesto por rubro de gasto ya existe (G26).
 - **Qué falta**: el esquema de `presupuesto` no tiene columna de propiedad, pero
   AS #49 audita "usuario/hogar" y `tipo` INDIVIDUAL/FAMILIAR implica dueños
   distintos. Además el input de AS #49 menciona "asignaciones esperadas" y el
@@ -247,7 +272,9 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿agregar `asignaciones_esperadas` (monto agregado) o una tabla
   hija presupuesto_linea por asignación esperada?
 
-### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)
+### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  📋 DECISIÓN
+- Decisiones de alcance/agregación tomadas en Fase 6. Abierto: presupuesto con
+  moneda propia (§B8) y "ahorro real" desde reservas en vez de ingresos−gastos.
 - **Qué falta**: DATABASE_DESIGN §12 define la proyección como "comparación entre
   montos esperados y reales agregados desde `evento_financiero` en el período"
   sin precisar qué eventos entran ni cómo se maneja la moneda.
@@ -266,7 +293,9 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   en vez de ingresos−gastos?, ¿excluir transferencias entre elementos del alcance
   ya está bien así?
 
-### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)
+### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)  ✅ + 📋
+- Signo, invariante y pago-por-transferencia: ✅. Abierto (📋): ¿intereses como
+  Ajuste o como evento propio? (con §B3 ya está el campo `tasa_interes`).
 - **Qué falta**: ni el DDD ni DATABASE_DESIGN fijan el signo de
   `elemento_patrimonial.valor_vigente` para una DEUDA, ni cómo se relaciona con
   `valor_pendiente` cuando cambian por evento/ajuste.
@@ -291,7 +320,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
   TRANSFERENCIA hacia el elemento crédito? ¿intereses como Ajuste o como evento?
 
-### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)
+### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)  📋 DECISIÓN (§B10)
 - **Qué falta**: DDD Sección V pide reconstruir el estado a una fecha pasada
   aplicando los hechos con `fecha <= X`. El modelo no guarda "fecha de alta" ni
   "fecha de baja" del elemento (Registrar/Desactivar/Reactivar son config, y la
@@ -308,7 +337,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 - **Para decidir**: ¿agregar `fecha_alta` / `fecha_baja` al elemento? ¿fecha a la
   anulación para reconstruirla en el tiempo?
 
-### G19 — Consolidación del hogar sin `hogar_id` en el elemento (Fase 10)
+### G19 — Consolidación del hogar sin `hogar_id` en el elemento (Fase 10)  📋 DECISIÓN (solo importa con multi-hogar)
 - **Qué falta**: DDD Sección Q dice "un elemento participa en una única
   consolidación de hogar", pero el esquema solo tiene el booleano
   `participa_consolidacion` — no hay columna que apunte a qué hogar.
@@ -328,7 +357,9 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
     correcciones vivas (colapsa el par original+compensatorio).
 - **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
 
-### G20 — Notificaciones (Fase 11 + 14c)
+### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL
+- In-app: ✅. Push remoto: 🔒 EXTERNO (necesita development build + `projectId` de
+  EAS). Preferencias de notificación + reintentos de envío fallido: ⬜ PENDIENTE.
 - **In-app (Fase 11)**: tabla `notificacion` (migración 005), registro que NO es
   dominio (sin auditoría, regenerable). Se emite dentro de la transacción del
   comando. Generadores: **OBJETIVO_COMPLETADO**, **RESERVA_CONSUMIDA**,
@@ -345,7 +376,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   devuelve null (no rompe nada). Preferencias de notificación y reintentos de
   envío fallido tampoco están.
 
-### G5 — Consulta "mis invitaciones recibidas"
+### G5 — Consulta "mis invitaciones recibidas"  ✅ RESUELTO
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
   listar sus invitaciones pendientes, pero no conoce el `hogar_id`. API_DESIGN
   solo tiene `GET /hogares/{id}/invitaciones?estado=PENDIENTE` (por hogar).
@@ -362,7 +393,7 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 Ver `Docs/UI_UX_BACKLOG.md` para el backlog completo de UI/UX. Estos son los
 vacíos que requieren **decisión de dominio + migración** antes de ser UI.
 
-### G22 — Glosa / detalle en el movimiento financiero
+### G22 — Glosa / detalle en el movimiento financiero  ✅ RESUELTO (Fase 15c, opción a)
 - **Qué falta**: `evento_financiero` solo tiene `tipo, monto, moneda, fecha`. No
   hay dónde escribir "pago internet marzo". Ni los 6 docs lo contemplan
   (AS #5 menciona "comentarios" como tipo de información de visibilidad, pero no
@@ -378,7 +409,10 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   hecho económico → no participa de la reconstrucción histórica (Sección V).
 - **Para decidir**: ¿la glosa se puede editar sin anular el evento?
 
-### G23 — Categorización de movimientos: categoría vs. etiqueta
+### G23 — Categorización de movimientos: categoría vs. etiqueta  ✅ RESUELTO + 📋
+- Categorías (15c), etiquetas (15i), agrupaciones de elementos (15j), presupuesto
+  por rubro (15d): ✅. Abierto (📋): **categorías jerárquicas** (`categoria_padre_id`,
+  §B9) — hoy lista plana.
 - **Qué falta**: no hay forma de clasificar un gasto/ingreso ("Mercado",
   "Servicios", "Sueldo"). El presupuesto (Agregado K) solo compara totales de
   ingreso/gasto, no por rubro. No hay registro rápido de gastos recurrentes.
@@ -437,7 +471,7 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   - **Ambas** (categoría + etiqueta), pero etiquetas y agrupaciones de elementos
     quedan para fase posterior — la categoría es la única de Fase 15c.
 
-### G24 — Plantillas / movimientos recurrentes rápidos (Fase 15h)
+### G24 — Plantillas / movimientos recurrentes rápidos (Fase 15h)  ✅ RESUELTO
 - **Qué falta**: registrar "el gasto de siempre" (internet, arriendo) en 2 toques.
   Distinto de **Movimiento Programado** (#13–#16, que es un movimiento futuro
   concreto con fecha): una plantilla es un molde reutilizable sin fecha.
@@ -460,7 +494,12 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
     en el detalle de un movimiento (deriva origen/destino de los impactos).
   - CONVERSION queda fuera (dos monedas, más lógica).
 
-### G25 — Sección de Ajustes / preferencias de visualización
+### G25 — Sección de Ajustes / preferencias de visualización  🟡 PARCIAL
+- `GET /usuarios/me` ya devuelve `preferencias`; hay pantalla Ajustes (hub) y
+  selector de tema (Fase 28). Falta: darle forma al objeto de preferencias
+  (formato de fecha, secciones visibles del dashboard, densidad, moneda de
+  despliegue) — cada toggle es chico — y 📋 decidir qué es del usuario y qué del
+  hogar (`hogar.configuracion JSONB` vs. tablas).
 - **Qué falta**: un lugar para administrar de forma granular lo que se muestra —
   categorías, etiquetas, agrupaciones, formato de fecha, secciones visibles del
   dashboard, tema, densidad, moneda de despliegue preferida, tipos de elemento
@@ -481,7 +520,9 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
-### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)
+### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO + 📋
+- Líneas por categoría de gasto: ✅. Abierto (📋): ¿la suma de líneas debe cuadrar
+  con `gastos_esperados`? ¿líneas de ahorro por objetivo (cierra G15)?
 - **Qué falta**: el Presupuesto (Agregado K) solo compara totales de
   ingreso/gasto/ahorro (`ingresos_esperados`, `gastos_esperados`,
   `ahorro_esperado`). No hay forma de fijar cuánto se espera por categoría
@@ -512,7 +553,7 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
   (cierra del todo G15)?
 
-### G27 — Reportes financieros por período (Fase 16)
+### G27 — Reportes financieros por período (Fase 16)  ✅ RESUELTO
 - **Qué falta**: no había forma de ver "mis gastos de marzo" ni "el año 2026". El
   desglose por rubro solo vivía dentro del detalle de un presupuesto; la lista de
   movimientos solo se veía por elemento o en `GET /hogares/:id/eventos-financieros`
@@ -534,3 +575,46 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
     conversiones no cuentan). Eventos anulados fuera.
 - **Para decidir**: ¿comparación automática con el período anterior en el
   endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+
+---
+
+## Qué queda — por facilidad
+
+Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista de
+**pendientes**, ordenada de más fácil a más difícil.
+
+### 1 · Chico, sin decisión (solo hacer)
+
+| # | Gap | Qué es | Alcance |
+|---|-----|--------|---------|
+| P1 | **G3** | Pedir la moneda de consolidación en "Crear hogar" + poder cambiarla en "Gestionar hogar". El backend (`CrearHogar`, `CambiarMonedaConsolidacion` #36) ya está. | Solo app: `Select` de moneda en 2 pantallas. |
+| P2 | **G14** (parte ⬜) | Al **anular** un evento que consumió reservas, devolverlas a ACTIVA (hoy quedan CONSUMIDA para siempre). | Backend: unas líneas en `evento.service.anular` + recalcular progreso. 1–2 e2e. |
+| P3 | **G11** (parte ⬜) | Comando nuevo `CambiarAdmiteValorizacion` — si creaste un elemento sin el flag, hoy nunca lo podés valorizar. | Backend: comando + auditoría; app: toggle en "Editar elemento". |
+| P4 | **G20** (preferencias) | Preferencias de notificación (silenciar tipos) sobre `usuario.preferencias` (que ya existe y ya se expone). | Backend mínimo + app: toggles en Ajustes. |
+
+### 2 · Mediano, necesita una decisión tuya primero (📋)
+
+| # | Gap | La decisión | Si se decide, el trabajo |
+|---|-----|-------------|--------------------------|
+| P5 | **G9** | ¿Corregir también la **fecha** de un movimiento? ¿Re-corregir encadenando (hoy la cadena es lineal, una sola corrección viva)? | Backend: ampliar `CorregirEventoFinanciero`. Medio. |
+| P6 | **G26 / G15 / B7** | ¿Línea de **ahorro esperado por objetivo** en el presupuesto? ¿La suma de líneas de gasto debe cuadrar con `gastos_esperados`? | Migración chica + extender `presupuesto_linea` y la desviación. |
+| P7 | **B9 (dentro de G23)** | ¿Categorías **jerárquicas** (2 niveles, "Servicios › Internet")? | Migración: `categoria_padre_id`. No rompe datos. Medio. |
+| P8 | **G17** (intereses) | ¿Los **intereses** de una deuda/crédito se registran como Ajuste o como evento propio? (el campo `tasa_interes` ya existe desde §B3). | Depende de la respuesta; de chico a medio. |
+| P9 | **G13 / B6** | ¿Objetivos y asignaciones **compartidos por hogar** (hoy son personales)? | Migración + cambios de acceso en toda la capa de planificación. Medio-grande. |
+| P10 | **G18 / B10** | ¿Agregar `fecha_alta` / `fecha_baja` al elemento y fecha a la anulación, para que la reconstrucción histórica distinga "no existía todavía"? | Migración + backfill + lógica de `ReconstruccionService`. Medio-grande. |
+| P11 | **G16 / B8** | ¿**Moneda** propia en reservas / asignaciones / objetivos / presupuestos (hoy se asume la del elemento / CLP)? | Migración en 4 tablas + tocar todos sus cálculos. Grande. |
+| P12 | **G6** (resto) / **G2** (resto) | Visibilidad propia para reservas/objetivos/presupuestos (hoy owner-only); reglas de visibilidad propias del movimiento programado; co-propiedad que exija compartir hogar. | Extiende §B1. Medio cada una. |
+| P13 | **G7 / G19** | Materializar proyecciones si el cálculo en vivo escala mal; `elemento.hogar_consolidacion_id` explícito (solo importa con multi-hogar, que se descartó). | Solo si aparece el problema. |
+
+### 3 · Bloqueado por algo externo (🔒)
+
+| # | Gap | Qué falta |
+|---|-----|-----------|
+| P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. |
+| P15 | **G20** (push) | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). |
+| P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). |
+
+### Recomendación
+Partir por **P1** (moneda en Crear hogar) que es puro UI y cierra un placeholder
+viejo, y **P2** (des-consumir reservas al anular) que es un bug de comportamiento
+chico y acotado. **P3** y **P4** completan la tanda "fácil".
