@@ -41,17 +41,23 @@ export const CLARO: Paleta = {
   info: '#eff6ff',
 };
 
+/**
+ * Estética inspirada en apps tipo "rimu": fondo casi negro, tarjetas apenas
+ * más claras que el fondo (la separación la da el borde, no la sombra),
+ * bordes muy sutiles y un solo acento saturado — acá se mantiene el azul en
+ * vez de pasar a verde (decisión del usuario, sesión 2026-09-04).
+ */
 export const OSCURO: Paleta = {
-  fondo: '#0b0f19',
-  bg: '#161b26',
-  text: '#f3f4f6',
-  muted: '#9ca3af',
-  border: '#2b3240',
+  fondo: '#08090a',
+  bg: '#111214',
+  text: '#f2f2f0',
+  muted: '#8b8b90',
+  border: '#242429',
   primary: '#3b82f6',
   primaryText: '#ffffff',
-  danger: '#f87171',
-  faint: '#1f2633',
-  info: '#172033',
+  danger: '#ef4444',
+  faint: '#0d0e10',
+  info: '#101a2c',
 };
 
 export type ModoTema = 'sistema' | 'claro' | 'oscuro';

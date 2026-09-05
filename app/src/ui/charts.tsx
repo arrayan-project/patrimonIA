@@ -1,6 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, G, Polyline, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  G,
+  LinearGradient,
+  Line,
+  Path,
+  Polyline,
+  Rect,
+  Stop,
+  Text as SvgText,
+} from 'react-native-svg';
 import { Punto, useC } from './index';
 import type { Paleta } from './tema';
 
@@ -136,6 +147,7 @@ export function GraficoLinea({
   formatoValor?: (n: number) => string;
 }) {
   const { c, styles } = useCharts();
+  const [gradId] = useState(() => `glg-${Math.random().toString(36).slice(2)}`);
   const ancho = 300;
   const padY = 14;
   if (puntos.length < 2) {
@@ -146,27 +158,41 @@ export function GraficoLinea({
   const min = Math.min(...valores);
   const max = Math.max(...valores);
   const rango = max - min || 1;
+  const trazo = color ?? c.primary;
 
   const x = (i: number) => (i / (puntos.length - 1)) * ancho;
   const y = (v: number) => padY + (1 - (v - min) / rango) * (alto - 2 * padY);
 
   const coords = puntos.map((p, i) => `${x(i)},${y(p.valor)}`).join(' ');
   const cero = min <= 0 && max >= 0 ? y(0) : null;
+  const ultimo = { x: x(puntos.length - 1), y: y(valores[valores.length - 1]) };
+  // Área bajo la línea, desvanecida hacia abajo (look "rimu").
+  const area = `M ${x(0)},${alto} L ${coords.split(' ').join(' L ')} L ${ultimo.x},${alto} Z`;
 
   return (
     <View style={{ gap: 4 }}>
       <View style={{ height: alto }}>
         <Svg width="100%" height={alto} viewBox={`0 0 ${ancho} ${alto}`} preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={trazo} stopOpacity={0.28} />
+              <Stop offset="1" stopColor={trazo} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Path d={area} fill={`url(#${gradId})`} stroke="none" />
           {cero != null && (
             <Line x1={0} y1={cero} x2={ancho} y2={cero} stroke={c.border} strokeWidth={1} />
           )}
           <Polyline
             points={coords}
             fill="none"
-            stroke={color ?? c.primary}
+            stroke={trazo}
             strokeWidth={2}
             strokeLinejoin="round"
+            strokeLinecap="round"
           />
+          <Circle cx={ultimo.x} cy={ultimo.y} r={5} fill={trazo} fillOpacity={0.18} />
+          <Circle cx={ultimo.x} cy={ultimo.y} r={2.5} fill={trazo} />
         </Svg>
       </View>
       <View style={styles.ejeFila}>
