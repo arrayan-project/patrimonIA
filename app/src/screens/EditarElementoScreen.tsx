@@ -25,6 +25,7 @@ import {
   Segmented,
   SectionTitle,
   Select,
+  SelectRow,
   Title,
   Skeleton,
   Panel,
@@ -37,6 +38,12 @@ import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
 
 const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
+type Nivel = (typeof VIS)[number];
+const TIPOS_INFO = [
+  ['EXISTENCIA', 'Que existe'],
+  ['VALOR', 'El monto'],
+  ['MOVIMIENTOS', 'Los movimientos'],
+] as const;
 
 /** Solo dígitos, máx 2 decimales, en [0, 100]. */
 function limpiarPct(t: string): string {
@@ -60,7 +67,12 @@ export function EditarElementoScreen() {
   const [tipo, setTipo] = useState('');
   const [modoDato, setModoDato] = useState<'Actualización' | 'Corrección'>('Actualización');
   const [motivoDato, setMotivoDato] = useState('');
-  const [visibilidad, setVisibilidad] = useState<(typeof VIS)[number]>('PRIVADA');
+  const [niveles, setNiveles] = useState<Record<string, Nivel>>({
+    EXISTENCIA: 'PRIVADA',
+    VALOR: 'PRIVADA',
+    MOVIMIENTOS: 'PRIVADA',
+  });
+  const [compartidoCon, setCompartidoCon] = useState<string[]>([]);
   const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
@@ -108,11 +120,23 @@ export function EditarElementoScreen() {
   }
   const detalleCambiado = Object.keys(detalleDto).length > 0;
 
+  const vptOrig = el
+    ? (el.visibilidadPorTipo ?? {
+        EXISTENCIA: el.visibilidad,
+        VALOR: el.visibilidad,
+        MOVIMIENTOS: el.visibilidad,
+      })
+    : null;
+  const visibilidadCambiada =
+    !!vptOrig &&
+    (TIPOS_INFO.some(([k]) => niveles[k] !== vptOrig[k]) ||
+      [...compartidoCon].sort().join() !== [...(el?.compartidoCon ?? [])].sort().join());
+
   const sucio =
     !!el &&
     (nombre.trim() !== el.nombre ||
       tipo.trim() !== el.tipo ||
-      visibilidad !== el.visibilidad ||
+      visibilidadCambiada ||
       (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
       repartoCambiado ||
       detalleCambiado ||
@@ -127,7 +151,15 @@ export function EditarElementoScreen() {
         setEl(e);
         setNombre(e.nombre);
         setTipo(e.tipo);
-        setVisibilidad(e.visibilidad as (typeof VIS)[number]);
+        const vpt =
+          e.visibilidadPorTipo ??
+          { EXISTENCIA: e.visibilidad, VALOR: e.visibilidad, MOVIMIENTOS: e.visibilidad };
+        setNiveles({
+          EXISTENCIA: vpt.EXISTENCIA as Nivel,
+          VALOR: vpt.VALOR as Nivel,
+          MOVIMIENTOS: vpt.MOVIMIENTOS as Nivel,
+        });
+        setCompartidoCon(e.compartidoCon ?? []);
         setEnConsolidacion(e.participaConsolidacion ? 'Sí' : 'No');
         setPcts(
           Object.fromEntries(
@@ -187,6 +219,7 @@ export function EditarElementoScreen() {
     return [...map.entries()].map(([usuarioId, nombre]) => ({ usuarioId, nombre }));
   })();
   const puedeEditarPropietarios = personas.length > 1;
+  const coMiembros = miembros.filter((m) => m.usuarioId !== usuario.id);
   const totalPct = propsEditados.reduce((s, p) => s + p.porcentaje, 0);
   const errReparto =
     Math.abs(totalPct - 100) > 0.001
@@ -256,24 +289,55 @@ export function EditarElementoScreen() {
 
       {activo && (
         <Panel>
-          <Segmented label="Visibilidad" options={VIS} value={visibilidad} onChange={setVisibilidad} />
+          <SectionTitle>Visibilidad</SectionTitle>
           <Ayuda>
-            Privada: solo tú la ves. Compartida / Familiar: los miembros de tu
-            hogar ven este elemento en las vistas del hogar.
+            Elige, para cada dato, quién puede verlo. Privada: solo tú. Familiar:
+            todos los miembros del hogar. Compartida: solo las personas que elijas.
           </Ayuda>
+          {TIPOS_INFO.map(([k, etiq]) => (
+            <Segmented
+              key={k}
+              label={etiq}
+              options={VIS}
+              value={niveles[k]}
+              onChange={(v) => setNiveles((n) => ({ ...n, [k]: v }))}
+            />
+          ))}
+          {coMiembros.length > 0 && Object.values(niveles).includes('COMPARTIDA') && (
+            <>
+              <Text style={styles.sectionTitle}>Compartir con</Text>
+              {coMiembros.map((m) => (
+                <SelectRow
+                  key={m.usuarioId}
+                  label={m.nombre}
+                  selected={compartidoCon.includes(m.usuarioId)}
+                  onPress={() =>
+                    setCompartidoCon((xs) =>
+                      xs.includes(m.usuarioId)
+                        ? xs.filter((x) => x !== m.usuarioId)
+                        : [...xs, m.usuarioId],
+                    )
+                  }
+                />
+              ))}
+            </>
+          )}
           <Button
-            title="Cambiar visibilidad"
+            title="Guardar visibilidad"
             variant="secondary"
+            loading={busy}
+            disabled={!visibilidadCambiada}
             onPress={() =>
-              run(() =>
-                api.post(
-                  '/comandos/CambiarVisibilidadElementoPatrimonial',
-                  { elementoId, visibilidad },
-                  token,
-                ),
+              run(
+                () =>
+                  api.post(
+                    '/comandos/DefinirVisibilidadElementoPatrimonial',
+                    { elementoId, niveles, compartidoCon },
+                    token,
+                  ),
+                'Visibilidad actualizada',
               )
             }
-            loading={busy}
           />
         </Panel>
       )}

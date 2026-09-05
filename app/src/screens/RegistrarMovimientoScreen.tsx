@@ -47,6 +47,7 @@ export function RegistrarMovimientoScreen() {
   const { key } = useIdempotencyKey();
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
+  const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [plantillas, setPlantillas] = useState<PlantillaMovimientoDTO[]>([]);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
@@ -77,6 +78,10 @@ export function RegistrarMovimientoScreen() {
       .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
       .then(setElementos)
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+    api
+      .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token)
+      .then(setElementosHogar)
+      .catch(() => setElementosHogar([]));
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
       .then((hs) =>
@@ -274,10 +279,20 @@ export function RegistrarMovimientoScreen() {
               onPress={() => setDestinoId(el.id)}
             />
           ))}
-          {tipo === 'TRANSFERENCIA' && (
-            <Paragraph>
-              El destino puede ser de otro miembro de tu hogar (Fase 2 solo lista tus elementos).
-            </Paragraph>
+          {tipo === 'TRANSFERENCIA' && elementosHogar.length > 0 && (
+            <>
+              <Text style={styles.label}>De otro miembro del hogar</Text>
+              {elementosHogar.map((el) => (
+                <SelectRow
+                  key={el.id}
+                  label={`${el.nombre}${el.valorOculto ? '' : ` · ${money(el.valorVigente, el.moneda)}`} · ${
+                    el.propietarios[0]?.nombre ?? 'hogar'
+                  }`}
+                  selected={destinoId === el.id}
+                  onPress={() => setDestinoId(el.id)}
+                />
+              ))}
+            </>
           )}
         </View>
       )}

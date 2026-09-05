@@ -11,13 +11,16 @@ técnicas que hoy limitan la experiencia.
 
 La conclusión para UI/UX está al final (§ "Cómo esto estructura la app").
 
-> **Estado a Fase 30 (2026-09-03).** Todo el bloque §A sin decisiones está
-> implementado: **A1, A2, A3, A5, A6, A7, A9** (Fases 29–30). Quedan en §A solo
-> los que requieren una definición o diseño de UX: **A4** (¿el usuario final
-> distingue "editar" de "corregir"?), **A8** (transferir a elemento de otro
-> miembro — atado a §B1), **A10** (guía proactiva hacia Crédito — diseño de UX),
-> **A11** (consistencia multi-hogar — chore transversal). El resto del trabajo
-> disponible son las **decisiones §B**.
+> **Estado a Fase 34 (2026-09-04).** Bloque §A: **A1, A2, A3, A5, A6, A7, A8, A9**
+> implementados. El usuario decidió §B1, §B2, §B3 y §B5 (Fases 32–34); quedan
+> **A4** (¿el usuario final distingue "editar" de "corregir"? — implementado como
+> opción visible en Editar elemento, Fase 31, sin forzar la distinción), **A10**
+> (guía proactiva hacia Crédito — diseño de UX, no pedido) y **A11** (consistencia
+> multi-hogar — chore transversal, el usuario dijo que no por ahora). Quedan sin
+> decidir: **B4** (comentarios/adjuntos), **B6** (objetivos/asignaciones
+> familiares), **B7** (ahorro esperado en presupuesto), **B8** (moneda en
+> reserva/asignación/objetivo/presupuesto), **B9** (categorías jerárquicas),
+> **B10** (fechas de alta/baja para reconstrucción).
 
 ---
 
@@ -105,14 +108,12 @@ las asignaciones independientes **no se pueden crear ni ver**.
 **Falta:** una pantalla "Asignaciones" (o dentro de Planificar) que liste todas
 —con y sin objetivo— y permita crear una suelta.
 
-### A8 · Transferir a un elemento de otro miembro del hogar
+### A8 · Transferir a un elemento de otro miembro del hogar — ✅ HECHO (Fase 34)
 `UX_FLOWS` Flujo 1 paso 4 ("le transfiero a mi esposa para Netflix"). El backend
-**ya lo permite** (`evento.service #validarDestino`: el destino puede ser de un
-co-miembro). El bloqueo es de UI: `GET /elementos-patrimoniales?propietario=me`
-solo devuelve los tuyos, así que el selector no tiene qué ofrecer.
-
-**Falta:** un endpoint "elementos visibles para mí en el hogar" — cruza con la
-decisión de visibilidad granular (§B1).
+ya lo permitía (`evento.service #validarDestino`). Con §B1 resuelto, se agregó
+`GET /elementos-patrimoniales?alcance=hogar` (elementos de co-miembros cuya
+EXISTENCIA el actor puede ver) y el picker de destino en Registrar movimiento
+(TRANSFERENCIA) los ofrece.
 
 ### A9 · Colapso visual de corrección + original
 `GAPS G10` + `UX_FLOWS` Flujo 6: hoy el detalle de un elemento muestra el evento
@@ -137,47 +138,49 @@ tiene selector de hogar activo, pero muchas pantallas asumen `hogares[0]`
 Requieren **tu decisión + (casi siempre) una migración** antes de ser UI.
 Ya están en `GAPS.md`; las repito priorizadas por impacto en UX.
 
-### B1 · Visibilidad granular por tipo de información — `GAPS G6`
+### B1 · Visibilidad granular por tipo de información — `GAPS G6` — ✅ RESUELTO (Fase 34)
 `REQUISITES §M` define visibilidad **por tipo**: existencia · valor · movimientos ·
 reservas/asignaciones · objetivos · presupuestos · comentarios · documentos. Y
 tres niveles: Privada / Compartida / **Familiar**.
 
-Hoy: **un solo enum** `visibilidad` (PRIVADA/COMPARTIDA/FAMILIAR) y **no hay tabla
-"compartido con quién"** → COMPARTIDA y FAMILIAR se comportan igual.
+**Decisión del usuario**: implementarlo tal como se planteó. Migración 016:
+`elemento_visibilidad` (nivel por EXISTENCIA/VALOR/MOVIMIENTOS — reservas,
+objetivos y presupuestos quedan para cuando existan como conceptos compartibles)
++ `elemento_comparticion` (con quién, cuando el nivel es COMPARTIDA). El enum
+base `visibilidad` sigue siendo el nivel por defecto de los tres tipos; compat:
+COMPARTIDA sin lista explícita se comporta como FAMILIAR. Comando
+`DefinirVisibilidadElementoPatrimonial`. `obtenerElemento` cierra EXISTENCIA
+(404) y, sin VALOR, `valorOculto: true` + montos en 0. Los movimientos se abren
+a co-miembros con visibilidad MOVIMIENTOS. Editar elemento tiene un editor por
+tipo + selector de "compartir con". Desbloqueó **§A8**.
 
-**Impacto UX:** sin esto no hay forma real de "comparto el saldo pero no los
-movimientos", ni de listar los elementos de otro miembro (§A8). Es la decisión de
-dominio con **más efecto en la experiencia de hogar**.
+### B2 · Estado operativo de Deuda/Crédito — `GAPS G1` — ✅ RESUELTO (Fase 32)
+**Decisión del usuario**: incluir los conceptos. Sigue **sin** columna
+`estado_operativo` (fiel al DDD: "se deriva") — es un cálculo de lectura:
+`VIGENTE` · `PARCIALMENTE_PAGADA` · `EN_MORA` · `SALDADA` · `CONDONADA` ·
+`INCOBRABLE`, expuesto en `ElementoPatrimonialDTO.estadoOperativo`. Migración 014
+agregó `valor_pendiente_inicial` para poder derivar "parcialmente pagada" sin
+depender de la auditoría.
 
-### B2 · Estado operativo de Deuda/Crédito — `GAPS G1`, `UX_FLOWS` Flujo 4
-El DDD dice que el estado "se deriva del valor pendiente" pero **no nombra los
-valores intermedios** entre "activa" y "saldada". Decisión (Fase 8): no se
-introdujo un enum; el estado es un cálculo de lectura (% pagado).
-
-**Para decidir:** ¿basta mostrar "% pagado / saldo pendiente", o hace falta un
-estado formal ("vigente / en mora / parcialmente pagada / saldada / incobrable")
-para reportes y para el color en la lista?
-
-### B3 · Información adicional de Deuda/Crédito — `REQUISITES §J`
-Los docs listan campos **opcionales**: acreedor, deudor, fecha inicio/término,
-cuota, tasa de interés, observaciones. **Ninguno está en el esquema.**
-
-**Impacto UX:** hoy una deuda es solo "nombre + saldo". Para que la app sea útil
-con créditos reales (un crédito hipotecario, un préstamo a un amigo) hace falta al
-menos fecha de término y cuota. Migración: columnas opcionales en
-`elemento_patrimonial` o tabla hija `detalle_deuda`.
+### B3 · Información adicional de Deuda/Crédito — `REQUISITES §J` — ✅ RESUELTO (Fase 32)
+**Decisión del usuario**: sumar los campos al esquema. Migración 014: columnas
+opcionales en `elemento_patrimonial` (no tabla hija) — `contraparte` (acreedor/
+deudor), `fecha_inicio`, `fecha_termino`, `cuota_monto`, `tasa_interes`,
+`observaciones`. Se capturan al crear (wizard) y se editan con
+`ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`.
 
 ### B4 · Comentarios y documentos adjuntos — `REQUISITES §M / §D`
 Listados como tipos de información con visibilidad propia. **No modelados.**
 `GAPS G22` propuso una tabla `comentario` polimórfica y se descartó por ahora
 (se hizo `glosa` en el evento). Nada para adjuntar una boleta, un contrato, etc.
 
-### B5 · Movimiento Programado: tipo, destino múltiple, visibilidad — `GAPS G2`
-Hoy: solo **INGRESO**, **un** destino, sin reglas de visibilidad. No se puede
-programar un **gasto** ("arriendo el día 5") ni una **transferencia**.
-`DDD §S` deja explícitamente para después si hereda visibilidad del destino o
-tiene la suya. Es la funcionalidad de planificación más pedida en apps de este
-tipo.
+### B5 · Movimiento Programado: tipo, destino múltiple, visibilidad — `GAPS G2` — ✅ RESUELTO (Fase 33)
+**Decisión del usuario**: incluirlos. Migración 015: `tipo`
+(INGRESO/GASTO/TRANSFERENCIA) + `elemento_origen_id`; `elemento_destino_id` pasa
+a nullable, CHECK amarra los slots al tipo. Materializar genera un Evento
+Financiero del mismo tipo. Autorización: propietario de cada elemento referido.
+Visibilidad/propiedad **sigue heredada** de los elementos (sin columnas propias,
+como dejaba abierto DDD §S) — puede revisarse junto con §B1 más adelante.
 
 ### B6 · Objetivos / asignaciones compartidos por hogar — `GAPS G13`
 Hoy son **personales** (`usuario_id`). Pero el "objetivo Casa" del caso de uso
@@ -254,21 +257,26 @@ esto es central y hoy está 100% invisible:
 - distinguir "editar" de "corregir" cuando corresponde, (§A4)
 - colapsar el par corrección+original en la lista. (§A9)
 
-### Orden sugerido de trabajo
+### Orden sugerido de trabajo — HECHO
 
-**Sin decisiones (solo UI + endpoints de lectura) — HECHO (Fases 29–30):**
+**Sin decisiones (Fases 29–31):**
 1. ✅ Disponibilidad financiera en elemento + Inicio (§A1, §A2).
 2. ✅ Historial de auditoría por entidad (§A5).
 3. ✅ Pantalla de Asignaciones, incluye independientes (§A7).
 4. ✅ Cambiar propiedad post-creación (§A3).
 5. ✅ Colapso visual corrección+original (§A9).
 6. ✅ Patrimonio / valor de elemento a una fecha puntual (§A6).
+7. ✅ "Editar" vs "corregir" visible en Editar elemento, con miniguías por operación (§A4).
 
-**Necesitan decisión tuya primero (lo que queda):**
-7. **Visibilidad granular** (§B1) — desbloquea "transferir a otro miembro" (§A8) y
-   el uso real en hogar. Es la decisión de mayor impacto.
-8. Movimiento Programado con tipo (gasto/transferencia) (§B5).
-9. Info adicional de Deuda/Crédito (§B3).
-10. Estado operativo formal de Deuda/Crédito (§B2).
-11. "Editar" vs "corregir" para el usuario final (§A4).
-12. Guía proactiva hacia Crédito (§A10) y consistencia multi-hogar (§A11).
+**Decisiones del usuario, implementadas (Fases 32–34):**
+8. ✅ Info adicional de Deuda/Crédito (§B3).
+9. ✅ Estado operativo derivado de Deuda/Crédito (§B2).
+10. ✅ Movimiento Programado con tipo INGRESO/GASTO/TRANSFERENCIA (§B5).
+11. ✅ Visibilidad granular por tipo de información + "compartido con quién" (§B1) —
+    desbloqueó transferir a un elemento de otro miembro (§A8).
+
+**Sin decisión tomada (el usuario dijo que no, o no se ha pedido):**
+- §A10 guía proactiva hacia Crédito, §A11 consistencia multi-hogar (multihogar: no).
+- §B4 comentarios/adjuntos, §B6 objetivos/asignaciones familiares, §B7 ahorro
+  esperado en presupuesto, §B8 moneda en reserva/asignación/objetivo/presupuesto,
+  §B9 categorías jerárquicas, §B10 fechas de alta/baja para reconstrucción.

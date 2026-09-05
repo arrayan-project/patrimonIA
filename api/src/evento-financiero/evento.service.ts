@@ -12,6 +12,7 @@ import { ProgresoService } from '../planificacion/progreso.service.js';
 import { NotificacionService } from '../notificacion/notificacion.service.js';
 import { ConversionService } from '../tipo-cambio/conversion.service.js';
 import { EtiquetaService } from '../etiqueta/etiqueta.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import { derivarValorPendiente } from '../common/deuda.js';
 import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
@@ -32,6 +33,7 @@ export class EventoFinancieroService {
     private readonly notificaciones: NotificacionService,
     private readonly conversion: ConversionService,
     private readonly etiquetas: EtiquetaService,
+    private readonly elementos: ElementoService,
   ) {}
 
   /**
@@ -310,7 +312,10 @@ export class EventoFinancieroService {
   }
 
   async listarPorElemento(elementoId: string, actorId: string): Promise<EventoFinancieroDTO[]> {
-    await this.exigirPropietario(elementoId, actorId);
+    // §B1 — propietario, o co-miembro con visibilidad de MOVIMIENTOS.
+    if (!(await this.elementos.puedeVerMovimientos(elementoId, actorId))) {
+      throw new ForbiddenException('No puedes ver los movimientos de ese elemento');
+    }
     const impactos = await this.prisma.impacto_patrimonial.findMany({
       where: { elemento_id: elementoId, origen_tipo: 'EVENTO_FINANCIERO' },
       orderBy: { created_at: 'desc' },

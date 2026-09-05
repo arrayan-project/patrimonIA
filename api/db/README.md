@@ -85,6 +85,10 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   `elemento_origen_id` en `movimiento_programado`; `elemento_destino_id` pasa a
   nullable; CHECK `ck_mov_prog_elementos` amarra los slots al tipo (GAPS.md G2,
   DOMINIO_PENDIENTE §B5). Ya incluida en `init/01_schema.sql`.
+- `016_visibilidad_granular.sql` — `elemento_visibilidad` (nivel por tipo de
+  información: EXISTENCIA/VALOR/MOVIMIENTOS) + `elemento_comparticion` (con quién
+  se comparte cuando el nivel es COMPARTIDA). GAPS.md G6, DOMINIO_PENDIENTE §B1.
+  Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

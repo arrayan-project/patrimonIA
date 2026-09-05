@@ -104,8 +104,22 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
   - `RegistrarElementoPatrimonial`: el actor debe figurar entre los propietarios
     declarados (no puede crear un elemento 100% ajeno). Cualquier co-propietario
     debe ser un usuario ACTIVO — no se exige (todavía) que comparta hogar.
-- **Para decidir**: ¿visibilidad granular por tipo de info?, ¿tabla de
-  "compartido con"?, ¿reglas de co-propiedad más estrictas?
+- **RESUELTO (Fase 34, §B1)**: migración 016.
+  - `elemento_visibilidad(elemento_id, tipo_info, nivel)` — nivel por tipo
+    (EXISTENCIA / VALOR / MOVIMIENTOS). Fila solo si sobrescribe el enum base
+    `visibilidad` (que sigue siendo el nivel por defecto de todos los tipos).
+  - `elemento_comparticion(elemento_id, usuario_id)` — con quién se comparte
+    cuando el nivel es COMPARTIDA. **Compat**: COMPARTIDA sin lista se comporta
+    como FAMILIAR (los elementos previos no cambian).
+  - Comando `DefinirVisibilidadElementoPatrimonial {elementoId, niveles?, compartidoCon?}`.
+  - `elemento.service.#puedeVer(el, actor, tipo)`. `obtenerElemento` cierra
+    EXISTENCIA (404) y, sin VALOR, devuelve `valorOculto: true` + montos en 0.
+    `evento.service.listarPorElemento` abre a co-miembros con MOVIMIENTOS.
+  - `GET /elementos-patrimoniales?alcance=hogar` — elementos de co-miembros cuya
+    existencia el actor puede ver (desbloquea §A8: transferir a su elemento).
+- **Sigue pendiente**: reservas/objetivos/presupuestos como tipos de info con
+  visibilidad propia (hoy owner-only); co-propiedad más estricta (co-propietario
+  no obligado a compartir hogar).
 
 ### G7 — Proyecciones: en vivo vs. materializada
 - **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan

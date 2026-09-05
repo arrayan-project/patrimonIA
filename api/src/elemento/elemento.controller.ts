@@ -8,6 +8,7 @@ import {
   CambiarPropiedadDto,
   CambiarVisibilidadDto,
   CorregirDatosElementoDto,
+  DefinirVisibilidadDto,
   DesactivarElementoDto,
   EliminarElementoDto,
   LlevarPendienteACeroDto,
@@ -44,6 +45,12 @@ export class ElementoController {
   @HttpCode(200)
   cambiarVisibilidad(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CambiarVisibilidadDto) {
     return this.elementos.cambiarVisibilidad(u.id, dto);
+  }
+
+  @Post('comandos/DefinirVisibilidadElementoPatrimonial')
+  @HttpCode(200)
+  definirVisibilidad(@CurrentUser() u: UsuarioAutenticado, @Body() dto: DefinirVisibilidadDto) {
+    return this.elementos.definirVisibilidad(u.id, dto);
   }
 
   @Post('comandos/CambiarParticipacionEnConsolidacion')
@@ -97,7 +104,12 @@ export class ElementoController {
     @Query('propietario') propietario?: string,
     @Query('incluirInactivos') incluirInactivos?: string,
     @Query('categoria') categoria?: string,
+    @Query('alcance') alcance?: string,
   ): Promise<ElementoPatrimonialDTO[]> {
+    if (alcance === 'hogar') {
+      // §A8 — elementos de co-miembros cuya existencia el actor puede ver.
+      return this.elementos.listarVisiblesDelHogar(user.id);
+    }
     const propietarioId = !propietario || propietario === 'me' ? user.id : propietario;
     return this.elementos.listarPorPropietario(
       user.id,

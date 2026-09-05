@@ -48,7 +48,7 @@ function colorEstadoDeuda(estado: string, c: Paleta): string {
 export function ElementoDetalleScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const toast = useToast();
   const elementoId = nav.route.params?.elementoId as string | undefined;
@@ -75,10 +75,14 @@ export function ElementoDetalleScreen() {
       );
       setElemento(el);
       setEventos(
-        await api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token),
+        await api
+          .get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token)
+          .catch(() => []),
       );
       setAjustes(
-        await api.get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token),
+        await api
+          .get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token)
+          .catch(() => []),
       );
       setReservas(
         await api
@@ -157,6 +161,7 @@ export function ElementoDetalleScreen() {
   };
 
   const el = elemento;
+  const esPropietario = el.propietarios.some((p) => p.usuarioId === usuario.id);
   const reservado = reservas.reduce((acc, r) => acc + r.monto, 0);
   const libre = el.valorVigente - reservado;
   const montoMov = (monto: number, moneda: string, anulado: boolean) => (
@@ -173,10 +178,14 @@ export function ElementoDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Title>{el.nombre}</Title>
-      <Stat
-        label="Valor vigente"
-        value={<MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.valor} />}
-      />
+      {el.valorOculto ? (
+        <Stat label="Valor vigente" value="—" hint="El propietario no comparte el monto de este elemento." />
+      ) : (
+        <Stat
+          label="Valor vigente"
+          value={<MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.valor} />}
+        />
+      )}
 
       <Panel>
         <Row left="Categoría" right={etiqueta(el.categoriaFuncional)} />
@@ -248,7 +257,7 @@ export function ElementoDetalleScreen() {
           ) : null}
           {el.tasaInteres != null ? <Row left="Tasa anual" right={`${el.tasaInteres}%`} /> : null}
           {el.observaciones ? <Nota>{el.observaciones}</Nota> : null}
-          {(el.valorPendiente ?? 0) > 0 && (
+          {esPropietario && (el.valorPendiente ?? 0) > 0 && (
             <View style={{ gap: 8, marginTop: 8 }}>
               <Nota>
                 {esDeuda
@@ -409,42 +418,48 @@ export function ElementoDetalleScreen() {
         </View>
       </Panel>
 
-      <Panel>
-        <SectionTitle>Valor a una fecha</SectionTitle>
-        <Nota>Reconstruye cuánto valía este elemento en una fecha pasada.</Nota>
-        <DateField label="Fecha" value={fechaHist} onChange={setFechaHist} />
-        <Button
-          title="Consultar"
-          variant="secondary"
-          loading={histBusy}
-          disabled={!/^\d{4}-\d{2}-\d{2}$/.test(fechaHist.trim())}
-          onPress={consultarHistorico}
-        />
-        {valorHist && (
-          <Row
-            left={`Al ${fechaLegible(valorHist.fecha)}`}
-            right={money(valorHist.valor, valorHist.moneda)}
+      {esPropietario && (
+        <Panel>
+          <SectionTitle>Valor a una fecha</SectionTitle>
+          <Nota>Reconstruye cuánto valía este elemento en una fecha pasada.</Nota>
+          <DateField label="Fecha" value={fechaHist} onChange={setFechaHist} />
+          <Button
+            title="Consultar"
+            variant="secondary"
+            loading={histBusy}
+            disabled={!/^\d{4}-\d{2}-\d{2}$/.test(fechaHist.trim())}
+            onPress={consultarHistorico}
           />
-        )}
-      </Panel>
+          {valorHist && (
+            <Row
+              left={`Al ${fechaLegible(valorHist.fecha)}`}
+              right={money(valorHist.valor, valorHist.moneda)}
+            />
+          )}
+        </Panel>
+      )}
 
       <ErrorText>{error}</ErrorText>
-      <Button
-        title="Editar / estado"
-        variant="secondary"
-        onPress={() => nav.go('EditarElemento', { elementoId, contexto: el.nombre })}
-      />
-      <Button
-        title="Historial de cambios"
-        variant="secondary"
-        onPress={() =>
-          nav.go('Historial', {
-            entidadTipo: 'ELEMENTO_PATRIMONIAL',
-            entidadId: elementoId,
-            contexto: el.nombre,
-          })
-        }
-      />
+      {esPropietario && (
+        <>
+          <Button
+            title="Editar / estado"
+            variant="secondary"
+            onPress={() => nav.go('EditarElemento', { elementoId, contexto: el.nombre })}
+          />
+          <Button
+            title="Historial de cambios"
+            variant="secondary"
+            onPress={() =>
+              nav.go('Historial', {
+                entidadTipo: 'ELEMENTO_PATRIMONIAL',
+                entidadId: elementoId,
+                contexto: el.nombre,
+              })
+            }
+          />
+        </>
+      )}
     </Screen>
   );
 }

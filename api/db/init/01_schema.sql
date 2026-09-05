@@ -96,6 +96,22 @@ CREATE TABLE elemento_patrimonial (
 CREATE INDEX ix_elemento_estado ON elemento_patrimonial (estado);
 CREATE INDEX ix_elemento_categoria ON elemento_patrimonial (categoria_funcional);
 
+-- Visibilidad granular (migración 016). Fila solo si sobrescribe el nivel base.
+CREATE TABLE elemento_visibilidad (
+    elemento_id UUID NOT NULL REFERENCES elemento_patrimonial(id) ON DELETE CASCADE,
+    tipo_info   TEXT NOT NULL CHECK (tipo_info IN ('EXISTENCIA', 'VALOR', 'MOVIMIENTOS')),
+    nivel       TEXT NOT NULL CHECK (nivel IN ('PRIVADA', 'COMPARTIDA', 'FAMILIAR')),
+    PRIMARY KEY (elemento_id, tipo_info)
+);
+
+CREATE TABLE elemento_comparticion (
+    elemento_id UUID NOT NULL REFERENCES elemento_patrimonial(id) ON DELETE CASCADE,
+    usuario_id  UUID NOT NULL REFERENCES usuario(id),
+    PRIMARY KEY (elemento_id, usuario_id)
+);
+
+CREATE INDEX ix_elemento_comparticion_usuario ON elemento_comparticion (usuario_id);
+
 CREATE TABLE elemento_propietario (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     elemento_id   UUID NOT NULL REFERENCES elemento_patrimonial(id),

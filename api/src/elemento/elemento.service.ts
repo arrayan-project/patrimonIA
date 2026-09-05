@@ -21,6 +21,7 @@ import type {
   CambiarPropiedadDto,
   CambiarVisibilidadDto,
   CorregirDatosElementoDto,
+  DefinirVisibilidadDto,
   DesactivarElementoDto,
   EliminarElementoDto,
   LlevarPendienteACeroDto,
@@ -273,6 +274,78 @@ export class ElementoService {
         entidadId: el.id,
         valorAnterior: { visibilidad: el.visibilidad },
         valorPosterior: { visibilidad: dto.visibilidad },
+      });
+    });
+    return this.obtenerElemento(el.id, actorId);
+  }
+
+  /**
+   * §B1 — DefinirVisibilidadElementoPatrimonial. Fija el nivel por tipo de
+   * información (EXISTENCIA/VALOR/MOVIMIENTOS) y con quién se comparte. Un nivel
+   * igual al base borra su override. Solo un propietario.
+   */
+  async definirVisibilidad(
+    actorId: string,
+    dto: DefinirVisibilidadDto,
+  ): Promise<ElementoPatrimonialDTO> {
+    const el = await this.#cargarConPropietario(dto.elementoId, actorId);
+    const niveles = dto.niveles ?? {};
+    const tipos = ['EXISTENCIA', 'VALOR', 'MOVIMIENTOS'] as const;
+
+    if (dto.compartidoCon && dto.compartidoCon.length > 0) {
+      const usuarios = await this.prisma.usuario.findMany({
+        where: { id: { in: dto.compartidoCon }, estado: 'ACTIVO' },
+        select: { id: true },
+      });
+      if (usuarios.length !== new Set(dto.compartidoCon).size) {
+        throw new BadRequestException('Algún usuario de compartidoCon no es válido');
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const anteriores = await tx.elemento_visibilidad.findMany({
+        where: { elemento_id: el.id },
+      });
+      for (const tipo of tipos) {
+        const nivel = niveles[tipo];
+        if (nivel === undefined) continue;
+        if (nivel === el.visibilidad) {
+          await tx.elemento_visibilidad.deleteMany({
+            where: { elemento_id: el.id, tipo_info: tipo },
+          });
+        } else {
+          await tx.elemento_visibilidad.upsert({
+            where: { elemento_id_tipo_info: { elemento_id: el.id, tipo_info: tipo } },
+            create: { elemento_id: el.id, tipo_info: tipo, nivel },
+            update: { nivel },
+          });
+        }
+      }
+
+      if (dto.compartidoCon !== undefined) {
+        await tx.elemento_comparticion.deleteMany({ where: { elemento_id: el.id } });
+        if (dto.compartidoCon.length > 0) {
+          await tx.elemento_comparticion.createMany({
+            data: [...new Set(dto.compartidoCon)].map((usuario_id) => ({
+              elemento_id: el.id,
+              usuario_id,
+            })),
+          });
+        }
+      }
+
+      await this.auditoria.registrar(tx, {
+        comando: 'DefinirVisibilidadElementoPatrimonial',
+        usuarioId: actorId,
+        entidadTipo: 'ELEMENTO_PATRIMONIAL',
+        entidadId: el.id,
+        valorAnterior: {
+          niveles: Object.fromEntries(anteriores.map((a) => [a.tipo_info, a.nivel])),
+        },
+        valorPosterior: {
+          niveles,
+          ...(dto.compartidoCon !== undefined ? { compartido_con: dto.compartidoCon } : {}),
+        },
       });
     });
     return this.obtenerElemento(el.id, actorId);
@@ -555,19 +628,152 @@ export class ElementoService {
       where: { elemento_id: elementoId },
     });
     const esPropietario = propietarios.some((p) => p.usuario_id === actorId);
-    if (!esPropietario && !(await this.visiblePorHogar(elemento, actorId))) {
+    const propIds = propietarios.map((p) => p.usuario_id);
+
+    if (!esPropietario && !(await this.#puedeVer(elemento, actorId, 'EXISTENCIA', propIds))) {
       throw new NotFoundException('Elemento no encontrado');
     }
 
+    const verValor =
+      esPropietario || (await this.#puedeVer(elemento, actorId, 'VALOR', propIds));
+
     const usuarios = await this.prisma.usuario.findMany({
-      where: { id: { in: propietarios.map((p) => p.usuario_id) } },
+      where: { id: { in: propIds } },
     });
     const nombrePorId = new Map(usuarios.map((u) => [u.id, u.nombre]));
+
+    let visibilidadPorTipo: ElementoPatrimonialDTO['visibilidadPorTipo'] = null;
+    let compartidoCon: string[] | null = null;
+    if (esPropietario) {
+      const overrides = await this.prisma.elemento_visibilidad.findMany({
+        where: { elemento_id: elementoId },
+      });
+      const nivelDe = (tipo: string) =>
+        overrides.find((o) => o.tipo_info === tipo)?.nivel ?? elemento.visibilidad;
+      visibilidadPorTipo = {
+        EXISTENCIA: nivelDe('EXISTENCIA'),
+        VALOR: nivelDe('VALOR'),
+        MOVIMIENTOS: nivelDe('MOVIMIENTOS'),
+      };
+      compartidoCon = (
+        await this.prisma.elemento_comparticion.findMany({
+          where: { elemento_id: elementoId },
+          select: { usuario_id: true },
+        })
+      ).map((r) => r.usuario_id);
+    }
+
     return toElementoDTO(
       elemento,
       propietarios.map((p) => ({ ...p, nombre: nombrePorId.get(p.usuario_id) })),
-      await this.#estadoOperativoDeuda(elemento),
+      {
+        estadoOperativo: verValor ? await this.#estadoOperativoDeuda(elemento) : null,
+        ocultarValor: !verValor,
+        visibilidadPorTipo,
+        compartidoCon,
+      },
     );
+  }
+
+  /** §B1 — visibilidad granular: ¿el actor puede ver `tipo` de este elemento? */
+  async #puedeVer(
+    elemento: ElementoRow,
+    actorId: string,
+    tipo: 'EXISTENCIA' | 'VALOR' | 'MOVIMIENTOS',
+    propIds?: string[],
+  ): Promise<boolean> {
+    const ids =
+      propIds ??
+      (
+        await this.prisma.elemento_propietario.findMany({
+          where: { elemento_id: elemento.id },
+          select: { usuario_id: true },
+        })
+      ).map((p) => p.usuario_id);
+    if (ids.includes(actorId)) return true;
+    if (ids.length === 0) return false;
+
+    const override = await this.prisma.elemento_visibilidad.findUnique({
+      where: { elemento_id_tipo_info: { elemento_id: elemento.id, tipo_info: tipo } },
+    });
+    const nivel = override?.nivel ?? elemento.visibilidad;
+
+    if (nivel === 'PRIVADA') return false;
+    if (nivel === 'COMPARTIDA') {
+      // Si hay una lista explícita, solo esas personas. Si está vacía (p. ej.
+      // elementos previos a §B1), se comporta como FAMILIAR (compat).
+      const lista = await this.prisma.elemento_comparticion.findMany({
+        where: { elemento_id: elemento.id },
+        select: { usuario_id: true },
+      });
+      if (lista.length > 0) return lista.some((r) => r.usuario_id === actorId);
+    }
+    // FAMILIAR (o COMPARTIDA sin lista): co-miembro de hogar de algún propietario.
+    return this.#coMiembroDeAlguno(ids, actorId);
+  }
+
+  async #coMiembroDeAlguno(propIds: string[], actorId: string): Promise<boolean> {
+    const [hogaresProp, hogaresActor] = await Promise.all([
+      this.prisma.membresia.findMany({
+        where: { usuario_id: { in: propIds }, estado: 'ACTIVA' },
+        select: { hogar_id: true },
+      }),
+      this.prisma.membresia.findMany({
+        where: { usuario_id: actorId, estado: 'ACTIVA' },
+        select: { hogar_id: true },
+      }),
+    ]);
+    const setActor = new Set(hogaresActor.map((m) => m.hogar_id));
+    return hogaresProp.some((m) => setActor.has(m.hogar_id));
+  }
+
+  /** ¿El actor puede ver los MOVIMIENTOS del elemento? (usado por evento.service) */
+  async puedeVerMovimientos(elementoId: string, actorId: string): Promise<boolean> {
+    const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id: elementoId } });
+    if (!el) return false;
+    return this.#puedeVer(el, actorId, 'MOVIMIENTOS');
+  }
+
+  /** §A8 — elementos ACTIVOS de co-miembros cuya EXISTENCIA es visible para el actor. */
+  async listarVisiblesDelHogar(actorId: string): Promise<ElementoPatrimonialDTO[]> {
+    const propios = new Set(
+      (
+        await this.prisma.elemento_propietario.findMany({
+          where: { usuario_id: actorId },
+          select: { elemento_id: true },
+        })
+      ).map((p) => p.elemento_id),
+    );
+    const hogaresActor = (
+      await this.prisma.membresia.findMany({
+        where: { usuario_id: actorId, estado: 'ACTIVA' },
+        select: { hogar_id: true },
+      })
+    ).map((m) => m.hogar_id);
+    if (hogaresActor.length === 0) return [];
+    const coMiembros = (
+      await this.prisma.membresia.findMany({
+        where: { hogar_id: { in: hogaresActor }, estado: 'ACTIVA' },
+        select: { usuario_id: true },
+      })
+    ).map((m) => m.usuario_id);
+    const candidatos = await this.prisma.elemento_propietario.findMany({
+      where: { usuario_id: { in: coMiembros } },
+      select: { elemento_id: true },
+    });
+    const idsUnicos = [...new Set(candidatos.map((c) => c.elemento_id))].filter(
+      (id) => !propios.has(id),
+    );
+    const elementos = await this.prisma.elemento_patrimonial.findMany({
+      where: { id: { in: idsUnicos }, estado: 'ACTIVO' },
+    });
+    const visibles: ElementoPatrimonialDTO[] = [];
+    for (const el of elementos) {
+      if (await this.#puedeVer(el, actorId, 'EXISTENCIA')) {
+        visibles.push(await this.obtenerElemento(el.id, actorId));
+      }
+    }
+    return visibles;
   }
 
   /**
@@ -620,27 +826,4 @@ export class ElementoService {
       .map(toImpactoDTO);
   }
 
-  // ── Helpers de acceso ─────────────────────────────────────────────────────
-
-  /** Visibilidad simplificada (el esquema colapsó la config por-tipo a un enum). */
-  private async visiblePorHogar(elemento: ElementoRow, actorId: string): Promise<boolean> {
-    if (elemento.visibilidad === 'PRIVADA') return false;
-    // COMPARTIDA / FAMILIAR: visible para co-miembros de hogar de algún propietario.
-    // Aproximación de Fase 2 — ver GAPS.md G6.
-    const propietarios = await this.prisma.elemento_propietario.findMany({
-      where: { elemento_id: elemento.id },
-      select: { usuario_id: true },
-    });
-    if (propietarios.length === 0) return false;
-    const hogaresPropietarios = await this.prisma.membresia.findMany({
-      where: { usuario_id: { in: propietarios.map((p) => p.usuario_id) }, estado: 'ACTIVA' },
-      select: { hogar_id: true },
-    });
-    const hogaresActor = await this.prisma.membresia.findMany({
-      where: { usuario_id: actorId, estado: 'ACTIVA' },
-      select: { hogar_id: true },
-    });
-    const setActor = new Set(hogaresActor.map((m) => m.hogar_id));
-    return hogaresPropietarios.some((m) => setActor.has(m.hogar_id));
-  }
 }

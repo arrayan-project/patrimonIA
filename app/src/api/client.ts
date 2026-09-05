@@ -203,6 +203,12 @@ export interface ElementoPatrimonialDTO {
   estado: string;
   /** Solo DEUDA/CREDITO: saldo pendiente (magnitud positiva). */
   valorPendiente: number | null;
+  /** §B1: el propietario no comparte el VALOR — los montos vienen en 0. */
+  valorOculto: boolean;
+  /** Nivel por tipo de información. Solo presente si eres propietario. */
+  visibilidadPorTipo: { EXISTENCIA: string; VALOR: string; MOVIMIENTOS: string } | null;
+  /** Usuarios con los que se comparte (nivel COMPARTIDA). Solo si eres propietario. */
+  compartidoCon: string[] | null;
   createdAt: string;
   propietarios: PropietarioDTO[];
   // Info adicional de DEUDA/CREDITO (§B3). null fuera de esas categorías.
