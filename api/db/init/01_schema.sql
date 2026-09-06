@@ -143,12 +143,22 @@ CREATE TABLE objetivo_financiero (
     monto_objetivo  NUMERIC(18,2) NOT NULL,
     fecha_objetivo  DATE,  -- opcional
     estado          TEXT NOT NULL CHECK (estado IN ('EN_PROGRESO', 'COMPLETADO', 'CANCELADO')),
-    usuario_id      UUID REFERENCES usuario(id),  -- migración 001: objetivo personal (GAPS.md G13)
+    usuario_id      UUID REFERENCES usuario(id),  -- migración 001: dueño (GAPS.md G13)
+    hogar_id        UUID REFERENCES hogar(id),    -- migración 021: NULL = personal; !NULL = compartido (P9)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ix_objetivo_estado ON objetivo_financiero (estado);
 CREATE INDEX ix_objetivo_usuario ON objetivo_financiero (usuario_id);
+CREATE INDEX ix_objetivo_hogar ON objetivo_financiero (hogar_id) WHERE hogar_id IS NOT NULL;
+
+-- migración 021 — quién puede MODIFICAR un objetivo compartido (además del dueño)
+CREATE TABLE objetivo_designado (
+    objetivo_id UUID NOT NULL REFERENCES objetivo_financiero(id) ON DELETE CASCADE,
+    usuario_id  UUID NOT NULL REFERENCES usuario(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (objetivo_id, usuario_id)
+);
 
 -- Nota: progreso_acumulado NO es columna — proyección calculada (ver sección 12).
 

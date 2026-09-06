@@ -156,6 +156,7 @@ model hogar {
   categoria_movimiento categoria_movimiento[]
   invitacion           invitacion[]
   membresia            membresia[]
+  objetivo_financiero  objetivo_financiero[]
   presupuesto          presupuesto[]
   tipo_elemento        tipo_elemento[]
 }
@@ -237,12 +238,16 @@ model objetivo_financiero {
   estado                   String
   usuario_id               String?                    @db.Uuid
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  hogar_id                 String?                    @db.Uuid
   asignacion               asignacion[]
+  objetivo_designado       objetivo_designado[]
+  hogar                    hogar?                     @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuario                  usuario?                   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   presupuesto_linea_ahorro presupuesto_linea_ahorro[]
 
   @@index([estado], map: "ix_objetivo_estado")
   @@index([usuario_id], map: "ix_objetivo_usuario")
+  @@index([hogar_id], map: "ix_objetivo_hogar", where: raw("(hogar_id IS NOT NULL)"))
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -306,6 +311,7 @@ model usuario {
   invitacion_invitacion_invitado_idTousuario invitacion[]            @relation("invitacion_invitado_idTousuario")
   membresia                                  membresia[]
   notificacion                               notificacion[]
+  objetivo_designado                         objetivo_designado[]
   objetivo_financiero                        objetivo_financiero[]
   plantilla_movimiento                       plantilla_movimiento[]
   presupuesto                                presupuesto[]
@@ -534,4 +540,14 @@ model presupuesto_linea_ahorro {
 
   @@unique([presupuesto_id, objetivo_id])
   @@index([presupuesto_id], map: "ix_presupuesto_linea_ahorro_presu")
+}
+
+model objetivo_designado {
+  objetivo_id         String              @db.Uuid
+  usuario_id          String              @db.Uuid
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  objetivo_financiero objetivo_financiero @relation(fields: [objetivo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario             usuario             @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([objetivo_id, usuario_id])
 }

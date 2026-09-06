@@ -314,6 +314,12 @@ export interface ObjetivoFinancieroDTO {
   montoObjetivo: number;
   fechaObjetivo: string | null;
   estado: string;
+  /** P9: hogar con el que se comparte. null = personal. */
+  hogarId: string | null;
+  /** P9: usuarios que pueden modificarlo (además del dueño). */
+  designados: string[];
+  esMio: boolean;
+  puedoModificar: boolean;
   progreso: number;
   progresoPorcentaje: number;
   createdAt: string;

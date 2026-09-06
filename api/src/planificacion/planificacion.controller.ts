@@ -7,7 +7,9 @@ import { ReservaService } from './reserva.service.js';
 import {
   ActualizarObjetivoDto,
   CambiarEstadoObjetivoDto,
+  CompartirObjetivoConHogarDto,
   CrearObjetivoDto,
+  DefinirDesignadosObjetivoDto,
   EliminarObjetivoDto,
 } from './dto/objetivo.dto.js';
 import {
@@ -49,6 +51,24 @@ export class PlanificacionController {
   @HttpCode(200)
   eliminarObjetivo(@CurrentUser() u: UsuarioAutenticado, @Body() dto: EliminarObjetivoDto) {
     return this.objetivos.eliminar(u.id, dto);
+  }
+
+  @Post('comandos/CompartirObjetivoConHogar')
+  @HttpCode(200)
+  compartirObjetivo(
+    @CurrentUser() u: UsuarioAutenticado,
+    @Body() dto: CompartirObjetivoConHogarDto,
+  ) {
+    return this.objetivos.compartirConHogar(u.id, dto);
+  }
+
+  @Post('comandos/DefinirDesignadosObjetivo')
+  @HttpCode(200)
+  definirDesignados(
+    @CurrentUser() u: UsuarioAutenticado,
+    @Body() dto: DefinirDesignadosObjetivoDto,
+  ) {
+    return this.objetivos.definirDesignados(u.id, dto);
   }
 
   @Get('objetivos-financieros')

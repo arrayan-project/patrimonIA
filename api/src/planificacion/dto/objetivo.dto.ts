@@ -1,4 +1,4 @@
-import { IsIn, IsISO8601, IsNumber, IsOptional, IsPositive, IsString, IsUUID, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsISO8601, IsNumber, IsOptional, IsPositive, IsString, IsUUID, MinLength } from 'class-validator';
 
 export const ESTADOS_OBJETIVO = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
 
@@ -6,6 +6,20 @@ export class CrearObjetivoDto {
   @IsString() @MinLength(1) nombre!: string;
   @IsNumber({ maxDecimalPlaces: 2 }) @IsPositive() montoObjetivo!: number;
   @IsOptional() @IsISO8601() fechaObjetivo?: string;
+  /** P9 — compartir con un hogar del actor (se vuelve visible para sus miembros). */
+  @IsOptional() @IsUUID() hogarId?: string;
+}
+
+/** P9 — CompartirObjetivoConHogar. Solo el dueño. hogarId null → dejar de compartir. */
+export class CompartirObjetivoConHogarDto {
+  @IsUUID() objetivoId!: string;
+  @IsOptional() @IsUUID() hogarId?: string | null;
+}
+
+/** P9 — DefinirDesignadosObjetivo. Solo el ADMINISTRADOR del hogar (o el dueño). */
+export class DefinirDesignadosObjetivoDto {
+  @IsUUID() objetivoId!: string;
+  @IsArray() @ArrayMaxSize(50) @IsUUID('4', { each: true }) usuarioIds!: string[];
 }
 
 export class ActualizarObjetivoDto {

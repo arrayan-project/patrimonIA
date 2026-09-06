@@ -26,7 +26,7 @@ export class AsignacionService {
 
   /** AS #23 — CrearAsignacion. No constituye patrimonio. */
   async crear(actorId: string, dto: CrearAsignacionDto): Promise<AsignacionDTO> {
-    if (dto.objetivoId) await this.#exigirObjetivoPropio(dto.objetivoId, actorId);
+    if (dto.objetivoId) await this.#exigirObjetivoModificable(dto.objetivoId, actorId);
 
     const asignacion = await this.prisma.$transaction(async (tx) => {
       const creada = await tx.asignacion.create({
@@ -90,7 +90,7 @@ export class AsignacionService {
     const a = await this.#cargar(dto.asignacionId, actorId);
     const nuevoObjetivoId = dto.objetivoId ?? null;
     if (nuevoObjetivoId === a.objetivo_financiero_id) throw new BadRequestException('Sin cambios');
-    if (nuevoObjetivoId) await this.#exigirObjetivoPropio(nuevoObjetivoId, actorId);
+    if (nuevoObjetivoId) await this.#exigirObjetivoModificable(nuevoObjetivoId, actorId);
     const anteriorObjetivoId = a.objetivo_financiero_id;
 
     await this.prisma.$transaction(async (tx) => {
@@ -159,8 +159,25 @@ export class AsignacionService {
   }
 
   async listar(actorId: string, objetivoId?: string): Promise<AsignacionDTO[]> {
+    // P9 — asignaciones propias + las de objetivos compartidos que el actor ve.
+    const hogares = (
+      await this.prisma.membresia.findMany({
+        where: { usuario_id: actorId, estado: 'ACTIVA' },
+        select: { hogar_id: true },
+      })
+    ).map((m) => m.hogar_id);
+    const compartidos = (
+      await this.prisma.objetivo_financiero.findMany({
+        where: { hogar_id: { in: hogares } },
+        select: { id: true },
+      })
+    ).map((o) => o.id);
+
     const asignaciones = await this.prisma.asignacion.findMany({
-      where: { usuario_id: actorId, ...(objetivoId ? { objetivo_financiero_id: objetivoId } : {}) },
+      where: {
+        ...(objetivoId ? { objetivo_financiero_id: objetivoId } : {}),
+        OR: [{ usuario_id: actorId }, { objetivo_financiero_id: { in: compartidos } }],
+      },
       orderBy: { created_at: 'desc' },
     });
     const reservas = await this.prisma.reserva.findMany({
@@ -178,12 +195,28 @@ export class AsignacionService {
   async #cargar(asignacionId: string, actorId: string): Promise<AsignacionRow> {
     const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
     if (!a) throw new NotFoundException('Asignación no encontrada');
-    if (a.usuario_id !== actorId) throw new ForbiddenException('La asignación no es tuya');
-    return a;
+    if (a.usuario_id === actorId) return a;
+    // P9 — asignación de un objetivo compartido: la modifican dueño/designados.
+    if (a.objetivo_financiero_id && (await this.#puedeModificarObjetivo(a.objetivo_financiero_id, actorId))) {
+      return a;
+    }
+    throw new ForbiddenException('La asignación no es tuya');
   }
 
-  async #exigirObjetivoPropio(objetivoId: string, actorId: string): Promise<void> {
+  async #exigirObjetivoModificable(objetivoId: string, actorId: string): Promise<void> {
+    if (!(await this.#puedeModificarObjetivo(objetivoId, actorId))) {
+      throw new NotFoundException('Objetivo no encontrado');
+    }
+  }
+
+  async #puedeModificarObjetivo(objetivoId: string, actorId: string): Promise<boolean> {
     const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: objetivoId } });
-    if (!o || o.usuario_id !== actorId) throw new NotFoundException('Objetivo no encontrado');
+    if (!o) return false;
+    if (o.usuario_id === actorId) return true;
+    if (!o.hogar_id) return false;
+    const d = await this.prisma.objetivo_designado.findUnique({
+      where: { objetivo_id_usuario_id: { objetivo_id: objetivoId, usuario_id: actorId } },
+    });
+    return d !== null;
   }
 }

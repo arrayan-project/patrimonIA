@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
+import { api, ApiError, type HogarDTO, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
@@ -16,6 +16,7 @@ import {
   Field,
   MoneyField,
   ProgressBar,
+  Segmented,
   Skeleton,
   Screen,
   Title,
@@ -34,13 +35,20 @@ export function ObjetivosScreen() {
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[] | null>(null);
   const [nombre, setNombre] = useState('');
   const [monto, setMonto] = useState('');
+  const [compartir, setCompartir] = useState<'No' | 'Sí'>('No');
+  const [hogarId, setHogarId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      setObjetivos(await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token));
+      const [objs, hs] = await Promise.all([
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
+        api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []),
+      ]);
+      setObjetivos(objs);
+      setHogarId(hs[0]?.id ?? null);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }
@@ -54,12 +62,17 @@ export function ObjetivosScreen() {
     try {
       await api.post(
         '/comandos/CrearObjetivoFinanciero',
-        { nombre: nombre.trim(), montoObjetivo: Number(monto) },
+        {
+          nombre: nombre.trim(),
+          montoObjetivo: Number(monto),
+          ...(compartir === 'Sí' && hogarId ? { hogarId } : {}),
+        },
         token,
       );
       toast.mostrar('Objetivo creado');
       setNombre('');
       setMonto('');
+      setCompartir('No');
       await cargar();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -110,7 +123,10 @@ export function ObjetivosScreen() {
           <Card key={o.id} onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}>
             <View style={styles.head}>
               <Text style={styles.nombre}>{o.nombre}</Text>
-              <Text style={styles.estado}>{etiqueta(o.estado)}</Text>
+              <Text style={styles.estado}>
+                {o.hogarId ? '· del hogar · ' : ''}
+                {etiqueta(o.estado)}
+              </Text>
             </View>
             <ProgressBar pct={o.progresoPorcentaje} />
             <Text style={styles.muted}>
@@ -123,6 +139,20 @@ export function ObjetivosScreen() {
         <Text style={styles.nombre}>Nuevo objetivo</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="Pie vivienda" />
         <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} />
+        {hogarId && (
+          <Segmented
+            label="¿Compartir con el hogar?"
+            options={['No', 'Sí'] as const}
+            value={compartir}
+            onChange={setCompartir}
+            formatearOpcion={(v) => v}
+          />
+        )}
+        {compartir === 'Sí' && (
+          <Text style={styles.muted}>
+            Todos los miembros lo verán. Podrás designar quiénes pueden modificarlo.
+          </Text>
+        )}
         <Button title="Crear objetivo" onPress={crear} loading={busy} disabled={!nombre.trim() || !(Number(monto) > 0)} />
       </Panel>
 

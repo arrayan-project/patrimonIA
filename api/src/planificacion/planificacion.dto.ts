@@ -13,6 +13,14 @@ export interface ObjetivoFinancieroDTO {
   progreso: number;
   progresoPorcentaje: number;
   createdAt: string;
+  /** P9: hogar con el que se comparte. null = objetivo personal. */
+  hogarId: string | null;
+  /** P9: usuarios que pueden modificarlo (además del dueño). Compartidos → [...]. */
+  designados: string[];
+  /** true si el actor es el dueño del objetivo. */
+  esMio: boolean;
+  /** true si el actor puede modificar (dueño o designado). */
+  puedoModificar: boolean;
 }
 
 export interface ReservaDTO {
@@ -45,8 +53,14 @@ export interface ReservaDeElementoDTO {
   createdAt: string;
 }
 
-export function toObjetivoDTO(o: ObjetivoRow, progreso: number): ObjetivoFinancieroDTO {
+export function toObjetivoDTO(
+  o: ObjetivoRow,
+  progreso: number,
+  extra: { designados?: string[]; actorId?: string } = {},
+): ObjetivoFinancieroDTO {
   const monto = Number(o.monto_objetivo);
+  const designados = extra.designados ?? [];
+  const esMio = extra.actorId !== undefined && o.usuario_id === extra.actorId;
   return {
     id: o.id,
     nombre: o.nombre,
@@ -56,6 +70,10 @@ export function toObjetivoDTO(o: ObjetivoRow, progreso: number): ObjetivoFinanci
     progreso,
     progresoPorcentaje: monto > 0 ? Math.round((progreso / monto) * 1000) / 10 : 0,
     createdAt: o.created_at.toISOString(),
+    hogarId: o.hogar_id,
+    designados,
+    esMio,
+    puedoModificar: esMio || (extra.actorId !== undefined && designados.includes(extra.actorId)),
   };
 }
 

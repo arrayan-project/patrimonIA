@@ -5,12 +5,15 @@ import {
   api,
   ApiError,
   type AsignacionDTO,
+  type HogarDTO,
+  type MiembroDTO,
   type ObjetivoFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import {
+  Ayuda,
   Button,
   ErrorText,
   etiqueta,
@@ -20,6 +23,7 @@ import {
   Row,
   Screen,
   Segmented,
+  SelectRow,
   Title,
   Skeleton,
   Panel,
@@ -33,12 +37,15 @@ const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
 export function ObjetivoDetalleScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const objetivoId = nav.route.params?.objetivoId as string;
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
+  const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
+  const [hogarId, setHogarId] = useState<string | null>(null);
+  const [designados, setDesignados] = useState<string[]>([]);
   const [nombreAsg, setNombreAsg] = useState('');
   const [nuevoEstado, setNuevoEstado] = useState<(typeof ESTADOS)[number]>('EN_PROGRESO');
   const [motivo, setMotivo] = useState('');
@@ -51,7 +58,14 @@ export function ObjetivoDetalleScreen() {
       const o = await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${objetivoId}`, token);
       setObj(o);
       setNuevoEstado(o.estado as (typeof ESTADOS)[number]);
+      setDesignados(o.designados);
       setAsignaciones(await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token));
+      const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []);
+      setHogarId(hs[0]?.id ?? null);
+      if (o.esMio && hs[0]) {
+        const h = await api.get<HogarDTO>(`/hogares/${hs[0].id}`, token).catch(() => null);
+        setMiembros(h?.miembros ?? []);
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }
@@ -89,7 +103,11 @@ export function ObjetivoDetalleScreen() {
       <Text style={styles.muted}>
         {money(obj.progreso, 'CLP')} de {money(obj.montoObjetivo, 'CLP')} · {obj.progresoPorcentaje}% ·{' '}
         {etiqueta(obj.estado)}
+        {obj.hogarId ? ' · del hogar' : ''}
       </Text>
+      {obj.hogarId && !obj.puedoModificar && (
+        <Ayuda>Objetivo del hogar. Puedes verlo pero no modificarlo (no eres designado).</Ayuda>
+      )}
 
       <Panel>
         <Text style={styles.sectionTitle}>Asignaciones</Text>
@@ -104,25 +122,89 @@ export function ObjetivoDetalleScreen() {
             <Row left={a.nombre} right={money(a.totalReservado, 'CLP')} />
           </Pressable>
         ))}
-        <Field label="Nueva asignación" value={nombreAsg} onChangeText={setNombreAsg} autoCapitalize="sentences" />
-        <Button
-          title="Crear asignación"
-          variant="secondary"
-          loading={busy}
-          disabled={!nombreAsg.trim()}
-          onPress={() =>
-            run(async () => {
-              await api.post(
-                '/comandos/CrearAsignacion',
-                { nombre: nombreAsg.trim(), objetivoId },
-                token,
-              );
-              setNombreAsg('');
-            })
-          }
-        />
+        {obj.puedoModificar && (
+          <>
+            <Field label="Nueva asignación" value={nombreAsg} onChangeText={setNombreAsg} autoCapitalize="sentences" />
+            <Button
+              title="Crear asignación"
+              variant="secondary"
+              loading={busy}
+              disabled={!nombreAsg.trim()}
+              onPress={() =>
+                run(async () => {
+                  await api.post(
+                    '/comandos/CrearAsignacion',
+                    { nombre: nombreAsg.trim(), objetivoId },
+                    token,
+                  );
+                  setNombreAsg('');
+                })
+              }
+            />
+          </>
+        )}
       </Panel>
 
+      {obj.esMio && hogarId && (
+        <Panel>
+          <Text style={styles.sectionTitle}>Compartir con el hogar</Text>
+          <Segmented
+            label="¿Compartido?"
+            options={['No', 'Sí'] as const}
+            value={obj.hogarId ? 'Sí' : 'No'}
+            formatearOpcion={(v) => v}
+            onChange={(v) =>
+              run(() =>
+                api.post(
+                  '/comandos/CompartirObjetivoConHogar',
+                  { objetivoId, hogarId: v === 'Sí' ? hogarId : null },
+                  token,
+                ),
+              )
+            }
+          />
+          {obj.hogarId && (
+            <>
+              <Ayuda>Elige quién más puede modificar este objetivo (crear asignaciones, reservar, editar).</Ayuda>
+              {miembros
+                .filter((m) => m.usuarioId !== usuario.id)
+                .map((m) => (
+                  <SelectRow
+                    key={m.usuarioId}
+                    label={m.nombre}
+                    selected={designados.includes(m.usuarioId)}
+                    onPress={() =>
+                      setDesignados((d) =>
+                        d.includes(m.usuarioId)
+                          ? d.filter((x) => x !== m.usuarioId)
+                          : [...d, m.usuarioId],
+                      )
+                    }
+                  />
+                ))}
+              <Button
+                title="Guardar designados"
+                variant="secondary"
+                loading={busy}
+                disabled={
+                  [...designados].sort().join() === [...obj.designados].sort().join()
+                }
+                onPress={() =>
+                  run(() =>
+                    api.post(
+                      '/comandos/DefinirDesignadosObjetivo',
+                      { objetivoId, usuarioIds: designados },
+                      token,
+                    ),
+                  )
+                }
+              />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {obj.puedoModificar && (
       <Panel>
         <Segmented label="Estado" options={ESTADOS} value={nuevoEstado} onChange={setNuevoEstado} />
         <Button
@@ -140,25 +222,30 @@ export function ObjetivoDetalleScreen() {
             )
           }
         />
-        <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-        <Button
-          title="Eliminar objetivo"
-          variant="secondary"
-          loading={busy}
-          disabled={motivo.trim().length < 3}
-          onPress={() =>
-            run(
-              () =>
-                api.post(
-                  '/comandos/EliminarObjetivoFinanciero',
-                  { objetivoId, motivo: motivo.trim() },
-                  token,
-                ),
-              true,
-            )
-          }
-        />
+        {obj.esMio && (
+          <>
+            <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
+            <Button
+              title="Eliminar objetivo"
+              variant="secondary"
+              loading={busy}
+              disabled={motivo.trim().length < 3}
+              onPress={() =>
+                run(
+                  () =>
+                    api.post(
+                      '/comandos/EliminarObjetivoFinanciero',
+                      { objetivoId, motivo: motivo.trim() },
+                      token,
+                    ),
+                  true,
+                )
+              }
+            />
+          </>
+        )}
       </Panel>
+      )}
 
       <Button
         title="Historial de cambios"
