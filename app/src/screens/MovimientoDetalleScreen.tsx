@@ -15,9 +15,11 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  aISO,
   Ayuda,
   Button,
   Chip,
+  DateField,
   ErrorText,
   etiqueta,
   Field,
@@ -53,6 +55,8 @@ export function MovimientoDetalleScreen() {
 
   const [modo, setModo] = useState<null | 'corregir' | 'anular' | 'plantilla' | 'etiquetas'>(null);
   const [nuevoMonto, setNuevoMonto] = useState('');
+  const [nuevaFecha, setNuevaFecha] = useState(aISO(new Date()));
+  const [nuevaGlosa, setNuevaGlosa] = useState('');
   const [motivo, setMotivo] = useState('');
   const [nombrePlantilla, setNombrePlantilla] = useState('');
   const [etiquetaIds, setEtiquetaIds] = useState<string[]>([]);
@@ -64,6 +68,8 @@ export function MovimientoDetalleScreen() {
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
       setEvento(ev);
       setNuevoMonto(String(ev.monto));
+      setNuevaFecha(ev.fecha);
+      setNuevaGlosa(ev.glosa ?? '');
       setEtiquetaIds(ev.etiquetaIds);
       if (etiquetas.length === 0) {
         setEtiquetas(await api.get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token).catch(() => []));
@@ -94,15 +100,16 @@ export function MovimientoDetalleScreen() {
   useCargaAlEnfocar(cargar);
 
   const ejecutar = async () => {
+    if (!evento) return;
     setEnviando(true);
     setError('');
     try {
       if (modo === 'corregir') {
-        await api.post(
-          '/comandos/CorregirEventoFinanciero',
-          { eventoId, nuevoMonto: Number(nuevoMonto), motivo: motivo.trim() },
-          token,
-        );
+        const body: Record<string, unknown> = { eventoId, motivo: motivo.trim() };
+        if (Number(nuevoMonto) !== evento.monto) body.nuevoMonto = Number(nuevoMonto);
+        if (nuevaFecha !== evento.fecha) body.nuevaFecha = nuevaFecha;
+        if (nuevaGlosa.trim() !== (evento.glosa ?? '')) body.nuevaGlosa = nuevaGlosa.trim();
+        await api.post('/comandos/CorregirEventoFinanciero', body, token);
         toast.mostrar('Movimiento corregido');
       } else {
         if (!(await confirmar('Anular movimiento', 'Se revierte su efecto sobre el saldo. Queda en el historial marcado como anulado.', 'Anular'))) {
@@ -217,15 +224,15 @@ export function MovimientoDetalleScreen() {
 
       {modo === null && accionable && (
         <Ayuda>
-          Corregir: el movimiento ocurrió pero con otro monto. Se registra la
-          diferencia y el original queda enlazado a su corrección. Anular: el
-          movimiento no ocurrió — se revierte su efecto por completo.
+          Corregir: el movimiento ocurrió pero con otro monto, fecha o detalle. Se
+          registra la diferencia y el original queda enlazado a su corrección. Anular:
+          el movimiento no ocurrió — se revierte su efecto por completo.
         </Ayuda>
       )}
 
       {modo === null && (
         <View style={{ gap: 8 }}>
-          {accionable && <Button title="Corregir monto" onPress={() => setModo('corregir')} />}
+          {accionable && <Button title="Corregir" onPress={() => setModo('corregir')} />}
           {puedePlantilla && (
             <Button
               title="Guardar como plantilla"
@@ -303,11 +310,28 @@ export function MovimientoDetalleScreen() {
 
       {modo === 'corregir' && (
         <Panel>
-          <Text style={styles.formTitle}>Corregir monto</Text>
+          <Text style={styles.formTitle}>Corregir movimiento</Text>
+          <Ayuda>
+            El movimiento ocurrió, pero con otro monto, fecha o detalle. Se registra una
+            corrección enlazada; el original queda intacto. Para cambiar el tipo o los
+            elementos, anula y regístralo de nuevo.
+          </Ayuda>
           <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={evento.moneda} />
+          <DateField label="Fecha correcta" value={nuevaFecha} onChange={setNuevaFecha} />
+          <Field label="Detalle" value={nuevaGlosa} onChangeText={setNuevaGlosa} placeholder="Glosa del movimiento" autoCapitalize="sentences" />
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se corrige" autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
-          <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <Button
+            title="Guardar corrección"
+            onPress={ejecutar}
+            loading={enviando}
+            disabled={
+              motivo.trim().length < 3 ||
+              (Number(nuevoMonto) === evento.monto &&
+                nuevaFecha === evento.fecha &&
+                nuevaGlosa.trim() === (evento.glosa ?? ''))
+            }
+          />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </Panel>
       )}

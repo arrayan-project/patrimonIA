@@ -232,7 +232,9 @@ export class EventoFinancieroService {
    * compensatorio con `correccion_de_id` apuntando al original. En Evento
    * Financiero la corrección **compensa montos** (flujo): impacto = signo del
    * impacto original × (nuevoMonto − montoOriginal).
-   * Fase 3 corrige solo el monto — tipo/fecha/elementos requieren anular + registrar.
+   * GAPS.md P5 — además del monto se corrige la fecha y la glosa (opcionales, al
+   * menos uno). El tipo/los elementos afectados siguen requiriendo anular +
+   * registrar. La cadena sigue lineal (una sola corrección viva por evento).
    * Auditoría: Corrección — evento original, evento compensatorio, motivo.
    */
   async corregirEvento(actorId: string, dto: CorregirEventoDto): Promise<EventoFinancieroDTO> {
@@ -247,50 +249,75 @@ export class EventoFinancieroService {
       throw new ConflictException('El evento ya tiene una corrección — corrige esa última');
     }
 
-    const nuevoMonto = new Prisma.Decimal(dto.nuevoMonto);
-    const delta = nuevoMonto.minus(evento.monto); // p.ej. 45.000 − 50.000 = −5.000
-    if (delta.isZero()) {
-      throw new BadRequestException('El nuevo monto es igual al actual — no hay nada que corregir');
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const montoFinal = dto.nuevoMonto != null ? new Prisma.Decimal(dto.nuevoMonto) : evento.monto;
+    const delta = montoFinal.minus(evento.monto); // p.ej. 45.000 − 50.000 = −5.000
+    const fechaFinal = dto.nuevaFecha ? new Date(dto.nuevaFecha) : evento.fecha;
+    const fechaCambia = iso(fechaFinal) !== iso(evento.fecha);
+    const glosaFinal =
+      dto.nuevaGlosa !== undefined ? dto.nuevaGlosa.trim() || null : evento.glosa;
+    const glosaCambia = glosaFinal !== evento.glosa;
+
+    const valorAnterior: Record<string, unknown> = {};
+    const valorPosterior: Record<string, unknown> = {};
+    if (!delta.isZero()) {
+      valorAnterior.monto = evento.monto.toNumber();
+      valorPosterior.monto = montoFinal.toNumber();
+    }
+    if (fechaCambia) {
+      valorAnterior.fecha = iso(evento.fecha);
+      valorPosterior.fecha = iso(fechaFinal);
+    }
+    if (glosaCambia) {
+      valorAnterior.glosa = evento.glosa;
+      valorPosterior.glosa = glosaFinal;
+    }
+    if (Object.keys(valorPosterior).length === 0) {
+      throw new BadRequestException('No hay nada que corregir — los datos son iguales a los actuales');
     }
 
-    // La corrección hereda las etiquetas del original (como la glosa/categoría).
+    // La corrección hereda las etiquetas del original (como la categoría).
     const etiquetasOriginal = (await this.etiquetas.deEventos([evento.id])).get(evento.id) ?? [];
 
     const resultado = await this.prisma.$transaction(async (tx) => {
       const compensatorio = await tx.evento_financiero.create({
         data: {
           tipo: evento.tipo,
-          monto: delta.abs(),
+          monto: delta.isZero() ? evento.monto : delta.abs(),
           moneda: evento.moneda,
-          fecha: evento.fecha,
+          fecha: fechaFinal,
           correccion_de_id: evento.id,
           anulado: false,
           categoria_id: evento.categoria_id,
-          glosa: evento.glosa,
+          glosa: glosaFinal,
         },
       });
 
       const nuevosImpactos = [];
-      for (const i of impactos) {
-        const signo = new Prisma.Decimal(i.monto).isNegative() ? -1 : 1;
-        const montoComp = delta.times(signo); // signo del impacto original × delta
-        nuevosImpactos.push(
-          await tx.impacto_patrimonial.create({
-            data: {
-              elemento_id: i.elemento_id,
-              monto: montoComp,
-              origen_tipo: 'EVENTO_FINANCIERO',
-              origen_id: compensatorio.id,
-              fecha: evento.fecha,
-            },
-          }),
-        );
-        const el = await tx.elemento_patrimonial.findUniqueOrThrow({ where: { id: i.elemento_id } });
-        await tx.elemento_patrimonial.update({
-          where: { id: i.elemento_id },
-          data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(montoComp) },
-        });
-        await derivarValorPendiente(tx, i.elemento_id);
+      if (!delta.isZero()) {
+        for (const i of impactos) {
+          const signo = new Prisma.Decimal(i.monto).isNegative() ? -1 : 1;
+          const montoComp = delta.times(signo); // signo del impacto original × delta
+          nuevosImpactos.push(
+            await tx.impacto_patrimonial.create({
+              data: {
+                elemento_id: i.elemento_id,
+                monto: montoComp,
+                origen_tipo: 'EVENTO_FINANCIERO',
+                origen_id: compensatorio.id,
+                fecha: fechaFinal,
+              },
+            }),
+          );
+          const el = await tx.elemento_patrimonial.findUniqueOrThrow({
+            where: { id: i.elemento_id },
+          });
+          await tx.elemento_patrimonial.update({
+            where: { id: i.elemento_id },
+            data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(montoComp) },
+          });
+          await derivarValorPendiente(tx, i.elemento_id);
+        }
       }
 
       await this.auditoria.registrar(tx, {
@@ -299,8 +326,8 @@ export class EventoFinancieroService {
         entidadTipo: 'EVENTO_FINANCIERO',
         entidadId: evento.id,
         motivo: dto.motivo,
-        valorAnterior: { monto: evento.monto.toNumber() },
-        valorPosterior: { monto: nuevoMonto.toNumber() },
+        valorAnterior,
+        valorPosterior,
         entidadRelacionadaTipo: 'EVENTO_FINANCIERO',
         entidadRelacionadaId: compensatorio.id,
       });
