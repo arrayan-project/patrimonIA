@@ -29,11 +29,17 @@ export function RegistrarAjusteScreen() {
   const valorActual = nav.route.params?.valorActual as number | undefined;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
   const contexto = nav.route.params?.contexto as string | undefined;
+  const modoInteres = nav.route.params?.modoInteres === true;
+  const sentidoInicial = (nav.route.params?.sentidoInicial as 'Mayor' | 'Menor' | undefined) ?? 'Menor';
+  const magnitudInicial = nav.route.params?.magnitudInicial as number | undefined;
+  const motivoInicial = (nav.route.params?.motivoInicial as string | undefined) ?? '';
 
-  const [direccion, setDireccion] = useState<'Mayor' | 'Menor'>('Menor');
-  const [magnitud, setMagnitud] = useState('');
+  const [direccion, setDireccion] = useState<'Mayor' | 'Menor'>(sentidoInicial);
+  const [magnitud, setMagnitud] = useState(
+    magnitudInicial != null && magnitudInicial > 0 ? String(Math.round(magnitudInicial)) : '',
+  );
   const [fecha, setFecha] = useState(aISO(new Date()));
-  const [motivo, setMotivo] = useState('');
+  const [motivo, setMotivo] = useState(motivoInicial);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
@@ -69,14 +75,14 @@ export function RegistrarAjusteScreen() {
   return (
     <Screen>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>Registrar ajuste patrimonial</Title>
+      <Title>{modoInteres ? 'Registrar interés' : 'Registrar ajuste patrimonial'}</Title>
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
       )}
       <Ayuda>
-        Un ajuste corrige el valor cuando no puedes reconstruir la causa exacta
-        de una diferencia (el saldo del banco no cuadra con lo registrado, un
-        error viejo). Si sabes qué pasó, registra el movimiento en su lugar.
+        {modoInteres
+          ? 'El interés de una deuda o crédito se registra como un ajuste que aumenta el saldo. El monto sugerido es saldo × tasa anual ÷ 12 — ajústalo al período real (mora, refinanciación, etc.).'
+          : 'Un ajuste corrige el valor cuando no puedes reconstruir la causa exacta de una diferencia (el saldo del banco no cuadra con lo registrado, un error viejo). Si sabes qué pasó, registra el movimiento en su lugar.'}
       </Ayuda>
 
       <Segmented

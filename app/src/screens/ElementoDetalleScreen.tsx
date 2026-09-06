@@ -260,6 +260,28 @@ export function ElementoDetalleScreen() {
           {esPropietario && (el.valorPendiente ?? 0) > 0 && (
             <View style={{ gap: 8, marginTop: 8 }}>
               <Nota>
+                El interés del período se registra como un ajuste que aumenta el saldo.
+              </Nota>
+              <Button
+                title="Registrar interés"
+                variant="secondary"
+                onPress={() =>
+                  nav.go('RegistrarAjuste', {
+                    elementoId,
+                    valorActual: el.valorVigente,
+                    moneda: el.moneda,
+                    contexto: el.nombre,
+                    modoInteres: true,
+                    sentidoInicial: esDeuda ? 'Menor' : 'Mayor',
+                    motivoInicial: 'Interés del período',
+                    magnitudInicial:
+                      el.tasaInteres != null
+                        ? ((el.valorPendiente ?? 0) * el.tasaInteres) / 100 / 12
+                        : undefined,
+                  })
+                }
+              />
+              <Nota>
                 {esDeuda
                   ? 'Condonar: el acreedor perdona el saldo (tu patrimonio sube).'
                   : 'Declarar incobrable: reconoces que no se recuperará (tu patrimonio baja).'}
