@@ -72,6 +72,8 @@ export class ElementoService {
     if (usuarios.length !== idsUnicos.size) {
       throw new BadRequestException('Algún propietario no es un usuario activo');
     }
+    // P12 — un co-propietario debe compartir un hogar activo con el actor.
+    await this.#exigirCopropietariosDelHogar([...idsUnicos], actorId);
 
     // DEUDA/CREDITO: el atributo obligatorio es valor_pendiente; valor_vigente se
     // deriva con signo (DEUDA arrastra el patrimonio hacia abajo). Ver GAPS.md G17.
@@ -506,6 +508,8 @@ export class ElementoService {
       where: { id: { in: [...ids] }, estado: 'ACTIVO' },
     });
     if (usuarios.length !== ids.size) throw new BadRequestException('Algún propietario no es válido');
+    // P12 — un co-propietario debe compartir un hogar activo con el actor.
+    await this.#exigirCopropietariosDelHogar([...ids], actorId);
 
     const anteriores = await this.prisma.elemento_propietario.findMany({
       where: { elemento_id: el.id },
@@ -634,6 +638,33 @@ export class ElementoService {
     });
     if (!prop) throw new ForbiddenException('No eres propietario de ese elemento');
     return el;
+  }
+
+  /**
+   * P12 — co-propiedad estricta: cada co-propietario (distinto del actor) debe
+   * compartir al menos un hogar ACTIVA con el actor.
+   */
+  async #exigirCopropietariosDelHogar(ids: string[], actorId: string): Promise<void> {
+    const otros = ids.filter((id) => id !== actorId);
+    if (otros.length === 0) return;
+    const hogaresActor = new Set(
+      (
+        await this.prisma.membresia.findMany({
+          where: { usuario_id: actorId, estado: 'ACTIVA' },
+          select: { hogar_id: true },
+        })
+      ).map((m) => m.hogar_id),
+    );
+    const membresiasOtros = await this.prisma.membresia.findMany({
+      where: { usuario_id: { in: otros }, estado: 'ACTIVA', hogar_id: { in: [...hogaresActor] } },
+      select: { usuario_id: true },
+    });
+    const conHogar = new Set(membresiasOtros.map((m) => m.usuario_id));
+    if (otros.some((id) => !conHogar.has(id))) {
+      throw new BadRequestException(
+        'Un co-propietario no comparte un hogar contigo — invítalo al hogar primero',
+      );
+    }
   }
 
   // ── Consultas ─────────────────────────────────────────────────────────────

@@ -45,6 +45,21 @@ describe('Co-propiedad al registrar un elemento (e2e)', () => {
     }
     anaId = (await prisma.usuario.findUniqueOrThrow({ where: { email: 'ana@cop.cl' } })).id;
     betoId = (await prisma.usuario.findUniqueOrThrow({ where: { email: 'beto@cop.cl' } })).id;
+
+    // P12 — co-propiedad estricta: Ana y Beto comparten un hogar.
+    const tAna = await login('ana@cop.cl');
+    const hogarId = (
+      await bearer(request(http).post('/comandos/CrearHogar'), tAna).send({ nombre: 'Casa' }).expect(201)
+    ).body.id;
+    const inv = (
+      await bearer(request(http).post('/comandos/InvitarMiembro'), tAna)
+        .send({ hogarId, emailInvitado: 'beto@cop.cl' })
+        .expect(201)
+    ).body;
+    const tBeto = await login('beto@cop.cl');
+    await bearer(request(http).post('/comandos/AceptarInvitacion'), tBeto)
+      .send({ invitacionId: inv.id })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -104,5 +119,20 @@ describe('Co-propiedad al registrar un elemento (e2e)', () => {
   it('rechaza si el actor no figura entre los propietarios', async () => {
     const t = await login('ana@cop.cl');
     await alta(t, { propietarios: [{ usuarioId: betoId, porcentaje: 100 }] }).expect(400);
+  });
+
+  it('P12 — rechaza un co-propietario que no comparte hogar con el actor', async () => {
+    await request(http)
+      .post('/comandos/RegistrarUsuario')
+      .send({ email: 'carla@cop.cl', nombre: 'Carla', password: 'secret123' })
+      .expect(201);
+    const carlaId = (await prisma.usuario.findUniqueOrThrow({ where: { email: 'carla@cop.cl' } })).id;
+    const t = await login('ana@cop.cl');
+    await alta(t, {
+      propietarios: [
+        { usuarioId: anaId, porcentaje: 50 },
+        { usuarioId: carlaId, porcentaje: 50 },
+      ],
+    }).expect(400);
   });
 });
