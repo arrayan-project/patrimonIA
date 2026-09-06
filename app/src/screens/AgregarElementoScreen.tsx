@@ -6,6 +6,7 @@ import {
   type ElementoPatrimonialDTO,
   type HogarDTO,
   type MiembroDTO,
+  type TipoElementoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -39,7 +40,7 @@ import {
 
 const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
 const OPC_CATEGORIA = CATEGORIAS.map((c) => ({ value: c, label: etiqueta(c) }));
-const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
+const OPC_TIPO_FALLBACK = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: etiqueta(t), label: etiqueta(t) }));
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
   value: m,
   label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
@@ -63,8 +64,13 @@ export function AgregarElementoScreen() {
   const { key } = useIdempotencyKey();
 
   const [nombre, setNombre] = useState('');
-  const [tipo, setTipo] = useState('cuenta_corriente');
+  const [tipo, setTipo] = useState('');
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('LIQUIDEZ');
+  const [tiposCat, setTiposCat] = useState<TipoElementoDTO[]>([]);
+  const [hogarId, setHogarId] = useState<string | null>(null);
+  const [crearTipo, setCrearTipo] = useState(false);
+  const [tipoNuevo, setTipoNuevo] = useState('');
+  const [tipoBusy, setTipoBusy] = useState(false);
   const [valorInicial, setValorInicial] = useState('0');
   const [valorPendiente, setValorPendiente] = useState('');
   const [contraparte, setContraparte] = useState('');
@@ -87,10 +93,55 @@ export function AgregarElementoScreen() {
   useEffect(() => {
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
-      .then((hs) => (hs[0] ? api.get<HogarDTO>(`/hogares/${hs[0].id}`, token) : null))
-      .then((h) => setMiembros(h?.miembros ?? []))
+      .then(async (hs) => {
+        const h0 = hs[0]?.id ?? null;
+        setHogarId(h0);
+        if (!h0) return;
+        const [h, tipos] = await Promise.all([
+          api.get<HogarDTO>(`/hogares/${h0}`, token),
+          api.get<TipoElementoDTO[]>(`/hogares/${h0}/tipos-elemento`, token).catch(() => []),
+        ]);
+        setMiembros(h?.miembros ?? []);
+        setTiposCat(tipos);
+      })
       .catch(() => setMiembros([]));
   }, [token]);
+
+  const opcTipo =
+    tiposCat.length > 0
+      ? tiposCat.map((t) => ({ value: t.nombre, label: t.nombre }))
+      : OPC_TIPO_FALLBACK;
+
+  const elegirTipo = (v: string) => {
+    setTipo(v);
+    const t = tiposCat.find((x) => x.nombre === v);
+    if (t?.categoriaSugerida) {
+      setCategoria(t.categoriaSugerida);
+      setValorizable(t.categoriaSugerida === 'ACTIVO' || t.categoriaSugerida === 'INVERSION' ? 'Sí' : 'No');
+    }
+  };
+
+  const crearTipoInline = async () => {
+    if (!hogarId || !tipoNuevo.trim()) return;
+    setTipoBusy(true);
+    setError('');
+    try {
+      const nuevo = await api.post<TipoElementoDTO>(
+        '/comandos/CrearTipoElemento',
+        { hogarId, nombre: tipoNuevo.trim(), categoriaSugerida: categoria },
+        token,
+      );
+      setTiposCat(await api.get<TipoElementoDTO[]>(`/hogares/${hogarId}/tipos-elemento`, token));
+      setTipo(nuevo.nombre);
+      setTipoNuevo('');
+      setCrearTipo(false);
+      toast.mostrar('Tipo creado');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setTipoBusy(false);
+    }
+  };
 
   const hayComiembros = miembros.some((m) => m.usuarioId !== usuario.id);
   const compartida = propiedad === 'Compartida' && hayComiembros;
@@ -105,7 +156,7 @@ export function AgregarElementoScreen() {
   const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';
   const sucio =
     nombre.trim().length > 0 ||
-    tipo !== 'cuenta_corriente' ||
+    tipo !== '' ||
     categoria !== 'LIQUIDEZ' ||
     valorInicial !== '0' ||
     valorPendiente !== '' ||
@@ -118,6 +169,7 @@ export function AgregarElementoScreen() {
 
   // ── Validación por paso ───────────────────────────────────────────────────
   const errNombre = nombre.trim() ? '' : 'Escribe un nombre para identificarlo.';
+  const errTipo = tipo.trim() ? '' : 'Elige o escribe un tipo.';
   const errMoneda = /^[A-Za-z]{3}$/.test(moneda.trim())
     ? ''
     : 'Usa el código de 3 letras (CLP, USD, EUR…).';
@@ -138,7 +190,7 @@ export function AgregarElementoScreen() {
           : '';
 
   const errorDelPaso = (p: number) =>
-    p === 1 ? errNombre : p === 2 ? errMoneda || errPendiente : errReparto;
+    p === 1 ? errNombre || errTipo : p === 2 ? errMoneda || errPendiente : errReparto;
   const mostrar = (p: number, msg: string) => (intentado[p] && msg ? msg : undefined);
 
   const avanzar = () => {
@@ -156,7 +208,7 @@ export function AgregarElementoScreen() {
 
   const onSubmit = async () => {
     setIntentado((x) => ({ ...x, [paso]: true }));
-    if (errNombre || errMoneda || errPendiente || errReparto) return;
+    if (errNombre || errTipo || errMoneda || errPendiente || errReparto) return;
     setError('');
     setLoading(true);
     try {
@@ -204,6 +256,34 @@ export function AgregarElementoScreen() {
       {paso === 1 && (
         <>
           <Select
+            label="Tipo"
+            value={tipo}
+            options={opcTipo}
+            onChange={elegirTipo}
+            permiteOtro
+          />
+          {crearTipo ? (
+            <View style={{ gap: 8 }}>
+              <Field
+                label="Nombre del tipo"
+                value={tipoNuevo}
+                onChangeText={setTipoNuevo}
+                autoCapitalize="sentences"
+                placeholder="p. ej. Billetera digital"
+              />
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Button title="Crear" onPress={crearTipoInline} loading={tipoBusy} disabled={!tipoNuevo.trim()} />
+                <LinkButton title="Cancelar" onPress={() => setCrearTipo(false)} />
+              </View>
+            </View>
+          ) : hogarId ? (
+            <LinkButton
+              title="¿No encuentras el tipo? Crear uno nuevo"
+              onPress={() => setCrearTipo(true)}
+            />
+          ) : null}
+          {intentado[1] && errTipo ? <ErrorText>{errTipo}</ErrorText> : null}
+          <Select
             label="¿Qué es?"
             value={categoria}
             options={OPC_CATEGORIA}
@@ -233,7 +313,6 @@ export function AgregarElementoScreen() {
             autoCapitalize="sentences"
             error={mostrar(1, errNombre)}
           />
-          <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
         </>
       )}
 

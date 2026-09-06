@@ -14,6 +14,7 @@ import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AgrupacionModule } from './agrupacion/agrupacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
 import { CategoriaMovimientoModule } from './categoria-movimiento/categoria-movimiento.module.js';
+import { TipoElementoModule } from './tipo-elemento/tipo-elemento.module.js';
 import { ConsolidacionModule } from './consolidacion/consolidacion.module.js';
 import { EtiquetaModule } from './etiqueta/etiqueta.module.js';
 import { MovimientoProgramadoModule } from './movimiento-programado/movimiento-programado.module.js';
@@ -40,6 +41,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     AjustePatrimonialModule,
     AgrupacionModule,
     CategoriaMovimientoModule,
+    TipoElementoModule,
     EtiquetaModule,
     ConsolidacionModule,
     MovimientoProgramadoModule,

@@ -35,7 +35,10 @@ import {
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
 
-const OPC_TIPO = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: t, label: etiqueta(t) }));
+const OPC_TIPO_FALLBACK = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({
+  value: etiqueta(t),
+  label: etiqueta(t),
+}));
 
 const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 type Nivel = (typeof VIS)[number];
@@ -81,6 +84,7 @@ export function EditarElementoScreen() {
 
   // ── Propietarios (A3 — CambiarPropiedadElementoPatrimonial) ────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
+  const [tiposCat, setTiposCat] = useState<string[]>([]);
   const [pcts, setPcts] = useState<Record<string, string>>({});
 
   // ── Detalle de deuda/crédito (§B3) ────────────────────────────────────────
@@ -182,10 +186,29 @@ export function EditarElementoScreen() {
   useEffect(() => {
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
-      .then((hs) => (hs[0] ? api.get<HogarDTO>(`/hogares/${hs[0].id}`, token) : null))
-      .then((h) => setMiembros(h?.miembros ?? []))
+      .then(async (hs) => {
+        const h0 = hs[0]?.id;
+        if (!h0) return;
+        const [h, tipos] = await Promise.all([
+          api.get<HogarDTO>(`/hogares/${h0}`, token),
+          api
+            .get<{ nombre: string }[]>(`/hogares/${h0}/tipos-elemento`, token)
+            .catch(() => [] as { nombre: string }[]),
+        ]);
+        setMiembros(h?.miembros ?? []);
+        setTiposCat(tipos.map((t) => t.nombre));
+      })
       .catch(() => setMiembros([]));
   }, [token]);
+
+  const opcTipo = useMemo(() => {
+    const base =
+      tiposCat.length > 0 ? tiposCat.map((n) => ({ value: n, label: n })) : OPC_TIPO_FALLBACK;
+    // asegura que el tipo actual del elemento aparezca aunque no esté en el catálogo
+    return tipo && !base.some((o) => o.value === tipo)
+      ? [{ value: tipo, label: tipo }, ...base]
+      : base;
+  }, [tiposCat, tipo]);
 
   const run = async (fn: () => Promise<unknown>, aviso?: string) => {
     setBusy(true);
@@ -238,7 +261,7 @@ export function EditarElementoScreen() {
       {activo && (
         <Panel>
           <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
-          <Select label="Tipo" value={tipo} options={OPC_TIPO} onChange={setTipo} permiteOtro />
+          <Select label="Tipo" value={tipo} options={opcTipo} onChange={setTipo} permiteOtro />
           <Segmented
             label="¿Por qué cambias esto?"
             options={['Actualización', 'Corrección'] as const}

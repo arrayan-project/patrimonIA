@@ -117,6 +117,15 @@ export interface CategoriaMovimientoDTO {
   categoriaPadreId: string | null;
 }
 
+export interface TipoElementoDTO {
+  id: string;
+  hogarId: string;
+  nombre: string;
+  categoriaSugerida: 'LIQUIDEZ' | 'RESERVA' | 'INVERSION' | 'ACTIVO' | 'DEUDA' | 'CREDITO' | null;
+  orden: number;
+  estado: 'ACTIVA' | 'ARCHIVADA';
+}
+
 export interface EtiquetaDTO {
   id: string;
   nombre: string;

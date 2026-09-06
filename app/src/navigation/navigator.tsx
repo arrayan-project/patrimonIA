@@ -44,6 +44,7 @@ export type RouteName =
   | 'TiposCambio'
   | 'Ajustes'
   | 'Categorias'
+  | 'TiposElemento'
   | 'Etiquetas'
   | 'Agrupaciones';
 

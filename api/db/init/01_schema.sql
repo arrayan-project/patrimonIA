@@ -448,6 +448,23 @@ CREATE INDEX ix_categoria_movimiento_hogar
 CREATE INDEX ix_categoria_movimiento_padre
     ON categoria_movimiento (categoria_padre_id) WHERE categoria_padre_id IS NOT NULL;
 
+-- migración 018 — catálogo de tipos de elemento patrimonial (por hogar)
+CREATE TABLE tipo_elemento (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hogar_id            UUID NOT NULL REFERENCES hogar(id),
+    nombre              TEXT NOT NULL,
+    categoria_sugerida  TEXT CHECK (categoria_sugerida IN
+                          ('LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO')),
+    orden               INTEGER NOT NULL DEFAULT 0,
+    estado              TEXT NOT NULL DEFAULT 'ACTIVA' CHECK (estado IN ('ACTIVA', 'ARCHIVADA')),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (hogar_id, nombre)
+);
+
+CREATE INDEX ix_tipo_elemento_hogar
+    ON tipo_elemento (hogar_id, estado, orden);
+
 -- ============================================================================
 -- 16. Presupuesto por rubro (migración 010 — configuración, GAPS.md G26)
 -- Monto esperado de una categoría de movimiento dentro de un presupuesto.

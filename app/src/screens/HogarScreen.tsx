@@ -70,6 +70,12 @@ export function HogarScreen() {
         onPress={() => nav.go('Categorias')}
       />
       <MenuLink
+        icon="pricetag-outline"
+        title="Tipos de elemento patrimonial"
+        subtitle="Cuenta corriente, APV, propiedad… — vocabulario del hogar"
+        onPress={() => nav.go('TiposElemento')}
+      />
+      <MenuLink
         icon="swap-horizontal-outline"
         title="Tipos de cambio"
         subtitle="Tasas para convertir entre monedas"

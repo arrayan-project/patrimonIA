@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { NotificacionService } from '../notificacion/notificacion.service.js';
 import { CategoriaMovimientoService } from '../categoria-movimiento/categoria-movimiento.service.js';
+import { TipoElementoService } from '../tipo-elemento/tipo-elemento.service.js';
 import {
   toHogarDTO,
   toInvitacionDTO,
@@ -27,6 +28,7 @@ export class HogarService {
     private readonly auditoria: AuditoriaService,
     private readonly notificaciones: NotificacionService,
     private readonly categorias: CategoriaMovimientoService,
+    private readonly tiposElemento: TipoElementoService,
   ) {}
 
   // ── Comandos ──────────────────────────────────────────────────────────────
@@ -58,6 +60,7 @@ export class HogarService {
       });
 
       await this.categorias.sembrarPorDefecto(tx, creado.id);
+      await this.tiposElemento.sembrarPorDefecto(tx, creado.id);
 
       await this.auditoria.registrar(tx, {
         comando: 'CrearHogar',
@@ -392,6 +395,7 @@ export class HogarService {
         data: { categoria_id: null },
       });
       await tx.categoria_movimiento.deleteMany({ where: { hogar_id: hogarId } });
+      await tx.tipo_elemento.deleteMany({ where: { hogar_id: hogarId } });
       await tx.hogar.delete({ where: { id: hogarId } });
       await this.auditoria.registrar(tx, {
         comando: 'EliminarHogar',
