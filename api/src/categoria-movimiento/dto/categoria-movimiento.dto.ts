@@ -32,11 +32,21 @@ export class CrearCategoriaMovimientoDto {
   @IsString()
   @MaxLength(40)
   icono?: string;
+
+  /** Categoría padre (raíz). Omitir → categoría raíz. */
+  @IsOptional()
+  @IsUUID()
+  categoriaPadreId?: string;
 }
 
 export class ActualizarCategoriaMovimientoDto {
   @IsUUID()
   categoriaId!: string;
+
+  /** UUID para anidar bajo un padre raíz; null para volverla raíz. */
+  @IsOptional()
+  @IsUUID()
+  categoriaPadreId?: string | null;
 
   @IsOptional()
   @IsString()

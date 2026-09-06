@@ -435,6 +435,8 @@ CREATE TABLE categoria_movimiento (
     icono           TEXT,
     orden           INTEGER NOT NULL DEFAULT 0,
     estado          TEXT NOT NULL DEFAULT 'ACTIVA' CHECK (estado IN ('ACTIVA', 'ARCHIVADA')),
+    -- migración 017: jerarquía de 2 niveles (padre debe ser raíz — se valida en servicio)
+    categoria_padre_id UUID REFERENCES categoria_movimiento(id),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     UNIQUE (hogar_id, nombre)
@@ -442,6 +444,9 @@ CREATE TABLE categoria_movimiento (
 
 CREATE INDEX ix_categoria_movimiento_hogar
     ON categoria_movimiento (hogar_id, estado, orden);
+
+CREATE INDEX ix_categoria_movimiento_padre
+    ON categoria_movimiento (categoria_padre_id) WHERE categoria_padre_id IS NOT NULL;
 
 -- ============================================================================
 -- 16. Presupuesto por rubro (migración 010 — configuración, GAPS.md G26)

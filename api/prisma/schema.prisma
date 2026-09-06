@@ -130,12 +130,12 @@ model evento_financiero {
   movimiento_programado_origen_id String?                @db.Uuid
   correccion_de_id                String?                @db.Uuid
   anulado                         Boolean                @default(false)
-  created_at                      DateTime               @default(now()) @db.Timestamptz(6)
   glosa                           String?
   categoria_id                    String?                @db.Uuid
+  created_at                      DateTime               @default(now()) @db.Timestamptz(6)
   evento_etiqueta                 evento_etiqueta[]
   asignacion                      asignacion?            @relation(fields: [asignacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  categoria_movimiento            categoria_movimiento?  @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoria_movimiento            categoria_movimiento?  @relation("evento_financiero_categoria", fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   evento_financiero               evento_financiero?     @relation("evento_financieroToevento_financiero", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_evento_financiero         evento_financiero[]    @relation("evento_financieroToevento_financiero")
   movimiento_programado           movimiento_programado? @relation(fields: [movimiento_programado_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -208,15 +208,15 @@ model membresia {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model movimiento_programado {
   id                                                                                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo                                                                                String
   monto_planificado                                                                   Decimal               @db.Decimal(18, 2)
   moneda                                                                              String
   fecha_programada                                                                    DateTime              @db.Date
+  elemento_origen_id                                                                  String?               @db.Uuid
   elemento_destino_id                                                                 String?               @db.Uuid
   observaciones                                                                       String?
   estado                                                                              String
   created_at                                                                          DateTime              @default(now()) @db.Timestamptz(6)
-  tipo                                                                                String
-  elemento_origen_id                                                                  String?               @db.Uuid
   evento_financiero                                                                   evento_financiero[]
   elemento_patrimonial                                                                elemento_patrimonial? @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   elemento_patrimonial_movimiento_programado_elemento_origen_idToelemento_patrimonial elemento_patrimonial? @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial", fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -377,22 +377,26 @@ model dispositivo_push {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model categoria_movimiento {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  hogar_id             String                 @db.Uuid
-  nombre               String
-  tipo_aplicable       String
-  color                String?
-  icono                String?
-  orden                Int                    @default(0)
-  estado               String                 @default("ACTIVA")
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  hogar                hogar                  @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  evento_financiero    evento_financiero[]
-  plantilla_movimiento plantilla_movimiento[]
-  presupuesto_linea    presupuesto_linea[]
+  id                         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hogar_id                   String                 @db.Uuid
+  nombre                     String
+  tipo_aplicable             String
+  color                      String?
+  icono                      String?
+  orden                      Int                    @default(0)
+  estado                     String                 @default("ACTIVA")
+  created_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  categoria_padre_id         String?                @db.Uuid
+  categoria_movimiento       categoria_movimiento?  @relation("categoria_movimientoTocategoria_movimiento", fields: [categoria_padre_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_categoria_movimiento categoria_movimiento[] @relation("categoria_movimientoTocategoria_movimiento")
+  hogar                      hogar                  @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_financiero          evento_financiero[]    @relation("evento_financiero_categoria")
+  plantilla_movimiento       plantilla_movimiento[]
+  presupuesto_linea          presupuesto_linea[]
 
   @@unique([hogar_id, nombre])
   @@index([hogar_id, estado, orden], map: "ix_categoria_movimiento_hogar")
+  @@index([categoria_padre_id], map: "ix_categoria_movimiento_padre", where: raw("(categoria_padre_id IS NOT NULL)"))
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

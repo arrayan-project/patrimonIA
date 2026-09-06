@@ -59,6 +59,10 @@ export function RegistrarMovimientoScreen() {
   const [destinoId, setDestinoId] = useState<string | null>(null);
   const [filtroEl, setFiltroEl] = useState('');
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [hogarId, setHogarId] = useState<string | null>(null);
+  const [crearCat, setCrearCat] = useState(false);
+  const [catNombre, setCatNombre] = useState('');
+  const [catBusy, setCatBusy] = useState(false);
   const [glosa, setGlosa] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,14 +88,15 @@ export function RegistrarMovimientoScreen() {
       .catch(() => setElementosHogar([]));
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
-      .then((hs) =>
-        hs[0]
+      .then((hs) => {
+        setHogarId(hs[0]?.id ?? null);
+        return hs[0]
           ? api.get<CategoriaMovimientoDTO[]>(
               `/hogares/${hs[0].id}/categorias-movimiento`,
               token,
             )
-          : [],
-      )
+          : [];
+      })
       .then(setCategorias)
       .catch(() => setCategorias([]));
     api
@@ -119,9 +124,44 @@ export function RegistrarMovimientoScreen() {
   const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const puedeCategorizar = tipo === 'INGRESO' || tipo === 'GASTO';
-  const categoriasAplicables = categorias.filter(
-    (c) => c.tipoAplicable === 'AMBOS' || c.tipoAplicable === tipo,
-  );
+  const categoriasAplicables = useMemo(() => {
+    const aplica = (c: CategoriaMovimientoDTO) =>
+      c.tipoAplicable === 'AMBOS' || c.tipoAplicable === tipo;
+    const raices = categorias.filter((c) => !c.categoriaPadreId);
+    const orden: CategoriaMovimientoDTO[] = [];
+    for (const r of raices) {
+      const hijos = categorias.filter((c) => c.categoriaPadreId === r.id && aplica(c));
+      if (aplica(r) || hijos.length > 0) orden.push(r);
+      orden.push(...hijos);
+    }
+    return orden;
+  }, [categorias, tipo]);
+
+  const crearCategoriaInline = async () => {
+    if (!hogarId || !catNombre.trim()) return;
+    setCatBusy(true);
+    setError('');
+    try {
+      const nueva = await api.post<CategoriaMovimientoDTO>(
+        '/comandos/CrearCategoriaMovimiento',
+        { hogarId, nombre: catNombre.trim(), tipoAplicable: tipo },
+        token,
+      );
+      const refrescadas = await api.get<CategoriaMovimientoDTO[]>(
+        `/hogares/${hogarId}/categorias-movimiento`,
+        token,
+      );
+      setCategorias(refrescadas);
+      setCategoriaId(nueva.id);
+      setCatNombre('');
+      setCrearCat(false);
+      toast.mostrar('Categoría creada');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setCatBusy(false);
+    }
+  };
 
   const monedaEvento = useMemo(() => {
     const ref = elementos?.find((e) => e.id === (necesitaOrigen ? origenId : destinoId));
@@ -226,7 +266,7 @@ export function RegistrarMovimientoScreen() {
         maxLength={140}
       />
 
-      {puedeCategorizar && categoriasAplicables.length > 0 && (
+      {puedeCategorizar && (
         <View style={styles.group}>
           <Text style={styles.label}>Categoría (opcional)</Text>
           <SelectRow
@@ -237,11 +277,31 @@ export function RegistrarMovimientoScreen() {
           {categoriasAplicables.map((c) => (
             <SelectRow
               key={c.id}
-              label={c.nombre}
+              label={c.categoriaPadreId ? `›  ${c.nombre}` : c.nombre}
               selected={categoriaId === c.id}
               onPress={() => setCategoriaId(c.id)}
             />
           ))}
+          {crearCat ? (
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <Field
+                label="Nombre de la categoría"
+                value={catNombre}
+                onChangeText={setCatNombre}
+                autoCapitalize="sentences"
+                placeholder="p. ej. Mascotas"
+              />
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Button title="Crear" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
+                <LinkButton title="Cancelar" onPress={() => setCrearCat(false)} />
+              </View>
+            </View>
+          ) : (
+            <LinkButton
+              title="¿No encuentras la categoría? Crear una nueva"
+              onPress={() => setCrearCat(true)}
+            />
+          )}
         </View>
       )}
 

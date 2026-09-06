@@ -114,6 +114,7 @@ export interface CategoriaMovimientoDTO {
   icono: string | null;
   orden: number;
   estado: 'ACTIVA' | 'ARCHIVADA';
+  categoriaPadreId: string | null;
 }
 
 export interface EtiquetaDTO {

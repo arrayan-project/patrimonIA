@@ -25,6 +25,7 @@ export interface CategoriaMovimientoDTO {
   icono: string | null;
   orden: number;
   estado: string;
+  categoriaPadreId: string | null;
 }
 
 function toDTO(c: CategoriaRow): CategoriaMovimientoDTO {
@@ -37,6 +38,7 @@ function toDTO(c: CategoriaRow): CategoriaMovimientoDTO {
     icono: c.icono,
     orden: c.orden,
     estado: c.estado,
+    categoriaPadreId: c.categoria_padre_id,
   };
 }
 
@@ -75,6 +77,9 @@ export class CategoriaMovimientoService {
     });
     if (dup) throw new ConflictException('Ya existe una categoría con ese nombre en el hogar');
 
+    const padreId = dto.categoriaPadreId ?? null;
+    if (padreId) await this.#validarPadre(padreId, dto.hogarId);
+
     const max = await this.prisma.categoria_movimiento.aggregate({
       where: { hogar_id: dto.hogarId },
       _max: { orden: true },
@@ -88,6 +93,7 @@ export class CategoriaMovimientoService {
           tipo_aplicable: dto.tipoAplicable,
           color: dto.color ?? null,
           icono: dto.icono ?? null,
+          categoria_padre_id: padreId,
           orden: (max._max.orden ?? -1) + 1,
           estado: 'ACTIVA',
         },
@@ -97,7 +103,11 @@ export class CategoriaMovimientoService {
         usuarioId: actorId,
         entidadTipo: 'CATEGORIA_MOVIMIENTO',
         entidadId: c.id,
-        valorPosterior: { nombre: c.nombre, tipo_aplicable: c.tipo_aplicable },
+        valorPosterior: {
+          nombre: c.nombre,
+          tipo_aplicable: c.tipo_aplicable,
+          ...(padreId ? { categoria_padre_id: padreId } : {}),
+        },
         entidadRelacionadaTipo: 'HOGAR',
         entidadRelacionadaId: dto.hogarId,
       });
@@ -111,9 +121,28 @@ export class CategoriaMovimientoService {
     dto: ActualizarCategoriaMovimientoDto,
   ): Promise<CategoriaMovimientoDTO> {
     const c = await this.#cargar(dto.categoriaId, actorId);
-    const data: Prisma.categoria_movimientoUpdateInput = {};
+    const data: Prisma.categoria_movimientoUncheckedUpdateInput = {};
     const anterior: Record<string, unknown> = {};
     const posterior: Record<string, unknown> = {};
+
+    if (dto.categoriaPadreId !== undefined) {
+      const nuevoPadre = dto.categoriaPadreId ?? null;
+      if (nuevoPadre !== c.categoria_padre_id) {
+        if (nuevoPadre === c.id) throw new BadRequestException('Una categoría no puede ser su propio padre');
+        const hijos = await this.prisma.categoria_movimiento.count({
+          where: { categoria_padre_id: c.id },
+        });
+        if (nuevoPadre && hijos > 0) {
+          throw new BadRequestException(
+            'Esta categoría tiene subcategorías — no puede anidarse (máximo 2 niveles)',
+          );
+        }
+        if (nuevoPadre) await this.#validarPadre(nuevoPadre, c.hogar_id);
+        data.categoria_padre_id = nuevoPadre;
+        anterior.categoria_padre_id = c.categoria_padre_id;
+        posterior.categoria_padre_id = nuevoPadre;
+      }
+    }
 
     if (dto.nombre !== undefined && dto.nombre.trim() !== c.nombre) {
       const dup = await this.prisma.categoria_movimiento.findFirst({
@@ -160,6 +189,12 @@ export class CategoriaMovimientoService {
   ): Promise<CategoriaMovimientoDTO> {
     const c = await this.#cargar(dto.categoriaId, actorId);
     if (c.estado === 'ARCHIVADA') throw new ConflictException('La categoría ya está archivada');
+    const hijosActivos = await this.prisma.categoria_movimiento.count({
+      where: { categoria_padre_id: c.id, estado: 'ACTIVA' },
+    });
+    if (hijosActivos > 0) {
+      throw new ConflictException('Archiva primero sus subcategorías');
+    }
 
     const archivada = await this.prisma.$transaction(async (tx) => {
       const fila = await tx.categoria_movimiento.update({
@@ -222,6 +257,20 @@ export class CategoriaMovimientoService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /** El padre debe existir, ser del mismo hogar, estar ACTIVA y ser raíz (2 niveles). */
+  async #validarPadre(padreId: string, hogarId: string): Promise<void> {
+    const padre = await this.prisma.categoria_movimiento.findUnique({ where: { id: padreId } });
+    if (!padre || padre.hogar_id !== hogarId) {
+      throw new BadRequestException('La categoría padre no pertenece al hogar');
+    }
+    if (padre.estado !== 'ACTIVA') {
+      throw new BadRequestException('La categoría padre está archivada');
+    }
+    if (padre.categoria_padre_id) {
+      throw new BadRequestException('Solo se permiten 2 niveles — el padre ya es una subcategoría');
+    }
+  }
 
   async #cargar(categoriaId: string, actorId: string): Promise<CategoriaRow> {
     const c = await this.prisma.categoria_movimiento.findUnique({ where: { id: categoriaId } });

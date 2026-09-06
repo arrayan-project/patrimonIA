@@ -130,6 +130,47 @@ describe('Categorías de movimiento y glosa (e2e)', () => {
       .expect(400);
   });
 
+  it('categorías jerárquicas (2 niveles) — crear, anidar y sus límites', async () => {
+    const cats0 = (await auth(request(http).get(`/hogares/${hogarId}/categorias-movimiento`)).expect(200)).body;
+    const servicios = cats0.find((x: { nombre: string }) => x.nombre === 'Servicios');
+    const internet = (
+      await auth(request(http).post('/comandos/CrearCategoriaMovimiento'))
+        .send({ hogarId, nombre: 'Internet', tipoAplicable: 'GASTO', categoriaPadreId: servicios.id })
+        .expect(201)
+    ).body;
+    expect(internet.categoriaPadreId).toBe(servicios.id);
+
+    // 3er nivel prohibido
+    await auth(request(http).post('/comandos/CrearCategoriaMovimiento'))
+      .send({ hogarId, nombre: 'Fibra', tipoAplicable: 'GASTO', categoriaPadreId: internet.id })
+      .expect(400);
+
+    // no se puede anidar una categoría que ya tiene hijos
+    const luz = (
+      await auth(request(http).post('/comandos/CrearCategoriaMovimiento'))
+        .send({ hogarId, nombre: 'Electricidad', tipoAplicable: 'GASTO' })
+        .expect(201)
+    ).body;
+    await auth(request(http).post('/comandos/ActualizarCategoriaMovimiento'))
+      .send({ categoriaId: luz.id, categoriaPadreId: internet.id })
+      .expect(400);
+    // sí bajo una raíz
+    await auth(request(http).post('/comandos/ActualizarCategoriaMovimiento'))
+      .send({ categoriaId: luz.id, categoriaPadreId: servicios.id })
+      .expect(200);
+
+    // archivar el padre con hijos activos → 409
+    await auth(request(http).post('/comandos/ArchivarCategoriaMovimiento'))
+      .send({ categoriaId: servicios.id })
+      .expect(409);
+
+    // un gasto imputa a la subcategoría
+    const ev = await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 20_000, moneda: 'CLP', elementoOrigenId: cuentaId, categoriaId: internet.id })
+      .expect(201);
+    expect(ev.body.categoriaId).toBe(internet.id);
+  });
+
   it('GET /usuarios/me devuelve preferencias (null por defecto, editable)', async () => {
     const me1 = await auth(request(http).get('/usuarios/me')).expect(200);
     expect(me1.body.preferencias).toBeNull();
