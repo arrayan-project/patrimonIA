@@ -371,6 +371,22 @@ export interface DesviacionRubroDTO {
   desviacion: number;
 }
 
+export interface PresupuestoLineaAhorroDTO {
+  id: string;
+  presupuestoId: string;
+  objetivoId: string;
+  nombre: string;
+  montoEsperado: number;
+}
+
+export interface DesviacionObjetivoDTO {
+  objetivoId: string;
+  nombre: string;
+  esperado: number;
+  real: number;
+  desviacion: number;
+}
+
 export interface DesviacionPresupuestariaDTO {
   presupuestoId: string;
   periodo: { desde: string | null; hasta: string | null };
@@ -378,6 +394,7 @@ export interface DesviacionPresupuestariaDTO {
   real: { ingresos: number; gastos: number; ahorro: number };
   desviacion: { ingresos: number; gastos: number; ahorro: number };
   porRubro: DesviacionRubroDTO[];
+  porObjetivo: DesviacionObjetivoDTO[];
   sinClasificar: { ingresos: number; gastos: number };
 }
 

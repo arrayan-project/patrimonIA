@@ -6,6 +6,7 @@ import {
   ActualizarPresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
+  DefinirLineasAhorroPresupuestoDto,
   DefinirLineasPresupuestoDto,
   EliminarPresupuestoDto,
 } from './dto/presupuesto.dto.js';
@@ -43,6 +44,15 @@ export class PresupuestoController {
     return this.presupuestos.definirLineas(u.id, dto);
   }
 
+  @Post('comandos/DefinirLineasAhorroPresupuesto')
+  @HttpCode(200)
+  definirLineasAhorro(
+    @CurrentUser() u: UsuarioAutenticado,
+    @Body() dto: DefinirLineasAhorroPresupuestoDto,
+  ) {
+    return this.presupuestos.definirLineasAhorro(u.id, dto);
+  }
+
   @Get('presupuestos')
   listar(
     @CurrentUser() u: UsuarioAutenticado,
@@ -60,6 +70,11 @@ export class PresupuestoController {
   @Get('presupuestos/:id/lineas')
   lineas(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
     return this.presupuestos.lineas(id, u.id);
+  }
+
+  @Get('presupuestos/:id/lineas-ahorro')
+  lineasAhorro(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
+    return this.presupuestos.lineasAhorro(id, u.id);
   }
 
   @Get('presupuestos/:id/desviacion')

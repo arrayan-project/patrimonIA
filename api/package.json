@@ -24,7 +24,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "prisma:pull": "prisma db pull",
+    "prisma:pull": "prisma db pull && node scripts/fix-schema-relations.mjs",
     "prisma:generate": "prisma generate",
     "test:all": "vitest run && vitest run --config ./vitest.config.e2e.ts"
   },

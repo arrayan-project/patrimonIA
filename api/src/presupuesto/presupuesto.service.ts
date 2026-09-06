@@ -11,15 +11,18 @@ import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import {
   esVigente,
   toPresupuestoDTO,
+  type DesviacionObjetivoDTO,
   type DesviacionPresupuestariaDTO,
   type DesviacionRubroDTO,
   type PresupuestoDTO,
+  type PresupuestoLineaAhorroDTO,
   type PresupuestoLineaDTO,
 } from './presupuesto.dto.js';
 import type {
   ActualizarPresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
+  DefinirLineasAhorroPresupuestoDto,
   DefinirLineasPresupuestoDto,
   EliminarPresupuestoDto,
 } from './dto/presupuesto.dto.js';
@@ -348,6 +351,98 @@ export class PresupuestoService {
     }));
   }
 
+  /** Usuarios cuyos hechos entran en el alcance del presupuesto (ver desviacion). */
+  async #usuariosDelPresupuesto(p: PresupuestoRow, actorId: string): Promise<string[]> {
+    if (!p.hogar_id) return [p.usuario_id ?? actorId];
+    const miembros = await this.prisma.membresia.findMany({
+      where: { hogar_id: p.hogar_id, estado: 'ACTIVA' },
+      select: { usuario_id: true },
+    });
+    return miembros.map((m) => m.usuario_id);
+  }
+
+  /** GAPS.md P6 — reemplaza el conjunto de líneas de ahorro por objetivo. */
+  async definirLineasAhorro(
+    actorId: string,
+    dto: DefinirLineasAhorroPresupuestoDto,
+  ): Promise<PresupuestoLineaAhorroDTO[]> {
+    const p = await this.#cargar(dto.presupuestoId, actorId);
+    if (p.estado === 'CERRADO') throw new ConflictException('El presupuesto está cerrado');
+
+    const nuevas = dto.lineas.filter((l) => l.montoEsperado > 0);
+    const ids = nuevas.map((l) => l.objetivoId);
+    if (new Set(ids).size !== ids.length) {
+      throw new BadRequestException('Hay un objetivo repetido en las líneas');
+    }
+
+    if (ids.length > 0) {
+      const enAlcance = await this.#usuariosDelPresupuesto(p, actorId);
+      const validos = await this.prisma.objetivo_financiero.findMany({
+        where: { id: { in: ids }, usuario_id: { in: enAlcance } },
+        select: { id: true },
+      });
+      const okIds = new Set(validos.map((o) => o.id));
+      if (ids.some((id) => !okIds.has(id))) {
+        throw new BadRequestException('Un objetivo no existe o no está en el alcance del presupuesto');
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const previas = await tx.presupuesto_linea_ahorro.findMany({
+        where: { presupuesto_id: p.id },
+        select: { objetivo_id: true, monto_esperado: true },
+      });
+      await tx.presupuesto_linea_ahorro.deleteMany({ where: { presupuesto_id: p.id } });
+      if (nuevas.length > 0) {
+        await tx.presupuesto_linea_ahorro.createMany({
+          data: nuevas.map((l) => ({
+            presupuesto_id: p.id,
+            objetivo_id: l.objetivoId,
+            monto_esperado: new Prisma.Decimal(l.montoEsperado),
+          })),
+        });
+      }
+      await this.auditoria.registrar(tx, {
+        comando: 'DefinirLineasAhorroPresupuesto',
+        usuarioId: actorId,
+        entidadTipo: 'PRESUPUESTO',
+        entidadId: p.id,
+        valorAnterior: {
+          lineas: previas.map((x) => ({
+            objetivo_id: x.objetivo_id,
+            monto_esperado: Number(x.monto_esperado),
+          })),
+        },
+        valorPosterior: {
+          lineas: nuevas.map((l) => ({ objetivo_id: l.objetivoId, monto_esperado: l.montoEsperado })),
+        },
+        ...(p.hogar_id ? { entidadRelacionadaTipo: 'HOGAR', entidadRelacionadaId: p.hogar_id } : {}),
+      });
+    });
+
+    return this.lineasAhorro(p.id, actorId);
+  }
+
+  async lineasAhorro(
+    presupuestoId: string,
+    actorId: string,
+  ): Promise<PresupuestoLineaAhorroDTO[]> {
+    await this.#cargar(presupuestoId, actorId);
+    const filas = await this.prisma.presupuesto_linea_ahorro.findMany({
+      where: { presupuesto_id: presupuestoId },
+      include: { objetivo_financiero: true },
+    });
+    return filas
+      .map((f) => ({
+        id: f.id,
+        presupuestoId: f.presupuesto_id,
+        objetivoId: f.objetivo_id,
+        nombre: f.objetivo_financiero.nombre,
+        montoEsperado: Number(f.monto_esperado),
+      }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+
   async listar(actorId: string, tipo?: string, soloVigentes?: boolean): Promise<PresupuestoDTO[]> {
     const hogares = await this.prisma.membresia.findMany({
       where: { usuario_id: actorId, estado: 'ACTIVA' },
@@ -434,6 +529,7 @@ export class PresupuestoService {
     }
 
     const porRubro = await this.#desviacionPorRubro(p.id, realPorCat);
+    const porObjetivo = await this.#desviacionPorObjetivo(p);
     const sinCat = realPorCat.get(null) ?? { ingresos: 0, gastos: 0 };
 
     const esperado = {
@@ -456,8 +552,72 @@ export class PresupuestoService {
         ahorro: real.ahorro - esperado.ahorro,
       },
       porRubro,
+      porObjetivo,
       sinClasificar: { ingresos: sinCat.ingresos, gastos: sinCat.gastos },
     };
+  }
+
+  /**
+   * GAPS.md P6 — por cada línea de ahorro, compara el monto esperado contra el
+   * ahorro real hacia el objetivo en el período: Σ reserva.monto (estado !=
+   * LIBERADA) de las asignaciones del objetivo, creadas dentro del período.
+   */
+  async #desviacionPorObjetivo(p: PresupuestoRow): Promise<DesviacionObjetivoDTO[]> {
+    const lineas = await this.prisma.presupuesto_linea_ahorro.findMany({
+      where: { presupuesto_id: p.id },
+      include: { objetivo_financiero: true },
+    });
+    if (lineas.length === 0) return [];
+
+    const objetivoIds = lineas.map((l) => l.objetivo_id);
+    const asignaciones = await this.prisma.asignacion.findMany({
+      where: { objetivo_financiero_id: { in: objetivoIds } },
+      select: { id: true, objetivo_financiero_id: true },
+    });
+    const asigPorObjetivo = new Map<string, string[]>();
+    for (const a of asignaciones) {
+      if (!a.objetivo_financiero_id) continue;
+      const arr = asigPorObjetivo.get(a.objetivo_financiero_id) ?? [];
+      arr.push(a.id);
+      asigPorObjetivo.set(a.objetivo_financiero_id, arr);
+    }
+
+    const reservas = await this.prisma.reserva.findMany({
+      where: {
+        asignacion_id: { in: asignaciones.map((a) => a.id) },
+        estado: { not: 'LIBERADA' },
+        ...(p.fecha_inicio || p.fecha_fin
+          ? {
+              created_at: {
+                ...(p.fecha_inicio ? { gte: p.fecha_inicio } : {}),
+                ...(p.fecha_fin ? { lte: new Date(`${p.fecha_fin.toISOString().slice(0, 10)}T23:59:59.999Z`) } : {}),
+              },
+            }
+          : {}),
+      },
+      select: { asignacion_id: true, monto: true },
+    });
+    const realPorAsig = new Map<string, number>();
+    for (const r of reservas) {
+      realPorAsig.set(r.asignacion_id, (realPorAsig.get(r.asignacion_id) ?? 0) + Number(r.monto));
+    }
+
+    return lineas
+      .map((l) => {
+        const esperado = Number(l.monto_esperado);
+        const real = (asigPorObjetivo.get(l.objetivo_id) ?? []).reduce(
+          (s, aid) => s + (realPorAsig.get(aid) ?? 0),
+          0,
+        );
+        return {
+          objetivoId: l.objetivo_id,
+          nombre: l.objetivo_financiero.nombre,
+          esperado,
+          real,
+          desviacion: real - esperado,
+        };
+      })
+      .sort((a, b) => b.real - a.real);
   }
 
   /**

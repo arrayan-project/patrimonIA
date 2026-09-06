@@ -138,3 +138,28 @@ export class DefinirLineasPresupuestoDto {
   @Type(() => LineaPresupuestoDto)
   lineas!: LineaPresupuestoDto[];
 }
+
+/** Una línea de ahorro esperado hacia un objetivo (GAPS.md P6). */
+export class LineaAhorroPresupuestoDto {
+  @IsUUID()
+  objetivoId!: string;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoEsperado!: number;
+}
+
+/**
+ * Body de POST /comandos/DefinirLineasAhorroPresupuesto (GAPS.md P6).
+ * Reemplaza el conjunto completo de líneas de ahorro por objetivo.
+ */
+export class DefinirLineasAhorroPresupuestoDto {
+  @IsUUID()
+  presupuestoId!: string;
+
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => LineaAhorroPresupuestoDto)
+  lineas!: LineaAhorroPresupuestoDto[];
+}

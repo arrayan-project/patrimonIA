@@ -204,6 +204,25 @@ export function PresupuestoDetalleScreen() {
         )}
       </Panel>
 
+      {desv.porObjetivo.length > 0 && (
+        <Panel>
+          <Text style={styles.sectionTitle}>Ahorro por objetivo</Text>
+          {desv.porObjetivo.map((o) => (
+            <View key={o.objetivoId} style={styles.rubro}>
+              <Text style={styles.rubroTexto}>{o.nombre}</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.rubroTexto}>
+                  {money(o.real, 'CLP')} / {money(o.esperado, 'CLP')}
+                </Text>
+                <Text style={[styles.muted, { color: o.desviacion < 0 ? c.danger : c.muted }]}>
+                  {sign(o.desviacion)}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </Panel>
+      )}
+
       {modo === null && (
         <View style={{ gap: 8 }}>
           {p.estado !== 'CERRADO' && (

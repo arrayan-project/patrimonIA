@@ -483,6 +483,19 @@ CREATE TABLE presupuesto_linea (
 
 CREATE INDEX ix_presupuesto_linea_presu ON presupuesto_linea (presupuesto_id);
 
+-- migración 019 — línea de ahorro esperado por objetivo
+CREATE TABLE presupuesto_linea_ahorro (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    presupuesto_id UUID NOT NULL REFERENCES presupuesto(id) ON DELETE CASCADE,
+    objetivo_id    UUID NOT NULL REFERENCES objetivo_financiero(id),
+    monto_esperado NUMERIC(18,2) NOT NULL CHECK (monto_esperado >= 0),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (presupuesto_id, objetivo_id)
+);
+
+CREATE INDEX ix_presupuesto_linea_ahorro_presu ON presupuesto_linea_ahorro (presupuesto_id);
+
 -- ============================================================================
 -- 17. Plantillas de movimiento (migración 011 — configuración personal, G24)
 -- Molde reutilizable y sin fecha para registrar gastos/ingresos recurrentes.

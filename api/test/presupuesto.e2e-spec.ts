@@ -31,7 +31,7 @@ describe('Presupuesto (e2e)', () => {
     prisma = app.get(PrismaService);
     http = app.getHttpServer();
     await prisma.$executeRawUnsafe(
-      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, presupuesto_linea, categoria_movimiento RESTART IDENTITY CASCADE',
+      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, presupuesto_linea, presupuesto_linea_ahorro, categoria_movimiento RESTART IDENTITY CASCADE',
     );
     await request(http)
       .post('/comandos/RegistrarUsuario')
@@ -251,6 +251,67 @@ describe('Presupuesto (e2e)', () => {
     expect(rubroSueldo).toMatchObject({ esperado: 2_000_000, real: 0 });
     // hay gasto sin categoría en el período (este test y los anteriores comparten cuenta)
     expect(d.sinClasificar.gastos).toBeGreaterThanOrEqual(100_000);
+  });
+
+  it('P6 — línea de ahorro por objetivo: la desviación se desglosa por objetivo', async () => {
+    const objetivoId = (
+      await auth(request(http).post('/comandos/CrearObjetivoFinanciero'))
+        .send({ nombre: 'Viaje', montoObjetivo: 2_000_000 })
+        .expect(201)
+    ).body.id;
+    const asignacionId = (
+      await auth(request(http).post('/comandos/CrearAsignacion'))
+        .send({ nombre: 'Ahorro viaje', objetivoId })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/CrearReserva'))
+      .send({ asignacionId, elementoOrigenId: cuentaId, monto: 150_000 })
+      .expect(201);
+
+    const id = (
+      await auth(request(http).post('/comandos/CrearPresupuesto'))
+        .send({
+          tipo: 'INDIVIDUAL',
+          periodicidad: 'ESPECIFICO',
+          fechaInicio: '2026-01-01',
+          fechaFin: '2026-12-31',
+          ahorroEsperado: 500_000,
+        })
+        .expect(201)
+    ).body.id;
+
+    await auth(request(http).post('/comandos/DefinirLineasAhorroPresupuesto'))
+      .send({ presupuestoId: id, lineas: [{ objetivoId, montoEsperado: 300_000 }] })
+      .expect(200);
+
+    const lineas = (
+      await auth(request(http).get(`/presupuestos/${id}/lineas-ahorro`)).expect(200)
+    ).body;
+    expect(lineas).toHaveLength(1);
+    expect(lineas[0]).toMatchObject({ objetivoId, nombre: 'Viaje', montoEsperado: 300_000 });
+
+    const d = (await auth(request(http).get(`/presupuestos/${id}/desviacion`)).expect(200)).body;
+    const linea = d.porObjetivo.find((o: { objetivoId: string }) => o.objetivoId === objetivoId);
+    expect(linea).toMatchObject({ esperado: 300_000, real: 150_000, desviacion: -150_000 });
+
+    // objetivo ajeno → rechazo
+    await request(http)
+      .post('/comandos/RegistrarUsuario')
+      .send({ email: 'p6-ajeno@e2e.cl', nombre: 'X', password: 'secret123' })
+      .expect(201);
+    const otro = (
+      await request(http).post('/auth/login').send({ email: 'p6-ajeno@e2e.cl', password: 'secret123' })
+    ).body.accessToken;
+    const objAjeno = (
+      await request(http)
+        .post('/comandos/CrearObjetivoFinanciero')
+        .set('Authorization', `Bearer ${otro}`)
+        .send({ nombre: 'Otro', montoObjetivo: 1 })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/DefinirLineasAhorroPresupuesto'))
+      .send({ presupuestoId: id, lineas: [{ objetivoId: objAjeno, montoEsperado: 1_000 }] })
+      .expect(400);
   });
 
   it('DefinirLineasPresupuesto rechaza una categoría de otro hogar y un presupuesto cerrado', async () => {

@@ -61,6 +61,25 @@ export interface PresupuestoLineaDTO {
   montoEsperado: number;
 }
 
+/** Una línea de ahorro esperado por objetivo (GAPS.md P6). */
+export interface PresupuestoLineaAhorroDTO {
+  id: string;
+  presupuestoId: string;
+  objetivoId: string;
+  nombre: string;
+  montoEsperado: number;
+}
+
+/** Comparación esperado-vs-real del ahorro hacia un objetivo en el período. */
+export interface DesviacionObjetivoDTO {
+  objetivoId: string;
+  nombre: string;
+  esperado: number;
+  /** Σ reserva.monto (estado != LIBERADA) hacia el objetivo, creadas en el período. */
+  real: number;
+  desviacion: number;
+}
+
 /** Comparación esperado-vs-real de un rubro dentro del período del presupuesto. */
 export interface DesviacionRubroDTO {
   categoriaId: string;
@@ -83,6 +102,8 @@ export interface DesviacionPresupuestariaDTO {
   /** Desglose por rubro: una fila por línea del presupuesto, más los rubros con
    *  gasto/ingreso real pero sin línea (esperado 0). Ordenado por real desc. */
   porRubro: DesviacionRubroDTO[];
+  /** Desglose por objetivo: una fila por línea de ahorro (GAPS.md P6). */
+  porObjetivo: DesviacionObjetivoDTO[];
   /** Ingreso y gasto real del período sin categoría asignada. */
   sinClasificar: { ingresos: number; gastos: number };
 }

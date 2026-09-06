@@ -6,7 +6,9 @@ import {
   ApiError,
   type CategoriaMovimientoDTO,
   type HogarDTO,
+  type ObjetivoFinancieroDTO,
   type PresupuestoDTO,
+  type PresupuestoLineaAhorroDTO,
   type PresupuestoLineaDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -26,6 +28,8 @@ export function PresupuestoRubrosScreen() {
   const [cats, setCats] = useState<CategoriaMovimientoDTO[] | null>(null);
   // categoriaId → monto canónico ('' = sin línea)
   const [montos, setMontos] = useState<Record<string, string>>({});
+  const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
+  const [montosAhorro, setMontosAhorro] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -38,16 +42,24 @@ export function PresupuestoRubrosScreen() {
         const hogares = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         hogarId = hogares[0]?.id ?? null;
       }
-      const [lista, lineas] = await Promise.all([
+      const [lista, lineas, objs, lineasAhorro] = await Promise.all([
         hogarId
           ? api.get<CategoriaMovimientoDTO[]>(`/hogares/${hogarId}/categorias-movimiento`, token)
           : Promise.resolve<CategoriaMovimientoDTO[]>([]),
         api.get<PresupuestoLineaDTO[]>(`/presupuestos/${presupuestoId}/lineas`, token),
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []),
+        api
+          .get<PresupuestoLineaAhorroDTO[]>(`/presupuestos/${presupuestoId}/lineas-ahorro`, token)
+          .catch(() => []),
       ]);
       setCats(lista);
       const prev: Record<string, string> = {};
       for (const l of lineas) prev[l.categoriaId] = String(l.montoEsperado);
       setMontos(prev);
+      setObjetivos(objs.filter((o) => o.estado === 'EN_PROGRESO'));
+      const prevA: Record<string, string> = {};
+      for (const l of lineasAhorro) prevA[l.objetivoId] = String(l.montoEsperado);
+      setMontosAhorro(prevA);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -63,6 +75,14 @@ export function PresupuestoRubrosScreen() {
         .map(([categoriaId, v]) => ({ categoriaId, montoEsperado: Number(v || '0') }))
         .filter((l) => l.montoEsperado > 0);
       await api.post('/comandos/DefinirLineasPresupuesto', { presupuestoId, lineas }, token);
+      const lineasAhorro = Object.entries(montosAhorro)
+        .map(([objetivoId, v]) => ({ objetivoId, montoEsperado: Number(v || '0') }))
+        .filter((l) => l.montoEsperado > 0);
+      await api.post(
+        '/comandos/DefinirLineasAhorroPresupuesto',
+        { presupuestoId, lineas: lineasAhorro },
+        token,
+      );
       toast.mostrar('Rubros guardados');
       nav.back();
     } catch (e) {
@@ -115,6 +135,31 @@ export function PresupuestoRubrosScreen() {
       {grupo('Gastos por rubro', gastos, total(gastos))}
       {grupo('Ingresos por rubro', ingresos, total(ingresos))}
 
+      {objetivos.length > 0 && (
+        <Panel>
+          <View style={styles.filaTitulo}>
+            <Text style={styles.sectionTitle}>Ahorro por objetivo</Text>
+            <Text style={styles.muted}>
+              {objetivos
+                .reduce((s, o) => s + Number(montosAhorro[o.id] || '0'), 0)
+                .toLocaleString('es-CL')}
+            </Text>
+          </View>
+          <Text style={styles.muted}>
+            Cuánto esperas reservar hacia cada objetivo en el período. El real usa las
+            reservas creadas dentro del período.
+          </Text>
+          {objetivos.map((o) => (
+            <MoneyField
+              key={o.id}
+              label={o.nombre}
+              value={montosAhorro[o.id] ?? ''}
+              onChange={(v) => setMontosAhorro((m) => ({ ...m, [o.id]: v }))}
+            />
+          ))}
+        </Panel>
+      )}
+
       {cats.length === 0 && (
         <Text style={styles.muted}>
           Este hogar no tiene categorías. Créalas en Ajustes → Categorías de movimiento.
@@ -122,7 +167,12 @@ export function PresupuestoRubrosScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Guardar rubros" onPress={guardar} loading={busy} disabled={cats.length === 0} />
+      <Button
+        title="Guardar rubros"
+        onPress={guardar}
+        loading={busy}
+        disabled={cats.length === 0 && objetivos.length === 0}
+      />
       <LinkButton title="Cancelar" onPress={nav.back} />
     </Screen>
   );
