@@ -11,6 +11,14 @@ técnicas que hoy limitan la experiencia.
 
 La conclusión para UI/UX está al final (§ "Cómo esto estructura la app").
 
+> **Estado a Fase 46 (2026-09-05).** Todo el bloque §B con decisión tomada está
+> implementado: **B6** (objetivos compartidos por hogar — Fase 43), **B7** (ahorro
+> esperado por objetivo — Fase 41), **B8** (moneda como etiqueta en
+> objetivo/asignación/presupuesto — Fase 45), **B9** (categorías jerárquicas —
+> Fase 39), **B10** (fecha_alta/fecha_baja — Fase 42). Ver `GAPS.md` §2 para el
+> detalle. Sin decidir aún: **B4** (comentarios/adjuntos). Ver más abajo el estado
+> previo.
+>
 > **Estado a Fase 34 (2026-09-04).** Bloque §A: **A1, A2, A3, A5, A6, A7, A8, A9**
 > implementados. El usuario decidió §B1, §B2, §B3 y §B5 (Fases 32–34); quedan
 > **A4** (¿el usuario final distingue "editar" de "corregir"? — implementado como

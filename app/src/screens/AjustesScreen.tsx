@@ -10,6 +10,10 @@ const ETIQUETA_TEMA: Record<ModoTema, string> = {
   oscuro: 'Oscuro',
 };
 
+/**
+ * Configuración — consolidador único de toda la configuración de la app
+ * (G25). Lo que es del hogar se ve también desde la pestaña Hogar.
+ */
 export function AjustesScreen() {
   const nav = useNav();
   const { cerrarSesion } = useAuth();
@@ -23,7 +27,7 @@ export function AjustesScreen() {
 
   return (
     <Screen>
-      <Title>Ajustes</Title>
+      <Title>Configuración</Title>
 
       <GroupLabel>Apariencia</GroupLabel>
       <Segmented
@@ -34,7 +38,7 @@ export function AjustesScreen() {
         formatearOpcion={(v) => ETIQUETA_TEMA[v]}
       />
 
-      <GroupLabel>Cuenta</GroupLabel>
+      <GroupLabel>Mi cuenta</GroupLabel>
       <MenuLink
         icon="person-outline"
         title="Mi perfil"
@@ -52,6 +56,38 @@ export function AjustesScreen() {
         title="Agrupaciones de elementos"
         subtitle="Carpetas para ordenar tus cuentas y activos"
         onPress={() => nav.go('Agrupaciones')}
+      />
+      <MenuLink
+        icon="copy-outline"
+        title="Plantillas de movimiento"
+        subtitle="Moldes para registrar tus movimientos habituales en dos toques"
+        onPress={() => nav.go('Plantillas')}
+      />
+
+      <GroupLabel>Configuración del hogar</GroupLabel>
+      <MenuLink
+        icon="list-outline"
+        title="Categorías de movimiento"
+        subtitle="Rubros para clasificar ingresos y gastos (los ven todos)"
+        onPress={() => nav.go('Categorias')}
+      />
+      <MenuLink
+        icon="pricetag-outline"
+        title="Tipos de elemento patrimonial"
+        subtitle="Cuenta corriente, APV, propiedad… — vocabulario del hogar"
+        onPress={() => nav.go('TiposElemento')}
+      />
+      <MenuLink
+        icon="swap-horizontal-outline"
+        title="Tipos de cambio"
+        subtitle="Tasas para convertir entre monedas"
+        onPress={() => nav.go('TiposCambio')}
+      />
+      <MenuLink
+        icon="people-outline"
+        title="Gestionar hogar"
+        subtitle="Miembros, roles, moneda de consolidación e invitaciones"
+        onPress={() => nav.go('Hogar')}
       />
 
       <GroupLabel>Sesión</GroupLabel>

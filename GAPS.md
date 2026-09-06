@@ -4,7 +4,7 @@ Formato tomado de `Docs/UX_FLOWS.docx` § "Resumen y vacíos detectados": qué s
 necesita, por qué no está resuelto, qué opciones existen. Nada de esto se
 resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
-**Estado de cada gap** (revisión 2026-09-04, tras Fases 29–35):
+**Estado de cada gap** (revisión 2026-09-05, tras Fases 29–46 — P1–P13 hechos):
 `✅ RESUELTO` · `🟡 PARCIAL` (núcleo hecho, quedan sub-ítems) · `⬜ PENDIENTE`
 (accionable ya, sin decisión) · `📋 DECISIÓN` (necesita definición del usuario
 antes) · `🔒 EXTERNO` (bloqueado por proveedor externo / build de despliegue).
@@ -38,7 +38,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   `ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`
   (`#editarCampos` extendido). Solo se persisten/leen para categoría DEUDA/CREDITO.
 
-### G2 — Visibilidad / propiedad de Movimiento Programado  🟡 PARCIAL
+### G2 — Visibilidad / propiedad de Movimiento Programado  ✅ (tipo F33; visibilidad = heredada del elemento por decisión, P12/Fase 44)
 - `tipo` (INGRESO/GASTO/TRANSFERENCIA) **RESUELTO en Fase 33**. Lo que queda:
   las reglas de visibilidad/propiedad propias (hoy heredadas de los elementos)
   — decisión que DDD §S dejó abierta, se revisaría junto con §B1.
@@ -104,7 +104,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
 
-### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)  🟡 PARCIAL
+### G6 — Visibilidad de elementos y propiedad compartida (Fase 2)  🟡 PARCIAL (§B1 F34; co-propiedad estricta F44/P12)
 - **Qué falta**: el DDD (Sección M) define visibilidad "por tipo de información"
   (existencia, valor, movimientos, reservas...). El esquema colapsó eso a un solo
   enum `visibilidad` (PRIVADA/COMPARTIDA/FAMILIAR). No hay tabla "compartido con
@@ -131,9 +131,14 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
     `evento.service.listarPorElemento` abre a co-miembros con MOVIMIENTOS.
   - `GET /elementos-patrimoniales?alcance=hogar` — elementos de co-miembros cuya
     existencia el actor puede ver (desbloquea §A8: transferir a su elemento).
-- **Sigue pendiente**: reservas/objetivos/presupuestos como tipos de info con
-  visibilidad propia (hoy owner-only); co-propiedad más estricta (co-propietario
-  no obligado a compartir hogar).
+- **Fase 44 (P12)**: co-propiedad **estricta** — un co-propietario debe compartir
+  al menos un hogar ACTIVA con el actor (`elemento.service.#exigirCopropietariosDelHogar`),
+  tanto al registrar como al `CambiarPropiedadElementoPatrimonial`.
+- **Fase 43 (P9)**: los objetivos pueden compartirse con un hogar (visibles para
+  sus miembros). Presupuestos FAMILIAR ya eran visibles al hogar. Las reservas
+  siguen la visibilidad de su asignación/objetivo.
+- **Cubierto por decisión**: la visibilidad propia del movimiento programado se
+  mantiene heredada del elemento (DDD §S / G2).
 
 ### G7 — Proyecciones: en vivo vs. materializada  ⬜ PENDIENTE (monitorear)
 - **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan
@@ -161,7 +166,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   "corregir" una tasa se registra otra con fecha de vigencia posterior.
 - **Pendiente**: importación automática desde una fuente de tasas.
 
-### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)  📋 DECISIÓN
+### G9 — CorregirEventoFinanciero: alcance del "datos corregidos" (Fase 3)  ✅ RESUELTO (Fase 38, P5)
 - **Qué falta**: AS #12 dice "datos corregidos" sin enumerarlos.
 - **Decisión provisional (Fase 3)**: solo se corrige el **monto**. Cambiar tipo,
   fecha o elementos afectados requiere `AnularEventoFinanciero` + registrar de
@@ -187,7 +192,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 - **Colapso visual** original+corrección (UX_FLOWS Flujo 6): la app los muestra
   como filas separadas etiquetadas; el colapso en una sola línea llega después.
 
-### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  🟡 PARCIAL
+### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  🟡 PARCIAL (admite_valorizacion ✅ F36; anular intermedias 📋)
 - ✅ (Fase 36, P3) Comando `CambiarAdmiteValorizacion {elementoId, admite}` —
   toggle en "Editar elemento", rechaza habilitar en DEUDA/CREDITO.
 - 📋 Anular/corregir valorizaciones **intermedias** (no solo la última) — decisión.
@@ -218,7 +223,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   un `UPDATE` idéntico a #2 con `comando` distinto + motivo (la config no es
   hecho económico; su historial vive en auditoría — DATABASE_DESIGN §3).
 
-### G13 — Propiedad de Objetivo Financiero y Asignación (migración 001)  📋 DECISIÓN (§B6)
+### G13 — Propiedad de Objetivo Financiero y Asignación (migración 001)  ✅ RESUELTO (Fase 43, P9 — personal + compartido por hogar)
 - **Qué falta**: DDD Secciones H y J no definen quién es dueño de un objetivo o
   una asignación, y el esquema original no tenía columna de propiedad.
 - **Decisión**: son **personales** — la migración `api/db/migrations/001_...sql`
@@ -275,7 +280,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 - **Para decidir**: ¿agregar `asignaciones_esperadas` (monto agregado) o una tabla
   hija presupuesto_linea por asignación esperada?
 
-### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  📋 DECISIÓN
+### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ (Fase 45 — moneda como etiqueta, sin conversión, P11)
 - Decisiones de alcance/agregación tomadas en Fase 6. Abierto: presupuesto con
   moneda propia (§B8) y "ahorro real" desde reservas en vez de ingresos−gastos.
 - **Qué falta**: DATABASE_DESIGN §12 define la proyección como "comparación entre
@@ -296,7 +301,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   en vez de ingresos−gastos?, ¿excluir transferencias entre elementos del alcance
   ya está bien así?
 
-### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)  ✅ + 📋
+### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)  ✅ RESUELTO (intereses vía Ajuste, Fase 37, P8)
 - Signo, invariante y pago-por-transferencia: ✅. Abierto (📋): ¿intereses como
   Ajuste o como evento propio? (con §B3 ya está el campo `tasa_interes`).
 - **Qué falta**: ni el DDD ni DATABASE_DESIGN fijan el signo de
@@ -323,7 +328,7 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 - **Para decidir**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
   TRANSFERENCIA hacia el elemento crédito? ¿intereses como Ajuste o como evento?
 
-### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)  📋 DECISIÓN (§B10)
+### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)  ✅ RESUELTO (Fase 42, P10 — fecha_alta/fecha_baja; anulación con fecha 📋)
 - **Qué falta**: DDD Sección V pide reconstruir el estado a una fecha pasada
   aplicando los hechos con `fecha <= X`. El modelo no guarda "fecha de alta" ni
   "fecha de baja" del elemento (Registrar/Desactivar/Reactivar son config, y la
@@ -526,7 +531,7 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
-### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO + 📋
+### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO (+ línea de ahorro por objetivo, Fase 41, P6)
 - Líneas por categoría de gasto: ✅. Abierto (📋): ¿la suma de líneas debe cuadrar
   con `gastos_esperados`? ¿líneas de ahorro por objetivo (cierra G15)?
 - **Qué falta**: el Presupuesto (Agregado K) solo compara totales de
@@ -598,19 +603,24 @@ Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista d
 | P3 | **G11** | Comando `CambiarAdmiteValorizacion` + toggle en "Editar elemento". | ✅ Fase 36 |
 | P4 | **G20** | Preferencias de notificación (silenciar tipos) en "Mi perfil". | ✅ Fase 36 |
 
-### 2 · Mediano, necesita una decisión tuya primero (📋)
+### 2 · Mediano, con decisión tomada  ✅ HECHO — Fases 37–45 (2026-09-05)
 
-| # | Gap | La decisión | Si se decide, el trabajo |
-|---|-----|-------------|--------------------------|
-| P5 | **G9** | ¿Corregir también la **fecha** de un movimiento? ¿Re-corregir encadenando (hoy la cadena es lineal, una sola corrección viva)? | Backend: ampliar `CorregirEventoFinanciero`. Medio. |
-| P6 | **G26 / G15 / B7** | ¿Línea de **ahorro esperado por objetivo** en el presupuesto? ¿La suma de líneas de gasto debe cuadrar con `gastos_esperados`? | Migración chica + extender `presupuesto_linea` y la desviación. |
-| P7 | **B9 (dentro de G23)** | ¿Categorías **jerárquicas** (2 niveles, "Servicios › Internet")? | Migración: `categoria_padre_id`. No rompe datos. Medio. |
-| P8 | **G17** (intereses) | ¿Los **intereses** de una deuda/crédito se registran como Ajuste o como evento propio? (el campo `tasa_interes` ya existe desde §B3). | Depende de la respuesta; de chico a medio. |
-| P9 | **G13 / B6** | ¿Objetivos y asignaciones **compartidos por hogar** (hoy son personales)? | Migración + cambios de acceso en toda la capa de planificación. Medio-grande. |
-| P10 | **G18 / B10** | ¿Agregar `fecha_alta` / `fecha_baja` al elemento y fecha a la anulación, para que la reconstrucción histórica distinga "no existía todavía"? | Migración + backfill + lógica de `ReconstruccionService`. Medio-grande. |
-| P11 | **G16 / B8** | ¿**Moneda** propia en reservas / asignaciones / objetivos / presupuestos (hoy se asume la del elemento / CLP)? | Migración en 4 tablas + tocar todos sus cálculos. Grande. |
-| P12 | **G6** (resto) / **G2** (resto) | Visibilidad propia para reservas/objetivos/presupuestos (hoy owner-only); reglas de visibilidad propias del movimiento programado; co-propiedad que exija compartir hogar. | Extiende §B1. Medio cada una. |
-| P13 | **G7 / G19** | Materializar proyecciones si el cálculo en vivo escala mal; `elemento.hogar_consolidacion_id` explícito (solo importa con multi-hogar, que se descartó). | Solo si aparece el problema. |
+| # | Gap | Decisión y qué se hizo | Estado |
+|---|-----|------------------------|--------|
+| P5 | **G9** | "Se pueden corregir más datos": `CorregirEventoFinanciero` acepta `nuevaFecha` y `nuevaGlosa` además del monto. Cadena sigue lineal (re-corregir encadenando quedó fuera — bajo valor, más riesgo). | ✅ Fase 38 |
+| P6 | **G26 / G15 / B7** | "Sí": migración 019 `presupuesto_linea_ahorro`; comando `DefinirLineasAhorroPresupuesto`; `desviacion.porObjetivo[]`. La suma de líneas vs. `gastos_esperados` queda como señal informativa, no bloqueo. | ✅ Fase 41 |
+| P7 | **B9 (dentro de G23)** | "Sí, jerárquicas generales y que el usuario pueda crearlas": migración 017 `categoria_padre_id` (2 niveles); alta inline "¿no la encuentras?". | ✅ Fase 39 |
+| P8 | **G17** (intereses) | "Lo que tenga menos fricción": el interés se registra como **Ajuste Patrimonial** (sin migración ni comando nuevo). Atajo "Registrar interés" con monto sugerido. | ✅ Fase 37 |
+| P9 | **G13 / B6** | "Debe poder seleccionarse y formar parte de una vista hogar; todos ven, los designados modifican, el admin asigna": migración 021 `objetivo_financiero.hogar_id` + `objetivo_designado`; comandos `CompartirObjetivoConHogar` / `DefinirDesignadosObjetivo`. | ✅ Fase 43 |
+| P10 | **G18 / B10** | "Sí": migración 020 `fecha_alta` / `fecha_baja`; la reconstrucción usa la ventana de existencia. Fecha a la anulación queda fuera (más complejo, poco valor). | ✅ Fase 42 |
+| P11 | **G16 / B8** | "Debería pero solo afecta a ese elemento, no ramificarse": migración 022 `moneda` en objetivo/asignación/presupuesto como **etiqueta** (sin conversión). La reserva usa la del elemento. | ✅ Fase 45 |
+| P12 | **G6** (resto) / **G2** (resto) | "Sí": co-propiedad estricta (un co-propietario debe compartir hogar). El resto quedó cubierto por P9 (objetivos del hogar visibles) + el alcance FAMILIAR de presupuestos; la visibilidad del movimiento programado sigue heredada del elemento (decisión G2). | ✅ Fase 44 |
+| P13 | **G7 / G19** | "De acuerdo" con lo provisional: proyecciones todas en vivo (no se materializan); sin `elemento.hogar_consolidacion_id` (multi-hogar descartado). Nada que hacer salvo que aparezca un problema de performance. | ✅ (sin trabajo) |
+
+**Además (nuevo, pedido 2026-09-05)**: catálogo configurable de **tipos de elemento
+patrimonial** por hogar (migración 018, módulo `tipo-elemento/`) con alta inline
+y pantalla en Configuración; la vista **Configuración** se consolidó como hub
+único (Fase 46).
 
 ### 3 · Bloqueado por algo externo (🔒)
 
@@ -621,5 +631,8 @@ Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista d
 | P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). |
 
 ### Siguiente
-El bloque fácil (P1–P4) está hecho. Lo siguiente es el bloque §2 (P5–P13), que
-necesita una decisión tuya antes de implementar cada uno.
+Los bloques §1 (P1–P4) y §2 (P5–P13) están hechos (Fases 36–46). Lo único que
+queda es el bloque §3 (P14–P16), bloqueado por proveedores externos:
+- **P14 (G4)** — captcha / anti-bot antes de emitir el token de registro.
+- **P15 (G20)** — push remoto real (development build + `projectId` de EAS).
+- **P16 (G21)** — importación automática de tipos de cambio.

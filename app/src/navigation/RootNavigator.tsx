@@ -109,7 +109,7 @@ function Tabs() {
       <Tab.Screen
         name="Ajustes"
         component={AjustesScreen}
-        options={{ tabBarLabel: 'Ajustes', tabBarIcon: icono('settings-outline') }}
+        options={{ tabBarLabel: 'Config', tabBarIcon: icono('settings-outline') }}
       />
     </Tab.Navigator>
   );
