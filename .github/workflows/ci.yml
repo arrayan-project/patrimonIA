@@ -35,8 +35,11 @@ jobs:
           cache: npm
           cache-dependency-path: api/package-lock.json
       - run: npm ci
-      - name: Cargar el esquema
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
+      - name: Cargar el esquema (patrimonia + patrimonia_test)
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE patrimonia_test"
+          psql "postgresql://patrimonia:patrimonia@localhost:5432/patrimonia_test" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
       - run: npm run prisma:generate
       - run: npm run lint
       - run: npm run build

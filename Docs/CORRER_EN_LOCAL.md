@@ -36,7 +36,12 @@ Si ya lo hiciste antes, salta al punto 2.
    cd ~/Desktop/WebSiteProject/PatrimonIA/api && nvm use && npm install
    cd ~/Desktop/WebSiteProject/PatrimonIA/app && nvm use && npm install
    ```
-5. **App "Expo Go"** instalada en el teléfono (Play Store / App Store).
+5. **Volumen de la base** (persiste entre reinicios; `down -v` no lo borra):
+   ```bash
+   docker volume create patrimonia_pgdata
+   ```
+   (`./scripts/db.sh` lo crea solo si falta, así que este paso es opcional.)
+6. **App "Expo Go"** instalada en el teléfono (Play Store / App Store).
 
 ---
 
@@ -89,14 +94,25 @@ muestre el QR, ya está.
 
 ## 4. La cuenta para entrar a la app
 
-**No hay usuario de prueba.** La primera vez, en la app:
+**Opción rápida — datos de prueba ya armados.** Con el backend corriendo:
 
-- Pantalla **"Crear cuenta"** → email + nombre + contraseña (mínimo 8).
-  Los inventas tú; quedan guardados en tu base de datos local.
-- Las siguientes veces: **"Iniciar sesión"** con ese mismo email y contraseña.
+```bash
+./scripts/seed.sh
+```
 
-Si reseteas la base de datos (punto 7), esa cuenta se borra y hay que crearla
-de nuevo.
+Deja un escenario completo (hogar, deuda con detalle, objetivo compartido,
+presupuesto, multimoneda…). Entra con:
+
+```
+demo@patrimonia.cl / demo1234       (admin del hogar)
+pareja@patrimonia.cl / demo1234     (miembro)
+```
+
+Estos datos **se quedan** entre reinicios y entre corridas de tests — solo se
+borran si vuelves a correr `./scripts/seed.sh` o borras el volumen (punto 7).
+
+**Opción manual.** En la app, **"Crear cuenta"** → email + nombre + contraseña
+(mínimo 8). Las siguientes veces, **"Iniciar sesión"** con lo mismo.
 
 ---
 
@@ -129,13 +145,32 @@ Expo/Metro localhost:8081: 200
 
 ## 7. Empezar de cero con los datos
 
-Borra **todos** los usuarios, hogares, elementos y movimientos, y vuelve a
-aplicar el esquema:
+**Lo normal** — con el backend corriendo, un solo comando:
+
+```bash
+./scripts/seed.sh
+```
+
+Borra todo y siembra el escenario de prueba. Es lo que quieres el 99% de las veces.
+
+**Antes de algo riesgoso** (una migración grande, probar un comando destructivo):
+
+```bash
+./scripts/backup.sh                       # → backups/patrimonia_<fecha>.sql.gz
+./scripts/restore.sh backups/<archivo>    # para volver atrás
+```
+
+**Reset total borrando el volumen** (raro — casi nunca hace falta):
 
 ```bash
 cd ~/Desktop/WebSiteProject/PatrimonIA/api/db
-docker compose down -v && docker compose up -d
+docker compose down && docker volume rm patrimonia_pgdata
+docker volume create patrimonia_pgdata && docker compose up -d
 ```
+
+> ⚠️ **Nunca** `docker compose down -v` ni `docker volume prune` /
+> `docker system prune --volumes` con datos que quieras conservar — esos borran
+> el volumen. Los tests ya **no** tocan tu base (usan `patrimonia_test`).
 
 ---
 

@@ -9,6 +9,9 @@ build/
 .env
 .env.*
 !.env.example
+!.env.test
+# backups locales de la DB
+backups/
 # logs
 *.log
 npm-debug.log*

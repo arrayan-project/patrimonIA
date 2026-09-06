@@ -5,8 +5,10 @@ PostgreSQL 16 en Docker. No requiere Postgres instalado localmente.
 ## Arrancar
 
 ```bash
-cd api/db
-docker compose up -d
+./scripts/db.sh          # crea el volumen si falta, levanta Postgres, avisa si está vacía
+# o a mano:
+docker volume create patrimonia_pgdata   # solo la primera vez en esta máquina
+cd api/db && docker compose up -d
 ```
 
 El contenedor expone `localhost:5432`. Credenciales (solo desarrollo local):
@@ -15,6 +17,28 @@ El contenedor expone `localhost:5432`. Credenciales (solo desarrollo local):
 host=localhost port=5432 db=patrimonia user=patrimonia password=patrimonia
 ```
 
+## Dos bases: `patrimonia` y `patrimonia_test`
+
+| Base | Para qué | Quién la borra |
+|------|----------|----------------|
+| **`patrimonia`** | Tus datos de desarrollo / lo que pruebas en el teléfono. | Solo `./scripts/seed.sh` o un `restore`. |
+| **`patrimonia_test`** | Los e2e (`npm run test:e2e`). Hacen `TRUNCATE` en cada `beforeAll`. | Los propios tests, todo el tiempo. |
+
+Los e2e leen `api/.env.test` (versionado, sin secretos) y **nunca** tocan
+`patrimonia`. Antes de este cambio los tests corrían contra `patrimonia` y por
+eso "desaparecían" los datos que creabas a mano.
+
+## Persistencia
+
+El volumen `patrimonia_pgdata` es **externo** (se crea una vez con
+`docker volume create patrimonia_pgdata`). `docker compose down -v` **no lo
+borra** — hay que ser explícito: `docker volume rm patrimonia_pgdata`.
+
+- Sobrevive reinicios del laptop (`restart: unless-stopped` + Docker arranca en
+  boot).
+- Para **empezar de cero** con datos: `./scripts/seed.sh` (no `down -v`).
+- Backup puntual antes de algo riesgoso: `./scripts/backup.sh` / `./scripts/restore.sh`.
+
 ## Esquema
 
 `init/01_schema.sql` parte de `Docs/schema.sql` (traducción de
@@ -22,10 +46,12 @@ host=localhost port=5432 db=patrimonia user=patrimonia password=patrimonia
 scripts de `init/` los ejecuta el entrypoint de Postgres **solo en el primer
 arranque**, cuando el volumen de datos está vacío.
 
-Para reaplicar el esquema desde cero (DB nueva, ya trae todo):
+Para reaplicar el esquema desde cero **borrando el volumen** (raro — normalmente
+`./scripts/seed.sh` basta):
 
 ```bash
-docker compose down -v && docker compose up -d
+cd api/db && docker compose down && docker volume rm patrimonia_pgdata
+docker volume create patrimonia_pgdata && docker compose up -d
 ```
 
 ### Migraciones (`migrations/`)
@@ -89,6 +115,20 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   información: EXISTENCIA/VALOR/MOVIMIENTOS) + `elemento_comparticion` (con quién
   se comparte cuando el nivel es COMPARTIDA). GAPS.md G6, DOMINIO_PENDIENTE §B1.
   Ya incluida en `init/01_schema.sql`.
+- `017_categoria_jerarquica.sql` — `categoria_movimiento.categoria_padre_id`
+  (2 niveles, GAPS.md P7/B9). Ojo: `prisma db pull` borra la relación
+  evento_financiero⇄categoria_movimiento — `npm run prisma:pull` la re-agrega
+  con `scripts/fix-schema-relations.mjs`. Ya incluida en `init/01_schema.sql`.
+- `018_tipo_elemento.sql` — catálogo `tipo_elemento` por hogar + backfill
+  (GAPS.md P?, Fase 40). Ya incluida en `init/01_schema.sql`.
+- `019_presupuesto_linea_ahorro.sql` — línea de ahorro esperado por objetivo
+  (GAPS.md P6). Ya incluida en `init/01_schema.sql`.
+- `020_elemento_fecha_alta_baja.sql` — `fecha_alta` / `fecha_baja` del elemento
+  para la reconstrucción histórica (GAPS.md P10/B10). Ya incluida.
+- `021_objetivo_hogar_designados.sql` — `objetivo_financiero.hogar_id` + tabla
+  `objetivo_designado` (objetivos compartidos por hogar, GAPS.md P9/B6). Ya incluida.
+- `022_moneda_planificacion.sql` — `moneda` (etiqueta, sin conversión) en
+  objetivo / asignación / presupuesto (GAPS.md P11/B8). Ya incluida.
 
 ## Estado
 
