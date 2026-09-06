@@ -36,6 +36,7 @@ export class AsignacionService {
             dto.montoObjetivo === undefined ? null : new Prisma.Decimal(dto.montoObjetivo),
           objetivo_financiero_id: dto.objetivoId ?? null,
           usuario_id: actorId,
+          moneda: dto.moneda?.trim().toUpperCase() || null,
         },
       });
       await this.auditoria.registrar(tx, {

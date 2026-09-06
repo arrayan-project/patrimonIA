@@ -8,6 +8,8 @@ export class CrearObjetivoDto {
   @IsOptional() @IsISO8601() fechaObjetivo?: string;
   /** P9 — compartir con un hogar del actor (se vuelve visible para sus miembros). */
   @IsOptional() @IsUUID() hogarId?: string;
+  /** P11 — etiqueta de moneda (sin conversión). Por defecto CLP. */
+  @IsOptional() @IsString() @MinLength(3) moneda?: string;
 }
 
 /** P9 — CompartirObjetivoConHogar. Solo el dueño. hogarId null → dejar de compartir. */
@@ -27,6 +29,7 @@ export class ActualizarObjetivoDto {
   @IsOptional() @IsString() @MinLength(1) nombre?: string;
   @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @IsPositive() montoObjetivo?: number;
   @IsOptional() @IsISO8601() fechaObjetivo?: string;
+  @IsOptional() @IsString() @MinLength(3) moneda?: string;
 }
 
 export class CambiarEstadoObjetivoDto {

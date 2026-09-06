@@ -92,7 +92,7 @@ export function AsignacionDetalleScreen() {
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{asg.nombre}</Title>
-      <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, 'CLP')}</Text>
+      <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, asg.moneda)}</Text>
 
       <Ayuda>
         Una asignación divide un objetivo en partes. Cada reserva "aparta" un
@@ -109,7 +109,7 @@ export function AsignacionDetalleScreen() {
             <View key={r.id} style={styles.reserva}>
               <Row
                 left={nombrePorId.get(r.elementoOrigenId) ?? 'Elemento'}
-                right={money(r.monto, 'CLP')}
+                right={money(r.monto, asg.moneda)}
               />
               <Button
                 title="Liberar"

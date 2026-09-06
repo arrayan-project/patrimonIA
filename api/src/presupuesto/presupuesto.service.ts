@@ -97,6 +97,7 @@ export class PresupuestoService {
           estado,
           usuario_id: actorId,
           hogar_id: dto.tipo === 'FAMILIAR' ? dto.hogarId! : null,
+          moneda: dto.moneda?.trim().toUpperCase() || 'CLP',
         },
       });
       await this.auditoria.registrar(tx, {

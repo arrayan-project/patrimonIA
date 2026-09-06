@@ -13,6 +13,8 @@ export interface ObjetivoFinancieroDTO {
   progreso: number;
   progresoPorcentaje: number;
   createdAt: string;
+  /** P11: etiqueta de moneda (sin conversión). */
+  moneda: string;
   /** P9: hogar con el que se comparte. null = objetivo personal. */
   hogarId: string | null;
   /** P9: usuarios que pueden modificarlo (además del dueño). Compartidos → [...]. */
@@ -38,6 +40,8 @@ export interface AsignacionDTO {
   montoObjetivo: number | null;
   objetivoId: string | null;
   totalReservado: number;
+  /** P11: etiqueta de moneda (sin conversión). */
+  moneda: string;
   createdAt: string;
   reservas?: ReservaDTO[];
 }
@@ -70,6 +74,7 @@ export function toObjetivoDTO(
     progreso,
     progresoPorcentaje: monto > 0 ? Math.round((progreso / monto) * 1000) / 10 : 0,
     createdAt: o.created_at.toISOString(),
+    moneda: o.moneda,
     hogarId: o.hogar_id,
     designados,
     esMio,
@@ -102,6 +107,7 @@ export function toAsignacionDTO(
     montoObjetivo: a.monto_objetivo === null ? null : Number(a.monto_objetivo),
     objetivoId: a.objetivo_financiero_id,
     totalReservado: total,
+    moneda: a.moneda ?? 'CLP',
     createdAt: a.created_at.toISOString(),
     ...(incluirReservas ? { reservas: reservas.map(toReservaDTO) } : {}),
   };

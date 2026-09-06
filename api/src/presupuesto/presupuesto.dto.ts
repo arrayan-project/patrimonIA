@@ -13,6 +13,8 @@ export interface PresupuestoDTO {
   estado: string | null;
   usuarioId: string | null;
   hogarId: string | null;
+  /** P11: etiqueta de moneda (sin conversión). */
+  moneda: string;
   /** Derivada: ESPECIFICO → estado ACTIVO; PERIODICO → hoy dentro del intervalo. */
   vigente: boolean;
   createdAt: string;
@@ -45,6 +47,7 @@ export function toPresupuestoDTO(p: PresupuestoRow): PresupuestoDTO {
     estado: p.estado,
     usuarioId: p.usuario_id,
     hogarId: p.hogar_id,
+    moneda: p.moneda,
     vigente: esVigente(p),
     createdAt: p.created_at.toISOString(),
   };

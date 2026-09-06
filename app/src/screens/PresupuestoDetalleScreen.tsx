@@ -115,7 +115,7 @@ export function PresupuestoDetalleScreen() {
     );
   }
 
-  const sign = (n: number) => (n > 0 ? `+${money(n, 'CLP')}` : money(n, 'CLP'));
+  const sign = (n: number) => (n > 0 ? `+${money(n, p.moneda)}` : money(n, p.moneda));
   const puedeCerrar = p.periodicidad === 'ESPECIFICO' && p.estado === 'ACTIVO';
 
   const rubrosGasto = desv.porRubro.filter((r) => r.tipoAplicable !== 'INGRESO');
@@ -148,16 +148,16 @@ export function PresupuestoDetalleScreen() {
 
       <Panel>
         <Text style={styles.sectionTitle}>Presupuestado vs. real</Text>
-        <Row left="Ingresos esperados" right={money(desv.esperado.ingresos, 'CLP')} />
-        <Row left="Ingresos reales" right={money(desv.real.ingresos, 'CLP')} />
+        <Row left="Ingresos esperados" right={money(desv.esperado.ingresos, p.moneda)} />
+        <Row left="Ingresos reales" right={money(desv.real.ingresos, p.moneda)} />
         <Row left="Desviación ingresos" right={sign(desv.desviacion.ingresos)} />
         <View style={styles.sep} />
-        <Row left="Gastos esperados" right={money(desv.esperado.gastos, 'CLP')} />
-        <Row left="Gastos reales" right={money(desv.real.gastos, 'CLP')} />
+        <Row left="Gastos esperados" right={money(desv.esperado.gastos, p.moneda)} />
+        <Row left="Gastos reales" right={money(desv.real.gastos, p.moneda)} />
         <Row left="Desviación gastos" right={sign(desv.desviacion.gastos)} />
         <View style={styles.sep} />
-        <Row left="Ahorro esperado" right={money(desv.esperado.ahorro, 'CLP')} />
-        <Row left="Ahorro real" right={money(desv.real.ahorro, 'CLP')} />
+        <Row left="Ahorro esperado" right={money(desv.esperado.ahorro, p.moneda)} />
+        <Row left="Ahorro real" right={money(desv.real.ahorro, p.moneda)} />
         <Row left="Desviación ahorro" right={sign(desv.desviacion.ahorro)} />
       </Panel>
 
@@ -181,8 +181,8 @@ export function PresupuestoDetalleScreen() {
             {segmentos.some((s) => s.valor > 0) && (
               <Dona
                 segmentos={segmentos}
-                centro={money(desv.real.gastos, 'CLP').replace(' CLP', '')}
-                formatoValor={(n) => money(n, 'CLP')}
+                centro={money(desv.real.gastos, p.moneda).replace(` ${p.moneda}`, '')}
+                formatoValor={(n) => money(n, p.moneda)}
               />
             )}
             {rubrosConMeta.map((r) => (
@@ -190,7 +190,7 @@ export function PresupuestoDetalleScreen() {
                 <Text style={styles.rubroTexto}>{r.nombre}</Text>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.rubroTexto}>
-                    {money(r.real, 'CLP')} / {money(r.esperado, 'CLP')}
+                    {money(r.real, p.moneda)} / {money(r.esperado, p.moneda)}
                   </Text>
                   <Text
                     style={[styles.muted, { color: r.desviacion > 0 ? c.danger : c.muted }]}
@@ -212,7 +212,7 @@ export function PresupuestoDetalleScreen() {
               <Text style={styles.rubroTexto}>{o.nombre}</Text>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.rubroTexto}>
-                  {money(o.real, 'CLP')} / {money(o.esperado, 'CLP')}
+                  {money(o.real, p.moneda)} / {money(o.esperado, p.moneda)}
                 </Text>
                 <Text style={[styles.muted, { color: o.desviacion < 0 ? c.danger : c.muted }]}>
                   {sign(o.desviacion)}

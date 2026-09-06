@@ -59,6 +59,12 @@ export class CrearPresupuestoDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   ahorroEsperado?: number;
+
+  /** P11 — etiqueta de moneda (sin conversión). Por defecto CLP. */
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  moneda?: string;
 }
 
 /** Body de POST /comandos/ActualizarDatosPresupuesto (AS #50). tipo/periodicidad no se tocan. */

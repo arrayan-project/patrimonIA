@@ -12,6 +12,8 @@ export class CrearAsignacionDto {
   @IsString() @MinLength(1) nombre!: string;
   @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @IsPositive() montoObjetivo?: number;
   @IsOptional() @IsUUID() objetivoId?: string;
+  /** P11 — etiqueta de moneda (sin conversión). NULL = hereda del objetivo / CLP. */
+  @IsOptional() @IsString() @MinLength(3) moneda?: string;
 }
 
 export class ActualizarAsignacionDto {

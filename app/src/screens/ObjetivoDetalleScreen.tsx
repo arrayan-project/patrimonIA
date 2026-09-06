@@ -101,7 +101,7 @@ export function ObjetivoDetalleScreen() {
       <Title>{obj.nombre}</Title>
       <ProgressBar pct={obj.progresoPorcentaje} />
       <Text style={styles.muted}>
-        {money(obj.progreso, 'CLP')} de {money(obj.montoObjetivo, 'CLP')} · {obj.progresoPorcentaje}% ·{' '}
+        {money(obj.progreso, obj.moneda)} de {money(obj.montoObjetivo, obj.moneda)} · {obj.progresoPorcentaje}% ·{' '}
         {etiqueta(obj.estado)}
         {obj.hogarId ? ' · del hogar' : ''}
       </Text>
@@ -119,7 +119,7 @@ export function ObjetivoDetalleScreen() {
               nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
             }
           >
-            <Row left={a.nombre} right={money(a.totalReservado, 'CLP')} />
+            <Row left={a.nombre} right={money(a.totalReservado, a.moneda)} />
           </Pressable>
         ))}
         {obj.puedoModificar && (

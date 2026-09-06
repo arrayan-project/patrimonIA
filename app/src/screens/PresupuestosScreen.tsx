@@ -19,12 +19,16 @@ import {
   Skeleton,
   Screen,
   Segmented,
+  Select,
   Title,
   Panel,
   useC,
   type Paleta,
   tipoDe,
 } from '../ui';
+import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
+
+const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — ${NOMBRE_MONEDA[m] ?? m}` }));
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
 
@@ -47,6 +51,7 @@ export function PresupuestosScreen() {
   const [ingresos, setIngresos] = useState('');
   const [gastos, setGastos] = useState('');
   const [ahorro, setAhorro] = useState('');
+  const [moneda, setMoneda] = useState('CLP');
 
   const cargar = useCallback(async () => {
     setError('');
@@ -80,6 +85,7 @@ export function PresupuestosScreen() {
       if (num(ingresos) !== undefined) body.ingresosEsperados = num(ingresos);
       if (num(gastos) !== undefined) body.gastosEsperados = num(gastos);
       if (num(ahorro) !== undefined) body.ahorroEsperado = num(ahorro);
+      if (moneda !== 'CLP') body.moneda = moneda.trim().toUpperCase();
       await api.post('/comandos/CrearPresupuesto', body, token);
       toast.mostrar('Presupuesto creado');
       setIngresos('');
@@ -131,8 +137,8 @@ export function PresupuestosScreen() {
               {p.fechaInicio ?? '—'} → {p.fechaFin ?? '—'}
             </Text>
             <Text style={styles.muted}>
-              Ingresos {money(p.ingresosEsperados ?? 0, 'CLP')} · Gastos{' '}
-              {money(p.gastosEsperados ?? 0, 'CLP')}
+              Ingresos {money(p.ingresosEsperados ?? 0, p.moneda)} · Gastos{' '}
+              {money(p.gastosEsperados ?? 0, p.moneda)}
             </Text>
           </Card>
         ))
@@ -158,8 +164,9 @@ export function PresupuestosScreen() {
             <DateField label="Fin (opcional)" value={fechaFin} onChange={setFechaFin} optional />
           </>
         )}
-        <MoneyField label="Ingresos esperados" value={ingresos} onChange={setIngresos} />
-        <MoneyField label="Gastos esperados" value={gastos} onChange={setGastos} />
+        <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+        <MoneyField label="Ingresos esperados" value={ingresos} onChange={setIngresos} moneda={moneda} />
+        <MoneyField label="Gastos esperados" value={gastos} onChange={setGastos} moneda={moneda} />
         <MoneyField label="Ahorro esperado" value={ahorro} onChange={setAhorro} />
         <Button
           title="Crear presupuesto"

@@ -322,6 +322,8 @@ export interface ObjetivoFinancieroDTO {
   puedoModificar: boolean;
   progreso: number;
   progresoPorcentaje: number;
+  /** P11: etiqueta de moneda (sin conversión). */
+  moneda: string;
   createdAt: string;
 }
 
@@ -340,6 +342,7 @@ export interface AsignacionDTO {
   montoObjetivo: number | null;
   objetivoId: string | null;
   totalReservado: number;
+  moneda: string;
   createdAt: string;
   reservas?: ReservaDTO[];
 }
@@ -357,6 +360,7 @@ export interface PresupuestoDTO {
   estado: string | null;
   usuarioId: string | null;
   hogarId: string | null;
+  moneda: string;
   vigente: boolean;
   createdAt: string;
 }

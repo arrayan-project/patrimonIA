@@ -39,6 +39,7 @@ export class ObjetivoService {
           estado: 'EN_PROGRESO',
           usuario_id: actorId,
           hogar_id: dto.hogarId ?? null,
+          moneda: dto.moneda?.trim().toUpperCase() || 'CLP',
         },
       });
       await this.auditoria.registrar(tx, {
@@ -77,6 +78,14 @@ export class ObjetivoService {
     if (dto.fechaObjetivo !== undefined) {
       data.fecha_objetivo = new Date(dto.fechaObjetivo);
       posterior.fecha_objetivo = dto.fechaObjetivo;
+    }
+    if (dto.moneda !== undefined) {
+      const m = dto.moneda.trim().toUpperCase();
+      if (m !== o.moneda) {
+        data.moneda = m;
+        anterior.moneda = o.moneda;
+        posterior.moneda = m;
+      }
     }
     if (Object.keys(data).length === 0) throw new BadRequestException('No hay cambios');
     await this.prisma.$transaction(async (tx) => {

@@ -2,6 +2,9 @@ import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type ObjetivoFinancieroDTO } from '../api/client';
+import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
+
+const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — ${NOMBRE_MONEDA[m] ?? m}` }));
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
@@ -17,6 +20,7 @@ import {
   MoneyField,
   ProgressBar,
   Segmented,
+  Select,
   Skeleton,
   Screen,
   Title,
@@ -36,6 +40,7 @@ export function ObjetivosScreen() {
   const [nombre, setNombre] = useState('');
   const [monto, setMonto] = useState('');
   const [compartir, setCompartir] = useState<'No' | 'Sí'>('No');
+  const [moneda, setMoneda] = useState('CLP');
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,6 +70,7 @@ export function ObjetivosScreen() {
         {
           nombre: nombre.trim(),
           montoObjetivo: Number(monto),
+          ...(moneda !== 'CLP' ? { moneda: moneda.trim().toUpperCase() } : {}),
           ...(compartir === 'Sí' && hogarId ? { hogarId } : {}),
         },
         token,
@@ -72,6 +78,7 @@ export function ObjetivosScreen() {
       toast.mostrar('Objetivo creado');
       setNombre('');
       setMonto('');
+      setMoneda('CLP');
       setCompartir('No');
       await cargar();
     } catch (e) {
@@ -102,15 +109,16 @@ export function ObjetivosScreen() {
       ) : (
         (() => {
           const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
+          const monedas = new Set(enProgreso.map((o) => o.moneda));
           const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
           const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
           const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
-          return enProgreso.length > 1 ? (
+          return enProgreso.length > 1 && monedas.size === 1 ? (
             <Panel>
               <Text style={styles.nombre}>Avance total ({enProgreso.length} objetivos activos)</Text>
               <ProgressBar pct={pct} />
               <Text style={styles.muted}>
-                {money(avance, 'CLP')} de {money(meta, 'CLP')} · {pct}%
+                {money(avance, [...monedas][0])} de {money(meta, [...monedas][0])} · {pct}%
               </Text>
             </Panel>
           ) : null;
@@ -130,7 +138,7 @@ export function ObjetivosScreen() {
             </View>
             <ProgressBar pct={o.progresoPorcentaje} />
             <Text style={styles.muted}>
-              {money(o.progreso, 'CLP')} de {money(o.montoObjetivo, 'CLP')} · {o.progresoPorcentaje}%
+              {money(o.progreso, o.moneda)} de {money(o.montoObjetivo, o.moneda)} · {o.progresoPorcentaje}%
             </Text>
           </Card>
         ))}
@@ -138,7 +146,8 @@ export function ObjetivosScreen() {
       <Panel>
         <Text style={styles.nombre}>Nuevo objetivo</Text>
         <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="Pie vivienda" />
-        <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} />
+        <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} moneda={moneda} />
+        <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
         {hogarId && (
           <Segmented
             label="¿Compartir con el hogar?"

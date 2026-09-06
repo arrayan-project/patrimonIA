@@ -145,6 +145,7 @@ CREATE TABLE objetivo_financiero (
     estado          TEXT NOT NULL CHECK (estado IN ('EN_PROGRESO', 'COMPLETADO', 'CANCELADO')),
     usuario_id      UUID REFERENCES usuario(id),  -- migración 001: dueño (GAPS.md G13)
     hogar_id        UUID REFERENCES hogar(id),    -- migración 021: NULL = personal; !NULL = compartido (P9)
+    moneda          TEXT NOT NULL DEFAULT 'CLP',  -- migración 022: etiqueta, sin conversión (P11)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -173,6 +174,7 @@ CREATE TABLE asignacion (
     monto_objetivo           NUMERIC(18,2),  -- nullable
     objetivo_financiero_id   UUID REFERENCES objetivo_financiero(id),  -- NULL = asignación independiente
     usuario_id               UUID REFERENCES usuario(id),  -- migración 001: asignación personal (GAPS.md G13)
+    moneda                   TEXT,  -- migración 022: etiqueta; NULL = hereda del objetivo (P11)
     created_at               TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -320,6 +322,7 @@ CREATE TABLE presupuesto (
                          -- NULL cuando periodicidad = 'PERIODICO' (vigencia por calendario)
     usuario_id           UUID REFERENCES usuario(id),  -- migración 002: creador (GAPS.md G15)
     hogar_id             UUID REFERENCES hogar(id),    -- migración 002: solo si tipo = FAMILIAR
+    moneda               TEXT NOT NULL DEFAULT 'CLP',  -- migración 022: etiqueta, sin conversión (P11)
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     -- Invariante: estado solo tiene sentido para presupuestos ESPECIFICOs
