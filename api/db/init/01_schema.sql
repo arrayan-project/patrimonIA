@@ -78,6 +78,10 @@ CREATE TABLE elemento_patrimonial (
     valor_pendiente           NUMERIC(18,2),  -- solo DEUDA/CREDITO; NULL en el resto
     created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
 
+    -- migración 020: entrada/salida del patrimonio (reconstrucción histórica, P10)
+    fecha_alta                DATE NOT NULL DEFAULT now(),
+    fecha_baja                DATE,
+
     -- Info adicional de DEUDA/CREDITO (migración 014, REQUISITES §J). Opcional; NULL en el resto.
     contraparte               TEXT,           -- acreedor (DEUDA) o deudor (CREDITO)
     fecha_inicio              DATE,

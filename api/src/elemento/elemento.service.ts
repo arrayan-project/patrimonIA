@@ -121,6 +121,7 @@ export class ElementoService {
           admite_valorizacion: dto.admiteValorizacion ?? false,
           visibilidad: dto.visibilidad ?? 'PRIVADA',
           estado: 'ACTIVO',
+          fecha_alta: dto.fechaAlta ? new Date(dto.fechaAlta) : new Date(),
           valor_pendiente: valorPendiente,
           ...detalle,
         },
@@ -413,15 +414,19 @@ export class ElementoService {
   async desactivar(actorId: string, dto: DesactivarElementoDto): Promise<ElementoPatrimonialDTO> {
     const el = await this.#cargarConPropietario(dto.elementoId, actorId);
     if (el.estado !== 'ACTIVO') throw new ConflictException('El elemento no está activo');
+    const fechaBaja = dto.fechaBaja ? new Date(dto.fechaBaja) : new Date();
     await this.prisma.$transaction(async (tx) => {
-      await tx.elemento_patrimonial.update({ where: { id: el.id }, data: { estado: 'INACTIVO' } });
+      await tx.elemento_patrimonial.update({
+        where: { id: el.id },
+        data: { estado: 'INACTIVO', fecha_baja: fechaBaja },
+      });
       await this.auditoria.registrar(tx, {
         comando: 'DesactivarElementoPatrimonial',
         usuarioId: actorId,
         entidadTipo: 'ELEMENTO_PATRIMONIAL',
         entidadId: el.id,
         valorAnterior: { estado: 'ACTIVO' },
-        valorPosterior: { estado: 'INACTIVO' },
+        valorPosterior: { estado: 'INACTIVO', fecha_baja: fechaBaja.toISOString().slice(0, 10) },
         motivo: dto.motivo,
       });
     });
@@ -433,14 +438,17 @@ export class ElementoService {
     const el = await this.#cargarConPropietario(dto.elementoId, actorId);
     if (el.estado !== 'INACTIVO') throw new ConflictException('El elemento no está inactivo');
     await this.prisma.$transaction(async (tx) => {
-      await tx.elemento_patrimonial.update({ where: { id: el.id }, data: { estado: 'ACTIVO' } });
+      await tx.elemento_patrimonial.update({
+        where: { id: el.id },
+        data: { estado: 'ACTIVO', fecha_baja: null },
+      });
       await this.auditoria.registrar(tx, {
         comando: 'ReactivarElementoPatrimonial',
         usuarioId: actorId,
         entidadTipo: 'ELEMENTO_PATRIMONIAL',
         entidadId: el.id,
         valorAnterior: { estado: 'INACTIVO' },
-        valorPosterior: { estado: 'ACTIVO' },
+        valorPosterior: { estado: 'ACTIVO', fecha_baja: null },
         motivo: dto.motivo,
       });
     });

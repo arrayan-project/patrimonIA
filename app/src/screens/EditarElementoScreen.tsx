@@ -91,6 +91,7 @@ export function EditarElementoScreen() {
   const [contraparte, setContraparte] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaTermino, setFechaTermino] = useState('');
+  const [fechaBaja, setFechaBaja] = useState('');
   const [cuota, setCuota] = useState('');
   const [tasa, setTasa] = useState('');
   const [observaciones, setObservaciones] = useState('');
@@ -524,6 +525,12 @@ export function EditarElementoScreen() {
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" placeholder="Requerido para reactivar/eliminar" />
         {activo ? (
           <>
+            <DateField
+              label="Fecha de salida (opcional)"
+              value={fechaBaja}
+              onChange={setFechaBaja}
+              optional
+            />
             <Button
               title="Desactivar"
               variant="danger"
@@ -535,7 +542,11 @@ export function EditarElementoScreen() {
                   () =>
                     api.post(
                       '/comandos/DesactivarElementoPatrimonial',
-                      { elementoId, ...(motivo.trim() ? { motivo: motivo.trim() } : {}) },
+                      {
+                        elementoId,
+                        ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
+                        ...(fechaBaja.trim() ? { fechaBaja: fechaBaja.trim() } : {}),
+                      },
                       token,
                     ),
                   'Desactivado',

@@ -90,6 +90,11 @@ export class RegistrarElementoDto extends DetalleDeudaDto {
   @Length(3, 3)
   moneda!: string;
 
+  /** P10 — fecha de entrada al patrimonio (YYYY-MM-DD). Por defecto hoy. */
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'fechaAlta debe ser YYYY-MM-DD' })
+  fechaAlta?: string;
+
   @IsOptional()
   @IsBoolean()
   participaValorLiquido?: boolean;

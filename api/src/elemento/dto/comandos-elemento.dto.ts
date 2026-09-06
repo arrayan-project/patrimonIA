@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -69,6 +70,9 @@ export class CambiarAdmiteValorizacionDto {
 export class DesactivarElementoDto {
   @IsUUID() elementoId!: string;
   @IsOptional() @IsString() motivo?: string;
+  /** P10 — fecha de salida del patrimonio (YYYY-MM-DD). Por defecto hoy. */
+  @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'fechaBaja debe ser YYYY-MM-DD' })
+  fechaBaja?: string;
 }
 
 export class ReactivarElementoDto {

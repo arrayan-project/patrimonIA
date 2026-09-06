@@ -220,6 +220,10 @@ export interface ElementoPatrimonialDTO {
   /** Usuarios con los que se comparte (nivel COMPARTIDA). Solo si eres propietario. */
   compartidoCon: string[] | null;
   createdAt: string;
+  /** P10: entrada al patrimonio (YYYY-MM-DD). */
+  fechaAlta: string;
+  /** P10: salida del patrimonio (Desactivar). null si sigue vigente. */
+  fechaBaja: string | null;
   propietarios: PropietarioDTO[];
   // Info adicional de DEUDA/CREDITO (§B3). null fuera de esas categorías.
   contraparte: string | null;
@@ -481,6 +485,8 @@ export interface ValorHistoricoElementoDTO {
   fecha: string;
   moneda: string;
   valor: number;
+  /** P10: false si a esa fecha el elemento no existía todavía o ya había salido. */
+  existia: boolean;
 }
 
 export interface SeriePatrimonialDTO {

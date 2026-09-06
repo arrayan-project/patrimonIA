@@ -8,6 +8,9 @@ export interface ValorHistoricoElementoDTO {
   moneda: string;
   /** Valor vigente reconstruido a esa fecha (valor_vigente − impactos posteriores). */
   valor: number;
+  /** P10: false si a esa fecha el elemento aún no existía (fecha < fecha_alta) o
+   *  ya había salido del patrimonio (fecha_baja && fecha >= fecha_baja). */
+  existia: boolean;
 }
 
 export interface PatrimonioHistoricoPorMoneda {
@@ -49,13 +52,17 @@ export interface SeriePatrimonialDTO {
  * económicos con fecha <= X. Se calcula retrocediendo desde `valor_vigente`
  * (que ya refleja el estado actual) y restando los impactos posteriores a X.
  *
- * La auditoría NO participa (Sección V). Simplificaciones (GAPS.md G18):
- * - no hay "fecha de alta" del elemento: para fechas anteriores a toda actividad
- *   la reconstrucción devuelve su valor inicial (no distingue "no existía");
- * - se usa el `estado` ACTIVO/INACTIVO actual del elemento (desactivar/reactivar
- *   son config sin fecha de hecho económico);
- * - un impacto de un evento hoy anulado se considera inexistente en toda la
- *   línea de tiempo (la anulación tampoco tiene fecha de hecho económico).
+ * La auditoría NO participa (Sección V).
+ *
+ * P10 (migración 020): el elemento lleva `fecha_alta` / `fecha_baja`. La
+ * reconstrucción los usa como ventana de existencia — a una fecha fuera de
+ * `[fecha_alta, fecha_baja)` el elemento no cuenta en el patrimonio (y
+ * `valorHistoricoElemento` devuelve `existia: false`). Ya NO se usa el estado
+ * ACTIVO/INACTIVO actual.
+ *
+ * Simplificación que queda (GAPS.md G18): un impacto de un evento hoy anulado se
+ * considera inexistente en toda la línea de tiempo (la anulación no tiene fecha
+ * de hecho económico).
  */
 @Injectable()
 export class ReconstruccionService {
@@ -74,11 +81,13 @@ export class ReconstruccionService {
     if (!prop) throw new ForbiddenException('No eres propietario de ese elemento');
 
     const fecha = this.#soloFecha(fechaISO);
+    const existia = this.#existiaA(el, fecha);
     return {
       elementoId,
       fecha,
       moneda: el.moneda,
-      valor: (await this.#valorElementoA(el, fecha)).toNumber(),
+      valor: existia ? (await this.#valorElementoA(el, fecha)).toNumber() : 0,
+      existia,
     };
   }
 
@@ -91,7 +100,9 @@ export class ReconstruccionService {
       where: { usuario_id: usuarioId },
       include: { elemento_patrimonial: true },
     });
-    const vigentesEnLaFecha = filas.filter((f) => f.elemento_patrimonial.estado === 'ACTIVO');
+    const vigentesEnLaFecha = filas.filter((f) =>
+      this.#existiaA(f.elemento_patrimonial, fecha),
+    );
 
     const acc = new Map<string, Prisma.Decimal>();
     for (const f of vigentesEnLaFecha) {
@@ -184,6 +195,15 @@ export class ReconstruccionService {
   }
 
   // ── Núcleo ────────────────────────────────────────────────────────────────
+
+  /** P10 — ¿el elemento existía en el patrimonio a `fecha` (YYYY-MM-DD)? */
+  #existiaA(el: ElementoRow, fecha: string): boolean {
+    const alta = el.fecha_alta ? el.fecha_alta.toISOString().slice(0, 10) : null;
+    const baja = el.fecha_baja ? el.fecha_baja.toISOString().slice(0, 10) : null;
+    if (alta && fecha < alta) return false;
+    if (baja && fecha >= baja) return false;
+    return true;
+  }
 
   /** valor_vigente actual − Σ impactos vivos con fecha posterior a `fecha`. */
   async #valorElementoA(el: ElementoRow, fecha: string): Promise<Prisma.Decimal> {

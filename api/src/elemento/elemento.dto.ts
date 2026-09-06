@@ -32,6 +32,10 @@ export interface ElementoPatrimonialDTO {
   /** Usuarios con los que se comparte (nivel COMPARTIDA). Solo al propietario. */
   compartidoCon: string[] | null;
   createdAt: string;
+  /** P10: entrada al patrimonio (para la reconstrucción histórica). */
+  fechaAlta: string;
+  /** P10: salida del patrimonio (Desactivar). NULL si sigue vigente. */
+  fechaBaja: string | null;
   propietarios: PropietarioDTO[];
 
   // Info adicional de DEUDA/CREDITO (§B3). NULL fuera de esas categorías.
@@ -91,6 +95,8 @@ export function toElementoDTO(
     visibilidadPorTipo: opciones.visibilidadPorTipo ?? null,
     compartidoCon: opciones.compartidoCon ?? null,
     createdAt: e.created_at.toISOString(),
+    fechaAlta: fecha(e.fecha_alta) ?? e.created_at.toISOString().slice(0, 10),
+    fechaBaja: fecha(e.fecha_baja),
     propietarios: propietarios.map((p) => ({
       usuarioId: p.usuario_id,
       ...(p.nombre ? { nombre: p.nombre } : {}),

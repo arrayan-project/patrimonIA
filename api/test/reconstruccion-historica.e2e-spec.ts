@@ -42,12 +42,12 @@ describe('Reconstrucción histórica (e2e)', () => {
 
     cuentaId = (
       await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
-        .send({ nombre: 'Cuenta', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 100_000, moneda: 'CLP' })
+        .send({ nombre: 'Cuenta', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 100_000, moneda: 'CLP', fechaAlta: '2026-01-01' })
         .expect(201)
     ).body.id;
     inmuebleId = (
       await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
-        .send({ nombre: 'Depto', tipo: 'inmueble', categoriaFuncional: 'ACTIVO', valorInicial: 1_000_000, moneda: 'CLP', admiteValorizacion: true })
+        .send({ nombre: 'Depto', tipo: 'inmueble', categoriaFuncional: 'ACTIVO', valorInicial: 1_000_000, moneda: 'CLP', admiteValorizacion: true, fechaAlta: '2026-01-01' })
         .expect(201)
     ).body.id;
 
@@ -71,14 +71,17 @@ describe('Reconstrucción histórica (e2e)', () => {
       .body;
 
   it('reconstruye el valor de la cuenta en distintos momentos', async () => {
-    expect((await valorEn(cuentaId, '2026-01-01')).valor).toBe(100_000); // antes del ingreso
+    expect((await valorEn(cuentaId, '2026-01-01')).valor).toBe(100_000); // día del alta, antes del ingreso
     expect((await valorEn(cuentaId, '2026-02-01')).valor).toBe(150_000); // tras el ingreso
     expect((await valorEn(cuentaId, '2026-04-01')).valor).toBe(120_000); // tras el gasto
   });
 
-  it('para fechas anteriores a toda actividad devuelve el valor inicial', async () => {
-    // no hay "fecha de alta" en el modelo (GAPS.md G18)
-    expect((await valorEn(cuentaId, '2020-01-01')).valor).toBe(100_000);
+  it('P10 — para fechas anteriores al alta el elemento no existía (valor 0)', async () => {
+    const r = await valorEn(cuentaId, '2025-01-01');
+    expect(r.valor).toBe(0);
+    expect(r.existia).toBe(false);
+    // el día del alta ya existe
+    expect((await valorEn(cuentaId, '2026-01-01')).existia).toBe(true);
   });
 
   it('trata la valorización como el resto de los hechos con fecha', async () => {
@@ -145,5 +148,20 @@ describe('Reconstrucción histórica (e2e)', () => {
       .expect(200);
     // 2026-06-01 ya no incluye el ingreso anulado
     expect((await valorEn(cuentaId, '2026-06-01')).valor).toBe(120_000);
+  });
+
+  it('P10 — un elemento dado de baja no cuenta después de la fecha_baja', async () => {
+    const efimeroId = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'Auto viejo', tipo: 'vehiculo', categoriaFuncional: 'ACTIVO', valorInicial: 500_000, moneda: 'CLP', fechaAlta: '2026-01-01' })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/DesactivarElementoPatrimonial'))
+      .send({ elementoId: efimeroId, fechaBaja: '2026-03-01' })
+      .expect(200);
+    expect((await valorEn(efimeroId, '2026-02-01')).valor).toBe(500_000);
+    const post = await valorEn(efimeroId, '2026-04-01');
+    expect(post.valor).toBe(0);
+    expect(post.existia).toBe(false);
   });
 });

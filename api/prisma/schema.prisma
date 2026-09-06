@@ -88,6 +88,8 @@ model elemento_patrimonial {
   tasa_interes                                                                         Decimal?                @db.Decimal(9, 4)
   observaciones                                                                        String?
   valor_pendiente_inicial                                                              Decimal?                @db.Decimal(18, 2)
+  fecha_alta                                                                           DateTime                @db.Date
+  fecha_baja                                                                           DateTime?               @db.Date
   agrupacion_miembro                                                                   agrupacion_miembro?
   ajuste_patrimonial                                                                   ajuste_patrimonial[]
   elemento_comparticion                                                                elemento_comparticion[]

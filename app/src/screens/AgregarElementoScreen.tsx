@@ -77,6 +77,7 @@ export function AgregarElementoScreen() {
   const [fechaTermino, setFechaTermino] = useState('');
   const [cuota, setCuota] = useState('');
   const [moneda, setMoneda] = useState('CLP');
+  const [fechaAlta, setFechaAlta] = useState('');
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -164,6 +165,7 @@ export function AgregarElementoScreen() {
     fechaTermino !== '' ||
     cuota !== '' ||
     moneda !== 'CLP' ||
+    fechaAlta !== '' ||
     propiedad !== 'Solo mía';
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
@@ -219,6 +221,7 @@ export function AgregarElementoScreen() {
           tipo: tipo.trim(),
           categoriaFuncional: categoria,
           moneda: moneda.trim().toUpperCase(),
+          ...(fechaAlta.trim() ? { fechaAlta: fechaAlta.trim() } : {}),
           ...(compartida && propietarios.length > 1 ? { propietarios } : {}),
           ...(esDeudaOCredito
             ? {
@@ -326,6 +329,12 @@ export function AgregarElementoScreen() {
             permiteOtro
           />
           {intentado[2] && errMoneda ? <ErrorText>{errMoneda}</ErrorText> : null}
+          <DateField
+            label="¿Desde cuándo lo tienes? (opcional)"
+            value={fechaAlta}
+            onChange={setFechaAlta}
+            optional
+          />
           {esDeudaOCredito ? (
             <>
               <MoneyField

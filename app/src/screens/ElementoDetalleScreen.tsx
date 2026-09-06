@@ -193,6 +193,8 @@ export function ElementoDetalleScreen() {
         <Row left="Ámbito" right={etiqueta(el.ambito)} />
         <Row left="Visibilidad" right={etiqueta(el.visibilidad)} />
         <Row left="Estado" right={etiqueta(el.estado)} />
+        {el.fechaAlta ? <Row left="En el patrimonio desde" right={fechaLegible(el.fechaAlta)} /> : null}
+        {el.fechaBaja ? <Row left="Salió del patrimonio" right={fechaLegible(el.fechaBaja)} /> : null}
       </Panel>
 
       {reservas.length > 0 && (
@@ -452,12 +454,15 @@ export function ElementoDetalleScreen() {
             disabled={!/^\d{4}-\d{2}-\d{2}$/.test(fechaHist.trim())}
             onPress={consultarHistorico}
           />
-          {valorHist && (
-            <Row
-              left={`Al ${fechaLegible(valorHist.fecha)}`}
-              right={money(valorHist.valor, valorHist.moneda)}
-            />
-          )}
+          {valorHist &&
+            (valorHist.existia ? (
+              <Row
+                left={`Al ${fechaLegible(valorHist.fecha)}`}
+                right={money(valorHist.valor, valorHist.moneda)}
+              />
+            ) : (
+              <Nota>En esa fecha el elemento aún no existía o ya había salido del patrimonio.</Nota>
+            ))}
         </Panel>
       )}
 
