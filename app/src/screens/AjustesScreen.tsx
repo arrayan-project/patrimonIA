@@ -38,7 +38,7 @@ export function AjustesScreen() {
       <MenuLink
         icon="person-outline"
         title="Mi perfil"
-        subtitle="Nombre y datos de la cuenta"
+        subtitle="Nombre, notificaciones y datos de la cuenta"
         onPress={() => nav.go('Perfil')}
       />
       <MenuLink

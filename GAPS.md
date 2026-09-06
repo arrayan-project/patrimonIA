@@ -70,10 +70,11 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 
 ## Detectados durante la implementación de Fase 1
 
-### G3 — `moneda_consolidacion` en CrearHogar  ⬜ PENDIENTE (solo UI)
-- El comando y `CambiarMonedaConsolidacion` (#36) **ya existen** en el backend.
-  Falta que la pantalla "Crear hogar" pida la moneda (hoy manda el placeholder
-  `"CLP"`) y que "Gestionar hogar" deje cambiarla. Cambio chico, solo app.
+### G3 — `moneda_consolidacion` en CrearHogar  ✅ RESUELTO (Fase 36, P1)
+- "Crear hogar" ahora pide la moneda (`Select`, default CLP) y la manda en
+  `monedaConsolidacion`; "Gestionar hogar" tiene un panel para cambiarla
+  (`CambiarMonedaConsolidacion` #36, solo admin) con aviso de que no recalcula lo
+  ya mostrado.
 - **Qué falta**: el esquema exige `hogar.moneda_consolidacion` (NOT NULL), pero
   el comando `CrearHogar` (API_DESIGN A / AS #34) solo define `nombre` como input,
   y la pantalla "Crear Hogar" (UX_FLOWS) solo pide el nombre.
@@ -186,9 +187,9 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 - **Colapso visual** original+corrección (UX_FLOWS Flujo 6): la app los muestra
   como filas separadas etiquetadas; el colapso en una sola línea llega después.
 
-### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  ⬜ PENDIENTE + 📋
-- ⬜ Un comando para cambiar `admite_valorizacion` después de crear el elemento
-  (hoy si lo creaste sin el flag, nunca lo podés valorizar) — chico.
+### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  🟡 PARCIAL
+- ✅ (Fase 36, P3) Comando `CambiarAdmiteValorizacion {elementoId, admite}` —
+  toggle en "Editar elemento", rechaza habilitar en DEUDA/CREDITO.
 - 📋 Anular/corregir valorizaciones **intermedias** (no solo la última) — decisión.
 - **Qué falta**: AS #18 dice que la cadena de valorizaciones "debe ser
   recorrible en orden" pero no acota cuál se puede anular.
@@ -226,9 +227,11 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
   `init/01_schema.sql`.
 - **Para decidir**: ¿objetivos/asignaciones compartidos por hogar?
 
-### G14 — Fase 5c: políticas y simplificaciones  ⬜ PENDIENTE + 📋
-- ⬜ **AnularEventoFinanciero no "des-consume" reservas** — anular un gasto que
-  consumió reservas las deja en CONSUMIDA. Corregible sin decisión de dominio.
+### G14 — Fase 5c: políticas y simplificaciones  🟡 PARCIAL
+- ✅ (Fase 36, P2) **AnularEventoFinanciero ahora "des-consume" reservas** — lee
+  la lista `reservas_consumidas` de la auditoría de `RegistrarEventoFinanciero` y
+  las que siguen CONSUMIDA vuelven a ACTIVA; recalcula el progreso del objetivo.
+  `evento.service.#reactivarReservasConsumidas`.
 - 📋 "Consumir reserva" es grueso (todas las ACTIVAS de la asignación de golpe,
   no hasta el monto del evento) — refinarlo es decisión + más lógica.
 - **"Completar objetivo"**: solo transiciona EN_PROGRESO → COMPLETADO. Si el
@@ -358,8 +361,11 @@ El resumen ordenado por facilidad está **al final** (§ "Qué queda — por fac
 - **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
 
 ### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL
-- In-app: ✅. Push remoto: 🔒 EXTERNO (necesita development build + `projectId` de
-  EAS). Preferencias de notificación + reintentos de envío fallido: ⬜ PENDIENTE.
+- In-app: ✅. **Preferencias por tipo: ✅ (Fase 36, P4)** —
+  `usuario.preferencias.notificaciones[<tipo>] === false` silencia el aviso
+  (in-app + push); `NotificacionService.emitir` lo consulta; toggles en "Mi
+  perfil". Push remoto: 🔒 EXTERNO (development build + `projectId` de EAS).
+  Reintentos de envío fallido: ⬜ PENDIENTE.
 - **In-app (Fase 11)**: tabla `notificacion` (migración 005), registro que NO es
   dominio (sin auditoría, regenerable). Se emite dentro de la transacción del
   comando. Generadores: **OBJETIVO_COMPLETADO**, **RESERVA_CONSUMIDA**,
@@ -583,14 +589,14 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
 Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista de
 **pendientes**, ordenada de más fácil a más difícil.
 
-### 1 · Chico, sin decisión (solo hacer)
+### 1 · Chico, sin decisión (solo hacer)  ✅ HECHO — Fase 36
 
-| # | Gap | Qué es | Alcance |
-|---|-----|--------|---------|
-| P1 | **G3** | Pedir la moneda de consolidación en "Crear hogar" + poder cambiarla en "Gestionar hogar". El backend (`CrearHogar`, `CambiarMonedaConsolidacion` #36) ya está. | Solo app: `Select` de moneda en 2 pantallas. |
-| P2 | **G14** (parte ⬜) | Al **anular** un evento que consumió reservas, devolverlas a ACTIVA (hoy quedan CONSUMIDA para siempre). | Backend: unas líneas en `evento.service.anular` + recalcular progreso. 1–2 e2e. |
-| P3 | **G11** (parte ⬜) | Comando nuevo `CambiarAdmiteValorizacion` — si creaste un elemento sin el flag, hoy nunca lo podés valorizar. | Backend: comando + auditoría; app: toggle en "Editar elemento". |
-| P4 | **G20** (preferencias) | Preferencias de notificación (silenciar tipos) sobre `usuario.preferencias` (que ya existe y ya se expone). | Backend mínimo + app: toggles en Ajustes. |
+| # | Gap | Qué es | Estado |
+|---|-----|--------|--------|
+| P1 | **G3** | Moneda de consolidación en "Crear hogar" + "Gestionar hogar". | ✅ Fase 36 |
+| P2 | **G14** | Al **anular** un evento que consumió reservas, devolverlas a ACTIVA. | ✅ Fase 36 |
+| P3 | **G11** | Comando `CambiarAdmiteValorizacion` + toggle en "Editar elemento". | ✅ Fase 36 |
+| P4 | **G20** | Preferencias de notificación (silenciar tipos) en "Mi perfil". | ✅ Fase 36 |
 
 ### 2 · Mediano, necesita una decisión tuya primero (📋)
 
@@ -614,7 +620,6 @@ Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista d
 | P15 | **G20** (push) | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). |
 | P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). |
 
-### Recomendación
-Partir por **P1** (moneda en Crear hogar) que es puro UI y cierra un placeholder
-viejo, y **P2** (des-consumir reservas al anular) que es un bug de comportamiento
-chico y acotado. **P3** y **P4** completan la tanda "fácil".
+### Siguiente
+El bloque fácil (P1–P4) está hecho. Lo siguiente es el bloque §2 (P5–P13), que
+necesita una decisión tuya antes de implementar cada uno.

@@ -4,6 +4,7 @@ import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { RegistrarElementoDto } from './dto/registrar-elemento.dto.js';
 import {
   ActualizarDatosElementoDto,
+  CambiarAdmiteValorizacionDto,
   CambiarParticipacionConsolidacionDto,
   CambiarPropiedadDto,
   CambiarVisibilidadDto,
@@ -60,6 +61,15 @@ export class ElementoController {
     @Body() dto: CambiarParticipacionConsolidacionDto,
   ) {
     return this.elementos.cambiarParticipacionConsolidacion(u.id, dto);
+  }
+
+  @Post('comandos/CambiarAdmiteValorizacion')
+  @HttpCode(200)
+  cambiarAdmiteValorizacion(
+    @CurrentUser() u: UsuarioAutenticado,
+    @Body() dto: CambiarAdmiteValorizacionDto,
+  ) {
+    return this.elementos.cambiarAdmiteValorizacion(u.id, dto);
   }
 
   @Post('comandos/DesactivarElementoPatrimonial')

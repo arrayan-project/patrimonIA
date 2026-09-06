@@ -60,6 +60,12 @@ export class CambiarParticipacionConsolidacionDto {
   @IsBoolean() participa!: boolean;
 }
 
+/** G11 — habilitar/deshabilitar la valorización de un elemento después de crearlo. */
+export class CambiarAdmiteValorizacionDto {
+  @IsUUID() elementoId!: string;
+  @IsBoolean() admite!: boolean;
+}
+
 export class DesactivarElementoDto {
   @IsUUID() elementoId!: string;
   @IsOptional() @IsString() motivo?: string;

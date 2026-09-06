@@ -185,20 +185,39 @@ export class EventoFinancieroService {
         await derivarValorPendiente(tx, i.elemento_id);
       }
 
+      // GAPS.md G14 — si el evento consumió reservas al registrarse, revertirlas
+      // a ACTIVA (solo las que siguen CONSUMIDA — no las liberadas ni borradas).
+      const reservasRevividas = await this.#reactivarReservasConsumidas(tx, evento.id);
+
       const actualizado = await tx.evento_financiero.update({
         where: { id: evento.id },
         data: { anulado: true },
       });
 
-      await this.auditoria.registrar(tx, {
+      const entradaId = await this.auditoria.registrar(tx, {
         comando: 'AnularEventoFinanciero',
         usuarioId: actorId,
         entidadTipo: 'EVENTO_FINANCIERO',
         entidadId: evento.id,
         motivo: dto.motivo,
         valorAnterior: { anulado: false },
-        valorPosterior: { anulado: true },
+        valorPosterior: {
+          anulado: true,
+          ...(reservasRevividas.length > 0 ? { reservas_revividas: reservasRevividas } : {}),
+        },
       });
+
+      if (reservasRevividas.length > 0 && evento.asignacion_id) {
+        const asignacion = await tx.asignacion.findUnique({ where: { id: evento.asignacion_id } });
+        if (asignacion?.objetivo_financiero_id) {
+          await this.progreso.recalcularYCompletar(
+            tx,
+            asignacion.objetivo_financiero_id,
+            actorId,
+            entradaId,
+          );
+        }
+      }
 
       return actualizado;
     });
@@ -309,6 +328,37 @@ export class EventoFinancieroService {
     }
     const etqs = (await this.etiquetas.deEventos([eventoId])).get(eventoId) ?? [];
     return toEventoDTO(evento, impactos, etqs);
+  }
+
+  /**
+   * G14 — reactiva las reservas que este evento consumió al registrarse. Lee la
+   * lista de la entrada de auditoría `RegistrarEventoFinanciero` (embebida en
+   * `valor_posterior.reservas_consumidas`). Devuelve los ids efectivamente
+   * revividos (los que seguían CONSUMIDA).
+   */
+  async #reactivarReservasConsumidas(
+    tx: Prisma.TransactionClient,
+    eventoId: string,
+  ): Promise<string[]> {
+    const registro = await tx.auditoria.findFirst({
+      where: { comando: 'RegistrarEventoFinanciero', entidad_id: eventoId },
+      orderBy: { fecha_hora: 'asc' },
+    });
+    const vp = (registro?.valor_posterior ?? {}) as {
+      reservas_consumidas?: { id: string }[];
+    };
+    const ids = (vp.reservas_consumidas ?? []).map((r) => r.id).filter(Boolean);
+    if (ids.length === 0) return [];
+    const vivas = await tx.reserva.findMany({
+      where: { id: { in: ids }, estado: 'CONSUMIDA' },
+      select: { id: true },
+    });
+    if (vivas.length === 0) return [];
+    await tx.reserva.updateMany({
+      where: { id: { in: vivas.map((r) => r.id) } },
+      data: { estado: 'ACTIVA' },
+    });
+    return vivas.map((r) => r.id);
   }
 
   async listarPorElemento(elementoId: string, actorId: string): Promise<EventoFinancieroDTO[]> {

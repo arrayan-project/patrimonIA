@@ -74,6 +74,7 @@ export function EditarElementoScreen() {
   });
   const [compartidoCon, setCompartidoCon] = useState<string[]>([]);
   const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
+  const [valoriza, setValoriza] = useState<'No' | 'Sí'>('No');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -138,6 +139,7 @@ export function EditarElementoScreen() {
       tipo.trim() !== el.tipo ||
       visibilidadCambiada ||
       (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
+      (valoriza === 'Sí') !== el.admiteValorizacion ||
       repartoCambiado ||
       detalleCambiado ||
       motivoDato.trim().length > 0 ||
@@ -161,6 +163,7 @@ export function EditarElementoScreen() {
         });
         setCompartidoCon(e.compartidoCon ?? []);
         setEnConsolidacion(e.participaConsolidacion ? 'Sí' : 'No');
+        setValoriza(e.admiteValorizacion ? 'Sí' : 'No');
         setPcts(
           Object.fromEntries(
             e.propietarios.map((p) => [p.usuarioId, String(p.porcentaje)]),
@@ -365,6 +368,38 @@ export function EditarElementoScreen() {
                   { elementoId, participa: enConsolidacion === 'Sí' },
                   token,
                 ),
+              )
+            }
+          />
+        </Panel>
+      )}
+
+      {activo && !esDeudaOCredito && (
+        <Panel>
+          <Segmented
+            label="¿Se valoriza en el tiempo?"
+            options={['No', 'Sí'] as const}
+            value={valoriza}
+            onChange={setValoriza}
+          />
+          <Ayuda>
+            Actívalo para bienes o inversiones cuyo valor de mercado cambia
+            (inmuebles, fondos). Habilita "Registrar valorización" en el detalle.
+          </Ayuda>
+          <Button
+            title="Guardar"
+            variant="secondary"
+            loading={busy}
+            disabled={(valoriza === 'Sí') === el.admiteValorizacion}
+            onPress={() =>
+              run(
+                () =>
+                  api.post(
+                    '/comandos/CambiarAdmiteValorizacion',
+                    { elementoId, admite: valoriza === 'Sí' },
+                    token,
+                  ),
+                'Guardado',
               )
             }
           />

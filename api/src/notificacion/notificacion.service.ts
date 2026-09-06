@@ -53,6 +53,17 @@ export class NotificacionService {
    * revertido, podría llegar un push huérfano (aceptable para un aviso).
    */
   async emitir(tx: Prisma.TransactionClient, n: NuevaNotificacion): Promise<void> {
+    // G20 — el usuario puede silenciar un tipo desde `preferencias.notificaciones`
+    // (ausente o distinto de false = habilitado).
+    const dueno = await tx.usuario.findUnique({
+      where: { id: n.usuarioId },
+      select: { preferencias: true },
+    });
+    const prefs = (dueno?.preferencias ?? {}) as {
+      notificaciones?: Record<string, boolean>;
+    };
+    if (prefs.notificaciones?.[n.tipo] === false) return;
+
     await tx.notificacion.create({
       data: {
         usuario_id: n.usuarioId,

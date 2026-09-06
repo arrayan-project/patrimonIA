@@ -6,7 +6,13 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Ayuda, Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Select, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
+
+const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
+  value: m,
+  label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
+}));
 
 export function GestionHogarScreen() {
   const c = useC();
@@ -19,6 +25,7 @@ export function GestionHogarScreen() {
 
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [nombre, setNombre] = useState('');
+  const [moneda, setMoneda] = useState('CLP');
   const [motivo, setMotivo] = useState('');
   const [email, setEmail] = useState('');
   const [aviso, setAviso] = useState('');
@@ -31,6 +38,7 @@ export function GestionHogarScreen() {
       const h = await api.get<HogarDTO>(`/hogares/${hogarId}`, token);
       setHogar(h);
       setNombre(h.nombre);
+      setMoneda(h.monedaConsolidacion);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }
@@ -83,6 +91,33 @@ export function GestionHogarScreen() {
                   token,
                 );
                 toast.mostrar('Hogar actualizado');
+              })
+            }
+          />
+        </Panel>
+      )}
+
+      {soyAdmin && (
+        <Panel>
+          <Text style={styles.sectionTitle}>Moneda del hogar</Text>
+          <Select label="Moneda de consolidación" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
+          <Ayuda>
+            En esta moneda se muestra el patrimonio consolidado. Cambiarla no
+            recalcula lo ya mostrado con la moneda anterior.
+          </Ayuda>
+          <Button
+            title="Cambiar moneda"
+            variant="secondary"
+            loading={busy}
+            disabled={moneda.trim().toUpperCase() === hogar.monedaConsolidacion}
+            onPress={() =>
+              run(async () => {
+                await api.post(
+                  '/comandos/CambiarMonedaConsolidacion',
+                  { hogarId, moneda: moneda.trim().toUpperCase() },
+                  token,
+                );
+                toast.mostrar('Moneda actualizada');
               })
             }
           />

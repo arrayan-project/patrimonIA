@@ -17,6 +17,7 @@ import {
 import type { RegistrarElementoDto } from './dto/registrar-elemento.dto.js';
 import type {
   ActualizarDatosElementoDto,
+  CambiarAdmiteValorizacionDto,
   CambiarParticipacionConsolidacionDto,
   CambiarPropiedadDto,
   CambiarVisibilidadDto,
@@ -370,6 +371,39 @@ export class ElementoService {
         entidadId: el.id,
         valorAnterior: { participa_consolidacion: el.participa_consolidacion },
         valorPosterior: { participa_consolidacion: dto.participa },
+      });
+    });
+    return this.obtenerElemento(el.id, actorId);
+  }
+
+  /**
+   * G11 — CambiarAdmiteValorizacion. Habilita/deshabilita la valorización de un
+   * elemento después de crearlo. No se puede habilitar para DEUDA/CREDITO.
+   */
+  async cambiarAdmiteValorizacion(
+    actorId: string,
+    dto: CambiarAdmiteValorizacionDto,
+  ): Promise<ElementoPatrimonialDTO> {
+    const el = await this.#cargarConPropietario(dto.elementoId, actorId);
+    if (el.admite_valorizacion === dto.admite) throw new BadRequestException('Sin cambios');
+    if (
+      dto.admite &&
+      (el.categoria_funcional === 'DEUDA' || el.categoria_funcional === 'CREDITO')
+    ) {
+      throw new BadRequestException('DEUDA/CREDITO no admite valorización');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.elemento_patrimonial.update({
+        where: { id: el.id },
+        data: { admite_valorizacion: dto.admite },
+      });
+      await this.auditoria.registrar(tx, {
+        comando: 'CambiarAdmiteValorizacion',
+        usuarioId: actorId,
+        entidadTipo: 'ELEMENTO_PATRIMONIAL',
+        entidadId: el.id,
+        valorAnterior: { admite_valorizacion: el.admite_valorizacion },
+        valorPosterior: { admite_valorizacion: dto.admite },
       });
     });
     return this.obtenerElemento(el.id, actorId);
