@@ -31,6 +31,7 @@ export function GestionHogarScreen() {
   const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intentoInv, setIntentoInv] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -179,16 +180,19 @@ export function GestionHogarScreen() {
           <Field
             label="Email"
             keyboardType="email-address"
+            autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
             placeholder="persona@email.cl"
+            error={intentoInv && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? 'Escribe un email válido.' : undefined}
           />
           {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
           <Button
             title="Enviar invitación"
             loading={busy}
-            disabled={!email.trim()}
-            onPress={() =>
+            onPress={() => {
+              setIntentoInv(true);
+              if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return;
               run(async () => {
                 await api.post(
                   '/comandos/InvitarMiembro',
@@ -197,8 +201,9 @@ export function GestionHogarScreen() {
                 );
                 setAviso(`Invitación enviada a ${email.trim()}`);
                 setEmail('');
-              })
-            }
+                setIntentoInv(false);
+              });
+            }}
           />
         </Panel>
       )}

@@ -115,6 +115,8 @@ export function ObjetivoDetalleScreen() {
           <Pressable
             key={a.id}
             style={styles.asg}
+            accessibilityRole="button"
+            accessibilityLabel={`${a.nombre}, ${money(a.totalReservado, a.moneda)}`}
             onPress={() =>
               nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
             }

@@ -129,10 +129,10 @@ export function TiposElementoScreen() {
                     </Text>
                   </View>
                   <View style={styles.filaBotones}>
-                    <Pressable hitSlop={8} onPress={() => mover(i, -1)}>
+                    <Pressable hitSlop={8} onPress={() => mover(i, -1)} accessibilityRole="button" accessibilityLabel="Subir">
                       <Text style={styles.flecha}>▲</Text>
                     </Pressable>
-                    <Pressable hitSlop={8} onPress={() => mover(i, 1)}>
+                    <Pressable hitSlop={8} onPress={() => mover(i, 1)} accessibilityRole="button" accessibilityLabel="Bajar">
                       <Text style={styles.flecha}>▼</Text>
                     </Pressable>
                   </View>

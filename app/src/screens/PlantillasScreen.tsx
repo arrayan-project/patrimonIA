@@ -69,6 +69,7 @@ export function PlantillasScreen() {
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intento, setIntento] = useState(false);
 
   // null = formulario oculto · 'nueva' = crear · id = editar esa plantilla
   const [modo, setModo] = useState<null | 'nueva' | string>(null);
@@ -109,10 +110,15 @@ export function PlantillasScreen() {
       categoriaId: p.categoriaId,
       glosa: p.glosa ?? '',
     });
+    setIntento(false);
     setModo(p.id);
   };
 
+  const errNombre = b.nombre.trim() ? '' : 'Ponle un nombre a la plantilla.';
+
   const guardar = async () => {
+    setIntento(true);
+    if (errNombre) return;
     setBusy(true);
     setError('');
     const necesitaOrigen = b.tipo === 'GASTO' || b.tipo === 'TRANSFERENCIA';
@@ -223,6 +229,7 @@ export function PlantillasScreen() {
           title="Nueva plantilla"
           onPress={() => {
             setB(VACIO);
+            setIntento(false);
             setModo('nueva');
           }}
         />
@@ -237,6 +244,7 @@ export function PlantillasScreen() {
             onChangeText={(nombre) => setB((x) => ({ ...x, nombre }))}
             autoCapitalize="sentences"
             placeholder="p. ej. Arriendo"
+            error={intento ? errNombre : undefined}
           />
           <Segmented
             label="Tipo"
@@ -316,7 +324,7 @@ export function PlantillasScreen() {
           />
 
           <ErrorText>{error}</ErrorText>
-          <Button title="Guardar" onPress={guardar} loading={busy} disabled={!b.nombre.trim()} />
+          <Button title="Guardar" onPress={guardar} loading={busy} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </Panel>
       )}

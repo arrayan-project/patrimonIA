@@ -37,6 +37,8 @@ export function AsignacionesScreen() {
   const [monto, setMonto] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intento, setIntento] = useState(false);
+  const errNombre = nombre.trim() ? '' : 'Ponle un nombre a la asignación.';
 
   const cargar = useCallback(async () => {
     setError('');
@@ -55,6 +57,8 @@ export function AsignacionesScreen() {
   useCargaAlEnfocar(cargar);
 
   const crear = async () => {
+    setIntento(true);
+    if (errNombre) return;
     setBusy(true);
     setError('');
     try {
@@ -143,10 +147,11 @@ export function AsignacionesScreen() {
           onChangeText={setNombre}
           autoCapitalize="sentences"
           placeholder="Fondo de emergencia"
+          error={intento ? errNombre : undefined}
         />
         <MoneyField label="Meta (opcional)" value={monto} onChange={setMonto} />
         <Nota>Para una asignación dentro de un objetivo, entra al objetivo y créala ahí.</Nota>
-        <Button title="Crear asignación" loading={busy} disabled={!nombre.trim()} onPress={crear} />
+        <Button title="Crear asignación" loading={busy} onPress={crear} />
       </Panel>
 
       <ErrorText>{error}</ErrorText>

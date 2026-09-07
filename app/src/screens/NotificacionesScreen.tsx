@@ -80,6 +80,8 @@ export function NotificacionesScreen() {
               <Pressable
                 key={n.id}
                 style={[styles.card, !n.leida && styles.noLeida]}
+                accessibilityRole="button"
+                accessibilityLabel={`${n.titulo}. ${n.cuerpo}${!n.leida ? '. Nueva' : ''}`}
                 onPress={() => {
                   if (!n.leida) void leer(n.id);
                   if (d) nav.go(d.name, d.params);

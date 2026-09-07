@@ -43,6 +43,10 @@ export function ObjetivosScreen() {
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intento, setIntento] = useState(false);
+
+  const errNombre = nombre.trim() ? '' : 'Ponle un nombre al objetivo.';
+  const errMonto = Number(monto) > 0 ? '' : 'La meta debe ser mayor a 0.';
 
   const cargar = useCallback(async () => {
     setError('');
@@ -61,6 +65,8 @@ export function ObjetivosScreen() {
   useCargaAlEnfocar(cargar);
 
   const crear = async () => {
+    setIntento(true);
+    if (errNombre || errMonto) return;
     setBusy(true);
     setError('');
     try {
@@ -140,8 +146,21 @@ export function ObjetivosScreen() {
 
       <Panel>
         <Text style={styles.nombre}>Nuevo objetivo</Text>
-        <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="Pie vivienda" />
-        <MoneyField label="Monto objetivo" value={monto} onChange={setMonto} moneda={moneda} />
+        <Field
+          label="Nombre"
+          value={nombre}
+          onChangeText={setNombre}
+          autoCapitalize="sentences"
+          placeholder="Pie vivienda"
+          error={intento ? errNombre : undefined}
+        />
+        <MoneyField
+          label="Monto objetivo"
+          value={monto}
+          onChange={setMonto}
+          moneda={moneda}
+          error={intento ? errMonto : undefined}
+        />
         <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
         {hogarId && (
           <Segmented
@@ -157,7 +176,7 @@ export function ObjetivosScreen() {
             Todos los miembros lo verán. Podrás designar quiénes pueden modificarlo.
           </Text>
         )}
-        <Button title="Crear objetivo" onPress={crear} loading={busy} disabled={!nombre.trim() || !(Number(monto) > 0)} />
+        <Button title="Crear objetivo" onPress={crear} loading={busy} />
       </Panel>
 
       <ErrorText>{error}</ErrorText>

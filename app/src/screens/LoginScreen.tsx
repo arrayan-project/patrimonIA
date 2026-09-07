@@ -11,8 +11,14 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
+
+  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
+  const errPassword = password ? '' : 'Escribe tu contraseña.';
 
   const onSubmit = async () => {
+    setIntento(true);
+    if (errEmail || errPassword) return;
     setError('');
     setLoading(true);
     try {
@@ -32,9 +38,11 @@ export function LoginScreen() {
       <Field
         label="Email"
         keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
         placeholder="tu@email.cl"
+        error={intento ? errEmail : undefined}
       />
       <Field
         label="Contraseña"
@@ -42,6 +50,7 @@ export function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         placeholder="Tu contraseña"
+        error={intento ? errPassword : undefined}
       />
 
       <ErrorText>{error}</ErrorText>

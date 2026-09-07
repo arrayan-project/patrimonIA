@@ -803,12 +803,14 @@ export function DateField({
   value,
   onChange,
   optional,
+  error,
   placeholder = 'Elegir fecha',
 }: {
   label: string;
   value: string;
   onChange: (iso: string) => void;
   optional?: boolean;
+  error?: string;
   placeholder?: string;
 }) {
   const c = useC();
@@ -829,7 +831,7 @@ export function DateField({
       ) : (
         <>
           <Pressable
-            style={styles.input}
+            style={[styles.input, error ? styles.inputError : null]}
             onPress={() => setAbierto(true)}
             accessibilityRole="button"
             accessibilityLabel={`${label}: ${value ? fechaLegible(value) : placeholder}`}
@@ -843,6 +845,7 @@ export function DateField({
           )}
         </>
       )}
+      {error ? <Text style={styles.errorInline}>{error}</Text> : null}
       {optional && value ? <LinkButton title="Quitar fecha" onPress={() => onChange('')} /> : null}
     </View>
   );
@@ -1055,8 +1058,8 @@ export function Select({
       </Pressable>
 
       <Modal visible={abierto} transparent animationType="slide" onRequestClose={cerrar}>
-        <Pressable style={styles.modalFondo} onPress={cerrar}>
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.modalFondo} onPress={cerrar} accessibilityRole="button" accessibilityLabel="Cerrar">
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
             {label ? <Text style={styles.modalTitulo}>{label}</Text> : null}
             {modoOtro ? (
               <View style={{ gap: 10 }}>
@@ -1085,6 +1088,9 @@ export function Select({
                   <Pressable
                     key={o.value}
                     style={styles.modalOpcion}
+                    accessibilityRole="button"
+                    accessibilityLabel={o.label}
+                    accessibilityState={{ selected: o.value === value }}
                     onPress={() => {
                       onChange(o.value);
                       cerrar();
@@ -1101,7 +1107,12 @@ export function Select({
                   </Pressable>
                 ))}
                 {permiteOtro && (
-                  <Pressable style={styles.modalOpcion} onPress={() => setModoOtro(true)}>
+                  <Pressable
+                    style={styles.modalOpcion}
+                    accessibilityRole="button"
+                    accessibilityLabel="Otro valor"
+                    onPress={() => setModoOtro(true)}
+                  >
                     <Text style={[styles.modalOpcionTxt, { color: c.primary }]}>Otro…</Text>
                   </Pressable>
                 )}

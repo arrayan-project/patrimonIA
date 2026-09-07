@@ -5,13 +5,18 @@
 > Parte 3. Este documento se conserva como **journal** de la implementación de
 > UI/UX (útil para entender por qué está cada cosa donde está).
 >
-> **Solo quedan pulidos P2/P3 sueltos**, no bloqueantes:
-> - **H3** — validación en vivo (`error?` + `tocado`/`intento`) en los formularios
->   que aún no la tienen (hecha en Agregar elemento, Registrar movimiento/ajuste,
->   Valorizar, Crear hogar, Perfil).
-> - **I1** — barrido de accesibilidad por pantalla de los `Pressable` sueltos
->   (los componentes compartidos de `ui/` ya tienen `accessibilityRole/State/Label`).
-> - **G1** — adoptar `ListItem` en las pocas listas que aún se arman a mano.
+> **Estado de los pulidos sueltos (Fase 53, 2026-09-06):**
+> - **H3** ✅ — validación en vivo (`error?` + `intento`) en Login, Registro, Tipos
+>   de cambio, Objetivos, Asignaciones, Mov. programados, Plantillas, Invitar
+>   miembro (además de las ya hechas: Agregar elemento, Registrar movimiento/ajuste,
+>   Valorizar, Crear hogar, Perfil). `DateField` gana prop `error`.
+> - **I1** ✅ — `accessibilityRole`/`Label`/`State` en todos los `Pressable`
+>   sueltos de pantallas (Categorías, Tipos de elemento, Etiquetas, Notificaciones,
+>   ObjetivoDetalle, Movimientos, Dashboard) y del `Select` de `ui/`.
+> - **G1** — `ListItem` en las listas restantes: **diferido a propósito**. Las que
+>   quedan (Categorías, Tipos de elemento) tienen modo de edición inline +
+>   reordenar + 2 acciones por fila; `ListItem` (título/subtítulo/right/onPress) no
+>   les calza sin perder funcionalidad. No vale la pena forzarlo.
 >
 > Nada de esto toca dominio ni backend.
 

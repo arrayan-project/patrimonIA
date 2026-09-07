@@ -14,8 +14,17 @@ export function RegistroScreen() {
   const [pideCodigo, setPideCodigo] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
+
+  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
+  const errNombre = nombre.trim() ? '' : 'Escribe tu nombre.';
+  const errPassword = password.length >= 8 ? '' : 'Mínimo 8 caracteres.';
 
   const crear = async (registroToken?: string) => {
+    if (!registroToken) {
+      setIntento(true);
+      if (errEmail || errNombre || errPassword) return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -43,12 +52,21 @@ export function RegistroScreen() {
       <Field
         label="Email"
         keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
         placeholder="tu@email.cl"
         editable={!pideCodigo}
+        error={intento ? errEmail : undefined}
       />
-      <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Tu nombre" editable={!pideCodigo} />
+      <Field
+        label="Nombre"
+        value={nombre}
+        onChangeText={setNombre}
+        placeholder="Tu nombre"
+        editable={!pideCodigo}
+        error={intento ? errNombre : undefined}
+      />
       <Field
         label="Contraseña"
         secureTextEntry
@@ -56,6 +74,7 @@ export function RegistroScreen() {
         onChangeText={setPassword}
         placeholder="Mínimo 8 caracteres"
         editable={!pideCodigo}
+        error={intento ? errPassword : undefined}
       />
 
       {pideCodigo ? (
@@ -74,12 +93,7 @@ export function RegistroScreen() {
       ) : (
         <>
           <ErrorText>{error}</ErrorText>
-          <Button
-            title="Crear cuenta"
-            onPress={() => crear()}
-            loading={loading}
-            disabled={!email.trim() || !nombre.trim() || password.length < 8}
-          />
+          <Button title="Crear cuenta" onPress={() => crear()} loading={loading} />
           <LinkButton title="Ya tengo cuenta — iniciar sesión" onPress={() => nav.go('Login')} />
         </>
       )}

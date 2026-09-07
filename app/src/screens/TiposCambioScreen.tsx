@@ -36,6 +36,16 @@ export function TiposCambioScreen() {
   const [destino, setDestino] = useState('CLP');
   const [tasa, setTasa] = useState('');
   const [fecha, setFecha] = useState('');
+  const [intento, setIntento] = useState(false);
+
+  const errOrigen = origen.trim().length === 3 ? '' : 'Código de 3 letras (p. ej. USD).';
+  const errDestino =
+    destino.trim().length !== 3
+      ? 'Código de 3 letras (p. ej. CLP).'
+      : destino.trim().toUpperCase() === origen.trim().toUpperCase()
+        ? 'La moneda destino no puede ser la misma.'
+        : '';
+  const errTasa = Number(tasa) > 0 ? '' : 'Ingresa una tasa mayor a 0.';
 
   const cargar = useCallback(async () => {
     setError('');
@@ -49,6 +59,8 @@ export function TiposCambioScreen() {
   useCargaAlEnfocar(cargar);
 
   const registrar = async () => {
+    setIntento(true);
+    if (errOrigen || errDestino || errTasa) return;
     setBusy(true);
     setError('');
     try {
@@ -83,16 +95,32 @@ export function TiposCambioScreen() {
 
       <Panel>
         <Text style={styles.sectionTitle}>Registrar tasa</Text>
-        <Field label="Moneda origen" value={origen} onChangeText={setOrigen} maxLength={3} />
-        <Field label="Moneda destino" value={destino} onChangeText={setDestino} maxLength={3} />
-        <Field label="Tasa" keyboardType="numeric" value={tasa} onChangeText={setTasa} placeholder="950" />
-        <DateField label="Vigente desde (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
-        <Button
-          title="Registrar"
-          onPress={registrar}
-          loading={busy}
-          disabled={!(Number(tasa) > 0) || origen.trim().length !== 3 || destino.trim().length !== 3}
+        <Field
+          label="Moneda origen"
+          value={origen}
+          onChangeText={setOrigen}
+          maxLength={3}
+          autoCapitalize="characters"
+          error={intento ? errOrigen : undefined}
         />
+        <Field
+          label="Moneda destino"
+          value={destino}
+          onChangeText={setDestino}
+          maxLength={3}
+          autoCapitalize="characters"
+          error={intento ? errDestino : undefined}
+        />
+        <Field
+          label="Tasa"
+          keyboardType="numeric"
+          value={tasa}
+          onChangeText={setTasa}
+          placeholder="950"
+          error={intento ? errTasa : undefined}
+        />
+        <DateField label="Vigente desde (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
+        <Button title="Registrar" onPress={registrar} loading={busy} />
       </Panel>
 
       {lista === null ? (

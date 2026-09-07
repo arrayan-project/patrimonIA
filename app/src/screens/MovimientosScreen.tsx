@@ -241,6 +241,8 @@ export function MovimientosScreen() {
           disabled={periodo === 'Recientes'}
           onPress={() => mover(-1)}
           style={periodo === 'Recientes' && styles.flechaOff}
+          accessibilityRole="button"
+          accessibilityLabel="Período anterior"
         >
           <Text style={styles.flecha}>‹</Text>
         </Pressable>
@@ -250,6 +252,8 @@ export function MovimientosScreen() {
           disabled={periodo === 'Recientes'}
           onPress={() => mover(1)}
           style={periodo === 'Recientes' && styles.flechaOff}
+          accessibilityRole="button"
+          accessibilityLabel="Período siguiente"
         >
           <Text style={styles.flecha}>›</Text>
         </Pressable>
@@ -337,7 +341,12 @@ export function MovimientosScreen() {
           )}
 
           {periodo === 'Recientes' && (
-            <Pressable style={styles.mas} onPress={() => setMesesAtras((n) => n + 3)}>
+            <Pressable
+              style={styles.mas}
+              onPress={() => setMesesAtras((n) => n + 3)}
+              accessibilityRole="button"
+              accessibilityLabel="Cargar 3 meses más"
+            >
               <Text style={styles.link}>Cargar 3 meses más (desde hace {mesesAtras + 3})</Text>
             </Pressable>
           )}

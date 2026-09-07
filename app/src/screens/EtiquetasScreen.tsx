@@ -148,12 +148,23 @@ export function EtiquetasScreen() {
         />
         <Text style={styles.muted}>Color (opcional)</Text>
         <View style={styles.colores}>
-          <Pressable onPress={() => setColor(null)}>
+          <Pressable
+            onPress={() => setColor(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Sin color"
+            accessibilityState={{ selected: !color }}
+          >
             <View style={[styles.swatch, !color && styles.swatchSel, { backgroundColor: c.faint }]} />
           </Pressable>
-          {PALETA_CATEGORIA.map((c) => (
-            <Pressable key={c} onPress={() => setColor(c)}>
-              <View style={[styles.swatch, color === c && styles.swatchSel, { backgroundColor: c }]} />
+          {PALETA_CATEGORIA.map((col) => (
+            <Pressable
+              key={col}
+              onPress={() => setColor(col)}
+              accessibilityRole="button"
+              accessibilityLabel={`Color ${col}`}
+              accessibilityState={{ selected: color === col }}
+            >
+              <View style={[styles.swatch, color === col && styles.swatchSel, { backgroundColor: col }]} />
             </Pressable>
           ))}
         </View>

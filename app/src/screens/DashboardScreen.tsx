@@ -356,7 +356,7 @@ export function DashboardScreen() {
             </Pressable>
           ))}
           {alertas.length > 3 && (
-            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')}>
+            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')} accessibilityRole="button" accessibilityLabel={`Ver todas las alertas (${alertas.length})`}>
               <Text style={[styles.alertaTxt, { color: c.muted }]}>Ver todas ({alertas.length})</Text>
             </Pressable>
           )}
@@ -367,7 +367,7 @@ export function DashboardScreen() {
         <Panel>
           <View style={styles.headRow}>
             <Text style={styles.section}>Primeros pasos</Text>
-            <Pressable hitSlop={8} onPress={cerrarOnboarding}>
+            <Pressable hitSlop={8} onPress={cerrarOnboarding} accessibilityRole="button" accessibilityLabel="Ocultar primeros pasos">
               <Text style={styles.muted}>Ocultar</Text>
             </Pressable>
           </View>
@@ -431,7 +431,7 @@ export function DashboardScreen() {
       <Panel>
         <View style={styles.headRow}>
           <Text style={styles.section}>Flujo de {MESES[hoy.getMonth()]}</Text>
-          <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')}>
+          <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')} accessibilityRole="button" accessibilityLabel="Ver movimientos">
             <Text style={styles.link}>Ver movimientos ›</Text>
           </Pressable>
         </View>
@@ -453,7 +453,7 @@ export function DashboardScreen() {
         <Panel>
           <View style={styles.headRow}>
             <Text style={styles.section}>Objetivos</Text>
-            <Pressable hitSlop={8} onPress={() => nav.go('Planificar')}>
+            <Pressable hitSlop={8} onPress={() => nav.go('Planificar')} accessibilityRole="button" accessibilityLabel="Ir a Planificar">
               <Text style={styles.link}>Planificar ›</Text>
             </Pressable>
           </View>
@@ -494,7 +494,7 @@ function Paso({
   styles: ReturnType<typeof crearEstilos>;
 }) {
   return (
-    <Pressable style={styles.paso} onPress={onPress}>
+    <Pressable style={styles.paso} onPress={onPress} accessibilityRole="button" accessibilityLabel={texto} accessibilityState={{ checked: hecho }}>
       <Text style={{ fontSize: 15 }}>{hecho ? '✓' : '○'}</Text>
       <Text style={[styles.pasoTxt, hecho && { color: c.mutedDim, textDecorationLine: 'line-through' }]}>{texto}</Text>
     </Pressable>

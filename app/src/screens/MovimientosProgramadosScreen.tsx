@@ -46,6 +46,7 @@ export function MovimientosProgramadosScreen() {
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [intento, setIntento] = useState(false);
 
   const [tipo, setTipo] = useState<(typeof TIPOS)[number]>('INGRESO');
   const [monto, setMonto] = useState('');
@@ -78,7 +79,8 @@ export function MovimientosProgramadosScreen() {
   const monedaRef = (usaOrigen ? origen : destino)?.moneda;
 
   const crear = async () => {
-    if (!monedaRef) return;
+    setIntento(true);
+    if (!puedeCrear || !monedaRef) return;
     setBusy(true);
     setError('');
     try {
@@ -116,6 +118,8 @@ export function MovimientosProgramadosScreen() {
     (!usaOrigen || !!origenId) &&
     (!usaDestino || !!destinoId) &&
     (tipo !== 'TRANSFERENCIA' || origenId !== destinoId);
+  const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
+  const errFecha = fechaValida ? '' : 'Elige una fecha.';
 
   return (
     <Screen onRefresh={cargar}>
@@ -156,8 +160,14 @@ export function MovimientosProgramadosScreen() {
       <Panel>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
         <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
-        <MoneyField label="Monto planificado" value={monto} onChange={setMonto} moneda={monedaRef} />
-        <DateField label="Fecha" value={fecha} onChange={setFecha} />
+        <MoneyField
+          label="Monto planificado"
+          value={monto}
+          onChange={setMonto}
+          moneda={monedaRef}
+          error={intento ? errMonto : undefined}
+        />
+        <DateField label="Fecha" value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
         {usaOrigen && (
           <>
             <Text style={styles.label}>Cuenta de origen (de dónde sale)</Text>
@@ -185,7 +195,7 @@ export function MovimientosProgramadosScreen() {
           </>
         )}
         <Field label="Observaciones (opcional)" value={obs} onChangeText={setObs} autoCapitalize="sentences" />
-        <Button title="Programar" onPress={crear} loading={busy} disabled={!puedeCrear} />
+        <Button title="Programar" onPress={crear} loading={busy} />
       </Panel>
 
       <ErrorText>{error}</ErrorText>

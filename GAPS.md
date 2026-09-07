@@ -722,16 +722,15 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | P15 | **G20** (push) | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). |
 | P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). |
 
-### 5 · Pulido de UI pendiente (P2/P3)
+### 5 · Pulido de UI (P2/P3)
 
-| # | Qué | Detalle en |
-|---|-----|-----------|
-| U1 | **H3** — validación en vivo (`error?` + `tocado`/`intento`) en los formularios que aún no la tienen | `UI_UX_BACKLOG.md` §H |
-| U2 | **I1** — barrido de accesibilidad por pantalla de los `Pressable` sueltos | `UI_UX_BACKLOG.md` §I |
-| U3 | **G1** — adoptar `ListItem` en las listas que aún se arman a mano | `UI_UX_BACKLOG.md` §G |
+| # | Qué | Estado |
+|---|-----|--------|
+| U1 | **H3** — validación en vivo (`error?` + `intento`) en los formularios que faltaban | ✅ Fase 53 |
+| U2 | **I1** — `accessibilityRole/Label/State` en los `Pressable` sueltos | ✅ Fase 53 |
+| U3 | **G1** — `ListItem` en las listas restantes | 📋 diferido (rows con edición inline + reordenar; no calzan en `ListItem`) |
 
 ### Siguiente
-Los bloques §1 y §2 (P1–P13) están hechos (Fases 36–46). El frente actual es el
-**despliegue** (P17, `Docs/DESPLIEGUE.md`) + el **pulido de UI** (U1–U3). El
-bloque §4 (P14–P16, proveedores externos) queda **relegado** hasta después del
-despliegue.
+Los bloques §1, §2 y §5 (P1–P13, U1–U2) están hechos. El frente actual es el
+**despliegue** (P17, `Docs/DESPLIEGUE.md`). El bloque §4 (P14–P16, proveedores
+externos) queda **relegado** hasta después del despliegue.
