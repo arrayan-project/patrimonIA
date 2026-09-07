@@ -31,30 +31,35 @@ Variables de entorno del backend (`api/src` las lee vía `@nestjs/config`):
 
 ---
 
-## 1 · Neon (base de datos)
+## 1 · Neon (base de datos)  — ✅ hecho (2026-09-06)
 
-1. Crear cuenta en [neon.tech](https://neon.tech), crear un proyecto (región cercana).
-2. Copiar la **connection string** (formato `postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`).
-3. Cargar el esquema. **No usamos `prisma migrate`** — el esquema vive en SQL a mano:
+- Proyecto: `twilight-truth-92618037`, branch `production`, región `us-east-2`, PostgreSQL 18.
+- Esquema **cargado y verificado**: 32 tablas (todas las migraciones 001–024 plegadas).
+- La connection string (pooled) va como `DATABASE_URL` en Render (paso 2). **Es un
+  secreto** — no la pongas en el repo; solo en Render (y, si corres el backend
+  local contra Neon, en `api/.env`, que está en `.gitignore`).
 
-   ```bash
-   # el esquema consolidado (todas las tablas + las 24 migraciones ya plegadas)
-   psql "postgresql://...neon...?sslmode=require" -f api/db/init/01_schema.sql
-   ```
+**Cómo se hizo** (para reproducir si hay que recrear la DB):
 
-   Si `psql` no está instalado, usa el **SQL Editor** de la consola de Neon y pega
-   el contenido de `api/db/init/01_schema.sql`.
+```bash
+# no hace falta psql instalado — se usa la imagen postgres:16 de Docker
+docker run --rm -i postgres:16 psql -v ON_ERROR_STOP=1 \
+  "postgresql://…neon…-pooler…?sslmode=require" < api/db/init/01_schema.sql
+# validar:
+docker run --rm -i postgres:16 psql "postgresql://…neon…?sslmode=require" -c "\dt"
+```
 
-4. **Validar** antes de tocar Render:
+**NO uses `neon config init` / `neon.ts` / `neon deploy`.** Ese es el sistema de
+migraciones propio de Neon y **choca** con el de este proyecto (SQL a mano en
+`api/db/migrations/` + `prisma db pull`). El `neon` CLI sí sirve para
+`login` / `link` / abrir la consola, pero la gestión de esquema sigue el flujo de
+`api/db/README.md`.
 
-   ```bash
-   psql "postgresql://...neon...?sslmode=require" -c "\dt"
-   ```
-
-   Deben aparecer ~32 tablas (`hogar`, `usuario`, `elemento_patrimonial`, …).
+**Migración nueva** (cuando se agregue `api/db/migrations/NNN_*.sql`): correrla
+también contra Neon con el mismo `docker run … psql … < …NNN.sql`.
 
 > Neon free tier **autosuspende** la DB tras ~5 min sin uso; la primera consulta
-> después la despierta (~0,5 s). No pasa nada, es esperado.
+> después la despierta (~0,5 s). Es esperado.
 
 ---
 
@@ -76,7 +81,17 @@ valores de `DATABASE_URL` y `JWT_SECRET` (marcados `sync: false`).
    - **Start Command**: `npm run start:prod`
    - **Health Check Path**: `/health`
    - **Node version**: la toma de `api/.nvmrc` (22.22.1) / `engines` — no la fuerces a mano.
-3. **Environment**: añadir `DATABASE_URL` y `JWT_SECRET` (paso 0).
+3. **Environment** (pestaña *Environment* del servicio → *Environment Variables* → *Add*):
+
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | la connection string **pooled** de Neon, entre comillas no, tal cual: `postgresql://neondb_owner:…@ep-…-pooler.…neon.tech/neondb?sslmode=require` |
+   | `JWT_SECRET` | el secreto generado en el paso 0 (no el de `api/.env`) |
+   | `AUTH_REGISTRO_TOKEN_REQUERIDO` | `false` |
+
+   `PORT` la inyecta Render sola — no la agregues. Si el arranque falla con un
+   error de `channel_binding`, quita `&channel_binding=require` de la URL.
+
 4. Deploy. Cuando termine, `GET https://<tu-servicio>.onrender.com/health` debe
    responder `{"status":"ok", ...}` con `database: up`.
 
