@@ -612,7 +612,7 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   distinción vive en el modelo, no en un flag de presentación. No cambia el
   patrimonio ni genera comando nuevo. El wizard de alta lo pregunta; la app
   agrupa los `CUSTODIA_INFORMAL` bajo "Encargos y custodia", aparte de las deudas
-  financieras. Ver `Docs/DDD-adenda-naturaleza.md` (prosa para §T y DATABASE_DESIGN)
+  financieras. Ver `Docs/ADENDA-dominio-fases-50-51.md` (prosa para §T y DATABASE_DESIGN)
   y `Docs/DOMINIO_PENDIENTE.md` §B-custodia.
 - **Para decidir**: si más adelante hace falta, un tercer valor para "garantía /
   depósito en prenda" seguiría el mismo patrón (agregar al CHECK).
@@ -645,6 +645,30 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   cuenta). App: la vista Movimientos se unificó en un solo selector de período
   (Mes / Año / Recientes) que muestra KPIs + lista juntos, y agrega
   "Disponible hoy" (líquido real) para el alcance propio.
+
+---
+
+### G30 — Cierre de los hallazgos del análisis de dominio  ✅ RESUELTO (Fase 52)
+Hallazgos F4/F6/F7/F8 de `Docs/mockup/casos-dominio-probados.html` (F1/F2/F3/F5
+ya cerrados en Fases 50–51).
+- **F6/F7 — REQUISITES línea 213** ("la transferencia como un único movimiento en
+  la vista consolidada"): el feed `/hogares/:id/eventos-financieros` ya existía
+  pero (a) ninguna pantalla lo usaba y (b) devolvía movimientos de cuentas
+  PRIVADAS de otros miembros. Ahora `ConsolidacionService.eventosDelHogar`
+  **filtra por §M**: solo eventos que tocan un elemento con
+  `participa_consolidacion` o de propiedad del actor. Se añadió `glosa` y los
+  `elementos` pasan a `{id, nombre}[]`. Pantalla nueva **`MovimientosHogar`**
+  (link en Hogar → Patrimonio): una fila por evento, la transferencia colapsada
+  y neutra. El feed ampliado (objetivos, miembros, valorizaciones) queda fuera
+  por decisión — necesitaría un endpoint agregado sobre `auditoria`.
+- **F4 — guía a Crédito/Deuda** (UX_FLOWS Flujo 1, nota del paso 6): al registrar
+  un INGRESO, un aviso — "¿te lo devuelven / es de un tercero?" — con enlace a
+  crear un Crédito/Deuda (`AgregarElemento` acepta `?categoria=`).
+- **F8 — compra co-financiada**: solo guía UX (elección del usuario), sin cambio
+  de modelo. Al registrar un GASTO, aviso: "¿alguien más aportó? Registra primero
+  una transferencia desde su cuenta a la tuya y luego el gasto completo". El neto
+  ya cuadra con ese patrón; un GASTO con aportes de varias cuentas/personas
+  seguiría siendo una decisión de dominio pendiente si algún día se pide.
 
 ---
 

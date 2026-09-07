@@ -451,6 +451,18 @@ export interface PatrimonioConsolidadoDTO {
   conversionesFaltantes: string[];
 }
 
+export interface EventoConsolidadoDTO {
+  eventoId: string;
+  tipo: string;
+  fecha: string;
+  moneda: string;
+  montoEfectivo: number;
+  anulado: boolean;
+  corregido: boolean;
+  glosa: string | null;
+  elementos: { id: string; nombre: string }[];
+}
+
 export interface MetricasHogarDTO {
   hogarId: string;
   porMoneda: {

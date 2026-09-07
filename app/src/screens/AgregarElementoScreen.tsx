@@ -63,9 +63,13 @@ export function AgregarElementoScreen() {
   const toast = useToast();
   const { key } = useIdempotencyKey();
 
+  const catInicial = CATEGORIAS.includes(nav.route.params?.categoria as (typeof CATEGORIAS)[number])
+    ? (nav.route.params?.categoria as (typeof CATEGORIAS)[number])
+    : 'LIQUIDEZ';
+
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
-  const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('LIQUIDEZ');
+  const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>(catInicial);
   const [tiposCat, setTiposCat] = useState<TipoElementoDTO[]>([]);
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [crearTipo, setCrearTipo] = useState(false);

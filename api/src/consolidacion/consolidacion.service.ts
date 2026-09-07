@@ -184,12 +184,23 @@ export class ConsolidacionService {
   async eventosDelHogar(hogarId: string, actorId: string): Promise<EventoConsolidadoDTO[]> {
     await this.#exigirMiembro(hogarId, actorId);
     const miembros = await this.#miembrosActivos(hogarId);
-    const elementoIds = (
-      await this.prisma.elemento_propietario.findMany({
-        where: { usuario_id: { in: miembros } },
-        select: { elemento_id: true },
-      })
-    ).map((x) => x.elemento_id);
+    const props = await this.prisma.elemento_propietario.findMany({
+      where: { usuario_id: { in: miembros } },
+      select: { elemento_id: true, usuario_id: true },
+    });
+    const propiosDelActor = new Set(
+      props.filter((p) => p.usuario_id === actorId).map((p) => p.elemento_id),
+    );
+    const elementosDelHogar = await this.prisma.elemento_patrimonial.findMany({
+      where: { id: { in: [...new Set(props.map((p) => p.elemento_id))] } },
+      select: { id: true, nombre: true, participa_consolidacion: true },
+    });
+    const nombrePorId = new Map(elementosDelHogar.map((e) => [e.id, e.nombre]));
+    // §M — el actor solo ve eventos que tocan un elemento consolidado del hogar
+    // o de su propiedad; los movimientos privados de otros miembros no se filtran.
+    const elementoIds = elementosDelHogar
+      .filter((e) => e.participa_consolidacion || propiosDelActor.has(e.id))
+      .map((e) => e.id);
 
     const impactosDelHogar = await this.prisma.impacto_patrimonial.findMany({
       where: { elemento_id: { in: elementoIds }, origen_tipo: 'EVENTO_FINANCIERO' },
@@ -237,7 +248,10 @@ export class ConsolidacionService {
         montoEfectivo: Number(e.monto) + delta,
         anulado: e.anulado,
         corregido: deltaPorRaiz.has(e.id),
-        elementos: elementosDelEvento,
+        glosa: e.glosa,
+        elementos: elementosDelEvento
+          .filter((id) => nombrePorId.has(id))
+          .map((id) => ({ id, nombre: nombrePorId.get(id) as string })),
       });
     }
     return filas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));

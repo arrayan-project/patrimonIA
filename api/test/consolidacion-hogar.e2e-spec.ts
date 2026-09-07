@@ -174,8 +174,35 @@ describe('Consolidación y métricas del hogar (e2e)', () => {
     const gasto = ev.body.find((e: { eventoId: string }) => e.eventoId === gastoId);
     expect(gasto.corregido).toBe(true);
     expect(gasto.montoEfectivo).toBe(80_000); // 100k con la corrección plegada
+    expect(gasto.glosa).toBeNull();
+    expect(gasto.elementos[0]).toMatchObject({ id: cuentaA, nombre: 'Cuenta A' });
     // el compensatorio no aparece como fila propia
-    expect(ev.body.every((e: { tipo: string; montoEfectivo: number }) => e.eventoId !== undefined)).toBe(true);
+    expect(ev.body.every((e: { eventoId?: string }) => e.eventoId !== undefined)).toBe(true);
+  });
+
+  it('§M: un movimiento en una cuenta privada de otro miembro no aparece para el actor', async () => {
+    const privadaB = (
+      await elem(tokenB, {
+        nombre: 'Cuenta secreta de B',
+        tipo: 'cuenta_corriente',
+        categoriaFuncional: 'LIQUIDEZ',
+        valorInicial: 300_000,
+        moneda: 'CLP',
+      })
+    ).body.id;
+    const gastoB = (
+      await B(request(http).post('/comandos/RegistrarEventoFinanciero'))
+        .send({ tipo: 'GASTO', monto: 50_000, moneda: 'CLP', elementoOrigenId: privadaB, glosa: 'algo mío', fecha: '2026-03-01' })
+        .expect(201)
+    ).body.id;
+
+    const paraA = await A(request(http).get(`/hogares/${hogarId}/eventos-financieros`)).expect(200);
+    expect(paraA.body.some((e: { eventoId: string }) => e.eventoId === gastoB)).toBe(false);
+
+    const paraB = await B(request(http).get(`/hogares/${hogarId}/eventos-financieros`)).expect(200);
+    const propio = paraB.body.find((e: { eventoId: string }) => e.eventoId === gastoB);
+    expect(propio).toBeDefined();
+    expect(propio.glosa).toBe('algo mío');
   });
 
   it('un no-miembro no accede', async () => {

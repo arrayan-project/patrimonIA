@@ -59,5 +59,11 @@ export interface EventoConsolidadoDTO {
   montoEfectivo: number;
   anulado: boolean;
   corregido: boolean;
-  elementos: string[];
+  glosa: string | null;
+  /**
+   * Elementos afectados (para una transferencia: origen y destino). Solo se
+   * incluyen los que el actor puede ver en el hogar — `participa_consolidacion`
+   * o de su propiedad. Ver `ConsolidacionService.eventosDelHogar`.
+   */
+  elementos: { id: string; nombre: string }[];
 }

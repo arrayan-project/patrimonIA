@@ -167,6 +167,12 @@ export function HogarScreen() {
             icon: 'home-outline',
             onPress: () => nav.go('HogarConsolidado', { hogarId: hogar.id }),
           },
+          {
+            title: 'Movimientos del hogar',
+            subtitle: 'Ingresos, gastos y transferencias sobre el patrimonio consolidado',
+            icon: 'swap-horizontal-outline',
+            onPress: () => nav.go('MovimientosHogar', { hogarId: hogar.id }),
+          },
         ]}
       />
 

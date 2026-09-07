@@ -249,6 +249,25 @@ export function RegistrarMovimientoScreen() {
           equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
         </Paragraph>
       )}
+      {tipo === 'INGRESO' && (
+        <View style={styles.hint}>
+          <Paragraph>
+            ¿Te van a devolver este dinero, o es de un tercero para comprarle algo? No lo
+            registres como ingreso —se sumaría a tus ingresos del mes—. Créalo como un
+            Crédito (te deben) o una Deuda tipo "encargo".
+          </Paragraph>
+          <LinkButton
+            title="Crear un crédito o una deuda"
+            onPress={() => nav.go('AgregarElemento', { categoria: 'CREDITO' })}
+          />
+        </View>
+      )}
+      {tipo === 'GASTO' && (
+        <Paragraph>
+          ¿Alguien más puso parte? Registra primero una transferencia desde su cuenta a la
+          tuya y luego este gasto por el total: así queda el rastro de quién aportó cuánto.
+        </Paragraph>
+      )}
       <MoneyField
         label="Monto"
         value={monto}
@@ -383,6 +402,7 @@ export function RegistrarMovimientoScreen() {
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
   group: { gap: 8 },
+  hint: { gap: 4 },
   label: { fontSize: 13, fontWeight: '600', color: c.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

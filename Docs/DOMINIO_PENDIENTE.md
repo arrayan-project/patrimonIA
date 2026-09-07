@@ -214,7 +214,7 @@ patrón que `CondonarDeuda` vs `DeclararIncobrable`: distinción explícita en e
 modelo, no un flag de UI. No hay comando nuevo, no cambia el patrimonio. El
 wizard de alta lo pregunta; la app muestra los `CUSTODIA_INFORMAL` bajo "Encargos
 y custodia", separados de las deudas/créditos financieros. Prosa para DDD §T y
-DATABASE_DESIGN en `Docs/DDD-adenda-naturaleza.md`.
+DATABASE_DESIGN en `Docs/ADENDA-dominio-fases-50-51.md`.
 
 ### B4 · Comentarios y documentos adjuntos — `REQUISITES §M / §D`
 Listados como tipos de información con visibilidad propia. **No modelados.**

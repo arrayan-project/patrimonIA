@@ -40,6 +40,7 @@ export type RouteName =
   | 'Plantillas'
   | 'EvolucionPatrimonio'
   | 'HogarConsolidado'
+  | 'MovimientosHogar'
   | 'Notificaciones'
   | 'TiposCambio'
   | 'Ajustes'
