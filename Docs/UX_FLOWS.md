@@ -106,37 +106,37 @@ Decisión de UX explícita: el paso 5 requiere que la capa de presentación sepa
 ## Desglose — Flujo 2: Alta de hogar
 
 ```
-[Pantalla: Registro]
-  Campos: email, nombre, contraseña
-  Acción: RegistrarUsuario
-  → [Pantalla: Bienvenida / Elegir camino]
+[Pantalla: Registro]
+  Campos: email, nombre, contraseña
+  Acción: RegistrarUsuario
+  → [Pantalla: Bienvenida / Elegir camino]
 
- [Pantalla: Bienvenida / Elegir camino]
-  "Todo usuario debe pertenecer a un hogar" (mensaje explicativo — REQUISITES Sección B)
-  Opción A: [Crear un hogar nuevo]
-  Opción B: [Tengo una invitación pendiente]
-  Opción C: [Esperar invitación] (estado pasivo, sin acción)
+ [Pantalla: Bienvenida / Elegir camino]
+  "Todo usuario debe pertenecer a un hogar" (mensaje explicativo — REQUISITES Sección B)
+  Opción A: [Crear un hogar nuevo]
+  Opción B: [Tengo una invitación pendiente]
+  Opción C: [Esperar invitación] (estado pasivo, sin acción)
 
-  → Opción A: [Pantalla: Crear Hogar]
-  → Opción B: [Pantalla: Ingresar código/ver invitaciones]
-  → Opción C: [Pantalla: Estado "sin hogar"] (permite reintentar B en cualquier momento)
+  → Opción A: [Pantalla: Crear Hogar]
+  → Opción B: [Pantalla: Ingresar código/ver invitaciones]
+  → Opción C: [Pantalla: Estado "sin hogar"] (permite reintentar B en cualquier momento)
 
- [Pantalla: Crear Hogar]
-  Campo: nombre del hogar
-  Acción: CrearHogar
-  Resultado automático: usuario = Administrador (sin paso adicional, mostrado como confirmación)
-  → [Pantalla: Dashboard del hogar] (vacío, invita a "Agregar tu primer elemento patrimonial" o "Invitar a un miembro")
+ [Pantalla: Crear Hogar]
+  Campo: nombre del hogar
+  Acción: CrearHogar
+  Resultado automático: usuario = Administrador (sin paso adicional, mostrado como confirmación)
+  → [Pantalla: Dashboard del hogar] (vacío, invita a "Agregar tu primer elemento patrimonial" o "Invitar a un miembro")
 
- [Pantalla: Ingresar código/ver invitaciones]
-  Lista de invitaciones pendientes (GET /hogares/{id}/invitaciones?estado=PENDIENTE, filtrado por el usuario invitado)
-  Cada invitación: [Aceptar] [Rechazar]
-  → Aceptar: AceptarInvitacion → [Pantalla: Dashboard del hogar] (ahora con datos existentes del hogar)
-  → Rechazar: RechazarInvitacion → vuelve a [Pantalla: Bienvenida / Elegir camino]
+ [Pantalla: Ingresar código/ver invitaciones]
+  Lista de invitaciones pendientes (GET /hogares/{id}/invitaciones?estado=PENDIENTE, filtrado por el usuario invitado)
+  Cada invitación: [Aceptar] [Rechazar]
+  → Aceptar: AceptarInvitacion → [Pantalla: Dashboard del hogar] (ahora con datos existentes del hogar)
+  → Rechazar: RechazarInvitacion → vuelve a [Pantalla: Bienvenida / Elegir camino]
 
- [Pantalla: Dashboard del hogar → Invitar miembro] (solo visible si rol = Administrador)
-  Campo: email del invitado
-  Acción: InvitarMiembro
-  → Confirmación inline, vuelve al Dashboard
+ [Pantalla: Dashboard del hogar → Invitar miembro] (solo visible si rol = Administrador)
+  Campo: email del invitado
+  Acción: InvitarMiembro
+  → Confirmación inline, vuelve al Dashboard
 ```
 
 Decisión de UX no cubierta por el dominio: qué pasa si un usuario nuevo no tiene invitación pendiente y tampoco quiere crear un hogar todavía — el DDD no prohíbe este estado transitorio (“el usuario puede existir momentáneamente sin hogar”), pero la UX necesita decidir si bloquea el resto de la app en ese estado o permite explorar en modo lectura. Esto no está definido en ningún documento y no es una decisión de dominio — es puramente de producto.
@@ -144,46 +144,46 @@ Decisión de UX no cubierta por el dominio: qué pasa si un usuario nuevo no tie
 ## Desglose — Flujo 5: Objetivo financiero hasta completarse
 
 ```
-[Pantalla: Lista de Objetivos]
-  [+ Nuevo objetivo]
-  → [Pantalla: Crear Objetivo]
+[Pantalla: Lista de Objetivos]
+  [+ Nuevo objetivo]
+  → [Pantalla: Crear Objetivo]
 
- [Pantalla: Crear Objetivo]
-  Campos: nombre, monto objetivo, fecha objetivo (opcional)
-  Acción: CrearObjetivoFinanciero
-  → [Pantalla: Detalle del Objetivo] (progreso = 0%, sin asignaciones)
+ [Pantalla: Crear Objetivo]
+  Campos: nombre, monto objetivo, fecha objetivo (opcional)
+  Acción: CrearObjetivoFinanciero
+  → [Pantalla: Detalle del Objetivo] (progreso = 0%, sin asignaciones)
 
- [Pantalla: Detalle del Objetivo]
-  Barra de progreso (GET /objetivos-financieros/{id}, proyección progreso_objetivo)
-  Lista de asignaciones asociadas (vacía al inicio)
-  [+ Asociar asignación existente] o [+ Crear asignación para este objetivo]
-  → CrearAsignacion (objetivo_asociado = este) → vuelve a Detalle, ahora con la asignación listada
+ [Pantalla: Detalle del Objetivo]
+  Barra de progreso (GET /objetivos-financieros/{id}, proyección progreso_objetivo)
+  Lista de asignaciones asociadas (vacía al inicio)
+  [+ Asociar asignación existente] o [+ Crear asignación para este objetivo]
+  → CrearAsignacion (objetivo_asociado = este) → vuelve a Detalle, ahora con la asignación listada
 
- [Pantalla: Detalle del Objetivo → tap en una asignación]
-  Lista de reservas de esa asignación (GET /asignaciones/{id}/reservas)
-  [+ Nueva reserva]
-  → [Pantalla: Crear Reserva]
+ [Pantalla: Detalle del Objetivo → tap en una asignación]
+  Lista de reservas de esa asignación (GET /asignaciones/{id}/reservas)
+  [+ Nueva reserva]
+  → [Pantalla: Crear Reserva]
 
- [Pantalla: Crear Reserva]
-  Selector: elemento patrimonial origen
-  Campo: monto (con validación de disponibilidad — feedback inline si excede valor libre)
-  Acción: CrearReserva
-  → Vuelve a Detalle del Objetivo, barra de progreso actualizada
+ [Pantalla: Crear Reserva]
+  Selector: elemento patrimonial origen
+  Campo: monto (con validación de disponibilidad — feedback inline si excede valor libre)
+  Acción: CrearReserva
+  → Vuelve a Detalle del Objetivo, barra de progreso actualizada
 
- --- Transición autónoma del sistema (sin pantalla iniciada por el usuario) ---
+ --- Transición autónoma del sistema (sin pantalla iniciada por el usuario) ---
 
- [Notificación: "¡Objetivo completado!"]
-  Se dispara cuando progreso alcanza 100% (política "Completar objetivo", Principio 4)
-  No bloqueante — aparece como notificación/banner, no como modal que interrumpe
-  Acciones disponibles directo desde la notificación:
-  [Ver objetivo] → Detalle del Objetivo (ahora estado = Completado)
-  [Reabrir] → CambiarEstadoObjetivoFinanciero (nuevo estado = En progreso) — un solo tap, sin fricción,
-  porque el Principio 4 exige que el usuario tenga "siempre la última palabra"
+ [Notificación: "¡Objetivo completado!"]
+  Se dispara cuando progreso alcanza 100% (política "Completar objetivo", Principio 4)
+  No bloqueante — aparece como notificación/banner, no como modal que interrumpe
+  Acciones disponibles directo desde la notificación:
+  [Ver objetivo] → Detalle del Objetivo (ahora estado = Completado)
+  [Reabrir] → CambiarEstadoObjetivoFinanciero (nuevo estado = En progreso) — un solo tap, sin fricción,
+  porque el Principio 4 exige que el usuario tenga "siempre la última palabra"
 
- [Pantalla: Detalle del Objetivo — estado Completado]
-  Mismo layout que en progreso, pero con indicador visual de completado
-  El botón [Reabrir] permanece visible y accesible — no se esconde en un menú secundario,
-  porque el DDD trata esto como decisión frecuente y legítima, no una acción excepcional
+ [Pantalla: Detalle del Objetivo — estado Completado]
+  Mismo layout que en progreso, pero con indicador visual de completado
+  El botón [Reabrir] permanece visible y accesible — no se esconde en un menú secundario,
+  porque el DDD trata esto como decisión frecuente y legítima, no una acción excepcional
 ```
 
 Decisión de UX explícita, justificada por el dominio: el botón “Reabrir” no puede estar escondido ni requerir confirmación con fricción alta (ej. “¿estás seguro?” con modal) — porque el Principio 4 del DDD es explícito en que el usuario “conserva siempre la capacidad de editar o revertir manualmente ese cambio ante una decisión repentina”. Un diseño que dificulte revertir estaría violando un principio transversal del dominio, no solo tomando una decisión de estilo.

@@ -15,28 +15,28 @@
 # 1. Hogar (Agregado A)
 
 ```
-hogar
-  id UUID PK
-  nombre TEXT NOT NULL
-  moneda_consolidacion TEXT NOT NULL -- ISO 4217
-  created_at TIMESTAMPTZ NOT NULL
+hogar
+  id UUID PK
+  nombre TEXT NOT NULL
+  moneda_consolidacion TEXT NOT NULL -- ISO 4217
+  created_at TIMESTAMPTZ NOT NULL
 
- membresia
-  id UUID PK
-  hogar_id UUID FK -> hogar.id NOT NULL
-  usuario_id UUID FK -> usuario.id NOT NULL
-  rol TEXT NOT NULL CHECK (rol IN ('ADMINISTRADOR','MIEMBRO'))
-  estado TEXT NOT NULL CHECK (estado IN ('ACTIVA','SALIDA'))
-  created_at TIMESTAMPTZ NOT NULL
-  UNIQUE (hogar_id, usuario_id) WHERE estado = 'ACTIVA'
+ membresia
+  id UUID PK
+  hogar_id UUID FK -> hogar.id NOT NULL
+  usuario_id UUID FK -> usuario.id NOT NULL
+  rol TEXT NOT NULL CHECK (rol IN ('ADMINISTRADOR','MIEMBRO'))
+  estado TEXT NOT NULL CHECK (estado IN ('ACTIVA','SALIDA'))
+  created_at TIMESTAMPTZ NOT NULL
+  UNIQUE (hogar_id, usuario_id) WHERE estado = 'ACTIVA'
 
- invitacion
-  id UUID PK
-  hogar_id UUID FK -> hogar.id NOT NULL
-  emisor_id UUID FK -> usuario.id NOT NULL
-  invitado_id UUID FK -> usuario.id NOT NULL
-  estado TEXT NOT NULL CHECK (estado IN ('PENDIENTE','ACEPTADA','RECHAZADA'))
-  created_at TIMESTAMPTZ NOT NULL
+ invitacion
+  id UUID PK
+  hogar_id UUID FK -> hogar.id NOT NULL
+  emisor_id UUID FK -> usuario.id NOT NULL
+  invitado_id UUID FK -> usuario.id NOT NULL
+  estado TEXT NOT NULL CHECK (estado IN ('PENDIENTE','ACEPTADA','RECHAZADA'))
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Invariantes del agregado → constraint o validación:
@@ -52,14 +52,14 @@ Invariantes del agregado → constraint o validación:
 # 2. Usuario (Agregado B)
 
 ```
-usuario
-  id UUID PK
-  email TEXT NOT NULL UNIQUE
-  nombre TEXT NOT NULL
-  password_hash TEXT NOT NULL
-  preferencias JSONB
-  estado TEXT NOT NULL CHECK (estado IN ('ACTIVO','DESACTIVADO'))
-  created_at TIMESTAMPTZ NOT NULL
+usuario
+  id UUID PK
+  email TEXT NOT NULL UNIQUE
+  nombre TEXT NOT NULL
+  password_hash TEXT NOT NULL
+  preferencias JSONB
+  estado TEXT NOT NULL CHECK (estado IN ('ACTIVO','DESACTIVADO'))
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Observación del DDD: un usuario puede pertenecer a múltiples hogares (vía `membresia`), y puede existir momentáneamente sin hogar (durante alta) — no hay FK obligatoria `usuario.hogar_id`, la relación vive en `membresia`.
@@ -67,29 +67,29 @@ Observación del DDD: un usuario puede pertenecer a múltiples hogares (vía `me
 # 3. Elemento Patrimonial (Agregado E) + Propiedad
 
 ```
-elemento_patrimonial
-  id UUID PK
-  nombre TEXT NOT NULL
-  tipo TEXT NOT NULL -- cuenta_corriente, inmueble, vehiculo, deuda, credito, etc.
-  categoria_funcional TEXT NOT NULL CHECK (categoria_funcional IN
-  ('LIQUIDEZ','RESERVA','INVERSION','ACTIVO','CREDITO','DEUDA'))
-  ambito TEXT NOT NULL CHECK (ambito IN ('PERSONAL','HOGAR'))
-  valor_vigente NUMERIC(18,2) NOT NULL
-  moneda TEXT NOT NULL -- ISO 4217
-  participa_valor_liquido BOOLEAN NOT NULL DEFAULT FALSE
-  participa_consolidacion BOOLEAN NOT NULL DEFAULT FALSE
-  admite_valorizacion BOOLEAN NOT NULL DEFAULT FALSE
-  visibilidad TEXT NOT NULL CHECK (visibilidad IN ('PRIVADA','COMPARTIDA','FAMILIAR'))
-  estado TEXT NOT NULL CHECK (estado IN ('ACTIVO','INACTIVO'))
-  valor_pendiente NUMERIC(18,2) -- solo aplica a DEUDA/CREDITO; NULL en el resto
-  created_at TIMESTAMPTZ NOT NULL
+elemento_patrimonial
+  id UUID PK
+  nombre TEXT NOT NULL
+  tipo TEXT NOT NULL -- cuenta_corriente, inmueble, vehiculo, deuda, credito, etc.
+  categoria_funcional TEXT NOT NULL CHECK (categoria_funcional IN
+  ('LIQUIDEZ','RESERVA','INVERSION','ACTIVO','CREDITO','DEUDA'))
+  ambito TEXT NOT NULL CHECK (ambito IN ('PERSONAL','HOGAR'))
+  valor_vigente NUMERIC(18,2) NOT NULL
+  moneda TEXT NOT NULL -- ISO 4217
+  participa_valor_liquido BOOLEAN NOT NULL DEFAULT FALSE
+  participa_consolidacion BOOLEAN NOT NULL DEFAULT FALSE
+  admite_valorizacion BOOLEAN NOT NULL DEFAULT FALSE
+  visibilidad TEXT NOT NULL CHECK (visibilidad IN ('PRIVADA','COMPARTIDA','FAMILIAR'))
+  estado TEXT NOT NULL CHECK (estado IN ('ACTIVO','INACTIVO'))
+  valor_pendiente NUMERIC(18,2) -- solo aplica a DEUDA/CREDITO; NULL en el resto
+  created_at TIMESTAMPTZ NOT NULL
 
- elemento_propietario
-  id UUID PK
-  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
-  usuario_id UUID FK -> usuario.id NOT NULL
-  porcentaje NUMERIC(5,2) NOT NULL CHECK (porcentaje > 0 AND porcentaje <= 100)
-  UNIQUE (elemento_id, usuario_id)
+ elemento_propietario
+  id UUID PK
+  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
+  usuario_id UUID FK -> usuario.id NOT NULL
+  porcentaje NUMERIC(5,2) NOT NULL CHECK (porcentaje > 0 AND porcentaje <= 100)
+  UNIQUE (elemento_id, usuario_id)
 ```
 
 *Nota de diseño (decisión de sesión): esta tabla guarda solo el estado vigente — sin vigencia temporal ni historial en fila. Visibilidad, participación en consolidación, participación en valor líquido y propiedad son configuración, no hechos económicos: su historial de cambios vive exclusivamente en Auditoría (Sección U), consistente con el Principio C (historial de negocio ≠ auditoría) y con la Sección V (la reconstrucción de estado se construye desde hechos económicos con fecha — eventos, valorizaciones, ajustes — no desde configuración administrativa). *`*CambiarPropiedadElementoPatrimonial*`* hace UPDATE/reemplazo directo de las filas de *`*elemento_propietario*`*, y el valor anterior/posterior queda en la entrada de auditoría correspondiente, no en esta tabla.*
@@ -109,29 +109,29 @@ Decisión de propiedad compartida (confirmada en esta sesión): el % se declara 
 # 4. Evento Financiero (Agregado D) + Impacto Patrimonial (F)
 
 ```
-evento_financiero
-  id UUID PK
-  tipo TEXT NOT NULL CHECK (tipo IN
-  ('INGRESO','GASTO','TRANSFERENCIA','CONVERSION','PRESTAMO'))
-  monto NUMERIC(18,2) NOT NULL
-  moneda TEXT NOT NULL
-  fecha DATE NOT NULL -- fecha del hecho económico
-  asignacion_id UUID FK -> asignacion.id -- NULL si no aplica (opcional)
-  movimiento_programado_origen_id UUID FK -> movimiento_programado.id -- NULL si no viene de materialización
-  correccion_de_id UUID FK -> evento_financiero.id -- NULL salvo si este evento es compensatorio
-  anulado BOOLEAN NOT NULL DEFAULT FALSE
-  created_at TIMESTAMPTZ NOT NULL
-  -- INMUTABLE tras creación, salvo el flag `anulado` (ver AnularEventoFinanciero)
+evento_financiero
+  id UUID PK
+  tipo TEXT NOT NULL CHECK (tipo IN
+  ('INGRESO','GASTO','TRANSFERENCIA','CONVERSION','PRESTAMO'))
+  monto NUMERIC(18,2) NOT NULL
+  moneda TEXT NOT NULL
+  fecha DATE NOT NULL -- fecha del hecho económico
+  asignacion_id UUID FK -> asignacion.id -- NULL si no aplica (opcional)
+  movimiento_programado_origen_id UUID FK -> movimiento_programado.id -- NULL si no viene de materialización
+  correccion_de_id UUID FK -> evento_financiero.id -- NULL salvo si este evento es compensatorio
+  anulado BOOLEAN NOT NULL DEFAULT FALSE
+  created_at TIMESTAMPTZ NOT NULL
+  -- INMUTABLE tras creación, salvo el flag `anulado` (ver AnularEventoFinanciero)
 
- impacto_patrimonial
-  id UUID PK
-  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
-  monto NUMERIC(18,2) NOT NULL -- signo indica entrada/salida
-  origen_tipo TEXT NOT NULL CHECK (origen_tipo IN
-  ('EVENTO_FINANCIERO','VALORIZACION','AJUSTE_PATRIMONIAL'))
-  origen_id UUID NOT NULL -- FK polimórfica: apunta a evento_financiero.id,
-  -- valorizacion.id o ajuste_patrimonial.id según origen_tipo
-  created_at TIMESTAMPTZ NOT NULL
+ impacto_patrimonial
+  id UUID PK
+  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
+  monto NUMERIC(18,2) NOT NULL -- signo indica entrada/salida
+  origen_tipo TEXT NOT NULL CHECK (origen_tipo IN
+  ('EVENTO_FINANCIERO','VALORIZACION','AJUSTE_PATRIMONIAL'))
+  origen_id UUID NOT NULL -- FK polimórfica: apunta a evento_financiero.id,
+  -- valorizacion.id o ajuste_patrimonial.id según origen_tipo
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Invariantes → mecanismo:
@@ -148,15 +148,15 @@ Nota de diseño — FK polimórfica en `impacto_patrimonial`: es la única polim
 # 5. Movimiento Programado (agregado propio)
 
 ```
-movimiento_programado
-  id UUID PK
-  monto_planificado NUMERIC(18,2) NOT NULL
-  moneda TEXT NOT NULL
-  fecha_programada DATE NOT NULL
-  elemento_destino_id UUID FK -> elemento_patrimonial.id NOT NULL
-  observaciones TEXT
-  estado TEXT NOT NULL CHECK (estado IN ('PENDIENTE','MATERIALIZADO','CANCELADO'))
-  created_at TIMESTAMPTZ NOT NULL
+movimiento_programado
+  id UUID PK
+  monto_planificado NUMERIC(18,2) NOT NULL
+  moneda TEXT NOT NULL
+  fecha_programada DATE NOT NULL
+  elemento_destino_id UUID FK -> elemento_patrimonial.id NOT NULL
+  observaciones TEXT
+  estado TEXT NOT NULL CHECK (estado IN ('PENDIENTE','MATERIALIZADO','CANCELADO'))
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 *Nota: *`*evento_financiero.movimiento_programado_origen_id*`* es la referencia inversa que enlaza el evento real con su origen planificado, tras *`*MaterializarMovimientoProgramado*`*. No hay FK en sentido contrario obligatoria — un movimiento programado puede no llegar nunca a materializarse (cancelado).
@@ -166,16 +166,16 @@ Pendiente explícito heredado de la Sección S del DDD: reglas de visibilidad/pr
 # 6. Valorización (Agregado G)
 
 ```
-valorizacion
-  id UUID PK
-  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
-  valor_anterior NUMERIC(18,2) NOT NULL
-  valor_nuevo NUMERIC(18,2) NOT NULL
-  fecha DATE NOT NULL
-  correccion_de_id UUID FK -> valorizacion.id -- NULL salvo si es compensatoria
-  anulada BOOLEAN NOT NULL DEFAULT FALSE
-  created_at TIMESTAMPTZ NOT NULL
-  -- INMUTABLE tras creación salvo flag `anulada`
+valorizacion
+  id UUID PK
+  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
+  valor_anterior NUMERIC(18,2) NOT NULL
+  valor_nuevo NUMERIC(18,2) NOT NULL
+  fecha DATE NOT NULL
+  correccion_de_id UUID FK -> valorizacion.id -- NULL salvo si es compensatoria
+  anulada BOOLEAN NOT NULL DEFAULT FALSE
+  created_at TIMESTAMPTZ NOT NULL
+  -- INMUTABLE tras creación salvo flag `anulada`
 ```
 
 Invariantes → mecanismo:
@@ -189,16 +189,16 @@ Invariantes → mecanismo:
 # 7. Ajuste Patrimonial (Agregado L)
 
 ```
-ajuste_patrimonial
-  id UUID PK
-  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
-  monto NUMERIC(18,2) NOT NULL
-  motivo TEXT NOT NULL -- obligatorio, sin excepción (Sección T, W)
-  fecha DATE NOT NULL
-  correccion_de_id UUID FK -> ajuste_patrimonial.id
-  anulado BOOLEAN NOT NULL DEFAULT FALSE
-  created_at TIMESTAMPTZ NOT NULL
-  CHECK (motivo IS NOT NULL AND motivo <> '')
+ajuste_patrimonial
+  id UUID PK
+  elemento_id UUID FK -> elemento_patrimonial.id NOT NULL
+  monto NUMERIC(18,2) NOT NULL
+  motivo TEXT NOT NULL -- obligatorio, sin excepción (Sección T, W)
+  fecha DATE NOT NULL
+  correccion_de_id UUID FK -> ajuste_patrimonial.id
+  anulado BOOLEAN NOT NULL DEFAULT FALSE
+  created_at TIMESTAMPTZ NOT NULL
+  CHECK (motivo IS NOT NULL AND motivo <> '')
 ```
 
 Invariante clave: `motivo` es `NOT NULL` con CHECK adicional de no-vacío — este es uno de los pocos invariantes de la Sección W que sí es expresable directamente como constraint de columna, sin necesitar lógica de aplicación.
@@ -206,20 +206,20 @@ Invariante clave: `motivo` es `NOT NULL` con CHECK adicional de no-vacío — es
 # 8. Asignación (Agregado H) + Reserva (I)
 
 ```
-asignacion
-  id UUID PK
-  nombre TEXT NOT NULL
-  monto_objetivo NUMERIC(18,2) -- nullable: una asignación puede no tener monto objetivo fijo
-  objetivo_financiero_id UUID FK -> objetivo_financiero.id -- NULL = asignación independiente
-  created_at TIMESTAMPTZ NOT NULL
+asignacion
+  id UUID PK
+  nombre TEXT NOT NULL
+  monto_objetivo NUMERIC(18,2) -- nullable: una asignación puede no tener monto objetivo fijo
+  objetivo_financiero_id UUID FK -> objetivo_financiero.id -- NULL = asignación independiente
+  created_at TIMESTAMPTZ NOT NULL
 
- reserva
-  id UUID PK
-  asignacion_id UUID FK -> asignacion.id NOT NULL
-  elemento_origen_id UUID FK -> elemento_patrimonial.id NOT NULL
-  monto NUMERIC(18,2) NOT NULL CHECK (monto > 0)
-  estado TEXT NOT NULL CHECK (estado IN ('ACTIVA','LIBERADA','CONSUMIDA'))
-  created_at TIMESTAMPTZ NOT NULL
+ reserva
+  id UUID PK
+  asignacion_id UUID FK -> asignacion.id NOT NULL
+  elemento_origen_id UUID FK -> elemento_patrimonial.id NOT NULL
+  monto NUMERIC(18,2) NOT NULL CHECK (monto > 0)
+  estado TEXT NOT NULL CHECK (estado IN ('ACTIVA','LIBERADA','CONSUMIDA'))
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Invariantes → mecanismo:
@@ -233,13 +233,13 @@ Invariantes → mecanismo:
 # 9. Objetivo Financiero (Agregado J)
 
 ```
-objetivo_financiero
-  id UUID PK
-  nombre TEXT NOT NULL
-  monto_objetivo NUMERIC(18,2) NOT NULL
-  fecha_objetivo DATE -- opcional
-  estado TEXT NOT NULL CHECK (estado IN ('EN_PROGRESO','COMPLETADO','CANCELADO'))
-  created_at TIMESTAMPTZ NOT NULL
+objetivo_financiero
+  id UUID PK
+  nombre TEXT NOT NULL
+  monto_objetivo NUMERIC(18,2) NOT NULL
+  fecha_objetivo DATE -- opcional
+  estado TEXT NOT NULL CHECK (estado IN ('EN_PROGRESO','COMPLETADO','CANCELADO'))
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Nota: `progreso_acumulado` no es columna — es una proyección calculada (Sección M/N del DDD: “resultado derivado”, “no se persiste como entidad de negocio”). Se calcula en tiempo de consulta sumando `reserva.monto WHERE estado = 'ACTIVA'` para las asignaciones asociadas a este objetivo, o se materializa en una tabla de proyección de lectura separada (ver sección 11) si el cálculo en vivo resulta costoso.
@@ -247,20 +247,20 @@ Nota: `progreso_acumulado` no es columna — es una proyección calculada (Secci
 # 10. Presupuesto (Agregado K)
 
 ```
-presupuesto
-  id UUID PK
-  tipo TEXT NOT NULL CHECK (tipo IN ('INDIVIDUAL','FAMILIAR'))
-  periodicidad TEXT NOT NULL CHECK (periodicidad IN ('PERIODICO','ESPECIFICO'))
-  intervalo TEXT -- 'MENSUAL','TRIMESTRAL', etc. — NULL si es específico
-  fecha_inicio DATE
-  fecha_fin DATE
-  ingresos_esperados NUMERIC(18,2)
-  gastos_esperados NUMERIC(18,2)
-  ahorro_esperado NUMERIC(18,2)
-  estado TEXT CHECK (estado IN ('ACTIVO','CERRADO'))
-  -- NULL cuando periodicidad = 'PERIODICO' (vigencia calculada por calendario,
-  -- no campo persistido — ver nota en DDD Sección K)
-  created_at TIMESTAMPTZ NOT NULL
+presupuesto
+  id UUID PK
+  tipo TEXT NOT NULL CHECK (tipo IN ('INDIVIDUAL','FAMILIAR'))
+  periodicidad TEXT NOT NULL CHECK (periodicidad IN ('PERIODICO','ESPECIFICO'))
+  intervalo TEXT -- 'MENSUAL','TRIMESTRAL', etc. — NULL si es específico
+  fecha_inicio DATE
+  fecha_fin DATE
+  ingresos_esperados NUMERIC(18,2)
+  gastos_esperados NUMERIC(18,2)
+  ahorro_esperado NUMERIC(18,2)
+  estado TEXT CHECK (estado IN ('ACTIVO','CERRADO'))
+  -- NULL cuando periodicidad = 'PERIODICO' (vigencia calculada por calendario,
+  -- no campo persistido — ver nota en DDD Sección K)
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Invariante → mecanismo: “presupuesto periódico no requiere estado propio, termina por calendario” se traduce directamente: `estado` queda `NULL` para periódicos, y la vigencia se calcula en consulta comparando `fecha_inicio`/`fecha_fin` (derivados del intervalo) contra la fecha actual — no hay job ni trigger que “cierre” un presupuesto periódico.
@@ -268,22 +268,22 @@ Invariante → mecanismo: “presupuesto periódico no requiere estado propio, t
 # 11. Auditoría (Sección U)
 
 ```
-auditoria
-  id UUID PK
-  comando TEXT NOT NULL -- ej. 'RegistrarElementoPatrimonial', 'CorregirValorizacion'
-  usuario_id UUID FK -> usuario.id NOT NULL
-  fecha_hora TIMESTAMPTZ NOT NULL
-  entidad_tipo TEXT NOT NULL -- 'ELEMENTO_PATRIMONIAL','EVENTO_FINANCIERO', etc.
-  entidad_id UUID NOT NULL -- FK polimórfica hacia la entidad afectada
-  valor_anterior JSONB -- condicional: solo en comandos que modifican campo/monto existente
-  valor_posterior JSONB -- condicional: idem
-  motivo TEXT -- condicional: obligatorio en Ajuste, Condonación,
-  -- Incobrabilidad, Corrección; opcional/ausente en creación
-  entidad_relacionada_tipo TEXT -- condicional: p.ej. 'EVENTO_FINANCIERO' en una corrección
-  entidad_relacionada_id UUID -- condicional: id de esa entidad relacionada
-  encadenada_de_id UUID FK -> auditoria.id -- NULL salvo si esta entrada es una política
-  -- que "genera su propia entrada" (Sección U)
-  created_at TIMESTAMPTZ NOT NULL
+auditoria
+  id UUID PK
+  comando TEXT NOT NULL -- ej. 'RegistrarElementoPatrimonial', 'CorregirValorizacion'
+  usuario_id UUID FK -> usuario.id NOT NULL
+  fecha_hora TIMESTAMPTZ NOT NULL
+  entidad_tipo TEXT NOT NULL -- 'ELEMENTO_PATRIMONIAL','EVENTO_FINANCIERO', etc.
+  entidad_id UUID NOT NULL -- FK polimórfica hacia la entidad afectada
+  valor_anterior JSONB -- condicional: solo en comandos que modifican campo/monto existente
+  valor_posterior JSONB -- condicional: idem
+  motivo TEXT -- condicional: obligatorio en Ajuste, Condonación,
+  -- Incobrabilidad, Corrección; opcional/ausente en creación
+  entidad_relacionada_tipo TEXT -- condicional: p.ej. 'EVENTO_FINANCIERO' en una corrección
+  entidad_relacionada_id UUID -- condicional: id de esa entidad relacionada
+  encadenada_de_id UUID FK -> auditoria.id -- NULL salvo si esta entrada es una política
+  -- que "genera su propia entrada" (Sección U)
+  created_at TIMESTAMPTZ NOT NULL
 ```
 
 Campos universales vs. condicionales (traducción directa de Sección U):
