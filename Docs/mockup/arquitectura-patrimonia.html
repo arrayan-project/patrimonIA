@@ -1,0 +1,916 @@
+<!--
+  Arquitectura de PatrimonIA — mapa de navegación + evaluación + propuesta.
+  Documento de análisis. No modifica la app.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura de PatrimonIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ---- tokens: light (complete) ------------------------------------------- */
+:root{
+  --ground:#f3f4f7;
+  --panel:#ffffff;
+  --panel-2:#e9ebef;
+  --ink:#1a1d23;
+  --muted:#5a6069;
+  --faint:#878d97;
+  --rule:#d6d9df;
+  --accent:#3c5f86;
+  --accent-soft:#e9f0f7;
+  --move:#8f5714;   --move-bg:#f5edde;
+  --new:#296b49;    --new-bg:#e0efe7;
+  --drop:#9c3c28;   --drop-bg:#f4e3de;
+  --keep:#5a6069;
+  --shadow:0 1px 2px rgba(20,24,32,.05), 0 10px 30px -16px rgba(20,24,32,.18);
+  --maxcol:760px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0b0c0e;
+    --panel:#141619;
+    --panel-2:#1c1f24;
+    --ink:#e6e8ec;
+    --muted:#969ca6;
+    --faint:#6b717b;
+    --rule:#292d34;
+    --accent:#7ea6d2;
+    --accent-soft:#172431;
+    --move:#d69a52;   --move-bg:#282016;
+    --new:#57b485;    --new-bg:#15251d;
+    --drop:#d3765e;   --drop-bg:#291913;
+    --keep:#969ca6;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 34px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0b0c0e;
+  --panel:#141619;
+  --panel-2:#1c1f24;
+  --ink:#e6e8ec;
+  --muted:#969ca6;
+  --faint:#6b717b;
+  --rule:#292d34;
+  --accent:#7ea6d2;
+  --accent-soft:#172431;
+  --move:#d69a52;   --move-bg:#282016;
+  --new:#57b485;    --new-bg:#15251d;
+  --drop:#d3765e;   --drop-bg:#291913;
+  --keep:#969ca6;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 34px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ text-wrap:balance; line-height:1.15; }
+a{ color:var(--accent); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+
+/* ---- top bar ----------------------------------------------------------- */
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.55rem clamp(1rem,4vw,2.5rem);
+  background:color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rule);
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:.74rem; letter-spacing:.06em; text-transform:uppercase;
+}
+.topbar .wordmark{ color:var(--muted); }
+.topbar button{
+  font:inherit; text-transform:uppercase; letter-spacing:.06em;
+  background:var(--panel); color:var(--muted);
+  border:1px solid var(--rule); border-radius:6px;
+  padding:.28rem .6rem; cursor:pointer;
+}
+.topbar button:hover{ color:var(--ink); border-color:var(--faint); }
+
+.wrap{ max-width:1180px; margin:0 auto; padding:clamp(1.6rem,4vw,3.4rem) clamp(1rem,4vw,2.5rem) 5rem; }
+
+/* ---- masthead -------------------------------------------------------- */
+.masthead{ max-width:var(--maxcol); margin-bottom:clamp(2rem,5vw,3.4rem); }
+.eyebrow{
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 1rem;
+}
+h1{
+  font-family:"Instrument Serif", Georgia, serif;
+  font-weight:400;
+  font-size:clamp(2.4rem,7vw,3.6rem);
+  letter-spacing:-.01em;
+  margin:0 0 .9rem;
+}
+.lede{ font-size:1.075rem; color:var(--muted); margin:0 0 1.4rem; max-width:62ch; }
+.meta{
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:.76rem; color:var(--faint); letter-spacing:.02em;
+  padding-top:1rem; border-top:1px solid var(--rule);
+}
+.meta span{ white-space:nowrap; }
+.meta span + span::before{ content:"·"; margin:0 .55rem; color:var(--rule); }
+
+/* ---- layout / toc --------------------------------------------------- */
+.layout{ display:block; }
+main{ max-width:var(--maxcol); }
+.toc{ display:none; }
+@media (min-width:1060px){
+  .layout{ display:grid; grid-template-columns:196px minmax(0,1fr); gap:clamp(2rem,5vw,4.5rem); align-items:start; }
+  .toc{
+    display:block; position:sticky; top:4.2rem;
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:.76rem; line-height:1.5;
+  }
+  .toc ol{ list-style:none; margin:0; padding:0; }
+  .toc > ol > li{ margin:.15rem 0; }
+  .toc a{ display:block; padding:.28rem .55rem; color:var(--faint); border-left:2px solid transparent; }
+  .toc a:hover{ color:var(--ink); text-decoration:none; }
+  .toc a.on{ color:var(--ink); border-left-color:var(--accent); background:var(--accent-soft); }
+  .toc .sub a{ padding-left:1.3rem; font-size:.72rem; }
+}
+
+/* ---- sections ----------------------------------------------------- */
+section{ margin:clamp(2.6rem,7vw,4.6rem) 0 0; scroll-margin-top:4.5rem; }
+.sec-head{ display:flex; align-items:baseline; gap:.9rem; border-bottom:1px solid var(--rule); padding-bottom:.7rem; margin-bottom:1.6rem; }
+.sec-num{ font-family:"Instrument Serif", Georgia, serif; font-size:2rem; color:var(--accent); line-height:1; }
+h2{ font-size:clamp(1.35rem,3.4vw,1.7rem); font-weight:600; margin:0; }
+h3{ font-size:1.06rem; font-weight:600; margin:2.4rem 0 .9rem; scroll-margin-top:4.5rem; }
+h3 .h3-tag{ font-family:"IBM Plex Mono",monospace; font-size:.66rem; font-weight:500; color:var(--faint); text-transform:uppercase; letter-spacing:.08em; margin-left:.5rem; }
+p{ margin:.9rem 0; }
+main > section > p:first-of-type{ color:var(--muted); }
+
+/* ---- legend ------------------------------------------------------ */
+.legend{ display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; margin:1.4rem 0 0; font-size:.82rem; }
+.legend div{ display:flex; align-items:center; gap:.45rem; color:var(--muted); }
+
+/* ---- tags & chips --------------------------------------------- */
+.chip{
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:.72rem; color:var(--muted);
+  background:var(--panel-2); border:1px solid var(--rule); border-radius:4px;
+  padding:.02rem .34rem; white-space:nowrap;
+}
+.tag{
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:.63rem; text-transform:uppercase; letter-spacing:.05em;
+  padding:.08rem .38rem; border-radius:3px; border:1px solid; white-space:nowrap;
+}
+.tag--keep{ color:var(--keep); border-color:var(--rule); background:transparent; }
+.tag--move{ color:var(--move); border-color:color-mix(in srgb,var(--move) 40%,transparent); background:var(--move-bg); }
+.tag--new{  color:var(--new);  border-color:color-mix(in srgb,var(--new) 40%,transparent);  background:var(--new-bg); }
+.tag--drop{ color:var(--drop); border-color:color-mix(in srgb,var(--drop) 40%,transparent); background:var(--drop-bg); }
+.to{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.74rem; color:var(--accent); }
+
+/* ---- tab branch (details) ---------------------------------- */
+.branch-tools{ display:flex; justify-content:flex-end; margin:.4rem 0 -.2rem; }
+.branch-tools button{
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em;
+  background:none; border:0; color:var(--faint); cursor:pointer; padding:.2rem .3rem;
+}
+.branch-tools button:hover{ color:var(--accent); }
+
+.tab{
+  border:1px solid var(--rule); border-radius:11px;
+  background:var(--panel); box-shadow:var(--shadow);
+  margin:.75rem 0; overflow:hidden;
+}
+.tab > summary{
+  list-style:none; cursor:pointer;
+  display:flex; align-items:center; gap:.55rem; flex-wrap:wrap;
+  padding:.78rem .95rem;
+  font-size:.98rem;
+}
+.tab > summary::-webkit-details-marker{ display:none; }
+.tab > summary::before{
+  content:"▸"; color:var(--faint); font-size:.68rem; flex:none;
+  transition:transform .16s ease;
+}
+.tab[open] > summary::before{ transform:rotate(90deg); }
+.tab > summary:hover{ background:var(--accent-soft); }
+.tab > summary .nm{ font-weight:600; }
+.tab-body{ padding:.35rem 1rem 1rem 1.15rem; border-top:1px solid var(--rule); }
+.tab-body > .desc{ margin:.55rem 0 .7rem; }
+
+.dot{ width:.6rem; height:.6rem; border-radius:50%; background:var(--c,var(--accent)); flex:none; box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--accent)) 20%,transparent); }
+
+/* ---- tree ------------------------------------------------- */
+.tree, .tree ul{ list-style:none; margin:0; padding:0; }
+.tree ul{ padding-left:.95rem; }
+.tree li{ position:relative; padding-left:.95rem; margin:.16rem 0; }
+.tree li::before{ content:""; position:absolute; left:0; top:.66em; width:.62rem; height:1px; background:var(--rule); }
+.tree li::after{ content:""; position:absolute; left:0; top:0; bottom:0; width:1px; background:var(--rule); }
+.tree li:last-child::after{ bottom:auto; height:.66em; }
+.tree > li:first-child{ margin-top:.1rem; }
+
+.node{ display:flex; flex-wrap:wrap; gap:.38rem; align-items:baseline; }
+.node .nm{ font-weight:500; }
+li.sub > .node .nm{ font-weight:400; color:var(--muted); }
+.desc{ font-size:.83rem; color:var(--faint); margin:.06rem 0 0; }
+.desc .to{ font-size:.78rem; }
+
+/* ---- aside / callout ---------------------------------- */
+.aside{
+  border:1px solid var(--rule); border-left:3px solid var(--accent);
+  background:var(--panel); border-radius:8px;
+  padding:1rem 1.15rem; margin:1.6rem 0; font-size:.92rem;
+}
+.aside h4{ margin:0 0 .5rem; font-size:.82rem; text-transform:uppercase; letter-spacing:.07em; color:var(--accent); font-family:"IBM Plex Mono",monospace; font-weight:500; }
+.aside ul{ margin:.4rem 0 0; padding-left:1.1rem; }
+.aside li{ margin:.3rem 0; color:var(--muted); }
+.aside code{ font-family:"IBM Plex Mono",monospace; font-size:.85em; color:var(--ink); }
+
+/* ---- findings ---------------------------------------- */
+.probs{ margin:1.4rem 0 0; }
+.prob{ padding:1.2rem 0; border-top:1px solid var(--rule); }
+.prob:first-child{ border-top:0; padding-top:.4rem; }
+.prob h4{ margin:0 0 .4rem; font-size:1.02rem; font-weight:600; display:flex; gap:.55rem; align-items:baseline; flex-wrap:wrap; }
+.prob h4 .k{ font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--faint); border:1px solid var(--rule); border-radius:4px; padding:.02rem .32rem; }
+.prob p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem; }
+
+/* ---- comparison table ------------------------------- */
+.tablewrap{ overflow-x:auto; margin:1.4rem 0; border:1px solid var(--rule); border-radius:10px; }
+table.cmp{ border-collapse:collapse; width:100%; min-width:560px; font-size:.88rem; }
+.cmp th, .cmp td{ text-align:left; padding:.62rem .8rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+.cmp thead th{
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--faint); background:var(--panel-2); border-bottom:1px solid var(--rule);
+  position:sticky; top:0;
+}
+.cmp tbody tr:last-child td{ border-bottom:0; }
+.cmp tbody tr:hover{ background:var(--accent-soft); }
+.cmp .area{ font-weight:600; }
+.cmp td .chip{ font-size:.68rem; }
+
+/* ---- keeps ------------------------------------------ */
+.keeps{ list-style:none; margin:1rem 0 0; padding:0; }
+.keeps li{ padding:.55rem 0 .55rem 1.5rem; position:relative; color:var(--muted); border-top:1px solid var(--rule); }
+.keeps li:first-child{ border-top:0; }
+.keeps li::before{ content:"="; position:absolute; left:0; top:.55rem; font-family:"IBM Plex Mono",monospace; color:var(--new); font-weight:500; }
+.keeps b{ color:var(--ink); font-weight:600; }
+
+/* ---- thesis --------------------------------------- */
+.thesis{
+  margin:2.4rem 0 0; padding:1.8rem clamp(1.1rem,4vw,2rem);
+  border:1px solid var(--rule); border-radius:12px; background:var(--panel);
+  box-shadow:var(--shadow);
+}
+.thesis p{
+  font-family:"Instrument Serif", Georgia, serif;
+  font-size:clamp(1.3rem,3.2vw,1.7rem); line-height:1.4; margin:0; color:var(--ink);
+}
+.thesis .flow{ font-style:italic; }
+.thesis b{ color:var(--accent); font-weight:400; font-style:normal; }
+.thesis .k{ display:block; margin-top:.9rem; font-family:"IBM Plex Sans",sans-serif; font-size:.9rem; color:var(--muted); line-height:1.6; }
+
+footer{
+  margin-top:4rem; padding-top:1.4rem; border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace; font-size:.75rem; color:var(--faint); line-height:1.7;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; }
+}
+</style>
+
+<div class="topbar">
+  <span class="wordmark">PatrimonIA · documento de trabajo</span>
+  <button id="themeBtn" type="button" aria-label="Cambiar tema">tema: auto</button>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Arquitectura de información · sin cambios de código</p>
+    <h1>Cómo está distribuida la app, y cómo podría estarlo mejor</h1>
+    <p class="lede">
+      El mapa completo de la navegación actual de PatrimonIA —cada pestaña, cada vista y sus
+      elementos—, una lectura de lo que hoy no calza, y una propuesta de reorganización
+      en cinco áreas pensada para gestión patrimonial familiar.
+    </p>
+    <p class="meta">
+      <span>≈42 pantallas</span><span>4 pestañas</span><span>Expo / React&nbsp;Native</span><span>post-rediseño monocromo</span><span>rev. 2026-09-06</span>
+    </p>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Contenido">
+      <ol>
+        <li><a href="#s1">§1 · Estado actual</a></li>
+        <li class="sub"><a href="#s1-raiz">Raíz y acceso</a></li>
+        <li class="sub"><a href="#s1-tabs">Las 4 pestañas</a></li>
+        <li class="sub"><a href="#s1-stack">Pantallas apiladas</a></li>
+        <li class="sub"><a href="#s1-cruce">Entradas duplicadas</a></li>
+        <li><a href="#s2">§2 · Evaluación</a></li>
+        <li><a href="#s3">§3 · Propuesta</a></li>
+        <li class="sub"><a href="#s3-tabla">Hoy → propuesta</a></li>
+        <li class="sub"><a href="#s3-areas">Cinco áreas</a></li>
+        <li class="sub"><a href="#s3-claves">Movimientos clave</a></li>
+        <li class="sub"><a href="#s3-mantiene">Qué se mantiene</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <!-- ============================ §1 ============================ -->
+      <section id="s1">
+        <div class="sec-head"><span class="sec-num">§1</span><h2>Estado actual</h2></div>
+        <p>
+          Árbol literal de la app tal como está construida hoy. Los recuadros
+          <span class="chip">EnCódigo</span> son nombres de ruta reales; las líneas sin recuadro
+          son secciones dentro de una misma pantalla.
+        </p>
+        <div class="legend">
+          <div><span class="tag tag--keep">pestaña</span> nivel de navegación principal</div>
+          <div><span class="to">→ Ruta</span> navega a otra pantalla</div>
+        </div>
+
+        <h3 id="s1-raiz">Raíz y acceso <span class="h3-tag">stack de navegación</span></h3>
+        <ul class="tree">
+          <li>
+            <div class="node"><span class="nm">Sin sesión</span></div>
+            <ul>
+              <li><div class="node"><span class="chip">Registro</span><span class="nm">Crear cuenta</span></div><p class="desc">email · nombre · contraseña → código de registro si el backend lo exige</p></li>
+              <li><div class="node"><span class="chip">Login</span><span class="nm">Iniciar sesión</span></div></li>
+            </ul>
+          </li>
+          <li>
+            <div class="node"><span class="nm">Con sesión, sin hogar</span></div>
+            <ul>
+              <li><div class="node"><span class="chip">Bienvenida</span><span class="nm">Elegir cómo empezar</span></div><p class="desc">Crear un hogar · Tengo una invitación</p></li>
+              <li><div class="node"><span class="chip">CrearHogar</span><span class="nm">Crear hogar</span></div><p class="desc">nombre · moneda de consolidación</p></li>
+              <li><div class="node"><span class="chip">Invitaciones</span><span class="nm">Invitaciones pendientes</span></div><p class="desc">aceptar / rechazar</p></li>
+            </ul>
+          </li>
+          <li>
+            <div class="node"><span class="nm">Con sesión + hogar</span> <span class="tag tag--keep">app</span></div>
+            <p class="desc">4 pestañas + ~34 pantallas apiladas sobre ellas</p>
+          </li>
+        </ul>
+
+        <h3 id="s1-tabs">Las 4 pestañas</h3>
+        <div class="branch-tools"><button type="button" data-expand="s1-tabs-branches">expandir / colapsar todo</button></div>
+        <div id="s1-tabs-branches">
+
+          <details class="tab" open>
+            <summary><span class="chip">Dashboard</span><span class="nm">Inicio</span><span class="tag tag--keep">pestaña 1</span></summary>
+            <div class="tab-body">
+              <p class="desc">Barra superior: pill de mes · botón ojo (ocultar montos) · engranaje <span class="to">→ Ajustes</span></p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Hero “Patrimonio total”</span></div><p class="desc">monto · variación % (30 d) · sparkline (90 d) · sub-stats Libre / Reservado</p></li>
+                <li><div class="node"><span class="nm">Accesos rápidos</span></div><p class="desc">Movimiento <span class="to">→ RegistrarMovimiento</span> · Cuenta <span class="to">→ AgregarElemento</span> · Objetivos <span class="to">→ Objetivos</span> · Programado <span class="to">→ MovimientosProgramados</span></p></li>
+                <li class="sub"><div class="node"><span class="nm">Otras monedas</span></div><p class="desc">sólo si el patrimonio tiene &gt;1 moneda</p></li>
+                <li class="sub"><div class="node"><span class="nm">Primeros pasos</span></div><p class="desc">onboarding; se oculta al completar cuenta + movimiento + objetivo</p></li>
+                <li class="sub"><div class="node"><span class="nm">Hogar activo</span></div><p class="desc">selector, sólo si perteneces a más de un hogar</p></li>
+                <li><div class="node"><span class="nm">Cuentas y bienes</span></div><p class="desc">lista (fila por categoría funcional) <span class="to">→ ElementoDetalle</span> · botones Agregar / Registrar</p></li>
+                <li><div class="node"><span class="nm">Recientes</span></div><p class="desc">últimos 5 movimientos del mes <span class="to">→ MovimientoDetalle</span> · “Ver todo” <span class="to">→ Movimientos</span></p></li>
+                <li class="sub"><div class="node"><span class="nm">Notificaciones</span></div><p class="desc">aparece sólo si hay sin leer <span class="to">→ Notificaciones</span></p></li>
+                <li><div class="node"><span class="nm">FAB “+”</span></div><p class="desc"><span class="to">→ RegistrarMovimiento</span></p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="chip">Movimientos</span><span class="nm">Movimientos</span><span class="tag tag--keep">pestaña 2</span></summary>
+            <div class="tab-body">
+              <p class="desc">Es un reporte, no un libro mayor: agrega y colapsa, no lista todo.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Selector de período</span></div><p class="desc">‹ mes › · segmented Mes / Año</p></li>
+                <li><div class="node"><span class="nm">Alcance</span></div><p class="desc">segmented Míos / Del hogar</p></li>
+                <li><div class="node"><span class="nm">Hero “Balance del período”</span></div><p class="desc">balance · Δ vs. período anterior · sub-stats Ingresos / Gastos</p></li>
+                <li><div class="node"><span class="nm">Gastos por rubro</span></div><p class="desc">dona por categoría</p></li>
+                <li><div class="node"><span class="nm">Lista de movimientos</span></div><p class="desc">fila por movimiento <span class="to">→ MovimientoDetalle</span></p></li>
+                <li class="sub"><div class="node"><span class="nm">Modo Año</span></div><p class="desc">gráfico de barras ingreso vs. gasto por mes</p></li>
+                <li><div class="node"><span class="nm">FAB “+”</span></div><p class="desc"><span class="to">→ RegistrarMovimiento</span></p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="chip">Planificar</span><span class="nm">Planificar</span><span class="tag tag--keep">pestaña 3</span></summary>
+            <div class="tab-body">
+              <p class="desc">Barra: pill “N activos” · botón + <span class="to">→ Objetivos</span></p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">MiniGrid</span></div><p class="desc">En progreso / Completados</p></li>
+                <li><div class="node"><span class="nm">Objetivos</span></div><p class="desc">tarjetas con barra fina <span class="to">→ ObjetivoDetalle</span> · “Ver todos” <span class="to">→ Objetivos</span> · tarjeta “Avance total” si &gt;1 en la misma moneda</p></li>
+                <li><div class="node"><span class="nm">Presupuesto del mes</span></div><p class="desc">tarjeta “Gasto total” del presupuesto vigente <span class="to">→ PresupuestoDetalle</span></p></li>
+                <li><div class="node"><span class="nm">Más herramientas</span> <span class="tag tag--keep">menú</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Presupuestos</span><span class="to">→ Presupuestos</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Asignaciones</span><span class="to">→ Asignaciones</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Movimientos programados</span><span class="to">→ MovimientosProgramados</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Plantillas de movimiento</span><span class="to">→ Plantillas</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Evolución de mi patrimonio</span><span class="to">→ EvolucionPatrimonio</span></div></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="chip">Hogar</span><span class="nm">Hogar</span><span class="tag tag--keep">pestaña 4</span></summary>
+            <div class="tab-body">
+              <p class="desc">Barra: pill nombre del hogar · campana con badge <span class="to">→ Notificaciones</span></p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Hero “Patrimonio consolidado”</span></div><p class="desc">total en moneda del hogar · sub-stats Elementos / Miembros</p></li>
+                <li><div class="node"><span class="nm">Por tipo de activo</span></div><p class="desc">MiniGrid con % por categoría · “Detalle” <span class="to">→ HogarConsolidado</span></p></li>
+                <li><div class="node"><span class="nm">Configuración del hogar</span> <span class="tag tag--keep">menú</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Categorías de movimiento</span><span class="to">→ Categorias</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Tipos de elemento patrimonial</span><span class="to">→ TiposElemento</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Tipos de cambio</span><span class="to">→ TiposCambio</span></div></li>
+                  </ul>
+                </li>
+                <li><div class="node"><span class="nm">Administración</span> <span class="tag tag--keep">menú</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Miembros y roles</span><span class="to">→ GestionHogar</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Invitaciones recibidas</span><span class="to">→ Invitaciones</span></div></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </details>
+
+        </div>
+
+        <h3 id="s1-stack">Pantallas apiladas <span class="h3-tag">agrupadas por área</span></h3>
+        <div class="branch-tools"><button type="button" data-expand="s1-stack-branches">expandir / colapsar todo</button></div>
+        <div id="s1-stack-branches">
+
+          <details class="tab">
+            <summary><span class="chip">Ajustes</span><span class="nm">Ajustes</span><span class="tag tag--keep">desde el engranaje de Inicio</span></summary>
+            <div class="tab-body">
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Apariencia</span></div><p class="desc">Tema: Automático / Claro / Oscuro</p></li>
+                <li><div class="node"><span class="nm">Mi cuenta</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Mi perfil</span><span class="to">→ Perfil</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Etiquetas</span><span class="to">→ Etiquetas</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Agrupaciones de elementos</span><span class="to">→ Agrupaciones</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Plantillas de movimiento</span><span class="to">→ Plantillas</span></div></li>
+                  </ul>
+                </li>
+                <li><div class="node"><span class="nm">Del hogar</span></div><p class="desc">“Configuración del hogar” → reenvía al tab Hogar</p></li>
+                <li><div class="node"><span class="nm">Sesión</span></div><p class="desc">Cerrar sesión</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab">
+            <summary><span class="nm">Elementos patrimoniales</span><span class="tag tag--keep">6 pantallas</span></summary>
+            <div class="tab-body">
+              <ul class="tree">
+                <li><div class="node"><span class="chip">AgregarElemento</span><span class="nm">Wizard de alta</span></div><p class="desc">1&nbsp;tipo (+ crear inline) · categoría · nombre — 2&nbsp;moneda · fecha alta · valor / (deuda: monto, acreedor, término, cuota) · ¿se valoriza? — 3&nbsp;propiedad Solo mía / Compartida con reparto %</p></li>
+                <li><div class="node"><span class="chip">ElementoDetalle</span><span class="nm">Detalle de una cuenta o bien</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Hero valor vigente</span></div></li>
+                    <li class="sub"><div class="node"><span class="nm">Datos</span></div><p class="desc">categoría · tipo · ámbito · visibilidad · estado · fechas alta/baja</p></li>
+                    <li class="sub"><div class="node"><span class="nm">Disponibilidad</span></div><p class="desc">valor − reservado = libre · reservas <span class="to">→ AsignacionDetalle</span></p></li>
+                    <li class="sub"><div class="node"><span class="nm">Deuda / Crédito</span></div><p class="desc">estado operativo · saldo · progreso pagado · contraparte · cuota · tasa · “Registrar interés” <span class="to">→ RegistrarAjuste</span> · Condonar / Declarar incobrable</p></li>
+                    <li class="sub"><div class="node"><span class="nm">Propietarios · Movimientos · Valorizaciones · Ajustes</span></div><p class="desc"><span class="to">→ MovimientoDetalle</span> · <span class="to">→ Valorizar</span> / <span class="to">→ ValorizacionDetalle</span> · <span class="to">→ RegistrarAjuste</span> / <span class="to">→ AjusteDetalle</span></p></li>
+                    <li class="sub"><div class="node"><span class="nm">Valor a una fecha</span></div><p class="desc">reconstrucción histórica</p></li>
+                    <li class="sub"><div class="node"><span class="nm">Editar / estado</span> · <span class="nm">Historial</span></div><p class="desc"><span class="to">→ EditarElemento</span> · <span class="to">→ Historial</span></p></li>
+                  </ul>
+                </li>
+                <li><div class="node"><span class="chip">EditarElemento</span><span class="nm">Editar y ciclo de vida</span></div><p class="desc">datos (Actualización/Corrección) · visibilidad granular (EXISTENCIA/VALOR/MOVIMIENTOS × PRIVADA/COMPARTIDA/FAMILIAR) · ¿cuenta en el patrimonio del hogar? · ¿se valoriza? · propietarios · [deuda] detalle · Estado: desactivar (+ fecha baja) / eliminar / reactivar</p></li>
+                <li><div class="node"><span class="chip">Valorizar</span> <span class="chip">ValorizacionDetalle</span></div><p class="desc">nuevo valor + fecha · ver / corregir / anular</p></li>
+                <li><div class="node"><span class="chip">RegistrarAjuste</span> <span class="chip">AjusteDetalle</span></div><p class="desc">el valor real es Menor / Mayor + diferencia + motivo · modo “interés” preconfigurado desde una deuda</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab">
+            <summary><span class="nm">Movimientos financieros</span><span class="tag tag--keep">5 pantallas</span></summary>
+            <div class="tab-body">
+              <ul class="tree">
+                <li><div class="node"><span class="chip">RegistrarMovimiento</span><span class="nm">Registrar un movimiento</span></div><p class="desc">desde plantilla (opcional) · tipo INGRESO / GASTO / TRANSFERENCIA / CONVERSIÓN · monto · fecha · detalle · categoría (+ crear inline) · origen / destino (buscador si &gt;6) · [transferencia] a elemento de otro miembro · etiquetas</p></li>
+                <li><div class="node"><span class="chip">MovimientoDetalle</span><span class="nm">Detalle de un movimiento</span></div><p class="desc">Hero tipo + monto · datos · acciones en línea: Corregir · Guardar como plantilla · Editar etiquetas · Anular · <span class="to">→ Historial</span></p></li>
+                <li><div class="node"><span class="chip">MovimientosProgramados</span> <span class="chip">MovimientoProgramadoDetalle</span></div><p class="desc">lista + form (tipo, monto, fecha, origen/destino, obs.) · detalle: Materializar ahora / Editar / Cancelar</p></li>
+                <li><div class="node"><span class="chip">Plantillas</span><span class="nm">Plantillas de movimiento</span></div><p class="desc">lista con edición en línea · molde: nombre, tipo, monto, origen/destino, categoría, detalle (sin fecha)</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab">
+            <summary><span class="nm">Planificación</span><span class="tag tag--keep">7 pantallas</span></summary>
+            <div class="tab-body">
+              <ul class="tree">
+                <li><div class="node"><span class="chip">Objetivos</span> <span class="chip">ObjetivoDetalle</span></div><p class="desc">crear (nombre, monto, moneda, ¿compartir?) · detalle: progreso · Asignaciones (+ crear) <span class="to">→ AsignacionDetalle</span> · Compartir con el hogar + designar quién modifica · Estado · Eliminar · <span class="to">→ Historial</span></p></li>
+                <li><div class="node"><span class="chip">Asignaciones</span> <span class="chip">AsignacionDetalle</span></div><p class="desc">Independientes / De un objetivo · detalle: Reservas activas (+ Liberar) · Nueva reserva (cuenta origen + monto) · Eliminar · <span class="to">→ Historial</span></p></li>
+                <li><div class="node"><span class="chip">Presupuestos</span> <span class="chip">PresupuestoDetalle</span> <span class="chip">PresupuestoRubros</span></div><p class="desc">crear (Individual/Familiar, Periódico/Específico, intervalo, montos) · detalle: presupuestado vs. real · Por rubro (dona + esperado/real) · Ahorro por objetivo · Editar / Cerrar / Eliminar</p></li>
+                <li><div class="node"><span class="chip">EvolucionPatrimonio</span><span class="nm">Evolución del patrimonio</span></div><p class="desc">¿cuánto tenía a una fecha? · variación entre dos fechas → gráfico de línea</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab">
+            <summary><span class="nm">Hogar · configuración · personales · transversales</span><span class="tag tag--keep">11 pantallas</span></summary>
+            <div class="tab-body">
+              <ul class="tree">
+                <li><div class="node"><span class="chip">HogarConsolidado</span></div><p class="desc">total · por moneda (neto/activos/pasivos/líquido/liquidez) · distribución de activos (dona) · de pasivos · objetivos del hogar</p></li>
+                <li><div class="node"><span class="chip">GestionHogar</span></div><p class="desc">nombre · moneda de consolidación · miembros (rol, remover) · invitar · salir · [admin] eliminar hogar</p></li>
+                <li><div class="node"><span class="chip">Invitaciones</span></div><p class="desc">pendientes: aceptar / rechazar</p></li>
+                <li><div class="node"><span class="chip">Categorias</span></div><p class="desc">jerárquicas (2 niveles) · reordenar ▲▼ · crear / editar / archivar · categoría padre</p></li>
+                <li><div class="node"><span class="chip">TiposElemento</span></div><p class="desc">reordenar ▲▼ · crear / editar / archivar · categoría sugerida</p></li>
+                <li><div class="node"><span class="chip">TiposCambio</span></div><p class="desc">registrar tasa (origen → destino, tasa, fecha) · histórico</p></li>
+                <li><div class="node"><span class="chip">Perfil</span></div><p class="desc">email · nombre · <b>preferencias de notificación</b> · desactivar cuenta</p></li>
+                <li><div class="node"><span class="chip">Etiquetas</span></div><p class="desc">crear / editar / eliminar + color</p></li>
+                <li><div class="node"><span class="chip">Agrupaciones</span></div><p class="desc">carpetas de elementos: crear / eliminar + elegir elementos</p></li>
+                <li><div class="node"><span class="chip">Notificaciones</span></div><p class="desc">lista; tocar marca leída + navega a la entidad</p></li>
+                <li><div class="node"><span class="chip">Historial</span></div><p class="desc">auditoría de una entidad (quién, cuándo, motivo, campos antes → después)</p></li>
+              </ul>
+            </div>
+          </details>
+
+        </div>
+
+        <div class="aside" id="s1-cruce">
+          <h4>Entradas al mismo destino desde varios sitios</h4>
+          <p style="margin:0;color:var(--muted)">Cuando una pantalla se alcanza desde tres lugares distintos, suele ser señal de que no tiene un hogar claro:</p>
+          <ul>
+            <li><code>Notificaciones</code> — desde Inicio <em>y</em> desde Hogar</li>
+            <li><code>Plantillas</code> — desde Planificar <em>y</em> desde Ajustes</li>
+            <li><code>Objetivos</code> — acceso rápido en Inicio, pill “+” y “ver todos” en Planificar</li>
+            <li><code>RegistrarMovimiento</code> — FAB de Inicio, acceso rápido, botón, FAB de Movimientos, ElementoDetalle</li>
+            <li><code>Categorias</code> / <code>TiposElemento</code> — desde Hogar <em>y</em> creación en línea desde los formularios</li>
+            <li>Configuración del hogar — el tab Hogar la tiene, y Ajustes vuelve a apuntar al tab Hogar</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================ §2 ============================ -->
+      <section id="s2">
+        <div class="sec-head"><span class="sec-num">§2</span><h2>Evaluación</h2></div>
+        <p>
+          La app cubre un dominio grande y está bien modelada por dentro. Lo que cuesta es
+          <em>encontrar</em> las cosas: hay conceptos potentes (reservas, deuda, consolidación,
+          auditoría) que no tienen una casa visible, y pestañas que mezclan modos mentales
+          distintos. Los hallazgos, de mayor a menor impacto:
+        </p>
+
+        <div class="probs">
+
+          <div class="prob">
+            <h4>“Planificar” es un cajón de sastre <span class="k">pestaña 3</span></h4>
+            <p>
+              En una sola pestaña conviven metas de ahorro (aspiración), presupuesto (disciplina
+              mensual), movimientos programados (flujo futuro), plantillas (atajo de tipeo) y
+              evolución del patrimonio (análisis retrospectivo). Son cinco modos mentales.
+              Plantillas no es planificar —es rellenar un formulario más rápido—; evolución es
+              justo lo contrario de planificar —mirar hacia atrás—.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>El concepto de “apartar dinero” está partido en tres <span class="k">asignaciones · reservas</span></h4>
+            <p>
+              “Aparto plata de una cuenta para una meta” aparece en <code>Asignaciones</code>
+              (enterrada en “Más herramientas”), dentro de <code>ObjetivoDetalle</code> y dentro de
+              <code>ElementoDetalle</code> (“Disponibilidad”). Y “libre vs. reservado vs. líquido”
+              se muestra en el hero de Inicio, en el detalle de cada elemento… y en ningún lado
+              consolidado. No hay una vista que responda “¿cuánto tengo comprometido y para qué?”.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>“Cuentas y bienes” no tiene pantalla propia <span class="k">Inicio</span></h4>
+            <p>
+              La lista de todo tu patrimonio sólo existe dentro del scroll de Inicio, entre el
+              onboarding y los recientes. No hay una vista con filtro por categoría
+              (Liquidez / Inversión / Deuda…), orden, ni toggle de archivados. El acceso rápido
+              que dice “Cuenta” lleva a <em>crear</em> una, no a verlas. A medida que crecen los
+              elementos, Inicio se vuelve inmanejable.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>Las deudas son de primera clase en el dominio e invisibles en la navegación</h4>
+            <p>
+              Un hipotecario, una tarjeta, un préstamo por cobrar: tienen saldo, cuotas, tasa,
+              mora, condonación. Son una superficie de gestión distinta a una cuenta corriente.
+              Hoy son filas sueltas en la lista plana. No hay vista “Deudas”, ni total de pasivos
+              a la vista fuera del consolidado del hogar.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>Dos heroes de patrimonio que se pisan <span class="k">Inicio · Hogar</span></h4>
+            <p>
+              Inicio muestra “mi patrimonio”; Hogar muestra “patrimonio consolidado”. Para un
+              hogar de una sola persona son casi el mismo número. La relación real
+              —lo mío es un subconjunto de lo del hogar— no se ve en ninguna parte; son dos
+              tarjetas desconectadas.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>La pestaña “Hogar” mezcla tres cosas</h4>
+            <p>
+              (a) la vista consolidada del patrimonio, (b) configuración de datos compartidos
+              —categorías, tipos de elemento, tipos de cambio— y (c) administración de personas
+              —miembros, roles, invitaciones—. Los tipos de cambio, además, son una tabla de
+              referencia global: no son un concepto “de hogar”.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>La configuración está repartida en tres lugares</h4>
+            <p>
+              El tema vive en Ajustes. Las preferencias de notificación viven en Perfil. La
+              configuración del hogar vive en el tab Hogar. El rediseño quitó la pestaña
+              “Config” pero no unificó su contenido. Etiquetas, Agrupaciones y Plantillas quedaron
+              como “herramientas personales” en Ajustes, lejos de los movimientos y elementos que
+              en realidad organizan.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>“Movimientos” es sólo reporte, no un libro mayor</h4>
+            <p>
+              La pestaña agrega por mes/año (ingresos, gastos, balance, rubros). Quien busca
+              “todas mis transacciones” —una lista cronológica que se pueda buscar y filtrar por
+              cuenta, categoría o etiqueta— no la tiene. A <code>MovimientoDetalle</code> sólo se
+              llega bajando desde un resumen mensual o desde un elemento.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>Las notificaciones no tienen una entrada consistente</h4>
+            <p>
+              Campana en Hogar; enlace en Inicio sólo si hay sin leer; nada en Movimientos ni
+              Planificar. Debería ser el mismo gesto en todas las pestañas.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>El “período” sólo existe en Movimientos</h4>
+            <p>
+              El patrimonio, el presupuesto y los objetivos también tienen dimensión temporal.
+              La pill de mes en Inicio es decorativa —no filtra nada—.
+            </p>
+          </div>
+
+          <div class="prob">
+            <h4>Hay auditoría por entidad, pero no un registro de actividad del hogar</h4>
+            <p>
+              El backend audita cada comando en su transacción. Eso se expone sólo como
+              <code>Historial</code> dentro de cada detalle. Para una app patrimonial familiar,
+              un “quién cambió qué” a nivel de hogar sería muy valioso y ya está todo el dato.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================ §3 ============================ -->
+      <section id="s3">
+        <div class="sec-head"><span class="sec-num">§3</span><h2>Distribución propuesta</h2></div>
+        <p>
+          El modelo mental de la gestión patrimonial es bastante estable:
+          <b>qué valgo</b> (activos − pasivos, en el tiempo) · <b>qué tengo y qué debo</b>
+          (las cuentas, inversiones, bienes, deudas) · <b>el dinero moviéndose</b> (ingresos,
+          gastos, transferencias) · <b>hacia dónde voy</b> (metas, reservas, presupuesto) ·
+          <b>con quién</b> (el hogar). La propuesta ordena la app sobre ese esqueleto: cinco
+          áreas, cada una con un solo modo mental.
+        </p>
+        <div class="legend">
+          <div><span class="tag tag--keep">igual</span> se mantiene donde está</div>
+          <div><span class="tag tag--move">mover</span> cambia de ubicación</div>
+          <div><span class="tag tag--new">nuevo</span> vista o capacidad que hoy no existe</div>
+          <div><span class="tag tag--drop">sacar</span> sale de esta área</div>
+        </div>
+
+        <h3 id="s3-tabla">Hoy → propuesta</h3>
+        <div class="tablewrap">
+          <table class="cmp">
+            <thead>
+              <tr><th>Elemento</th><th>Hoy vive en</th><th>Viviría en</th><th>Cambio</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="area">Lista de cuentas y bienes</td><td>Inicio (scroll)</td><td>Patrimonio (pestaña)</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Deudas</td><td>filas sueltas en la lista</td><td>Patrimonio › grupo con subtotal</td><td><span class="tag tag--new">nuevo</span></td></tr>
+              <tr><td class="area">Patrimonio consolidado del hogar</td><td>pestaña Hogar + <span class="chip">HogarConsolidado</span></td><td>Patrimonio › toggle “Del hogar”</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Evolución del patrimonio</td><td>Planificar › Más herramientas</td><td>Patrimonio › sub-vista</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Registro de movimientos (buscable)</td><td>—</td><td>Movimientos (vista por defecto)</td><td><span class="tag tag--new">nuevo</span></td></tr>
+              <tr><td class="area">Resumen mes / año + dona</td><td>Movimientos</td><td>Movimientos › sub-vista “Resumen”</td><td><span class="tag tag--keep">igual</span></td></tr>
+              <tr><td class="area">Movimientos programados</td><td>Planificar</td><td>Movimientos › sección “Futuros”</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Plantillas de movimiento</td><td>Planificar <em>y</em> Ajustes</td><td>Movimientos + acceso desde “+”</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Objetivos</td><td>Planificar</td><td>Planificar (contenido principal)</td><td><span class="tag tag--keep">igual</span></td></tr>
+              <tr><td class="area">Asignaciones / Reservas</td><td>pantalla suelta enterrada</td><td>dentro de Objetivos + resumen “Reservado”</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Presupuesto</td><td>Planificar</td><td>Planificar</td><td><span class="tag tag--keep">igual</span></td></tr>
+              <tr><td class="area">Categorías de movimiento</td><td>Hogar</td><td>Ajustes › Clasificación</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Tipos de elemento</td><td>Hogar</td><td>Ajustes › Clasificación</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Etiquetas</td><td>Ajustes › Mi cuenta</td><td>Ajustes › Clasificación</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Tipos de cambio</td><td>Hogar</td><td>Ajustes › Datos de referencia</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Agrupaciones</td><td>Ajustes</td><td>Ajustes › Organización</td><td><span class="tag tag--keep">igual</span></td></tr>
+              <tr><td class="area">Preferencias de notificación</td><td>Perfil</td><td>Ajustes › Cuenta</td><td><span class="tag tag--move">mover</span></td></tr>
+              <tr><td class="area">Miembros, roles, invitaciones</td><td>Hogar</td><td>Hogar</td><td><span class="tag tag--keep">igual</span></td></tr>
+              <tr><td class="area">Qué se comparte con el hogar</td><td>—</td><td>Hogar › transparencia</td><td><span class="tag tag--new">nuevo</span></td></tr>
+              <tr><td class="area">Actividad del hogar (quién cambió qué)</td><td>sólo <span class="chip">Historial</span> por entidad</td><td>Hogar › registro</td><td><span class="tag tag--new">nuevo</span></td></tr>
+              <tr><td class="area">Tema</td><td>Ajustes</td><td>Ajustes › Cuenta</td><td><span class="tag tag--keep">igual</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="s3-areas">Cinco áreas</h3>
+        <div class="branch-tools"><button type="button" data-expand="s3-branches">expandir / colapsar todo</button></div>
+        <div id="s3-branches">
+
+          <details class="tab" open>
+            <summary><span class="dot" style="--c:#3c5f86"></span><span class="nm">Resumen</span><span class="tag tag--keep">pestaña 1</span><span class="chip">Dashboard</span></summary>
+            <div class="tab-body">
+              <p class="desc">Sólo vistazo. Nada de gestión.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Campana de notificaciones</span> <span class="tag tag--new">nuevo</span></div><p class="desc">arriba a la derecha, idéntica en las 5 pestañas</p></li>
+                <li><div class="node"><span class="nm">Hero patrimonio neto</span> <span class="tag tag--move">mover</span></div><p class="desc">con toggle Mío / Del hogar aquí mismo · sparkline · variación</p></li>
+                <li><div class="node"><span class="nm">Flujo del mes</span></div><p class="desc">entra / sale / balance <span class="to">→ Movimientos</span></p></li>
+                <li><div class="node"><span class="nm">Avance de objetivos</span></div><p class="desc">barra compacta <span class="to">→ Planificar</span></p></li>
+                <li><div class="node"><span class="nm">Alertas</span> <span class="tag tag--new">nuevo</span></div><p class="desc">deuda en mora · reserva consumida · presupuesto excedido</p></li>
+                <li class="sub"><div class="node"><span class="nm">Onboarding</span></div><p class="desc">sólo una tarjeta descartable arriba, para cuentas nuevas</p></li>
+                <li><div class="node"><span class="nm">Accesos rápidos</span></div><p class="desc">Registrar movimiento · Agregar cuenta</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="dot" style="--c:#2c7550"></span><span class="nm">Patrimonio</span><span class="tag tag--new">pestaña nueva</span></summary>
+            <div class="tab-body">
+              <p class="desc">Qué tengo y qué debo. Absorbe la lista de Inicio, el consolidado del hogar y la evolución.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Toggle Míos / Del hogar</span> <span class="tag tag--move">mover</span></div><p class="desc">reemplaza la pestaña Hogar + <span class="chip">HogarConsolidado</span></p></li>
+                <li><div class="node"><span class="nm">Neto = Activos − Pasivos</span></div><p class="desc">desglose a la vista</p></li>
+                <li><div class="node"><span class="nm">Lista agrupada con subtotales</span> <span class="tag tag--move">mover</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Liquidez · Inversiones · Bienes · Deudas · Por cobrar</span></div><p class="desc">cada grupo colapsable <span class="to">→ ElementoDetalle</span></p></li>
+                    <li class="sub"><div class="node"><span class="nm">Overlay por Agrupación</span></div><p class="desc">opcional · toggle de archivados</p></li>
+                  </ul>
+                </li>
+                <li><div class="node"><span class="nm">Evolución</span> <span class="tag tag--move">mover</span></div><p class="desc">línea + “¿cuánto tenía a la fecha X?” — el análisis vive con lo que analiza</p></li>
+                <li><div class="node"><span class="nm">FAB “+”</span> <span class="to">→ AgregarElemento</span></div></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="dot" style="--c:#8a6d1f"></span><span class="nm">Movimientos</span><span class="tag tag--keep">pestaña 3</span></summary>
+            <div class="tab-body">
+              <p class="desc">El dinero moviéndose. Deja de ser sólo un reporte.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Registro</span> <span class="tag tag--new">nuevo</span></div><p class="desc">vista por defecto: lista cronológica <b>buscable y filtrable</b> (cuenta · categoría · etiqueta · tipo · fechas) <span class="to">→ MovimientoDetalle</span></p></li>
+                <li><div class="node"><span class="nm">Resumen</span> <span class="tag tag--keep">igual</span></div><p class="desc">sub-vista: el reporte mes / año actual — dona + barras</p></li>
+                <li><div class="node"><span class="nm">Futuros</span> <span class="tag tag--move">mover</span></div><p class="desc">sección de movimientos programados <span class="to">→ MovimientoProgramadoDetalle</span></p></li>
+                <li><div class="node"><span class="nm">Plantillas</span> <span class="tag tag--move">mover</span></div><p class="desc">gestión + entran desde el flujo “+”</p></li>
+                <li><div class="node"><span class="nm">FAB “+”</span> <span class="to">→ RegistrarMovimiento</span></div></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="dot" style="--c:#6c4a86"></span><span class="nm">Planificar</span><span class="tag tag--keep">pestaña 4</span></summary>
+            <div class="tab-body">
+              <p class="desc">Hacia dónde voy. Sólo lo genuinamente prospectivo.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Objetivos</span></div>
+                  <ul>
+                    <li class="sub"><div class="node"><span class="nm">Apartados / Reservas dentro del objetivo</span> <span class="tag tag--move">mover</span></div><p class="desc"><code>Asignaciones</code> deja de ser pantalla suelta</p></li>
+                    <li class="sub"><div class="node"><span class="nm">Apartados sin objetivo</span></div><p class="desc">“Fondo de emergencia” y similares, en su propia sección</p></li>
+                  </ul>
+                </li>
+                <li><div class="node"><span class="nm">Reservado — resumen</span> <span class="tag tag--new">nuevo</span></div><p class="desc">total apartado · por cuenta · acción Liberar — consolida el concepto disperso</p></li>
+                <li><div class="node"><span class="nm">Presupuesto</span></div><p class="desc">el vigente al frente + histórico <span class="to">→ PresupuestoDetalle</span></p></li>
+                <li><div class="node"><span class="nm">Evolución · Programados · Plantillas</span> <span class="tag tag--drop">sacar</span></div><p class="desc">a Patrimonio / a Movimientos</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab" open>
+            <summary><span class="dot" style="--c:#8a6d1f"></span><span class="dot" style="--c:#4a7c7c"></span><span class="nm">Hogar</span><span class="tag tag--keep">pestaña 5</span></summary>
+            <div class="tab-body">
+              <p class="desc">Quiénes participan. Sólo personas y lo compartido.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Miembros y roles · invitaciones</span> <span class="tag tag--keep">igual</span></div><p class="desc">recibidas y enviadas <span class="to">→ GestionHogar</span></p></li>
+                <li><div class="node"><span class="nm">Qué se comparte</span> <span class="tag tag--new">nuevo</span></div><p class="desc">elementos en consolidación + objetivos compartidos — vista de transparencia</p></li>
+                <li><div class="node"><span class="nm">Actividad del hogar</span> <span class="tag tag--new">nuevo</span></div><p class="desc">quién cambió qué — el backend ya lo audita todo</p></li>
+                <li><div class="node"><span class="nm">Categorías · Tipos · Tipos de cambio</span> <span class="tag tag--drop">sacar</span></div><p class="desc">a Ajustes</p></li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="tab">
+            <summary><span class="chip">Ajustes</span><span class="nm">Ajustes</span><span class="tag tag--keep">desde el engranaje de Resumen</span></summary>
+            <div class="tab-body">
+              <p class="desc">Todo lo que se configura una vez y se olvida. Un solo lugar.</p>
+              <ul class="tree">
+                <li><div class="node"><span class="nm">Cuenta</span></div><p class="desc">Mi perfil · <b>Notificaciones</b> <span class="tag tag--move">mover</span> (desde Perfil) · Tema</p></li>
+                <li><div class="node"><span class="nm">Clasificación</span> <span class="tag tag--move">mover</span></div><p class="desc">Categorías de movimiento · Tipos de elemento · Etiquetas — las tres juntas</p></li>
+                <li><div class="node"><span class="nm">Datos de referencia</span> <span class="tag tag--move">mover</span></div><p class="desc">Tipos de cambio</p></li>
+                <li><div class="node"><span class="nm">Organización</span></div><p class="desc">Agrupaciones</p></li>
+                <li><div class="node"><span class="nm">Sesión</span></div><p class="desc">Cerrar sesión</p></li>
+              </ul>
+            </div>
+          </details>
+
+        </div>
+
+        <h3 id="s3-claves">Movimientos clave</h3>
+        <ul class="tree" style="margin-top:1rem">
+          <li><div class="node"><span class="tag tag--new">nuevo</span><span class="nm">Pestaña Patrimonio</span></div><p class="desc">le da hogar a la lista de cuentas, a las deudas y a la relación mío ⊂ hogar</p></li>
+          <li><div class="node"><span class="tag tag--new">nuevo</span><span class="nm">Registro de movimientos buscable</span></div><p class="desc">Movimientos deja de ser sólo agregados</p></li>
+          <li><div class="node"><span class="tag tag--move">mover</span><span class="nm">Evolución → Patrimonio</span>, <span class="nm">Programados y Plantillas → Movimientos</span></div><p class="desc">Planificar queda sólo con lo prospectivo</p></li>
+          <li><div class="node"><span class="tag tag--move">mover</span><span class="nm">Asignaciones deja de ser pantalla suelta</span></div><p class="desc">viven dentro del objetivo + un resumen “Reservado”</p></li>
+          <li><div class="node"><span class="tag tag--move">mover</span><span class="nm">Config del hogar → Ajustes</span></div><p class="desc">Categorías, Tipos, Tipos de cambio, Etiquetas y Notificaciones bajo un solo techo</p></li>
+          <li><div class="node"><span class="tag tag--new">nuevo</span><span class="nm">Registro de actividad del hogar</span></div><p class="desc">la auditoría por entidad que ya existe, sumada a nivel de hogar</p></li>
+          <li><div class="node"><span class="tag tag--new">nuevo</span><span class="nm">Campana consistente</span></div><p class="desc">mismo gesto, arriba a la derecha, en las 5 pestañas</p></li>
+        </ul>
+
+        <h3 id="s3-mantiene">Qué se mantiene</h3>
+        <ul class="keeps">
+          <li><b>Todas las pantallas de detalle</b> —<code>ElementoDetalle</code>, <code>MovimientoDetalle</code>, <code>ObjetivoDetalle</code>, <code>PresupuestoDetalle</code>— con sus modos de acción en línea. Funcionan bien.</li>
+          <li><b>El wizard de <code>AgregarElemento</code></b> y su paso de co-propiedad.</li>
+          <li><b><code>Historial</code> de auditoría por entidad</b> — se conserva; la actividad del hogar es un agregado, no un reemplazo.</li>
+          <li><b>El vocabulario visual del rediseño</b> — Hero, fila de transacción, tarjeta de objetivo, MiniGrid, barra fina.</li>
+          <li><b>El flujo de alta</b> — Registro → Login → Bienvenida → CrearHogar / Invitaciones.</li>
+          <li><b>El resumen mes/año con dona y barras</b> — pasa a ser una sub-vista de Movimientos, sin perder nada.</li>
+        </ul>
+
+        <div class="thesis">
+          <p>
+            <span class="flow"><b>Resumen</b> — el vistazo. <b>Patrimonio</b> — qué tengo y qué debo.
+            <b>Movimientos</b> — el dinero moviéndose. <b>Planificar</b> — hacia dónde voy.
+            <b>Hogar</b> — con quién.</span>
+            <span class="k">Y Ajustes fuera del vistazo, tras el engranaje. Cada área, un solo modo mental; cada concepto, una sola casa.</span>
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        Documento de análisis de arquitectura de información. No modifica la app ni su código.<br>
+        Pensado para discutir y ajustar la propuesta antes de tocar navegación o pantallas.
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* theme toggle: auto → light → dark → auto */
+  var order = ["auto","light","dark"];
+  var root = document.documentElement;
+  var btn = document.getElementById("themeBtn");
+  var cur = "auto";
+  try { var s = localStorage.getItem("pat-arq-theme"); if (s && order.indexOf(s) >= 0) cur = s; } catch(e){}
+  function apply(){
+    if (cur === "auto") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", cur);
+    btn.textContent = "tema: " + cur;
+    try { localStorage.setItem("pat-arq-theme", cur); } catch(e){}
+  }
+  apply();
+  btn.addEventListener("click", function(){
+    cur = order[(order.indexOf(cur) + 1) % order.length];
+    apply();
+  });
+
+  /* expand / collapse all within a group */
+  document.querySelectorAll("[data-expand]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var group = document.getElementById(b.getAttribute("data-expand"));
+      if (!group) return;
+      var items = group.querySelectorAll("details.tab");
+      var anyClosed = Array.prototype.some.call(items, function(d){ return !d.open; });
+      items.forEach(function(d){ d.open = anyClosed; });
+    });
+  });
+
+  /* toc scroll-spy */
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  if (links.length && "IntersectionObserver" in window){
+    var byId = {};
+    links.forEach(function(a){ byId[a.getAttribute("href").slice(1)] = a; });
+    var targets = Object.keys(byId).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){
+          links.forEach(function(a){ a.classList.remove("on"); });
+          var a = byId[en.target.id];
+          if (a) a.classList.add("on");
+        }
+      });
+    }, { rootMargin: "-10% 0px -75% 0px", threshold: 0 });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+})();
+</script>

@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PatrimonIA · Propuesta de rediseño C (estilo Rimu)</title>
+<style>
+:root{
+  --bg:#000000; --panel:#0a0a0a; --panelAlt:#111113; --text:#f5f5f5; --muted:#8a8a8e;
+  --mutedDim:#5a5a5e; --border:#1c1c1e; --primary:#f5f5f5; --danger:#ff5c5c; --ok:#34d399;
+  --xs:4px; --sm:8px; --md:12px; --lg:16px; --xl:24px;
+  --r-card:18px; --r-pill:999px;
+}
+:root[data-theme="light"]{
+  --bg:#ffffff; --panel:#f7f7f8; --panelAlt:#efeff1; --text:#0a0a0a; --muted:#6b6b70;
+  --mutedDim:#9a9a9e; --border:#e4e4e6; --primary:#0a0a0a; --danger:#c0392b; --ok:#1e8e5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#1a1a1a;color:var(--text);-webkit-font-smoothing:antialiased}
+
+.chrome-top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 16px;background:#151516;border-bottom:1px solid #262628}
+.chrome-top h1{font-size:14px;margin:0;font-weight:700;color:#fff}
+.chrome-top .hint{font-size:12px;color:#8a8a8e}
+.chrome-top .sep{flex:1}
+.seg-tema{display:inline-flex;border:1px solid #333;border-radius:8px;overflow:hidden}
+.seg-tema button{border:0;background:#151516;color:#ccc;font:inherit;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer}
+.seg-tema button[aria-pressed="true"]{background:#fff;color:#000}
+
+.layout{display:flex;gap:24px;align-items:flex-start;padding:24px 16px;max-width:1300px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.col .caption{font-size:12px;color:#a8a8ac;text-align:center;max-width:380px;font-weight:600}
+.col .subcaption{font-size:11px;color:#6a6a6e;text-align:center;max-width:380px;margin-top:-6px}
+
+.device{width:375px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:36px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;height:800px}
+.notch{height:26px;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.notch::before{content:"";width:90px;height:6px;border-radius:3px;background:var(--border)}
+.viewport{flex:1;overflow:auto;background:var(--bg)}
+.screen-body{padding:16px 16px 90px;display:flex;flex-direction:column;gap:14px}
+
+.tabbar{display:flex;background:var(--bg);border-top:1px solid var(--border);padding-bottom:6px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 4px;font-size:9px;color:var(--mutedDim);letter-spacing:.2px}
+.tab.active{color:var(--text)}
+
+/* pill de fecha/filtro — patrón Rimu exacto */
+.pill-date{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:12px;color:var(--text);font-weight:500}
+.top-row{display:flex;align-items:center;justify-content:space-between}
+.top-actions{display:flex;gap:8px}
+.icon-btn{width:34px;height:34px;border-radius:17px;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:14px;position:relative}
+
+/* HERO — número gigante + línea con degradado, firma visual de Rimu */
+.hero{padding:2px 2px 0}
+.hero .lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.hero .row-val{display:flex;align-items:center;gap:10px;margin-top:6px}
+.hero .val{font-size:34px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+.hero .chg{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.hero .chg.neg{background:rgba(255,92,92,.15);color:var(--danger)}
+.hero .chg.pos{background:rgba(52,211,153,.15);color:var(--ok)}
+.hero .sub-stats{display:flex;gap:18px;margin-top:8px}
+.hero .sub-stats span{font-size:12px;color:var(--muted)}
+.hero .sub-stats b{color:var(--text);font-weight:600}
+
+.chart-wrap{margin-top:12px}
+.chart-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--mutedDim)}
+
+.action-row{display:flex;gap:10px;margin-top:4px}
+.action-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0}
+.action-btn .ic{width:44px;height:44px;border-radius:22px;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px}
+.action-btn .t{font-size:10px;color:var(--muted);font-weight:500}
+
+.group-lbl{font-size:10px;font-weight:700;color:var(--mutedDim);text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.group-lbl .link{color:var(--muted);font-weight:600;text-transform:none}
+
+/* fila de transacción — ícono cuadrado de marca + monto derecho, patrón Rimu exacto */
+.tx-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--panelAlt)}
+.tx-row:last-child{border-bottom:0}
+.tx-row .logo{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none;color:#fff}
+.tx-row .main{flex:1;min-width:0}
+.tx-row .t{font-size:14px;font-weight:600;color:var(--text)}
+.tx-row .s{font-size:11px;color:var(--mutedDim);margin-top:1px}
+.tx-row .amt{font-size:14px;font-weight:700;color:var(--text)}
+.tx-row .amt.neg{color:var(--text)}
+.tx-row .amt.pos{color:var(--ok)}
+
+/* diferenciación real vs virtual: sin color chillón, con ícono + etiqueta discreta en mayúsculas (fiel al lenguaje tipográfico Rimu) */
+.tx-row.virtual .logo{background:var(--panelAlt);border:1px dashed var(--border);color:var(--muted)}
+.tx-row.virtual .s{color:var(--muted)}
+.tx-row.virtual .s .tag{color:#8b5cf6;font-weight:700;letter-spacing:.3px}
+
+/* tarjetas de objetivo — número % grande a la derecha, línea de progreso fina */
+.card-obj{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px 16px}
+.card-obj .top{display:flex;justify-content:space-between;align-items:baseline}
+.card-obj .name{font-size:14px;font-weight:600;color:var(--text)}
+.card-obj .days{font-size:11px;color:var(--mutedDim)}
+.card-obj .bar{height:3px;background:var(--panelAlt);border-radius:2px;margin-top:10px;overflow:hidden}
+.card-obj .bar i{display:block;height:100%;background:var(--text)}
+.card-obj .foot{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--mutedDim)}
+
+/* grid de mini-cuentas sin sombra, separadas por fondo, patrón "metrics" de Rimu */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px}
+.mini-panel .lbl{font-size:10px;color:var(--mutedDim);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.mini-panel .val{font-size:19px;font-weight:700;color:var(--text);margin-top:4px}
+.mini-panel .sub{font-size:11px;color:var(--mutedDim);margin-top:2px}
+
+.list-menu{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.list-menu .fila{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--panelAlt)}
+.list-menu .fila:last-child{border-bottom:0}
+.list-menu .fila .ic{width:20px;text-align:center;opacity:.85;font-size:14px}
+.list-menu .fila .t{flex:1;font-size:13px;color:var(--text);font-weight:500}
+.list-menu .fila .chev{color:var(--mutedDim);font-size:14px}
+
+.fab{position:absolute;right:18px;bottom:82px;width:52px;height:52px;border-radius:26px;background:var(--text);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.fab svg{width:22px;height:22px}
+.fab svg *{stroke:var(--bg)}
+.viewport{position:relative}
+
+.notas-cambio{background:#0f0f10;border:1px solid #222;border-radius:12px;padding:16px;max-width:375px;font-size:13px;line-height:20px;color:#ddd}
+.notas-cambio h3{font-size:12px;margin:0 0 8px;text-transform:uppercase;color:#8a8a8e;letter-spacing:.6px}
+.notas-cambio ul{margin:0;padding-left:18px}
+.notas-cambio li{margin-bottom:7px}
+.notas-cambio b{color:#fff}
+</style>
+</head>
+<body>
+
+<div class="chrome-top">
+  <h1>PatrimonIA · Propuesta de rediseño (variante C, estilo Rimu)</h1>
+  <span class="hint">Negro puro, hero de línea con degradado, tipografía condensada — fiel al lenguaje visual de Rimu</span>
+  <span class="sep"></span>
+  <span class="hint">Tema</span>
+  <div class="seg-tema" id="segTema">
+    <button data-tema="oscuro" aria-pressed="true">Oscuro (Rimu)</button>
+    <button data-tema="claro" aria-pressed="false">Claro (nuevo)</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ============ INICIO ============ -->
+  <div class="col">
+    <div class="caption">1. Inicio — hero de patrimonio con gráfico de línea</div>
+    <div class="subcaption">Número gigante blanco + curva con degradado hacia transparente, igual que "Balance" y "Net Worth" de Rimu. Accesos rápidos como iconos circulares debajo, no tabs.</div>
+    <div class="device">
+      <div class="notch"></div>
+      <div class="viewport">
+        <div class="screen-body">
+          <div class="top-row">
+            <div class="pill-date">📅 Julio 2026</div>
+            <div class="top-actions">
+              <div class="icon-btn">👁️</div>
+              <div class="icon-btn">+</div>
+            </div>
+          </div>
+
+          <div class="hero">
+            <div class="lbl">Patrimonio total</div>
+            <div class="row-val">
+              <div class="val">$18.450.000</div>
+              <div class="chg pos">▲ 2,3%</div>
+            </div>
+            <div class="sub-stats">
+              <span>Libre <b>1.300.000</b></span>
+              <span>Reservado <b>1.900.000</b></span>
+            </div>
+            <div class="chart-wrap">
+              <svg width="100%" height="90" viewBox="0 0 343 90" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="var(--text)" stop-opacity="0.18"/>
+                    <stop offset="1" stop-color="var(--text)" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,70 L0,55 C40,50 60,20 100,18 C150,15 180,35 230,30 C270,26 300,10 343,8 L343,90 L0,90 Z" fill="url(#g1)"/>
+                <path d="M0,55 C40,50 60,20 100,18 C150,15 180,35 230,30 C270,26 300,10 343,8" fill="none" stroke="var(--text)" stroke-width="2"/>
+              </svg>
+              <div class="chart-labels"><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span></div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <div class="action-btn"><div class="ic">↕️</div><div class="t">Movimiento</div></div>
+            <div class="action-btn"><div class="ic">💰</div><div class="t">Cuentas</div></div>
+            <div class="action-btn"><div class="ic">📅</div><div class="t">Programado</div></div>
+            <div class="action-btn"><div class="ic">🏷️</div><div class="t">Categorías</div></div>
+          </div>
+
+          <div class="group-lbl"><span>Recientes</span><span class="link">Ver todo ›</span></div>
+          <div class="tx-row">
+            <div class="logo" style="background:#1a4fd6">🏦</div>
+            <div class="main"><div class="t">Sueldo</div><div class="s">Cuenta corriente · 5 sep</div></div>
+            <div class="amt pos">+2.200.000</div>
+          </div>
+          <div class="tx-row virtual">
+            <div class="logo">🚗</div>
+            <div class="main"><div class="t">Mantención auto</div><div class="s"><span class="tag">RESERVADO</span> · en Fintual</div></div>
+            <div class="amt">400.000</div>
+          </div>
+          <div class="tx-row">
+            <div class="logo" style="background:#16a34a">🛒</div>
+            <div class="main"><div class="t">Supermercado Jumbo</div><div class="s">Cuenta RUT · 12 sep</div></div>
+            <div class="amt neg">−86.400</div>
+          </div>
+          <div class="tx-row">
+            <div class="logo" style="background:#dc2626">🏠</div>
+            <div class="main"><div class="t">Dividendo hipotecario</div><div class="s">Cuenta corriente · 2 sep</div></div>
+            <div class="amt neg">−1.000.000</div>
+          </div>
+
+        </div>
+        <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active">🏠<span>Inicio</span></div>
+        <div class="tab">📊<span>Movimientos</span></div>
+        <div class="tab">🎯<span>Planificar</span></div>
+        <div class="tab">👪<span>Hogar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PLANIFICAR ============ -->
+  <div class="col">
+    <div class="caption">2. Planificar — línea de tiempo + tarjetas de objetivo</div>
+    <div class="subcaption">Timeline vertical de hitos (patrón exacto de "Objetivos" de Rimu), tarjetas con barra de progreso fina blanca en vez de azul saturado — coherente con la paleta monocroma.</div>
+    <div class="device">
+      <div class="notch"></div>
+      <div class="viewport">
+        <div class="screen-body">
+          <div class="top-row">
+            <div class="pill-date">🎯 2 activos</div>
+            <div class="icon-btn">+</div>
+          </div>
+
+          <div class="grid2">
+            <div class="mini-panel">
+              <div class="lbl">Adelantados</div>
+              <div class="val" style="color:var(--ok)">1</div>
+            </div>
+            <div class="mini-panel">
+              <div class="lbl">Atrasados</div>
+              <div class="val" style="color:var(--danger)">1</div>
+            </div>
+          </div>
+
+          <div class="group-lbl">Línea de tiempo</div>
+          <div class="card-obj">
+            <div class="top"><span class="name">🏠 Pie vivienda</span><span class="days">156d</span></div>
+            <div class="bar"><i style="width:20%"></i></div>
+            <div class="foot"><span>2.000.000 / 10.000.000</span><span>20%</span></div>
+          </div>
+          <div class="card-obj">
+            <div class="top"><span class="name">✈️ Vacaciones dic.</span><span class="days">45d</span></div>
+            <div class="bar"><i style="width:76%;background:var(--ok)"></i></div>
+            <div class="foot"><span>380.000 / 500.000</span><span style="color:var(--ok)">76%</span></div>
+          </div>
+
+          <div class="group-lbl">Presupuesto de septiembre</div>
+          <div class="card-obj">
+            <div class="top"><span class="name">Gasto total</span><span class="days">62%</span></div>
+            <div class="bar"><i style="width:62%"></i></div>
+            <div class="foot"><span>1.180.400 gastado</span><span>de 1.900.000</span></div>
+          </div>
+
+          <div class="group-lbl">Más herramientas</div>
+          <div class="list-menu">
+            <div class="fila"><span class="ic">📌</span><span class="t">Asignaciones</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">📋</span><span class="t">Plantillas de movimiento</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">📈</span><span class="t">Evolución del patrimonio</span><span class="chev">›</span></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab">🏠<span>Inicio</span></div>
+        <div class="tab">📊<span>Movimientos</span></div>
+        <div class="tab active">🎯<span>Planificar</span></div>
+        <div class="tab">👪<span>Hogar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOGAR ============ -->
+  <div class="col">
+    <div class="caption">3. Hogar — consolidado en mini-panels, config en lista</div>
+    <div class="subcaption">Distribución de patrimonio como grid de métricas (patrón "Metrics" de estudios/hábitos de Rimu) en vez de dona — más coherente con la estética plana y monocroma.</div>
+    <div class="device">
+      <div class="notch"></div>
+      <div class="viewport">
+        <div class="screen-body">
+          <div class="top-row">
+            <div class="pill-date">👪 Casa Riquelme</div>
+            <div class="icon-btn">🔔<span style="position:absolute;top:-4px;right:-4px;background:var(--danger);width:15px;height:15px;border-radius:8px;font-size:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">2</span></div>
+          </div>
+
+          <div class="hero">
+            <div class="lbl">Patrimonio consolidado</div>
+            <div class="row-val"><div class="val">$61.270.000</div></div>
+          </div>
+
+          <div class="group-lbl">Por tipo de activo</div>
+          <div class="grid2">
+            <div class="mini-panel">
+              <div class="lbl">Bienes raíces</div>
+              <div class="val">75%</div>
+              <div class="sub">52.000.000</div>
+            </div>
+            <div class="mini-panel">
+              <div class="lbl">Inversiones</div>
+              <div class="val">18%</div>
+              <div class="sub">4.100.000</div>
+            </div>
+            <div class="mini-panel">
+              <div class="lbl">Liquidez</div>
+              <div class="val">7%</div>
+              <div class="sub">1.850.000</div>
+            </div>
+            <div class="mini-panel">
+              <div class="lbl">Miembros</div>
+              <div class="val">3</div>
+              <div class="sub">activos</div>
+            </div>
+          </div>
+
+          <div class="group-lbl">Configuración del hogar</div>
+          <div class="list-menu">
+            <div class="fila"><span class="ic">📋</span><span class="t">Categorías de movimiento</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">🏷️</span><span class="t">Tipos de elemento patrimonial</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">💱</span><span class="t">Tipos de cambio</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">👥</span><span class="t">Miembros y roles</span><span class="chev">›</span></div>
+            <div class="fila"><span class="ic">✉️</span><span class="t">Invitaciones recibidas</span><span class="chev">›</span></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab">🏠<span>Inicio</span></div>
+        <div class="tab">📊<span>Movimientos</span></div>
+        <div class="tab">🎯<span>Planificar</span></div>
+        <div class="tab active">👪<span>Hogar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ NOTAS ============ -->
+  <div class="col" style="align-self:flex-start">
+    <div class="notas-cambio">
+      <h3>Qué tomé de Rimu, específicamente</h3>
+      <ul>
+        <li><b>Negro puro (#000), no gris oscuro.</b> Tu tema actual usa #08090a — Rimu usa negro real sin matiz. Cambié el fondo a puro negro y los paneles a #0a0a0a casi indistinguibles, separados por espacio, no por bordes marcados.</li>
+        <li><b>El hero de "Balance" de Rimu</b> — número gigante blanco, cambio porcentual en pill de color, y la curva de línea con degradado hacia transparente debajo — es su pieza más fuerte. La repliqué exacta para tu patrimonio total.</li>
+        <li><b>Tipografía en mayúsculas pequeñas con tracking amplio</b> para labels ("NET WORTH", "RECENT") — así se sienten los "Patrimonio total", "Recientes", "Más herramientas" acá.</li>
+        <li><b>Casi cero color, excepto rojo/verde para signo.</b> Nada de azul primario dominante como en tu paleta original — el blanco es el protagonista, el color se reserva para lo que importa (negativo, positivo, atrasado).</li>
+        <li><b>Barra de progreso fina blanca (3px)</b>, no gruesa azul — mismo patrón que sus barras de objetivo/hábito.</li>
+        <li><b>Ícono de app/categoría en cuadrado de color sólido</b> para transacciones (como Netflix rojo, Spotify verde en su lista) — más reconocible al escaneo que un ícono outline genérico.</li>
+        <li><b>Riesgo real que debes evaluar:</b> este estilo es precioso pero es <i>de alto contraste y muy denso en información fría</i> — funciona para alguien que ya ama los números (tu perfil). Puede sentirse frío o intimidante para un familiar/amigo sin ese gusto. Es la variante más "para ti", la menos "para adopción masiva".</li>
+        <li><b>Modo claro (nuevo, no existe en Rimu):</b> usa los mismos tokens invertidos — blanco puro en vez de negro puro, paneles gris muy claro casi imperceptibles, texto casi negro. Mantiene la misma jerarquía (número gigante, curva con degradado, barra fina, mayúsculas con tracking) para que ambos temas se sientan como la misma app, no como dos diseños distintos pegados con cinta.</li>
+        <li><b>Prueba el toggle arriba a la derecha</b> — cambia entre "Oscuro (Rimu)" y "Claro (nuevo)" en las 3 pantallas a la vez.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+document.getElementById('segTema').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#segTema button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+  if(b.dataset.tema==='claro') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+});
+</script>
+</body>
+</html>

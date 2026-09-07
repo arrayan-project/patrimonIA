@@ -1,0 +1,581 @@
+<!--
+  Casos del dominio probados contra la app PatrimonIA (backend en vivo + datos seed).
+  Documento de análisis / QA de comportamiento. Companion de "Arquitectura de PatrimonIA".
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casos del dominio probados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#f3f4f7; --panel:#ffffff; --panel-2:#e9ebef;
+  --ink:#1a1d23; --muted:#5a6069; --faint:#878d97; --rule:#d6d9df;
+  --accent:#3c5f86; --accent-soft:#e9f0f7;
+  --ok:#296b49;   --ok-bg:#e0efe7;
+  --warn:#8f5714; --warn-bg:#f5edde;
+  --bad:#9c3c28;  --bad-bg:#f4e3de;
+  --shadow:0 1px 2px rgba(20,24,32,.05), 0 10px 30px -16px rgba(20,24,32,.18);
+  --maxcol:770px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0b0c0e; --panel:#141619; --panel-2:#1c1f24;
+    --ink:#e6e8ec; --muted:#969ca6; --faint:#6b717b; --rule:#292d34;
+    --accent:#7ea6d2; --accent-soft:#172431;
+    --ok:#57b485;   --ok-bg:#15251d;
+    --warn:#d69a52; --warn-bg:#282016;
+    --bad:#d3765e;  --bad-bg:#291913;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 34px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0b0c0e; --panel:#141619; --panel-2:#1c1f24;
+  --ink:#e6e8ec; --muted:#969ca6; --faint:#6b717b; --rule:#292d34;
+  --accent:#7ea6d2; --accent-soft:#172431;
+  --ok:#57b485; --ok-bg:#15251d;
+  --warn:#d69a52; --warn-bg:#282016;
+  --bad:#d3765e; --bad-bg:#291913;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 34px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ text-wrap:balance; line-height:1.16; }
+a{ color:var(--accent); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+code, .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.55rem clamp(1rem,4vw,2.5rem);
+  background:color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--rule);
+  font-family:"IBM Plex Mono", monospace; font-size:.74rem;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.topbar .wordmark{ color:var(--muted); }
+.topbar button{
+  font:inherit; text-transform:uppercase; letter-spacing:.06em;
+  background:var(--panel); color:var(--muted);
+  border:1px solid var(--rule); border-radius:6px; padding:.28rem .6rem; cursor:pointer;
+}
+.topbar button:hover{ color:var(--ink); border-color:var(--faint); }
+
+.wrap{ max-width:1160px; margin:0 auto; padding:clamp(1.6rem,4vw,3.4rem) clamp(1rem,4vw,2.5rem) 5rem; }
+.layout{ display:block; }
+main{ max-width:var(--maxcol); }
+.toc{ display:none; }
+@media (min-width:1060px){
+  .layout{ display:grid; grid-template-columns:210px minmax(0,1fr); gap:clamp(2rem,5vw,4.5rem); align-items:start; }
+  .toc{ display:block; position:sticky; top:4.2rem; font-family:"IBM Plex Mono", monospace; font-size:.75rem; line-height:1.5; }
+  .toc ol{ list-style:none; margin:0; padding:0; }
+  .toc a{ display:block; padding:.28rem .55rem; color:var(--faint); border-left:2px solid transparent; }
+  .toc a:hover{ color:var(--ink); text-decoration:none; }
+  .toc a.on{ color:var(--ink); border-left-color:var(--accent); background:var(--accent-soft); }
+  .toc .sub a{ padding-left:1.3rem; font-size:.72rem; }
+}
+
+.masthead{ max-width:var(--maxcol); margin-bottom:clamp(2rem,5vw,3rem); }
+.eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 1rem; }
+h1{ font-family:"Instrument Serif", Georgia, serif; font-weight:400; font-size:clamp(2.3rem,6.5vw,3.4rem); letter-spacing:-.01em; margin:0 0 .9rem; }
+.lede{ font-size:1.06rem; color:var(--muted); margin:0 0 1.3rem; max-width:64ch; }
+.howto{
+  font-size:.9rem; color:var(--muted); background:var(--panel);
+  border:1px solid var(--rule); border-left:3px solid var(--accent);
+  border-radius:8px; padding:.9rem 1.1rem;
+}
+.howto b{ color:var(--ink); }
+.howto code{ font-size:.85em; color:var(--ink); }
+
+section{ margin:clamp(2.6rem,7vw,4.4rem) 0 0; scroll-margin-top:4.5rem; }
+.sec-head{ display:flex; align-items:baseline; gap:.9rem; border-bottom:1px solid var(--rule); padding-bottom:.7rem; margin-bottom:1.5rem; }
+.sec-num{ font-family:"Instrument Serif", Georgia, serif; font-size:2rem; color:var(--accent); line-height:1; }
+h2{ font-size:clamp(1.35rem,3.4vw,1.7rem); font-weight:600; margin:0; }
+h3{ font-size:1.08rem; font-weight:600; margin:2.2rem 0 .8rem; scroll-margin-top:4.5rem; }
+p{ margin:.9rem 0; }
+main > section > p:first-of-type{ color:var(--muted); }
+
+/* verdict table */
+.tablewrap{ overflow-x:auto; margin:1.3rem 0; border:1px solid var(--rule); border-radius:10px; }
+table{ border-collapse:collapse; width:100%; font-size:.88rem; font-variant-numeric:tabular-nums; }
+th, td{ text-align:left; padding:.6rem .8rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+thead th{ font-family:"IBM Plex Mono", monospace; font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); background:var(--panel-2); }
+tbody tr:last-child td{ border-bottom:0; }
+tbody tr:hover{ background:var(--accent-soft); }
+td.n{ text-align:right; white-space:nowrap; }
+.verdict table{ min-width:560px; }
+.verdict .area{ font-weight:600; }
+
+/* pills */
+.pill{ font-family:"IBM Plex Mono", monospace; font-size:.64rem; text-transform:uppercase; letter-spacing:.04em; padding:.1rem .42rem; border-radius:3px; border:1px solid; white-space:nowrap; }
+.pill.ok{ color:var(--ok); border-color:color-mix(in srgb,var(--ok) 40%,transparent); background:var(--ok-bg); }
+.pill.warn{ color:var(--warn); border-color:color-mix(in srgb,var(--warn) 40%,transparent); background:var(--warn-bg); }
+.pill.bad{ color:var(--bad); border-color:color-mix(in srgb,var(--bad) 40%,transparent); background:var(--bad-bg); }
+
+/* scenario block */
+.scn{ border:1px solid var(--rule); border-radius:12px; background:var(--panel); box-shadow:var(--shadow); overflow:hidden; margin:1.4rem 0; }
+.scn > header{ padding:1rem 1.15rem; border-bottom:1px solid var(--rule); background:var(--panel-2); }
+.scn > header .src{ font-family:"IBM Plex Mono", monospace; font-size:.7rem; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; }
+.scn > header .q{ font-family:"Instrument Serif", Georgia, serif; font-size:1.25rem; line-height:1.4; margin:.25rem 0 0; color:var(--ink); }
+.scn .body{ padding:.4rem 1.15rem 1.15rem; }
+.lane{ padding:1rem 0; border-bottom:1px solid var(--rule); }
+.lane:last-child{ border-bottom:0; }
+.lane h4{ margin:0 0 .5rem; font-size:.74rem; text-transform:uppercase; letter-spacing:.08em; font-family:"IBM Plex Mono", monospace; font-weight:500; display:flex; align-items:center; gap:.5rem; }
+.lane h4.docs{ color:var(--accent); }
+.lane h4.app{ color:var(--warn); }
+.lane h4.gap{ color:var(--bad); }
+.lane p{ margin:.4rem 0; font-size:.94rem; }
+.lane ul{ margin:.4rem 0; padding-left:1.15rem; }
+.lane li{ margin:.35rem 0; font-size:.93rem; color:var(--muted); }
+.lane li b, .lane p b{ color:var(--ink); }
+
+/* trace: monospace step ledger */
+.trace{ font-family:"IBM Plex Mono", monospace; font-size:.8rem; line-height:1.65; background:var(--ground); border:1px solid var(--rule); border-radius:8px; padding:.8rem 1rem; margin:.6rem 0; overflow-x:auto; color:var(--muted); }
+.trace .step{ color:var(--ink); }
+.trace .neg{ color:var(--bad); }
+.trace .pos{ color:var(--ok); }
+.trace .cmt{ color:var(--faint); }
+
+/* findings */
+.find{ padding:1.15rem 0; border-top:1px solid var(--rule); }
+.find:first-child{ border-top:0; padding-top:.4rem; }
+.find h4{ margin:0 0 .4rem; font-size:1.02rem; font-weight:600; display:flex; gap:.55rem; align-items:baseline; flex-wrap:wrap; }
+.find h4 .k{ font-family:"IBM Plex Mono", monospace; font-size:.7rem; color:var(--faint); border:1px solid var(--rule); border-radius:4px; padding:.02rem .34rem; }
+.find p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem; }
+
+/* recos */
+.reco{ list-style:none; margin:1rem 0 0; padding:0; }
+.reco > li{ padding:.9rem 0; border-top:1px solid var(--rule); }
+.reco > li:first-child{ border-top:0; }
+.reco .tier{ font-family:"IBM Plex Mono", monospace; font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); }
+.reco b{ color:var(--ink); }
+.reco p{ margin:.3rem 0 0; font-size:.93rem; color:var(--muted); }
+
+.thesis{ margin:2.2rem 0 0; padding:1.7rem clamp(1.1rem,4vw,2rem); border:1px solid var(--rule); border-radius:12px; background:var(--panel); box-shadow:var(--shadow); }
+.thesis p{ font-family:"Instrument Serif", Georgia, serif; font-size:clamp(1.25rem,3vw,1.6rem); line-height:1.42; margin:0; color:var(--ink); }
+.thesis b{ color:var(--accent); font-weight:400; }
+.thesis .k{ display:block; margin-top:.8rem; font-family:"IBM Plex Sans", sans-serif; font-size:.9rem; color:var(--muted); line-height:1.6; }
+
+footer{ margin-top:4rem; padding-top:1.4rem; border-top:1px solid var(--rule); font-family:"IBM Plex Mono", monospace; font-size:.75rem; color:var(--faint); line-height:1.75; }
+footer code{ color:var(--muted); }
+
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+
+<div class="topbar">
+  <span class="wordmark">PatrimonIA · QA de comportamiento</span>
+  <button id="themeBtn" type="button" aria-label="Cambiar tema">tema: auto</button>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Casos del DDD · probados contra el backend en vivo</p>
+    <h1>Cuando el dinero solo pasa: qué modeló el dominio y qué muestra la app</h1>
+    <p class="lede">
+      El “caso de uso típico” de REQUISITES incluye dos situaciones que el usuario pidió verificar:
+      una transferencia entre miembros que financia una compra conjunta, y plata de un tercero que
+      entra y sale sin ser nunca tuya. Se ejecutaron contra el backend real con los datos de prueba,
+      y se contrastó lo que ocurre con lo que dicen DDD, REQUISITES y UX_FLOWS.
+    </p>
+    <p class="howto">
+      <b>Cómo se probó.</b> Comandos <code>POST /comandos/RegistrarEventoFinanciero</code> y
+      <code>RegistrarElementoPatrimonial</code> contra <code>localhost:3000</code> con los usuarios
+      <code>demo@</code> (admin) y <code>pareja@</code> del hogar “Casa Riquelme”. Después de cada paso
+      se leyeron <code>/usuarios/me/patrimonio-individual</code>, <code>/usuarios/me/resumen-financiero</code>
+      y <code>/eventos-financieros?elemento=…</code> para ver exactamente lo que la app renderiza.
+      Fuentes: REQUISITES líneas 420–431 (“caso de uso típico”), UX_FLOWS Flujo 1, DDD §D/§K/§J, APPLICATION_SERVICES #10.
+    </p>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Contenido">
+      <ol>
+        <li><a href="#veredicto">Veredicto rápido</a></li>
+        <li><a href="#e1">Caso 1 · transferencia entre miembros</a></li>
+        <li><a href="#e2">Caso 2 · dinero de un tercero</a></li>
+        <li><a href="#e3">Caso 3 · pagué por mis papás</a></li>
+        <li><a href="#hallazgos">Hallazgos transversales</a></li>
+        <li class="sub"><a href="#f1">F1 · transfers fuera de Movimientos</a></li>
+        <li class="sub"><a href="#f2">F2 · el caso fundacional no se puede</a></li>
+        <li class="sub"><a href="#f3">F3 · plata ajena infla el mes</a></li>
+        <li class="sub"><a href="#f4">F4–F8</a></li>
+        <li><a href="#recomendaciones">Qué haría</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <!-- ============ VEREDICTO ============ -->
+      <section id="veredicto">
+        <div class="sec-head"><span class="sec-num">1</span><h2>Veredicto rápido</h2></div>
+        <p>
+          El <b>estado patrimonial final siempre queda correcto</b> — la aritmética del dominio es sólida.
+          Lo que falla es la <b>visualización</b>: la app no distingue plata propia de plata en tránsito,
+          y las transferencias entre cuentas casi no aparecen. Y un detalle serio de configuración impide
+          hacer el caso fundacional desde la interfaz.
+        </p>
+        <div class="tablewrap verdict">
+          <table>
+            <thead><tr><th>Situación</th><th>¿La modeló el dominio?</th><th>¿La muestra bien la app?</th><th>Severidad</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="area">Transferencia entre miembros del hogar</td>
+                <td>Sí — TRANSFERENCIA con destino = elemento de otro miembro (UX_FLOWS Flujo 1 paso 4)</td>
+                <td>Se ejecuta, el saldo queda bien, pero <b>no aparece en la pestaña Movimientos</b> de nadie</td>
+                <td><span class="pill warn">media</span></td>
+              </tr>
+              <tr>
+                <td class="area">Compra conjunta (A aporta + B aporta) desde una cuenta</td>
+                <td>Parcial — no hay “gasto co-financiado”; cada aporte es un evento independiente</td>
+                <td>El gasto sale entero de una cuenta; <b>no hay rastro de quién aportó cuánto</b></td>
+                <td><span class="pill warn">media</span></td>
+              </tr>
+              <tr>
+                <td class="area">Elegir la cuenta de otro miembro como destino, en la app</td>
+                <td>Sí — el backend lo permite entre co-miembros</td>
+                <td><b>No.</b> Los elementos nacen PRIVADA; el otro miembro no los ve en el selector</td>
+                <td><span class="pill bad">alta</span></td>
+              </tr>
+              <tr>
+                <td class="area">Plata de un tercero que entra y sale (nunca fue mía)</td>
+                <td>Deliberadamente <b>no</b> — DDD/UX_FLOWS: modelarlo como Crédito/Deuda formal</td>
+                <td>La app deja registrar INGRESO+GASTO sin fricción → <b>infla ingresos y gastos del mes</b></td>
+                <td><span class="pill bad">alta</span></td>
+              </tr>
+              <tr>
+                <td class="area">Guía hacia el flujo correcto (Crédito/Deuda) al detectar el patrón</td>
+                <td>UX_FLOWS lo pide explícitamente (Flujo 1, nota del paso 6)</td>
+                <td><b>Nunca se implementó.</b> No hay sugerencia en “Registrar movimiento”</td>
+                <td><span class="pill warn">media</span></td>
+              </tr>
+              <tr>
+                <td class="area">Ver la contraparte de una transferencia en su detalle</td>
+                <td>Sí — el API devuelve ambos impactos</td>
+                <td><b>No.</b> <code>MovimientoDetalle</code> sólo muestra el lado de la cuenta abierta</td>
+                <td><span class="pill warn">baja</span></td>
+              </tr>
+              <tr>
+                <td class="area">Transferencia como “un único movimiento” en vista consolidada</td>
+                <td>REQUISITES línea 213 lo exige</td>
+                <td>El feed <code>/hogares/:id/eventos-financieros</code> existe pero <b>no se muestra en ninguna pantalla</b></td>
+                <td><span class="pill warn">baja</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ CASO 1 ============ -->
+      <section id="e1">
+        <div class="sec-head"><span class="sec-num">2</span><h2>Caso 1 · transferencia entre miembros + compra conjunta</h2></div>
+        <div class="scn">
+          <header>
+            <div class="src">REQUISITES línea 427 — “caso de uso típico”</div>
+            <p class="q">“Mi esposa Zoily me transfirió dinero para que yo compre una aspiradora. Ambos aportamos, yo con saldo de mi cuenta + lo que ella me pasó. Desde cuenta RUT.”</p>
+          </header>
+          <div class="body">
+            <div class="lane">
+              <h4 class="docs">Lo que dicen los docs</h4>
+              <p>
+                UX_FLOWS Flujo 1 paso 4 lo cubre: una <code>TRANSFERENCIA</code> cuyo elemento destino
+                pertenece a otro miembro. Genera 2 impactos (salida en la cuenta de A, entrada en la de B).
+                <b>No existe</b> un “evento co-financiado”: la compra que hace B es un <code>GASTO</code>
+                independiente. La aspiradora, al consumirse, no se registra como activo — no hay co-propiedad de ella.
+              </p>
+            </div>
+            <div class="lane">
+              <h4 class="app">Lo que pasó en la prueba</h4>
+              <div class="trace">
+<span class="cmt"># estado inicial — demo: neto 32.177.510 · Cuenta corriente 2.285.510</span>
+<span class="step">1a</span>  pareja → TRANSFERENCIA 200.000  (Cuenta sueldo → Cuenta corriente de demo)
+     demo Cuenta corriente  <span class="pos">2.485.510</span>   demo neto <span class="pos">32.377.510</span>   pareja neto <span class="neg">45.500.000</span> (−200.000)
+<span class="step">1b</span>  demo → GASTO 350.000  (aspiradora: 150.000 suyos + 200.000 de Zoily)
+     demo Cuenta corriente  <span class="neg">2.135.510</span>   demo neto <span class="neg">32.027.510</span>
+<span class="cmt"># efecto real vs. el inicio: demo −150.000, pareja −200.000.  Correcto.</span>
+              </div>
+              <p><b>Cómo se ve en la app:</b></p>
+              <ul>
+                <li><b>Pestaña Movimientos de demo</b> (este mes): aparece <span class="mono">GASTO 350.000 · “Aspiradora”</span> y nada más. La transferencia de Zoily <b>no está</b> — el reporte filtra TRANSFERENCIA. Parece que demo gastó 350.000 de lo suyo.</li>
+                <li><b>Historial de la Cuenta corriente</b> (<code>ElementoDetalle</code>): sí se ven las dos filas, <span class="mono">TRANSFERENCIA +200.000 “Para la aspiradora”</span> y luego <span class="mono">GASTO −350.000</span>. Un humano las conecta; la app no las enlaza ni dice que la transferencia vino de la cuenta de pareja (sólo la glosa, si alguien la escribió).</li>
+                <li><b>Vista de pareja:</b> su pestaña Movimientos no muestra nada (TRANSFERENCIA filtrada). En el historial de su Cuenta sueldo ve <span class="mono">−200.000</span>. Su patrimonio bajó 200.000 sin ninguna pista de a dónde fue ni para qué.</li>
+                <li><b>“Del hogar”:</b> igual que “míos” — sólo el gasto de 350.000. La transferencia entre miembros no se consolida como un movimiento único (REQUISITES 213 incumplido).</li>
+              </ul>
+            </div>
+            <div class="lane">
+              <h4 class="gap">El hueco</h4>
+              <ul>
+                <li>Nada relaciona el gasto con el aporte que lo financió. “Ambos aportamos” es información que se pierde.</li>
+                <li>La transferencia entre miembros es invisible en la única pantalla que la gente mira a diario para “ver movimientos”.</li>
+                <li><b>Y más grave:</b> en la app real pareja <b>no puede hacer el paso 1a</b> — la Cuenta corriente de demo es <span class="mono">PRIVADA</span> (default del alta), así que no aparece en el selector “De otro miembro del hogar”. El caso fundacional del proyecto no se puede ejecutar sin que demo primero cambie la visibilidad a Familiar. Ver <a href="#f2">F2</a>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ CASO 2 ============ -->
+      <section id="e2">
+        <div class="sec-head"><span class="sec-num">3</span><h2>Caso 2 · dinero de un tercero que solo pasa</h2></div>
+        <div class="scn">
+          <header>
+            <div class="src">REQUISITES línea 430 — “caso de uso típico”</div>
+            <p class="q">“Un amigo me transfirió dinero a mi cuenta RUT para comprarle algo a él. Se lo compro, por lo que el dinero X que entró también salió.”</p>
+          </header>
+          <div class="body">
+            <div class="lane">
+              <h4 class="docs">Lo que dicen los docs</h4>
+              <p>
+                El dominio <b>a propósito no modela</b> “gasto/ingreso con expectativa de reembolso informal”.
+                UX_FLOWS lo dice literal (Flujo 1, nota del paso 6): <i>“el modelo de dominio no tiene un concepto
+                de gasto con expectativa de reembolso… es una decisión consciente”</i>. La forma correcta es un
+                elemento patrimonial formal: un <b>préstamo recibido = Deuda</b> (REQUISITES 189). Y la nota agrega:
+                <i>“la app debería sugerir crear un Elemento Patrimonial tipo Crédito en vez de solo un gasto”</i>.
+              </p>
+            </div>
+            <div class="lane">
+              <h4 class="app">Lo que pasó en la prueba</h4>
+              <p><b>Camino sin fricción</b> (el que la app invita a hacer): INGRESO 80.000 → GASTO 80.000.</p>
+              <div class="trace">
+<span class="step">INGRESO</span> 80.000 a Cuenta corriente   →  neto <span class="pos">+80.000</span>  <span class="cmt"># plata que NO es de demo</span>
+<span class="step">GASTO</span>   80.000 desde Cuenta corriente →  neto vuelve a su valor real
+<span class="cmt"># pero el mes ahora reporta:  ingresos +80.000  Y  gastos +80.000  sobre la realidad</span>
+              </div>
+              <p><b>Camino correcto según el DDD</b> (Deuda + pago):</p>
+              <div class="trace">
+<span class="step">1</span> INGRESO 80.000 a Cuenta corriente        neto <span class="pos">+80.000</span>
+<span class="step">2</span> crear Deuda “Encargo de Nico” −80.000    neto vuelve a lo real  <span class="cmt"># tengo 80.000 que debo</span>
+<span class="step">3</span> al entregar lo comprado: TRANSFERENCIA 80.000  Cuenta corriente → “Encargo de Nico”
+     Cuenta corriente <span class="neg">−80.000</span>   deuda pasa a <span class="pos">0</span>   neto sin cambios  <span class="cmt"># NO se registra ningún GASTO</span>
+              </div>
+              <p>
+                Se probó y funciona: la deuda llega a 0, el patrimonio nunca se distorsiona.
+                Pero son <b>3 registros</b> para lo que el usuario piensa como “entró y salió”, y el paso clave
+                es contra-intuitivo: la compra <b>no</b> se registra como gasto, se registra como pago de la deuda.
+              </p>
+            </div>
+            <div class="lane">
+              <h4 class="gap">El hueco</h4>
+              <ul>
+                <li>Durante la ventana entre entrada y salida, el patrimonio muestra plata que nunca fue del usuario.</li>
+                <li>El camino fácil <b>ensucia los totales del mes</b> en ingresos y gastos, y consume una categoría de ingreso y una de gasto que no corresponden.</li>
+                <li>El camino correcto existe pero es opaco, largo, y la app <b>no da ninguna pista</b> de que debería tomarse — la sugerencia que UX_FLOWS pidió nunca se construyó.</li>
+                <li>Modelarlo como “Deuda” también chirría: en <code>ElementoDetalle</code> aparece como una deuda con acreedor, cuando en realidad es plata en custodia, no un pasivo financiero.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ CASO 3 ============ -->
+      <section id="e3">
+        <div class="sec-head"><span class="sec-num">4</span><h2>Caso 3 · pagué por mis papás, me devuelven</h2></div>
+        <div class="scn">
+          <header>
+            <div class="src">REQUISITES línea 426 · UX_FLOWS Flujo 1 paso 6 — el espejo del caso 2</div>
+            <p class="q">“Pagué el mercado de mis papás. Ellos me devolverán el dinero en 3 días. Desde cuenta corriente.”</p>
+          </header>
+          <div class="body">
+            <div class="lane">
+              <h4 class="app">Lo que pasó en la prueba</h4>
+              <p>
+                Camino fácil (GASTO ahora, INGRESO al recibir): probado — el mes terminó reportando
+                <span class="mono">+45.000 de gasto y +45.000 de ingreso</span> por encima de la realidad. Mismo problema que el caso 2.
+              </p>
+              <p>
+                Camino DDD (Crédito por cobrar): se crea el elemento <span class="mono">“Me deben mis papás” · CREDITO · 45.000</span>,
+                aparece en la composición del patrimonio bajo “Crédito por cobrar”. Al pagar, una
+                <span class="mono">TRANSFERENCIA desde el crédito hacia la cuenta corriente</span> lo lleva a 0. Probado, funciona.
+              </p>
+            </div>
+            <div class="lane">
+              <h4 class="gap">El hueco</h4>
+              <p>
+                Idéntico al caso 2: el camino trazable existe pero es invisible como opción. Y la “recuperación”
+                del crédito, al ser una TRANSFERENCIA, tampoco aparece en la pestaña Movimientos — sólo en el
+                historial del elemento.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HALLAZGOS ============ -->
+      <section id="hallazgos">
+        <div class="sec-head"><span class="sec-num">5</span><h2>Hallazgos transversales</h2></div>
+        <p>Ordenados por impacto. Todo verificado contra el backend en vivo.</p>
+
+        <div class="find" id="f1">
+          <h4>Las transferencias no aparecen en la pestaña Movimientos <span class="k">alta</span></h4>
+          <p>
+            <code>resumen-financiero</code> —el endpoint que alimenta Movimientos, en modo Registro y Resumen—
+            filtra explícitamente a <code>INGRESO</code> y <code>GASTO</code>
+            (<code>reporte.service.ts</code>: <span class="mono">if (e.tipo !== 'INGRESO' && e.tipo !== 'GASTO') continue</span>).
+            Una <code>TRANSFERENCIA</code> —mover plata entre tus cuentas, pagar una deuda, apartar para Fintual,
+            transferir a tu pareja— <b>no se ve en ninguna parte de la pestaña</b>. Sólo aparece bajando al historial
+            de cada elemento. Para una app donde “transferir entre cuentas” es la mitad del caso de uso típico, es un vacío grande.
+          </p>
+        </div>
+
+        <div class="find" id="f2">
+          <h4>El caso fundacional no se puede hacer desde la interfaz <span class="k">alta</span></h4>
+          <p>
+            <code>RegistrarElementoPatrimonial</code> crea todo como <code>PRIVADA</code> por defecto, y el seed
+            hace lo mismo. Para elegir la cuenta de otro miembro como destino de una transferencia, el selector
+            usa <code>/elementos-patrimoniales?alcance=hogar</code>, que sólo devuelve lo que el actor puede ver.
+            Con visibilidad PRIVADA ese endpoint devuelve <span class="mono">[]</span> para el otro miembro —
+            verificado. Resultado: “le transfiero a mi esposa para que pague Netflix” (REQUISITES línea 423,
+            UX_FLOWS Flujo 1 paso 4) <b>es imposible</b> hasta que el dueño de la cuenta destino cambie su
+            visibilidad de existencia a Familiar. La app no explica esto ni lo sugiere.
+          </p>
+        </div>
+
+        <div class="find" id="f3">
+          <h4>La plata de terceros infla ingresos y gastos del mes <span class="k">alta</span></h4>
+          <p>
+            No hay concepto de “dinero en tránsito / en custodia”. El camino natural (INGRESO + GASTO)
+            deja el patrimonio neto correcto pero suma el monto a los totales de ingreso <b>y</b> de gasto del
+            período, y a las categorías. Alguien que revise “cuánto gané / cuánto gasté este mes” ve cifras
+            infladas por plata que solo pasó. Verificado en los casos 2 y 3.
+          </p>
+        </div>
+
+        <div class="find" id="f4">
+          <h4>La guía hacia Crédito/Deuda nunca se construyó <span class="k">media</span></h4>
+          <p>
+            UX_FLOWS deja el requisito escrito: al registrar un movimiento con patrón de reembolso, la interfaz
+            debería ofrecer crear un elemento Crédito/Deuda en vez de un gasto suelto. En
+            <code>RegistrarMovimientoScreen</code> no existe nada de eso.
+          </p>
+        </div>
+
+        <div class="find">
+          <h4>El detalle de un movimiento oculta la contraparte <span class="k">baja</span></h4>
+          <p>
+            <code>GET /eventos-financieros/:id</code> devuelve los dos impactos de una transferencia — se verificó.
+            Pero <code>MovimientoDetalleScreen</code> sólo renderiza el impacto de la cuenta desde la que llegaste,
+            y no resuelve nombres de elementos. Nunca se ve “desde/hacia qué cuenta”.
+          </p>
+        </div>
+
+        <div class="find">
+          <h4>El feed consolidado de eventos del hogar no se muestra <span class="k">baja</span></h4>
+          <p>
+            <code>/hogares/:id/eventos-financieros</code> — que sí lista transferencias — existe y responde, pero
+            ninguna pantalla lo consume (sólo el chequeo de onboarding lo llama para contar si hay eventos).
+            REQUISITES 213 (“una transferencia debe visualizarse como un único movimiento” en vistas consolidadas)
+            queda sin superficie donde cumplirse.
+          </p>
+        </div>
+
+        <div class="find">
+          <h4>No hay co-financiamiento ni co-propiedad de un consumo <span class="k">media</span></h4>
+          <p>
+            Un <code>EventoFinanciero</code> tiene impactos sobre elementos, pero no “aportantes”. Y un gasto
+            consume — no crea un activo co-propiedad. “Ambos aportamos para la aspiradora” no tiene dónde vivir.
+            Modelar contribuyentes en un evento es posible pero probablemente no vale la complejidad; ver recomendaciones.
+          </p>
+        </div>
+
+        <div class="find">
+          <h4>La aritmética del dominio es correcta en todos los casos <span class="k">positivo</span></h4>
+          <p>
+            En los tres escenarios, con cualquiera de los caminos, el patrimonio neto final de cada persona
+            terminó exactamente donde debía. El problema es de representación y de guía, no de modelo.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ RECOMENDACIONES ============ -->
+      <section id="recomendaciones">
+        <div class="sec-head"><span class="sec-num">6</span><h2>Qué haría</h2></div>
+        <p>Separado por costo. Lo de arriba es puramente de presentación y no toca el dominio.</p>
+
+        <ul class="reco">
+          <li>
+            <span class="tier">sólo UI · sin tocar el dominio</span>
+            <p><b>Mostrar las transferencias en Movimientos</b>, como una fila neutra (“movimiento interno”, ícono de flechas, sin color de signo) que <b>no</b> suma a ingresos ni gastos. Es el cambio de mayor impacto y sólo requiere dejar de filtrarlas en la lista y sumar el caso al render.</p>
+          </li>
+          <li>
+            <span class="tier">sólo UI</span>
+            <p><b>En el detalle de un movimiento, resolver y mostrar ambos lados</b> (“desde Cuenta sueldo de Pareja → Cuenta corriente”). El dato ya viene en el payload.</p>
+          </li>
+          <li>
+            <span class="tier">sólo UI</span>
+            <p><b>Al registrar un INGRESO, preguntar “¿te devuelven esto?” / “¿es plata de un tercero?”</b>. Si sí, en vez de un ingreso suelto, guiar a crear un elemento Crédito/Deuda y encadenar la operación. Es exactamente lo que UX_FLOWS pidió (F4).</p>
+          </li>
+          <li>
+            <span class="tier">dominio · chico</span>
+            <p><b>Al primer intento de transferir a otro miembro, ofrecer compartir esa cuenta</b> (subir su visibilidad de existencia a Familiar con un toque), o que el alta de una cuenta “de uso compartido” nazca Familiar. Desbloquea F2 sin rediseñar el modelo de visibilidad.</p>
+          </li>
+          <li>
+            <span class="tier">dominio · chico</span>
+            <p><b>Un subtipo de elemento “dinero en custodia / encargo”</b> — mecánicamente una Deuda (o Crédito) de contraparte informal, pero que en la UI no se lea como “deuda financiera”: se muestra en su propia línea (“Tienes 80.000 de Nico”), no mezclado con el hipotecario. Resuelve el chirrido semántico del caso 2.</p>
+          </li>
+          <li>
+            <span class="tier">dominio · mediano — evaluar si vale</span>
+            <p><b>Enlazar un gasto con la(s) transferencia(s) que lo financiaron</b>, o registrar “aportantes” en un evento. Daría “ambos aportamos para la aspiradora” de verdad. Alta complejidad para un caso de borde; probablemente basta con que las transferencias sean visibles y encadenables por glosa.</p>
+          </li>
+          <li>
+            <span class="tier">producto</span>
+            <p><b>Nombrar los dos vacíos que los propios docs ya detectaron</b> y aún están abiertos: el estado operativo intermedio de deuda/crédito (UX_FLOWS “Resumen y vacíos”) y este concepto de plata en tránsito. Decidir si entran al modelo o se resuelven sólo en UI.</p>
+          </li>
+        </ul>
+
+        <div class="thesis">
+          <p>
+            El dominio sabe contar. La app todavía no sabe <b>narrar</b>:
+            no diferencia tu plata de la que solo estás sosteniendo, y esconde el movimiento
+            más común que hace una familia — pasarse plata entre cuentas.
+            <span class="k">Los dos arreglos que más rinden no tocan el modelo: mostrar las transferencias en Movimientos, y preguntar “¿esto te lo devuelven?” cuando entra plata.</span>
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        Análisis de comportamiento. Ejecutado contra el backend en vivo con datos de prueba — quedaron
+        registrados en el hogar “Casa Riquelme” varios elementos y eventos de test
+        (<code>“Encargo de Nico”</code>, <code>“Me deben mis papás”</code>, la aspiradora, etc.).<br>
+        Para volver al escenario limpio: <code>./scripts/seed.sh</code> con el backend arriba.
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var order = ["auto","light","dark"], root = document.documentElement, btn = document.getElementById("themeBtn"), cur = "auto";
+  try { var s = localStorage.getItem("pat-casos-theme"); if (s && order.indexOf(s) >= 0) cur = s; } catch(e){}
+  function apply(){
+    if (cur === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", cur);
+    btn.textContent = "tema: " + cur;
+    try { localStorage.setItem("pat-casos-theme", cur); } catch(e){}
+  }
+  apply();
+  btn.addEventListener("click", function(){ cur = order[(order.indexOf(cur) + 1) % order.length]; apply(); });
+
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  if (links.length && "IntersectionObserver" in window){
+    var byId = {}; links.forEach(function(a){ byId[a.getAttribute("href").slice(1)] = a; });
+    var targets = Object.keys(byId).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){
+          links.forEach(function(a){ a.classList.remove("on"); });
+          var a = byId[en.target.id]; if (a) a.classList.add("on");
+        }
+      });
+    }, { rootMargin: "-10% 0px -75% 0px", threshold: 0 });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+})();
+</script>

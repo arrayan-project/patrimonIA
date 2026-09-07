@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PatrimonIA · Mockup de diseño</title>
+<style>
+/* ==========================================================================
+   PatrimonIA — Mockup de diseño estático
+   Archivo único para iterar el diseño fuera de la app (Expo/React Native).
+   - Los tokens de color/tipografía/espaciado replican app/src/ui/tema.ts + ui/index.tsx
+   - Cambia acá lo que quieras probar y luego lo llevamos de vuelta a la app.
+   ========================================================================== */
+
+/* ---- Tokens: paleta CLARA (fuente: CLARO en tema.ts) --------------------- */
+:root{
+  --fondo:#f3f4f6;
+  --bg:#ffffff;
+  --text:#111827;
+  --muted:#4b5563;
+  --border:#e5e7eb;
+  --primary:#1d4ed8;
+  --primaryText:#ffffff;
+  --danger:#b91c1c;
+  --faint:#eef1f5;
+  --info:#eff6ff;
+
+  /* espaciado (escala de 4) */
+  --xs:4px; --sm:8px; --md:12px; --lg:16px; --xl:24px; --xxl:32px;
+  /* radios */
+  --r-card:14px; --r-input:8px; --r-btn:8px; --r-chip:999px;
+  /* sombra sutil de tarjeta */
+  --sombra:0 2px 6px rgba(15,23,42,.06);
+}
+
+/* ---- Tokens: paleta OSCURA (fuente: OSCURO en tema.ts, look "rimu") ------ */
+:root[data-theme="dark"]{
+  --fondo:#08090a;
+  --bg:#111214;
+  --text:#f2f2f0;
+  --muted:#8b8b90;
+  --border:#242429;
+  --primary:#3b82f6;
+  --primaryText:#ffffff;
+  --danger:#ef4444;
+  --faint:#0d0e10;
+  --info:#101a2c;
+  --sombra:0 2px 6px rgba(0,0,0,.4);
+}
+
+/* modo "Auto": sigue el sistema, salvo que se elija Claro explícitamente */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fondo:#08090a; --bg:#111214; --text:#f2f2f0; --muted:#8b8b90; --border:#242429;
+    --primary:#3b82f6; --primaryText:#ffffff; --danger:#ef4444; --faint:#0d0e10; --info:#101a2c;
+    --sombra:0 2px 6px rgba(0,0,0,.4);
+  }
+}
+
+/* paleta estable de categorías (PALETA_CATEGORIA en ui/index.tsx) */
+:root{
+  --cat0:#1d4ed8; --cat1:#0891b2; --cat2:#16a34a; --cat3:#ca8a04; --cat4:#dc2626;
+  --cat5:#9333ea; --cat6:#db2777; --cat7:#ea580c; --cat8:#4b5563; --cat9:#0d9488; --cat10:#7c3aed;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--fondo);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ======================= CHROME DEL MOCKUP (no es la app) ================= */
+.chrome-top{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:10px 16px;
+  background:var(--bg);border-bottom:1px solid var(--border);
+}
+.chrome-top h1{font-size:14px;margin:0;font-weight:700;letter-spacing:.2px}
+.chrome-top .sep{flex:1}
+.chrome-top .hint{font-size:12px;color:var(--muted)}
+.seg-tema{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg-tema button{
+  border:0;background:var(--bg);color:var(--text);
+  font:inherit;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer;
+}
+.seg-tema button[aria-pressed="true"]{background:var(--primary);color:var(--primaryText)}
+
+.layout{display:flex;gap:24px;align-items:flex-start;padding:24px 16px;max-width:1200px;margin:0 auto}
+
+.sidebar{
+  width:230px;flex:0 0 230px;position:sticky;top:64px;
+  background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:8px;
+  max-height:calc(100vh - 96px);overflow:auto;
+}
+.sidebar .grp{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:12px 10px 4px}
+.sidebar a{
+  display:block;padding:8px 10px;border-radius:8px;font-size:13px;
+  color:var(--text);text-decoration:none;cursor:pointer;
+}
+.sidebar a:hover{background:var(--faint)}
+.sidebar a.active{background:var(--primary);color:var(--primaryText);font-weight:600}
+
+.stage{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.stage .caption{font-size:12px;color:var(--muted);text-align:center;max-width:380px}
+
+/* ======================= "TELÉFONO" ===================================== */
+.device{
+  width:390px;max-width:100%;
+  background:var(--fondo);
+  border:1px solid var(--border);
+  border-radius:34px;
+  box-shadow:0 20px 50px rgba(0,0,0,.18);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  height:800px;
+}
+.device .notch{height:26px;background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center}
+.device .notch::before{content:"";width:90px;height:6px;border-radius:3px;background:var(--border)}
+
+/* header nativo del stack (RootNavigator screenOptions) */
+.nav-header{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 14px;background:var(--bg);border-bottom:1px solid var(--border);
+  color:var(--text);font-weight:600;font-size:16px;
+}
+.nav-header .back{color:var(--primary);font-size:22px;line-height:1;cursor:default}
+
+.viewport{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.screen-body{padding:20px 16px 28px;display:flex;flex-direction:column;gap:14px}
+.screen[hidden]{display:none}
+
+/* tab bar inferior */
+.tabbar{
+  display:flex;background:var(--bg);border-top:1px solid var(--border);
+  padding-bottom:6px;
+}
+.tabbar .tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 0 4px;font-size:10px;color:var(--muted);cursor:pointer;
+}
+.tabbar .tab .ic{width:22px;height:22px}
+.tabbar .tab.active{color:var(--primary)}
+.tabbar .tab.active .ic *{stroke:var(--primary)}
+
+/* ======================= COMPONENTES DE LA APP ========================== */
+/* fuente: app/src/ui/index.tsx (mismos nombres) */
+
+.title{font-size:24px;font-weight:700;color:var(--text);margin:0}
+.section-title{font-size:16px;font-weight:700;color:var(--text);margin:0}
+.nota{font-size:13px;color:var(--muted);line-height:19px;margin:0}
+.paragraph{font-size:15px;color:var(--muted);line-height:22px;margin:0}
+.migaja{display:flex;align-items:center;gap:2px;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:-6px}
+
+.panel{
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--r-card);
+  padding:var(--lg);display:flex;flex-direction:column;gap:var(--sm);
+}
+.card{
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--r-card);
+  padding:var(--lg);box-shadow:var(--sombra);
+  display:flex;align-items:center;gap:10px;
+}
+.card.tap{cursor:default}
+.card .card-main{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card .chev,.list-item .chev,.menu-link .chev{color:var(--muted);font-size:18px;flex:none}
+
+.stat .lbl{font-size:13px;color:var(--muted)}
+.stat .val{font-size:20px;font-weight:800;color:var(--text)}
+.stat .val.xl{font-size:28px}
+.stat .hint{font-size:13px;color:var(--muted)}
+
+.data-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0}
+.data-row .l{font-size:14px;color:var(--muted)}
+.data-row .r{font-size:14px;color:var(--text);font-weight:600;text-align:right}
+
+.list-item{
+  display:flex;align-items:center;gap:8px;
+  border-top:1px solid var(--faint);padding:10px 0;
+}
+.list-item:first-child{border-top:0}
+.list-item .li-main{flex:1;min-width:0}
+.list-item .li-title{font-size:14px;color:var(--text);font-weight:600}
+.list-item .li-title.tachado{text-decoration:line-through;color:var(--muted)}
+.list-item .li-sub{font-size:13px;color:var(--muted)}
+.list-item .li-right{font-size:14px;color:var(--text);font-weight:600}
+
+.money-neg{color:var(--danger)}
+.money-pos{color:var(--primary)}
+
+.btn{
+  display:flex;align-items:center;justify-content:center;
+  min-height:48px;padding:14px;border-radius:var(--r-btn);
+  font-size:16px;font-weight:600;border:1px solid transparent;cursor:default;width:100%;
+  background:var(--primary);color:var(--primaryText);
+}
+.btn.secondary{background:var(--bg);border-color:var(--primary);color:var(--primary)}
+.btn.danger{background:var(--bg);border-color:var(--danger);color:var(--danger)}
+.btn.disabled{opacity:.5}
+.btn-row{display:flex;gap:12px}
+.link{color:var(--primary);font-size:14px;font-weight:600;cursor:default}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:600;color:var(--text)}
+.field .input{
+  border:1px solid var(--border);border-radius:var(--r-input);
+  padding:10px 12px;font-size:16px;color:var(--text);background:var(--bg);
+  min-height:42px;display:flex;align-items:center;
+}
+.field .input.ph{color:var(--muted)}
+.field .input.err{border-color:var(--danger)}
+.err-inline{color:var(--danger);font-size:12px}
+.err-text{color:var(--danger);font-size:14px}
+
+.select-box{
+  border:1px solid var(--border);border-radius:var(--r-input);
+  padding:12px;display:flex;justify-content:space-between;align-items:center;
+  font-size:16px;color:var(--text);background:var(--bg);
+}
+.select-box .caret{color:var(--muted);font-size:14px}
+
+.segmented{display:flex;gap:8px;flex-wrap:wrap}
+.segment{
+  border:1px solid var(--border);border-radius:8px;
+  padding:8px 12px;min-height:44px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:var(--text);cursor:default;
+}
+.segment.active{background:var(--primary);border-color:var(--primary);color:var(--primaryText)}
+
+.select-row{border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;color:var(--text)}
+.select-row.active{border-color:var(--primary);background:var(--info);color:var(--primary);font-weight:600}
+
+.chip{
+  display:inline-flex;align-items:center;
+  border:1px solid var(--border);border-radius:var(--r-chip);
+  padding:5px 12px;font-size:13px;font-weight:600;color:var(--text);
+}
+.chip.active{background:var(--primary);border-color:var(--primary);color:var(--primaryText)}
+
+.progress{height:10px;border-radius:5px;background:var(--faint);overflow:hidden}
+.progress > i{display:block;height:100%;border-radius:5px;background:var(--primary)}
+
+.dist{display:flex;height:14px;border-radius:7px;background:var(--faint);overflow:hidden}
+.dist > i{display:block;height:100%}
+
+.pasos .lbl{font-size:13px;color:var(--muted);margin-bottom:6px}
+
+.menu-link{
+  display:flex;align-items:center;gap:12px;
+  border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:default;
+}
+.menu-link .mi{
+  width:34px;height:34px;border-radius:8px;background:var(--faint);
+  display:flex;align-items:center;justify-content:center;flex:none;
+}
+.menu-link .mi svg{width:20px;height:20px}
+.menu-link .ml-main{flex:1;min-width:0}
+.menu-link .ml-title{font-size:15px;font-weight:600;color:var(--text)}
+.menu-link .ml-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.menu-link .badge{
+  min-width:22px;height:22px;border-radius:11px;background:var(--primary);color:var(--primaryText);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px;
+}
+.menu-link .chev{font-size:22px}
+
+.group-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-top:8px}
+
+.ayuda{
+  display:flex;gap:8px;align-items:flex-start;
+  background:var(--info);border-radius:10px;padding:12px;
+}
+.ayuda svg{width:18px;height:18px;flex:none;margin-top:1px}
+.ayuda .tx{flex:1;font-size:13px;color:var(--text);line-height:19px}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 8px;text-align:center}
+.empty svg{width:40px;height:40px}
+.empty .et{font-size:15px;font-weight:700;color:var(--text)}
+.empty .ed{font-size:13px;color:var(--muted);line-height:19px}
+
+.fab{
+  position:absolute;right:20px;bottom:84px;
+  width:56px;height:56px;border-radius:28px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--sombra);
+}
+.fab svg{width:26px;height:26px}
+.fab svg *{stroke:var(--primaryText)}
+.viewport{position:relative}
+
+.sep{height:1px;background:var(--faint);margin:4px 0}
+.subhead{font-size:13px;font-weight:700;color:var(--muted);margin-top:8px}
+
+/* selector de período (MovimientosScreen) */
+.period-row{display:flex;align-items:center;justify-content:center;gap:24px}
+.period-row .fl{font-size:30px;color:var(--primary);padding:0 8px}
+.period-row .pd{font-size:18px;font-weight:700;min-width:130px;text-align:center;text-transform:capitalize}
+
+/* onboarding pasos (DashboardScreen) */
+.paso{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px}
+.paso.done{color:var(--muted);text-decoration:line-through}
+
+/* dona leyenda */
+.dona-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.dona-leyenda{flex:1;min-width:140px;display:flex;flex-direction:column;gap:6px}
+.dona-leyenda .lf{display:flex;align-items:center;gap:8px}
+.dona-leyenda .pt{width:10px;height:10px;border-radius:5px;flex:none}
+.dona-leyenda .ll{flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dona-leyenda .lv{font-size:12px;color:var(--muted);font-weight:600}
+.eje{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+
+/* notificación no leída */
+.notif{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-card);padding:var(--lg);display:flex;flex-direction:column;gap:4px}
+.notif.no-leida{border-color:var(--primary);background:var(--info)}
+.notif .nt{font-size:15px;font-weight:700}
+.notif .nc{font-size:14px;color:var(--text)}
+.notif .nm{font-size:12px;color:var(--muted)}
+
+/* categorías jerárquicas */
+.cat-hijo{margin-left:20px}
+.cat-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cat-row .flechas{display:flex;gap:16px;color:var(--primary)}
+
+/* ======================= PÁGINA SISTEMA DE DISEÑO ====================== */
+.ds{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:24px;padding-bottom:60px}
+.ds h2{font-size:18px;margin:0 0 4px}
+.ds h3{font-size:14px;margin:16px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.ds .panel{background:var(--bg)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sw{border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:11px}
+.sw .chip-c{height:56px}
+.sw .meta{padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.sw .meta b{font-weight:600}
+.sw .meta code{color:var(--muted)}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.demo-grid > div{display:flex;flex-direction:column;gap:10px}
+@media(max-width:900px){.demo-grid{grid-template-columns:1fr}.sidebar{display:none}}
+.type-row{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--faint);padding:8px 0}
+.type-row .tag{font-size:11px;color:var(--muted);width:70px;flex:none}
+</style>
+</head>
+<body>
+
+<div class="chrome-top">
+  <h1>PatrimonIA · Mockup de diseño</h1>
+  <span class="hint">estático · edítalo y lo llevamos de vuelta a la app</span>
+  <span class="sep"></span>
+  <span class="hint">Tema</span>
+  <div class="seg-tema" id="segTema">
+    <button data-tema="sistema" aria-pressed="true">Auto</button>
+    <button data-tema="claro" aria-pressed="false">Claro</button>
+    <button data-tema="oscuro" aria-pressed="false">Oscuro</button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="grp">Autenticación</div>
+    <a data-screen="login">Iniciar sesión</a>
+    <div class="grp">Pestañas (tab bar)</div>
+    <a data-screen="dashboard" class="active">Inicio · Dashboard</a>
+    <a data-screen="movimientos">Movimientos</a>
+    <a data-screen="planificar">Planificar</a>
+    <a data-screen="hogar">Hogar</a>
+    <a data-screen="config">Configuración</a>
+    <div class="grp">Detalle y formularios</div>
+    <a data-screen="elemento">Detalle de elemento</a>
+    <a data-screen="agregar">Agregar cuenta o bien</a>
+    <a data-screen="objetivos">Objetivos financieros</a>
+    <a data-screen="objetivo">Detalle de objetivo</a>
+    <a data-screen="presupuesto">Presupuesto</a>
+    <a data-screen="consolidado">Patrimonio del hogar</a>
+    <a data-screen="evolucion">Evolución del patrimonio</a>
+    <a data-screen="categorias">Categorías de movimiento</a>
+    <a data-screen="notificaciones">Notificaciones</a>
+    <a data-screen="perfil">Mi perfil</a>
+    <div class="grp">Referencia</div>
+    <a data-screen="ds">Sistema de diseño</a>
+  </nav>
+
+  <main class="stage">
+    <div class="caption" id="caption"></div>
+
+    <!-- ============ DEVICE ============ -->
+    <div class="device" id="device">
+      <div class="notch"></div>
+      <div class="nav-header" id="navHeader" hidden><span class="back">‹</span><span id="navTitle"></span></div>
+      <div class="viewport">
+
+        <!-- ========================= LOGIN ========================= -->
+        <section class="screen" data-screen="login" hidden>
+          <div class="screen-body">
+            <h1 class="title">Iniciar sesión</h1>
+            <p class="paragraph">Bienvenido de vuelta a PatrimonIA.</p>
+            <div class="field"><label>Email</label><div class="input">demo@patrimonia.cl</div></div>
+            <div class="field"><label>Contraseña</label><div class="input">••••••••</div></div>
+            <div class="btn">Entrar</div>
+            <div class="link">No tengo cuenta — registrarme</div>
+          </div>
+        </section>
+
+        <!-- ========================= DASHBOARD ========================= -->
+        <section class="screen" data-screen="dashboard">
+          <div class="screen-body">
+            <h1 class="title">Casa Riquelme</h1>
+
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="section-title">Primeros pasos</span>
+                <span class="nota">Ocultar</span>
+              </div>
+              <div class="paso done">✅ Agrega tu primera cuenta o bien</div>
+              <div class="paso done">✅ Registra un movimiento</div>
+              <div class="paso">⬜️ Crea un objetivo de ahorro</div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Mi patrimonio</span>
+              <div style="border-top:1px solid var(--faint);padding-top:8px">
+                <div class="stat val xl">18.450.000 CLP</div>
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-top:4px">
+                  <span class="nota">Libre 1.300.000 CLP · líquido 3.200.000 CLP − reservado 1.900.000 CLP</span>
+                  <span style="font-size:13px;font-weight:600;color:var(--primary)">▲ 420.000 CLP (2,3%) · 30 días</span>
+                </div>
+              </div>
+              <div style="border-top:1px solid var(--faint);padding-top:8px">
+                <div class="stat val xl">2.400 USD</div>
+                <span class="nota">Líquido 2.400 USD</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Cuentas y bienes</span>
+              <div class="list-item"><div class="li-main"><div class="li-title">Cuenta corriente</div><div class="li-sub">Liquidez</div></div><span class="li-right money-pos">1.850.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Cuenta de ahorro</div><div class="li-sub">Reserva</div></div><span class="li-right money-pos">1.350.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Fondo mutuo Fintual</div><div class="li-sub">Inversión</div></div><span class="li-right money-pos">4.100.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Cuenta en dólares</div><div class="li-sub">Liquidez</div></div><span class="li-right money-pos">2.400 USD</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Tarjeta de crédito</div><div class="li-sub" style="color:var(--danger)">Deuda · En mora</div></div><span class="li-right money-neg">(320.000 CLP)</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Crédito hipotecario</div><div class="li-sub">Deuda · Vigente</div></div><span class="li-right money-neg">(38.500.000 CLP)</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Departamento</div><div class="li-sub">Activo</div></div><span class="li-right money-pos">52.000.000 CLP</span><span class="chev">›</span></div>
+              <div class="btn-row" style="margin-top:8px;flex-direction:column">
+                <div class="btn secondary">Agregar elemento</div>
+                <div class="btn">Registrar movimiento</div>
+              </div>
+            </div>
+
+            <div class="menu-link">
+              <div class="mi" data-ico="notifications"></div>
+              <div class="ml-main"><div class="ml-title">Notificaciones</div><div class="ml-sub">2 sin leer</div></div>
+              <div class="badge">2</div><div class="chev">›</div>
+            </div>
+          </div>
+          <div class="fab" data-ico="add"></div>
+        </section>
+
+        <!-- ========================= MOVIMIENTOS ========================= -->
+        <section class="screen" data-screen="movimientos" hidden>
+          <div class="screen-body">
+            <h1 class="title">Movimientos</h1>
+            <div class="period-row"><span class="fl">‹</span><span class="pd">sep 2026</span><span class="fl">›</span></div>
+            <div class="segmented"><span class="segment active">Mes</span><span class="segment">Año</span></div>
+            <div class="segmented"><span class="segment active">Míos</span><span class="segment">Del hogar</span></div>
+
+            <div class="panel">
+              <div class="data-row"><span class="l">Ingresos</span><span class="r">2.350.000 CLP</span></div>
+              <div class="data-row"><span class="l">Gastos</span><span class="r">1.180.400 CLP</span></div>
+              <div class="sep"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:15px;font-weight:700">Balance</span>
+                <span class="stat val money-pos">1.169.600 CLP</span>
+              </div>
+              <span class="nota">▲ 240.000 CLP vs. el período anterior</span>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Gastos por rubro</span>
+              <div class="dona-wrap">
+                <div id="dona-mov"></div>
+                <div class="dona-leyenda">
+                  <div class="lf"><span class="pt" style="background:var(--cat0)"></span><span class="ll">Vivienda</span><span class="lv">1.000.000 · 85%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat1)"></span><span class="ll">Mercado</span><span class="lv">86.400 · 7%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat2)"></span><span class="ll">Transporte</span><span class="lv">53.000 · 4%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat3)"></span><span class="ll">Servicios</span><span class="lv">41.000 · 3%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">6 movimientos</span>
+              <div class="list-item"><div class="li-main"><div class="li-title">Sueldo</div><div class="li-sub">5 sep 2026</div></div><span class="li-right money-pos">+2.200.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Arriendo estacionamiento</div><div class="li-sub">3 sep 2026</div></div><span class="li-right money-pos">+150.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Dividendo hipotecario</div><div class="li-sub">2 sep 2026</div></div><span class="li-right money-neg">−1.000.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Supermercado Jumbo</div><div class="li-sub">12 sep 2026</div></div><span class="li-right money-neg">−86.400 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Bencina</div><div class="li-sub">10 sep 2026</div></div><span class="li-right money-neg">−53.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Cuenta de luz</div><div class="li-sub">8 sep 2026 · corregido</div></div><span class="li-right money-neg">−41.000 CLP</span><span class="chev">›</span></div>
+            </div>
+          </div>
+          <div class="fab" data-ico="add"></div>
+        </section>
+
+        <!-- ========================= PLANIFICAR ========================= -->
+        <section class="screen" data-screen="planificar" hidden>
+          <div class="screen-body">
+            <h1 class="title">Planificar</h1>
+            <div class="group-label">Metas</div>
+            <div class="menu-link"><div class="mi" data-ico="flag"></div><div class="ml-main"><div class="ml-title">Objetivos financieros</div><div class="ml-sub">Metas de ahorro con reservas y progreso</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="bookmark"></div><div class="ml-main"><div class="ml-title">Asignaciones</div><div class="ml-sub">Dinero apartado — con objetivo o suelto (fondo de emergencia…)</div></div><div class="chev">›</div></div>
+            <div class="group-label">Presupuesto y flujo</div>
+            <div class="menu-link"><div class="mi" data-ico="pie"></div><div class="ml-main"><div class="ml-title">Presupuestos</div><div class="ml-sub">Esperado vs. real, con seguimiento por rubro</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="calendar"></div><div class="ml-main"><div class="ml-title">Movimientos programados</div><div class="ml-sub">Ingresos futuros con fecha, listos para materializar</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="copy"></div><div class="ml-main"><div class="ml-title">Plantillas de movimiento</div><div class="ml-sub">Moldes para el gasto o ingreso de siempre</div></div><div class="chev">›</div></div>
+            <div class="group-label">Seguimiento</div>
+            <div class="menu-link"><div class="mi" data-ico="trending"></div><div class="ml-main"><div class="ml-title">Evolución de mi patrimonio</div><div class="ml-sub">Cómo cambió tu patrimonio en el tiempo</div></div><div class="chev">›</div></div>
+          </div>
+        </section>
+
+        <!-- ========================= HOGAR ========================= -->
+        <section class="screen" data-screen="hogar" hidden>
+          <div class="screen-body">
+            <h1 class="title">Casa Riquelme</h1>
+            <div class="menu-link"><div class="mi" data-ico="notifications"></div><div class="ml-main"><div class="ml-title">Notificaciones</div><div class="ml-sub">2 sin leer</div></div><div class="badge">2</div><div class="chev">›</div></div>
+            <div class="group-label">Patrimonio</div>
+            <div class="menu-link"><div class="mi" data-ico="home"></div><div class="ml-main"><div class="ml-title">Patrimonio del hogar</div><div class="ml-sub">Vista consolidada de todos los miembros</div></div><div class="chev">›</div></div>
+            <div class="group-label">Configuración del hogar</div>
+            <div class="menu-link"><div class="mi" data-ico="list"></div><div class="ml-main"><div class="ml-title">Categorías de movimiento</div><div class="ml-sub">Rubros para clasificar ingresos y gastos (los ven todos)</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="pricetag"></div><div class="ml-main"><div class="ml-title">Tipos de elemento patrimonial</div><div class="ml-sub">Cuenta corriente, APV, propiedad… — vocabulario del hogar</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="swap"></div><div class="ml-main"><div class="ml-title">Tipos de cambio</div><div class="ml-sub">Tasas para convertir entre monedas</div></div><div class="chev">›</div></div>
+            <div class="group-label">Administración</div>
+            <div class="menu-link"><div class="mi" data-ico="people"></div><div class="ml-main"><div class="ml-title">Gestionar hogar</div><div class="ml-sub">Nombre, miembros, roles e invitaciones</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="mail"></div><div class="ml-main"><div class="ml-title">Invitaciones recibidas</div><div class="ml-sub">Hogares a los que te invitaron</div></div><div class="chev">›</div></div>
+          </div>
+        </section>
+
+        <!-- ========================= CONFIGURACIÓN ========================= -->
+        <section class="screen" data-screen="config" hidden>
+          <div class="screen-body">
+            <h1 class="title">Configuración</h1>
+            <div class="group-label">Apariencia</div>
+            <div class="field">
+              <label>Tema</label>
+              <div class="segmented"><span class="segment active">Automático</span><span class="segment">Claro</span><span class="segment">Oscuro</span></div>
+            </div>
+            <div class="group-label">Mi cuenta</div>
+            <div class="menu-link"><div class="mi" data-ico="person"></div><div class="ml-main"><div class="ml-title">Mi perfil</div><div class="ml-sub">Nombre, notificaciones y datos de la cuenta</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="pricetag"></div><div class="ml-main"><div class="ml-title">Etiquetas</div><div class="ml-sub">Marcas personales transversales para tus movimientos</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="folder"></div><div class="ml-main"><div class="ml-title">Agrupaciones de elementos</div><div class="ml-sub">Carpetas para ordenar tus cuentas y activos</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="copy"></div><div class="ml-main"><div class="ml-title">Plantillas de movimiento</div><div class="ml-sub">Moldes para registrar tus movimientos habituales en dos toques</div></div><div class="chev">›</div></div>
+            <div class="group-label">Configuración del hogar</div>
+            <div class="menu-link"><div class="mi" data-ico="list"></div><div class="ml-main"><div class="ml-title">Categorías de movimiento</div><div class="ml-sub">Rubros para clasificar ingresos y gastos (los ven todos)</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="pricetag"></div><div class="ml-main"><div class="ml-title">Tipos de elemento patrimonial</div><div class="ml-sub">Cuenta corriente, APV, propiedad… — vocabulario del hogar</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="swap"></div><div class="ml-main"><div class="ml-title">Tipos de cambio</div><div class="ml-sub">Tasas para convertir entre monedas</div></div><div class="chev">›</div></div>
+            <div class="menu-link"><div class="mi" data-ico="people"></div><div class="ml-main"><div class="ml-title">Gestionar hogar</div><div class="ml-sub">Miembros, roles, moneda de consolidación e invitaciones</div></div><div class="chev">›</div></div>
+            <div class="group-label">Sesión</div>
+            <div class="btn danger">Cerrar sesión</div>
+          </div>
+        </section>
+
+        <!-- ========================= DETALLE ELEMENTO ========================= -->
+        <section class="screen" data-screen="elemento" hidden>
+          <div class="screen-body">
+            <h1 class="title">Crédito hipotecario</h1>
+            <div class="stat"><span class="lbl">Valor vigente</span><span class="val xl money-neg">(38.500.000 CLP)</span></div>
+
+            <div class="panel">
+              <div class="data-row"><span class="l">Categoría</span><span class="r">Deuda</span></div>
+              <div class="data-row"><span class="l">Tipo</span><span class="r">Crédito hipotecario</span></div>
+              <div class="data-row"><span class="l">Ámbito</span><span class="r">Personal</span></div>
+              <div class="data-row"><span class="l">Visibilidad</span><span class="r">Familiar</span></div>
+              <div class="data-row"><span class="l">Estado</span><span class="r">Activa</span></div>
+              <div class="data-row"><span class="l">En el patrimonio desde</span><span class="r">1 mar 2021</span></div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Deuda</span>
+              <div class="data-row"><span class="l">Estado</span><span class="r" style="color:var(--muted)">Vigente</span></div>
+              <div class="data-row"><span class="l">Saldo pendiente</span><span class="r">38.500.000 CLP</span></div>
+              <div class="progress"><i style="width:23%"></i></div>
+              <p class="nota">Pagado 11.500.000 CLP de 50.000.000 CLP</p>
+              <div class="data-row"><span class="l">Acreedor</span><span class="r">Banco Estado</span></div>
+              <div class="data-row"><span class="l">Desde</span><span class="r">1 mar 2021</span></div>
+              <div class="data-row"><span class="l">Vence</span><span class="r">1 mar 2046</span></div>
+              <div class="data-row"><span class="l">Cuota</span><span class="r">1.000.000 CLP</span></div>
+              <div class="data-row"><span class="l">Tasa anual</span><span class="r">4,2%</span></div>
+              <p class="nota">El interés del período se registra como un ajuste que aumenta el saldo.</p>
+              <div class="btn secondary">Registrar interés</div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Propietarios</span>
+              <div class="data-row"><span class="l">Juan</span><span class="r">100%</span></div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Movimientos</span>
+              <div class="list-item"><div class="li-main"><div class="li-title">Dividendo hipotecario</div><div class="li-sub">Transferencia · 2 sep 2026</div></div><span class="li-right money-pos">1.000.000 CLP</span><span class="chev">›</span></div>
+              <div class="list-item"><div class="li-main"><div class="li-title">Dividendo hipotecario</div><div class="li-sub">Transferencia · 2 ago 2026</div></div><span class="li-right money-pos">1.000.000 CLP</span><span class="chev">›</span></div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Ajustes patrimoniales</span>
+              <div class="list-item"><div class="li-main"><div class="li-title">Interés del período</div></div><span class="li-right money-neg">(168.000 CLP)</span><span class="chev">›</span></div>
+              <div class="btn secondary" style="margin-top:8px">Registrar ajuste</div>
+            </div>
+
+            <div class="btn secondary">Editar / estado</div>
+            <div class="btn secondary">Historial de cambios</div>
+          </div>
+        </section>
+
+        <!-- ========================= AGREGAR ELEMENTO ========================= -->
+        <section class="screen" data-screen="agregar" hidden>
+          <div class="screen-body">
+            <h1 class="title">Agregar cuenta o bien</h1>
+            <div class="pasos">
+              <div class="lbl">Paso 1 de 3</div>
+              <div class="progress"><i style="width:33%"></i></div>
+            </div>
+            <div class="field"><label>Tipo</label><div class="select-box"><span>Cuenta corriente</span><span class="caret">▾</span></div></div>
+            <div class="link">¿No encuentras el tipo? Crear uno nuevo</div>
+            <div class="field"><label>¿Qué es?</label><div class="select-box"><span>Liquidez</span><span class="caret">▾</span></div></div>
+            <div class="ayuda"><span data-ico="info"></span><span class="tx">Liquidez: efectivo y cuentas de uso diario.</span></div>
+            <div class="field"><label>Nombre</label><div class="input ph">Cuenta corriente</div></div>
+            <div class="btn">Siguiente</div>
+          </div>
+        </section>
+
+        <!-- ========================= OBJETIVOS (lista) ========================= -->
+        <section class="screen" data-screen="objetivos" hidden>
+          <div class="screen-body">
+            <h1 class="title">Objetivos financieros</h1>
+            <div class="ayuda"><span data-ico="info"></span><span class="tx">Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje). Adentro creas asignaciones y les guardas reservas de dinero para ir viendo el avance.</span></div>
+
+            <div class="panel">
+              <span style="font-size:16px;font-weight:700">Avance total (2 objetivos activos)</span>
+              <div class="progress"><i style="width:44%"></i></div>
+              <span class="nota">3.300.000 CLP de 7.500.000 CLP · 44%</span>
+            </div>
+
+            <div class="card tap">
+              <div class="card-main">
+                <div style="display:flex;justify-content:space-between"><span style="font-size:16px;font-weight:700">Viaje a Japón</span><span class="nota">· del hogar · En progreso</span></div>
+                <div class="progress"><i style="width:47%"></i></div>
+                <span class="nota">2.100.000 CLP de 4.500.000 CLP · 47%</span>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="card tap">
+              <div class="card-main">
+                <div style="display:flex;justify-content:space-between"><span style="font-size:16px;font-weight:700">Fondo de emergencia</span><span class="nota">En progreso</span></div>
+                <div class="progress"><i style="width:40%"></i></div>
+                <span class="nota">1.200.000 CLP de 3.000.000 CLP · 40%</span>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="card tap">
+              <div class="card-main">
+                <div style="display:flex;justify-content:space-between"><span style="font-size:16px;font-weight:700">Notebook nuevo</span><span class="nota">En progreso</span></div>
+                <div class="progress"><i style="width:25%"></i></div>
+                <span class="nota">300 USD de 1.200 USD · 25%</span>
+              </div>
+              <span class="chev">›</span>
+            </div>
+
+            <div class="panel">
+              <span style="font-size:16px;font-weight:700">Nuevo objetivo</span>
+              <div class="field"><label>Nombre</label><div class="input ph">Pie vivienda</div></div>
+              <div class="field"><label>Monto objetivo (CLP)</label><div class="input ph">0</div></div>
+              <div class="field"><label>Moneda</label><div class="select-box"><span>CLP — Peso chileno</span><span class="caret">▾</span></div></div>
+              <div class="field"><label>¿Compartir con el hogar?</label><div class="segmented"><span class="segment active">No</span><span class="segment">Sí</span></div></div>
+              <div class="btn disabled">Crear objetivo</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= DETALLE OBJETIVO ========================= -->
+        <section class="screen" data-screen="objetivo" hidden>
+          <div class="screen-body">
+            <h1 class="title">Viaje a Japón</h1>
+            <div class="progress"><i style="width:47%"></i></div>
+            <p class="nota">2.100.000 CLP de 4.500.000 CLP · 47% · En progreso · del hogar</p>
+
+            <div class="panel">
+              <span class="section-title">Asignaciones</span>
+              <div class="data-row"><span class="l">Reserva de Juan</span><span class="r">1.400.000 CLP</span></div>
+              <div class="data-row"><span class="l">Reserva de Dani</span><span class="r">700.000 CLP</span></div>
+              <div class="field" style="margin-top:8px"><label>Nueva asignación</label><div class="input"></div></div>
+              <div class="btn secondary disabled">Crear asignación</div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Compartir con el hogar</span>
+              <div class="field"><label>¿Compartido?</label><div class="segmented"><span class="segment">No</span><span class="segment active">Sí</span></div></div>
+              <div class="ayuda"><span data-ico="info"></span><span class="tx">Elige quién más puede modificar este objetivo (crear asignaciones, reservar, editar).</span></div>
+              <div class="select-row active">Dani</div>
+              <div class="btn secondary disabled">Guardar designados</div>
+            </div>
+
+            <div class="panel">
+              <div class="field"><label>Estado</label><div class="segmented"><span class="segment active">En progreso</span><span class="segment">Completado</span><span class="segment">Cancelado</span></div></div>
+              <div class="btn secondary disabled">Cambiar estado</div>
+              <div class="field"><label>Motivo (para eliminar)</label><div class="input"></div></div>
+              <div class="btn secondary disabled">Eliminar objetivo</div>
+            </div>
+
+            <div class="btn secondary">Historial de cambios</div>
+          </div>
+        </section>
+
+        <!-- ========================= PRESUPUESTO ========================= -->
+        <section class="screen" data-screen="presupuesto" hidden>
+          <div class="screen-body">
+            <h1 class="title">Presupuesto individual</h1>
+            <div class="panel">
+              <div class="data-row"><span class="l">Periodicidad</span><span class="r">Periódico</span></div>
+              <div class="data-row"><span class="l">Intervalo</span><span class="r">Mensual</span></div>
+              <div class="data-row"><span class="l">Período</span><span class="r">1 sep 2026 → 30 sep 2026</span></div>
+              <div class="data-row"><span class="l">Estado</span><span class="r">Activo</span></div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Presupuestado vs. real</span>
+              <div class="data-row"><span class="l">Ingresos esperados</span><span class="r">2.300.000 CLP</span></div>
+              <div class="data-row"><span class="l">Ingresos reales</span><span class="r">2.350.000 CLP</span></div>
+              <div class="data-row"><span class="l">Desviación ingresos</span><span class="r">+50.000 CLP</span></div>
+              <div class="sep"></div>
+              <div class="data-row"><span class="l">Gastos esperados</span><span class="r">1.250.000 CLP</span></div>
+              <div class="data-row"><span class="l">Gastos reales</span><span class="r">1.180.400 CLP</span></div>
+              <div class="data-row"><span class="l">Desviación gastos</span><span class="r">−69.600 CLP</span></div>
+              <div class="sep"></div>
+              <div class="data-row"><span class="l">Ahorro esperado</span><span class="r">400.000 CLP</span></div>
+              <div class="data-row"><span class="l">Ahorro real</span><span class="r">500.000 CLP</span></div>
+              <div class="data-row"><span class="l">Desviación ahorro</span><span class="r">+100.000 CLP</span></div>
+            </div>
+
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="section-title">Por rubro</span><span class="link">Editar rubros</span>
+              </div>
+              <div class="cat-row" style="border-top:1px solid var(--faint);padding-top:8px">
+                <span style="font-size:14px;font-weight:600">Vivienda</span>
+                <div style="text-align:right">
+                  <div style="font-size:14px;font-weight:600">1.000.000 / 1.100.000 CLP</div>
+                  <div class="nota">−100.000 CLP</div>
+                </div>
+              </div>
+              <div class="cat-row" style="border-top:1px solid var(--faint);padding-top:8px">
+                <span style="font-size:14px;font-weight:600">Mercado</span>
+                <div style="text-align:right">
+                  <div style="font-size:14px;font-weight:600">86.400 / 150.000 CLP</div>
+                  <div class="nota">−63.600 CLP</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="btn">Editar montos esperados</div>
+            <div class="btn danger">Eliminar presupuesto</div>
+          </div>
+        </section>
+
+        <!-- ========================= CONSOLIDADO HOGAR ========================= -->
+        <section class="screen" data-screen="consolidado" hidden>
+          <div class="screen-body">
+            <h1 class="title">Patrimonio del hogar</h1>
+            <p class="nota">9 elementos consolidados · 2 miembros.</p>
+
+            <div class="panel">
+              <span class="section-title">Total (CLP)</span>
+              <span class="stat val" style="font-size:22px">24.760.000 CLP</span>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">CLP</span>
+              <div class="data-row"><span class="l">Patrimonio neto</span><span class="r">22.450.000 CLP</span></div>
+              <div class="data-row"><span class="l">Activos</span><span class="r">61.270.000 CLP</span></div>
+              <div class="data-row"><span class="l">Pasivos</span><span class="r money-neg">(38.820.000 CLP)</span></div>
+              <div class="data-row"><span class="l">Valor líquido</span><span class="r">4.550.000 CLP</span></div>
+              <div class="data-row"><span class="l">Liquidez</span><span class="r">7%</span></div>
+              <div class="subhead">Distribución de activos</div>
+              <div class="dona-wrap">
+                <div id="dona-cons"></div>
+                <div class="dona-leyenda">
+                  <div class="lf"><span class="pt" style="background:var(--cat0)"></span><span class="ll">Activo</span><span class="lv">52.000.000 · 85%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat1)"></span><span class="ll">Inversión</span><span class="lv">4.100.000 · 7%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat2)"></span><span class="ll">Liquidez</span><span class="lv">3.820.000 · 6%</span></div>
+                  <div class="lf"><span class="pt" style="background:var(--cat3)"></span><span class="ll">Reserva</span><span class="lv">1.350.000 · 2%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">Objetivos del hogar</span>
+              <div class="data-row"><span class="l">Objetivos</span><span class="r">3 (3 en progreso, 0 completados)</span></div>
+              <div class="progress"><i style="width:44%"></i></div>
+              <span class="nota">3.300.000 CLP de 7.500.000 CLP · 44%</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= EVOLUCIÓN ========================= -->
+        <section class="screen" data-screen="evolucion" hidden>
+          <div class="screen-body">
+            <h1 class="title">Evolución de mi patrimonio</h1>
+            <div class="panel">
+              <span class="section-title">¿Cuánto tenía a una fecha?</span>
+              <div class="field"><label>Fecha</label><div class="input ph">Elegir fecha</div></div>
+              <div class="btn secondary">Ver patrimonio a esa fecha</div>
+            </div>
+            <p class="nota">Reconstruye el patrimonio a dos fechas y muestra la variación. Sin fecha de fin, se usa hoy.</p>
+            <div class="field"><label>Desde</label><div class="input">1 ene 2026</div></div>
+            <div class="field"><label>Hasta (opcional, por defecto hoy)</label><div class="input ph">Elegir fecha</div></div>
+            <div class="btn">Consultar</div>
+
+            <div class="panel">
+              <span class="section-title">Evolución (CLP)</span>
+              <div id="linea-evo"></div>
+              <div class="eje"><span>1 ene 2026</span><span>5 sep 2026</span></div>
+              <div class="eje"><span>mín 14.900.000 CLP</span><span>máx 18.450.000 CLP</span></div>
+            </div>
+
+            <div class="panel">
+              <span class="section-title">1 ene 2026 → 5 sep 2026</span>
+              <div class="data-row"><span class="l">Patrimonio (CLP) al inicio</span><span class="r">14.900.000 CLP</span></div>
+              <div class="data-row"><span class="l">Al final</span><span class="r">18.450.000 CLP</span></div>
+              <div class="data-row"><span class="l">Variación</span><span class="r">+3.550.000 CLP (23,8%)</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= CATEGORÍAS ========================= -->
+        <section class="screen" data-screen="categorias" hidden>
+          <div class="screen-body">
+            <h1 class="title">Categorías de movimiento</h1>
+            <div class="ayuda"><span data-ico="info"></span><span class="tx">Vocabulario del hogar para clasificar ingresos y gastos (Mercado, Servicios, Sueldo…). Puedes anidarlas en dos niveles ("Servicios › Internet"). La lista y el orden los ven todos los miembros.</span></div>
+
+            <div class="panel">
+              <div class="cat-row"><div><div style="font-size:15px;font-weight:700">Servicios</div><div class="nota">Gasto</div></div><div class="flechas"><span>▲</span><span>▼</span></div></div>
+              <div class="cat-row"><span class="link">Editar</span><span class="link">Archivar</span></div>
+            </div>
+            <div class="panel cat-hijo">
+              <div class="cat-row"><div><div style="font-size:15px;font-weight:700">› Internet y TV</div><div class="nota">Gasto</div></div></div>
+              <div class="cat-row"><span class="link">Editar</span><span class="link">Archivar</span></div>
+            </div>
+            <div class="panel">
+              <div class="cat-row"><div><div style="font-size:15px;font-weight:700">Mercado</div><div class="nota">Gasto</div></div><div class="flechas"><span>▲</span><span>▼</span></div></div>
+              <div class="cat-row"><span class="link">Editar</span><span class="link">Archivar</span></div>
+            </div>
+            <div class="panel">
+              <div class="cat-row"><div><div style="font-size:15px;font-weight:700">Sueldo</div><div class="nota">Ingreso</div></div><div class="flechas"><span>▲</span><span>▼</span></div></div>
+              <div class="cat-row"><span class="link">Editar</span><span class="link">Archivar</span></div>
+            </div>
+
+            <div class="panel">
+              <span style="font-size:15px;font-weight:700">Nueva categoría</span>
+              <div class="field"><label>Nombre</label><div class="input ph">p. ej. Mascotas</div></div>
+              <div class="field"><label>Aplica a</label><div class="segmented"><span class="segment active">Gasto</span><span class="segment">Ingreso</span><span class="segment">Ingresos y gastos</span></div></div>
+              <div class="field"><label>Categoría padre</label><div class="select-box"><span>Ninguna (categoría raíz)</span><span class="caret">▾</span></div></div>
+              <div class="btn disabled">Crear categoría</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= NOTIFICACIONES ========================= -->
+        <section class="screen" data-screen="notificaciones" hidden>
+          <div class="screen-body">
+            <h1 class="title">Notificaciones</h1>
+            <div class="btn secondary">Marcar todas como leídas</div>
+            <div class="notif no-leida">
+              <div class="nt">Reserva consumida</div>
+              <div class="nc">Se consumió una reserva de "Fondo de emergencia" por 200.000 CLP.</div>
+              <div class="nm">hoy · nueva · toca para abrir</div>
+            </div>
+            <div class="notif no-leida">
+              <div class="nt">Te invitaron a un hogar</div>
+              <div class="nc">Dani te invitó a "Casa Riquelme".</div>
+              <div class="nm">ayer · nueva · toca para abrir</div>
+            </div>
+            <div class="notif">
+              <div class="nt">Objetivo completado</div>
+              <div class="nc">"Cambio de refrigerador" llegó al 100%. 🎉</div>
+              <div class="nm">hace 5 días</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= MI PERFIL ========================= -->
+        <section class="screen" data-screen="perfil" hidden>
+          <div class="screen-body">
+            <h1 class="title">Mi perfil</h1>
+            <div class="panel">
+              <div class="data-row"><span class="l">Email</span><span class="r">demo@patrimonia.cl</span></div>
+              <div class="field"><label>Nombre</label><div class="input">Juan</div></div>
+              <div class="btn">Guardar</div>
+            </div>
+            <div class="panel">
+              <span class="section-title">Notificaciones</span>
+              <div class="ayuda"><span data-ico="info"></span><span class="tx">Elige qué avisos quieres recibir (en la app y como push).</span></div>
+              <div class="field"><label>Objetivo completado</label><div class="segmented"><span class="segment active">Sí</span><span class="segment">No</span></div></div>
+              <div class="field"><label>Reservas consumidas</label><div class="segmented"><span class="segment">Sí</span><span class="segment active">No</span></div></div>
+              <div class="field"><label>Invitación a un hogar</label><div class="segmented"><span class="segment active">Sí</span><span class="segment">No</span></div></div>
+              <div class="btn secondary disabled">Guardar preferencias</div>
+            </div>
+            <div class="panel">
+              <span class="section-title">Desactivar cuenta</span>
+              <p class="paragraph">Tus elementos patrimoniales y membresías históricas se conservan, pero no podrás volver a iniciar sesión.</p>
+              <div class="field"><label>Motivo</label><div class="input"></div></div>
+              <div class="btn danger disabled">Desactivar mi cuenta</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= SISTEMA DE DISEÑO ========================= -->
+        <section class="screen" data-screen="ds" hidden>
+          <div class="screen-body">
+            <div class="ds">
+              <div>
+                <h2>Sistema de diseño</h2>
+                <p class="nota">Fuente: <code>app/src/ui/tema.ts</code> y <code>app/src/ui/index.tsx</code>. Cambia los tokens en el <code>&lt;style&gt;</code> de este archivo (bloques <code>:root</code> y <code>:root[data-theme="dark"]</code>).</p>
+              </div>
+
+              <div>
+                <h3>Paleta — tema activo</h3>
+                <div class="swatches" id="swatches"></div>
+              </div>
+
+              <div>
+                <h3>Paleta de categorías (gráficos)</h3>
+                <div class="swatches" id="swatches-cat"></div>
+              </div>
+
+              <div>
+                <h3>Tipografía</h3>
+                <div class="panel">
+                  <div class="type-row"><span class="tag">título</span><span class="title">24 / 700</span></div>
+                  <div class="type-row"><span class="tag">sección</span><span class="section-title">16 / 700</span></div>
+                  <div class="type-row"><span class="tag">cuerpo</span><span style="font-size:15px">15 / 400 · lh 22</span></div>
+                  <div class="type-row"><span class="tag">dato</span><span style="font-size:14px;font-weight:600">14 / 600</span></div>
+                  <div class="type-row"><span class="tag">nota</span><span class="nota">13 / 400 · color muted</span></div>
+                </div>
+              </div>
+
+              <div>
+                <h3>Componentes</h3>
+                <div class="demo-grid">
+                  <div>
+                    <span class="group-label">Botones</span>
+                    <div class="btn">Primario</div>
+                    <div class="btn secondary">Secundario</div>
+                    <div class="btn danger">Peligro</div>
+                    <div class="btn disabled">Deshabilitado</div>
+                    <span class="link">LinkButton</span>
+                  </div>
+                  <div>
+                    <span class="group-label">Campos</span>
+                    <div class="field"><label>Field</label><div class="input">valor</div></div>
+                    <div class="field"><label>Field (placeholder)</label><div class="input ph">placeholder</div></div>
+                    <div class="field"><label>Field con error</label><div class="input err">valor</div><span class="err-inline">Mensaje de error</span></div>
+                    <div class="field"><label>Select</label><div class="select-box"><span>Opción elegida</span><span class="caret">▾</span></div></div>
+                  </div>
+                  <div>
+                    <span class="group-label">Segmented / SelectRow</span>
+                    <div class="segmented"><span class="segment active">Uno</span><span class="segment">Dos</span><span class="segment">Tres</span></div>
+                    <div class="select-row active">SelectRow activo</div>
+                    <div class="select-row">SelectRow inactivo</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip active">Chip activo</span><span class="chip">Chip</span></div>
+                  </div>
+                  <div>
+                    <span class="group-label">Progreso / distribución</span>
+                    <div class="progress"><i style="width:60%"></i></div>
+                    <div class="dist"><i style="width:55%;background:var(--cat0)"></i><i style="width:25%;background:var(--cat1)"></i><i style="width:20%;background:var(--cat2)"></i></div>
+                    <div class="pasos"><div class="lbl">Paso 2 de 3</div><div class="progress"><i style="width:66%"></i></div></div>
+                  </div>
+                  <div>
+                    <span class="group-label">Card / ListItem / Row</span>
+                    <div class="card tap"><div class="card-main"><span class="section-title">Card tocable</span><span class="nota">con chevron a la derecha</span></div><span class="chev">›</span></div>
+                    <div class="panel">
+                      <div class="list-item"><div class="li-main"><div class="li-title">ListItem</div><div class="li-sub">subtítulo</div></div><span class="li-right">valor</span><span class="chev">›</span></div>
+                      <div class="data-row"><span class="l">Row izquierda</span><span class="r">Row derecha</span></div>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="group-label">Stat / Ayuda / Empty</span>
+                    <div class="panel"><div class="stat"><span class="lbl">Etiqueta</span><span class="val">1.234.567 CLP</span><span class="hint">pista opcional</span></div></div>
+                    <div class="ayuda"><span data-ico="info"></span><span class="tx">Caja de ayuda contextual sobre fondo <code>info</code>.</span></div>
+                    <div class="panel"><div class="empty"><span data-ico="wallet"></span><span class="et">Estado vacío</span><span class="ed">Descripción breve de qué hacer.</span><div class="btn">Acción</div></div></div>
+                  </div>
+                  <div>
+                    <span class="group-label">MenuLink</span>
+                    <div class="menu-link"><div class="mi" data-ico="flag"></div><div class="ml-main"><div class="ml-title">MenuLink</div><div class="ml-sub">subtítulo descriptivo</div></div><div class="chev">›</div></div>
+                    <div class="menu-link"><div class="mi" data-ico="notifications"></div><div class="ml-main"><div class="ml-title">Con badge</div><div class="ml-sub">2 sin leer</div></div><div class="badge">2</div><div class="chev">›</div></div>
+                  </div>
+                  <div>
+                    <span class="group-label">Gráficos (SVG)</span>
+                    <div class="panel"><div class="dona-wrap"><div id="dona-ds"></div></div></div>
+                    <div class="panel"><div id="barras-ds"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /viewport -->
+
+      <div class="tabbar" id="tabbar">
+        <div class="tab active" data-screen="dashboard"><span class="ic" data-ico="home"></span>Inicio</div>
+        <div class="tab" data-screen="movimientos"><span class="ic" data-ico="receipt"></span>Movimientos</div>
+        <div class="tab" data-screen="planificar"><span class="ic" data-ico="flag"></span>Planificar</div>
+        <div class="tab" data-screen="hogar"><span class="ic" data-ico="people"></span>Hogar</div>
+        <div class="tab" data-screen="config"><span class="ic" data-ico="settings"></span>Config</div>
+      </div>
+    </div><!-- /device -->
+  </main>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Iconos (aprox. de Ionicons "-outline"). Simples a propósito: en la app real
+   son @expo/vector-icons; acá solo importa la silueta para juzgar el layout.
+   --------------------------------------------------------------------------- */
+const ICONS = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  receipt:'<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  flag:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  people:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6"/><path d="M18 20c0-2-1-3-2-4"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  notifications:'<path d="M6 16V10a6 6 0 1112 0v6l2 2H4z"/><path d="M10 20a2 2 0 004 0"/>',
+  add:'<path d="M12 5v14M5 12h14"/>',
+  wallet:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  pricetag:'<path d="M3 12l9-9 9 9-9 9z"/><circle cx="9" cy="9" r="1.5"/>',
+  swap:'<path d="M7 4l-4 4 4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  folder:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h8"/>',
+  pie:'<path d="M12 3v9l7 5A9 9 0 1012 3z"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  trending:'<path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/>',
+  bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+};
+function paintIcons(root){
+  (root||document).querySelectorAll('[data-ico]').forEach(el=>{
+    const n=el.getAttribute('data-ico'); if(!ICONS[n]||el.dataset.painted)return;
+    el.dataset.painted='1';
+    el.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%" style="color:var(--primary)">'+ICONS[n]+'</svg>';
+  });
+}
+
+/* ---- Donut SVG (Dona en ui/charts.tsx) ---- */
+function donut(el, segs, size){
+  size=size||150; const g=size*0.16, r=(size-g)/2, C=2*Math.PI*r;
+  const total=segs.reduce((s,x)=>s+x.v,0); let off=0;
+  let rings=`<circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="var(--faint)" stroke-width="${g}" fill="none"/>`;
+  segs.forEach(s=>{ const len=total?s.v/total*C:0;
+    rings+=`<circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${s.c}" stroke-width="${g}" fill="none" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${size/2} ${size/2})"/>`;
+    off+=len; });
+  el.innerHTML=`<svg width="${size}" height="${size}">${rings}</svg>`;
+}
+/* ---- Línea SVG (GraficoLinea) ---- */
+function linea(el, vals){
+  const w=300,h=140,pad=14, min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
+  const x=i=>i/(vals.length-1)*w, y=v=>pad+(1-(v-min)/rng)*(h-2*pad);
+  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  const area=`M ${x(0)},${h} L ${pts.split(' ').join(' L ')} L ${x(vals.length-1)},${h} Z`;
+  el.innerHTML=`<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--primary)" stop-opacity="0.28"/><stop offset="1" stop-color="var(--primary)" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#lg)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linejoin="round"/>
+  </svg>`;
+}
+/* ---- Barras pareadas (GraficoBarras) ---- */
+function barras(el, rows){
+  const w=320,h=150,pad=8, max=Math.max(1,...rows.flatMap(r=>[r.i,r.g])), step=w/rows.length, bw=Math.min(10,step/3);
+  const bh=v=>v/max*(h-2*pad);
+  let r=rows.map((b,i)=>{const cx=i*step+step/2;return `
+    <rect x="${cx-bw-1}" y="${h-pad-bh(b.i)}" width="${bw}" height="${bh(b.i)}" fill="var(--primary)" rx="1"/>
+    <rect x="${cx+1}" y="${h-pad-bh(b.g)}" width="${bw}" height="${bh(b.g)}" fill="var(--danger)" rx="1"/>`;}).join('');
+  el.innerHTML=`<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${r}
+    <line x1="0" y1="${h-pad}" x2="${w}" y2="${h-pad}" stroke="var(--border)"/></svg>
+    <div class="eje" style="margin-top:4px">`+rows.map(b=>`<span>${b.e}</span>`).join('')+`</div>
+    <div class="dona-leyenda"><div class="lf"><span class="pt" style="background:var(--primary)"></span><span class="eje">Ingresos</span>
+    <span class="pt" style="background:var(--danger)"></span><span class="eje">Gastos</span></div></div>`;
+}
+
+function renderCharts(){
+  const cat=n=>getComputedStyle(document.documentElement).getPropertyValue('--cat'+n).trim();
+  const d1=document.getElementById('dona-mov'); if(d1)donut(d1,[{v:1000000,c:cat(0)},{v:86400,c:cat(1)},{v:53000,c:cat(2)},{v:41000,c:cat(3)}]);
+  const d2=document.getElementById('dona-cons'); if(d2)donut(d2,[{v:52000000,c:cat(0)},{v:4100000,c:cat(1)},{v:3820000,c:cat(2)},{v:1350000,c:cat(3)}]);
+  const d3=document.getElementById('dona-ds'); if(d3)donut(d3,[{v:55,c:cat(0)},{v:25,c:cat(1)},{v:20,c:cat(2)}]);
+  const l1=document.getElementById('linea-evo'); if(l1)linea(l1,[14900000,15100000,15400000,15250000,16000000,16800000,17200000,17600000,18450000]);
+  const b1=document.getElementById('barras-ds'); if(b1)barras(b1,[{e:'jun',i:2.2,g:1.4},{e:'jul',i:2.3,g:1.9},{e:'ago',i:2.2,g:1.1},{e:'sep',i:2.35,g:1.18}]);
+}
+
+/* ---- Swatches del sistema de diseño ---- */
+function renderSwatches(){
+  const box=document.getElementById('swatches'); if(!box)return;
+  const toks=['fondo','bg','text','muted','border','primary','primaryText','danger','faint','info'];
+  const cs=getComputedStyle(document.documentElement);
+  box.innerHTML=toks.map(t=>{const v=cs.getPropertyValue('--'+t).trim();
+    return `<div class="sw"><div class="chip-c" style="background:${v};border-bottom:1px solid var(--border)"></div><div class="meta"><b>--${t}</b><code>${v}</code></div></div>`;}).join('');
+  const cbox=document.getElementById('swatches-cat');
+  cbox.innerHTML=Array.from({length:11},(_,i)=>{const v=cs.getPropertyValue('--cat'+i).trim();
+    return `<div class="sw"><div class="chip-c" style="background:${v}"></div><div class="meta"><b>--cat${i}</b><code>${v}</code></div></div>`;}).join('');
+}
+
+/* ---- Navegación entre pantallas ---- */
+const TAB_SCREENS=['dashboard','movimientos','planificar','hogar','config'];
+const TITLES={login:'',elemento:'Detalle',agregar:'Agregar cuenta o bien',objetivos:'Objetivos financieros',
+  objetivo:'Objetivo',presupuesto:'Presupuesto',consolidado:'Patrimonio del hogar',evolucion:'Evolución de mi patrimonio',
+  categorias:'Categorías de movimiento',notificaciones:'Notificaciones',perfil:'Mi perfil',ds:''};
+const CAPTIONS={
+  dashboard:'Tab "Inicio" — DashboardScreen. Onboarding, resumen de patrimonio por moneda, lista de cuentas y bienes, FAB para registrar movimiento.',
+  movimientos:'Tab "Movimientos" — selector de período, alcance míos/hogar, balance, dona de gastos por rubro y lista.',
+  planificar:'Tab "Planificar" — hub de metas, presupuesto y seguimiento (patrón MenuLink + GroupLabel).',
+  hogar:'Tab "Hogar" — patrimonio consolidado, configuración del hogar y administración.',
+  config:'Tab "Config" — AjustesScreen, el consolidador único de configuración. Tema + accesos a todo.',
+  login:'LoginScreen — sin header, formulario simple sobre fondo.',
+  elemento:'ElementoDetalleScreen — ejemplo de una deuda (hipotecario): Stat de valor, panel de datos, bloque de deuda con progreso, movimientos, ajustes.',
+  agregar:'AgregarElementoScreen — wizard de 2–3 pasos. Paso 1: tipo (con "crear tipo" inline), categoría con Ayuda, nombre.',
+  objetivos:'ObjetivosScreen — Ayuda, avance total, tarjetas de objetivo con ProgressBar, formulario de creación.',
+  objetivo:'ObjetivoDetalleScreen — progreso, asignaciones, compartir con el hogar + designados, estado.',
+  presupuesto:'PresupuestoDetalleScreen — presupuestado vs. real, desviación por rubro, acciones.',
+  consolidado:'HogarConsolidadoScreen — total, desglose por moneda, dona de distribución de activos, objetivos del hogar.',
+  evolucion:'EvolucionPatrimonioScreen — patrimonio a una fecha, gráfico de línea, variación entre dos fechas.',
+  categorias:'CategoriasScreen — categorías jerárquicas (2 niveles) reordenables + creación con categoría padre.',
+  notificaciones:'NotificacionesScreen — tarjetas; las no leídas van con borde primary y fondo info.',
+  perfil:'PerfilScreen — datos de cuenta, preferencias de notificación, desactivar cuenta.',
+  ds:'Sistema de diseño — tokens de color del tema activo, tipografía y galería de componentes.'
+};
+
+function show(name){
+  document.querySelectorAll('.screen').forEach(s=>s.hidden = s.dataset.screen!==name);
+  document.querySelectorAll('#sidebar a').forEach(a=>a.classList.toggle('active',a.dataset.screen===name));
+  const isTab=TAB_SCREENS.includes(name);
+  const isFull=(name==='ds');
+  document.getElementById('tabbar').style.display=isTab?'flex':'none';
+  const nh=document.getElementById('navHeader');
+  if(isTab||name==='login'||isFull){nh.hidden=true;}
+  else{nh.hidden=false;document.getElementById('navTitle').textContent=TITLES[name]||name;}
+  document.querySelectorAll('#tabbar .tab').forEach(t=>t.classList.toggle('active',t.dataset.screen===name));
+  document.getElementById('device').style.height=isFull?'auto':'800px';
+  document.getElementById('caption').textContent=CAPTIONS[name]||'';
+  document.querySelector('.viewport').scrollTop=0;
+  location.hash=name;
+  paintIcons(); renderCharts(); renderSwatches();
+}
+
+document.querySelectorAll('#sidebar a').forEach(a=>a.addEventListener('click',()=>show(a.dataset.screen)));
+document.querySelectorAll('#tabbar .tab').forEach(t=>t.addEventListener('click',()=>show(t.dataset.screen)));
+
+/* ---- Tema ---- */
+const seg=document.getElementById('segTema');
+seg.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  const m=b.dataset.tema;
+  seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+  if(m==='sistema')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', m==='oscuro'?'dark':'light');
+  renderCharts(); renderSwatches();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{renderCharts();renderSwatches();});
+
+/* ---- init ---- */
+paintIcons();
+const start=(location.hash||'#dashboard').slice(1);
+show(document.querySelector('.screen[data-screen="'+start+'"]')?start:'dashboard');
+</script>
+</body>
+</html>
