@@ -241,9 +241,45 @@ Nota de diseño: `GET /elementos-patrimoniales/{id}` no expone directamente el m
 | `GET /presupuestos/{id}/desviacion` | Proyección `desviacion_presupuestaria` (DB design sección 12) — comparación presupuestado vs. real |
 | `GET /presupuestos?tipo=FAMILIAR&vigente=true` | Presupuestos vigentes — para periódicos, calculado por calendario; para específicos, por `estado = ACTIVO` |
 
+# Endpoints añadidos (Fases 13–52)
+
+Verificado contra los decoradores de ruta del backend.
+
+## Comandos (`POST /comandos/{Nombre}`)
+
+Los 26 comandos nuevos de `APPLICATION_SERVICES.md` §"Casos de uso añadidos"
+(#53–#78) tienen cada uno su `POST /comandos/{Nombre}`, con el mismo mapeo 1:1.
+Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`**.
+
+## Consultas nuevas
+
+| Endpoint | Devuelve | Fase / gap |
+|---|---|---|
+| `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL) | Fase 16 / G27 |
+| `GET /usuarios/me/resumen-anual?anio=&alcance=&hogarId=` | 12 baldes `{mes, porMoneda}` | Fase 16 / G27 |
+| `GET /usuarios/me/serie-patrimonial?desde=&hasta=&pasos=` | N puntos equiespaciados del patrimonio individual | Fase 15g |
+| `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` | patrimonio en 2 fechas + variación (abs / %) | Fase 9 |
+| `GET /usuarios/me/patrimonio-individual/historico?fecha=` | patrimonio reconstruido a esa fecha | Fase 9 / G18 |
+| `GET /elementos-patrimoniales/:id/valor-historico?fecha=` | valor del elemento a esa fecha (`existia: bool`) | Fase 9 |
+| `GET /hogares/:id/patrimonio-consolidado` | neto/activos/pasivos/líquido por moneda + `total` en moneda del hogar (o `conversionesFaltantes`) | Fase 10/13 |
+| `GET /hogares/:id/metricas` | distribución por categoría, liquidez, avance de objetivos del hogar | Fase 10 |
+| `GET /hogares/:id/eventos-financieros` | vista consolidada: 1 fila por evento (transferencia colapsada), filtrada por §M | Fase 10 / G30 |
+| `GET /hogares/:id/categorias-movimiento` · `/tipos-elemento` | catálogos del hogar | Fase 15c / 40 |
+| `GET /usuarios/me/etiquetas` · `/agrupaciones` · `/plantillas-movimiento` | catálogos personales | Fase 15h–j |
+| `GET /presupuestos/:id/lineas` · `/lineas-ahorro` · `/desviacion` | líneas por rubro / por objetivo · desviación con desglose | Fase 15d / 41 |
+| `GET /usuarios/me/notificaciones` · `/no-leidas` · `POST …/:id/leer` · `…/leer-todas` | bandeja in-app | Fase 11 |
+| `GET /tipos-cambio` · `POST /comandos/RegistrarTipoCambio` | tasas registradas | Fase 13 |
+| `POST /usuarios/me/dispositivos-push` · `DELETE …` | Expo push tokens | Fase 14c |
+| `POST /auth/registro-token` | token de pre-registro (rate-limit por IP; email opcional) | Fase 12/14c / G4 |
+
+## Query params añadidos al listado de elementos
+
+`GET /elementos-patrimoniales?propietario=me|<id>&incluirInactivos=&categoria=&alcance=hogar`
+— `alcance=hogar` devuelve solo los elementos de co-miembros cuya `EXISTENCIA` el actor puede ver (§M).
+
 # Resumen de cobertura
 
-52 endpoints de comando (`POST /comandos/{Nombre}`), mapeados 1:1 contra los 52 casos de uso de Application Services — verificado por conteo exacto sobre las tablas de este documento, no estimado.
+52 endpoints de comando de Fase 0 + 26 añadidos = **78**, mapeados 1:1 contra `APPLICATION_SERVICES.md`.
 
 Las 4 políticas automáticas (`UnirseAHogar`, `ConsumirReserva`, `CompletarObjetivo`, `DerivarEstadoOperativo`) están documentadas explícitamente como ausentes en cada sección relevante — no tienen endpoint propio porque no son invocables por el usuario, consistente con Application Services y la Sección U del DDD.
 

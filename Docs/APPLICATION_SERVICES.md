@@ -461,8 +461,96 @@ Nota de diseño: CondonarDeuda y DeclararIncobrable se mantienen como comandos s
 
 *Nota: se usa Cerrar cuando el presupuesto cumplió su ciclo y se quiere conservar el análisis; se usa Eliminar solo si el presupuesto nunca debió existir (error de carga).*
 
+# Casos de uso añadidos (Fases 13–52)
+
+Los #1–52 son el catálogo de Fase 0. Lo que sigue son los comandos añadidos
+durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
+(input · validación clave · output). El detalle de esquema está en
+`DATABASE_DESIGN.md` §13; el de dominio en `DDD.md` §X.
+
+## Multimoneda
+
+### 53. RegistrarTipoCambio
+- Input: moneda origen, moneda destino, tasa, fecha de vigencia.
+- Validaciones: tasa > 0; par no repetido para la misma fecha. Dato **global** — no requiere hogar.
+- Output: TipoCambioDTO. La tabla es **inmutable**: corregir = registrar otra fila con fecha posterior.
+- Auditoría: Creación — par, tasa, fecha.
+
+## Categorías de movimiento (del hogar) — GAPS G22/G23/P7
+
+### 54. CrearCategoriaMovimiento
+- Input: hogarId, nombre, tipoAplicable (INGRESO/GASTO/AMBOS), categoriaPadreId (opcional, 1 nivel).
+- Validaciones: miembro ACTIVA del hogar; nombre único por hogar; el padre es del mismo hogar y sin padre.
+- Output: CategoriaMovimientoDTO. Al crear un hogar se siembran 11 por defecto.
+### 55. ActualizarCategoriaMovimiento — nombre / tipoAplicable / padre.
+### 56. ArchivarCategoriaMovimiento — no borra (estado ARCHIVADA); deja de ofrecerse pero los eventos ya clasificados la conservan.
+### 57. ReordenarCategoriasMovimiento — lista de ids en el orden deseado.
+
+## Etiquetas de movimiento (personales) — GAPS G23
+
+### 58. CrearEtiqueta — nombre (único por usuario), color opcional.
+### 59. ActualizarEtiqueta · ### 60. EliminarEtiqueta (cascada sobre `evento_etiqueta`).
+### 61. EtiquetarEvento
+- Input: eventoId, etiquetaIds[].
+- Validaciones: el evento es del actor (vía impacto → propietario), no anulado; las etiquetas son del actor.
+- Orquestación: **reemplaza** el conjunto de etiquetas del evento. Auditoría: Modificación.
+
+## Agrupaciones de elementos (personales, de visualización) — GAPS G23
+
+### 62. CrearAgrupacion — nombre (único por usuario), color, orden.
+### 63. ActualizarAgrupacion · ### 64. EliminarAgrupacion (los elementos quedan sin agrupar).
+### 65. DefinirElementosAgrupacion
+- Input: agrupacionId, elementoIds[].
+- Validaciones: los elementos son del actor. Un elemento vive en **una sola** carpeta (se saca de cualquier otra). No afecta consolidación ni valor.
+
+## Tipos de elemento (catálogo del hogar) — Fase 40
+
+### 66. CrearTipoElemento — hogarId, nombre, categoriaSugerida (opcional).
+### 67. ActualizarTipoElemento · ### 68. ArchivarTipoElemento · ### 69. ReordenarTiposElemento.
+
+## Valorización — GAPS G11
+
+### 70. CambiarAdmiteValorizacion — elementoId, admite (bool). Un elemento que ya tiene valorizaciones no puede dejar de admitirlas.
+
+## Plantillas de movimiento (personales) — GAPS G24
+
+### 71. CrearPlantillaMovimiento
+- Input: nombre (único por usuario), tipo (INGRESO/GASTO/TRANSFERENCIA), y opcionalmente monto, elementos, categoría, glosa (todo nullable — es un molde).
+- Validaciones: propiedad de los elementos; categoría del hogar del actor + tipo compatible; TRANSFERENCIA sin categoría.
+- Nota: **usar** una plantilla no invoca comando — solo rellena el formulario de `RegistrarEventoFinanciero`.
+### 72. ActualizarPlantillaMovimiento (un `null` limpia el campo) · ### 73. EliminarPlantillaMovimiento (borrado físico).
+
+## Presupuesto por rubro — GAPS G26/P6
+
+### 74. DefinirLineasPresupuesto
+- Input: presupuestoId, lineas: [{ categoriaId, montoEsperado }].
+- Validaciones: presupuesto no CERRADO; categoría del hogar correcto. **Reemplazo completo** del conjunto; monto 0 elimina la línea.
+- Output: PresupuestoDTO. Una sola entrada de auditoría.
+### 75. DefinirLineasAhorroPresupuesto — igual, con [{ objetivoId, montoEsperado }].
+
+## Visibilidad granular del elemento — GAPS G6
+
+### 76. DefinirVisibilidadElementoPatrimonial
+- Input: elementoId, niveles por tipo ({ EXISTENCIA, VALOR, MOVIMIENTOS } → PRIVADA/COMPARTIDA/FAMILIAR), compartidoCon[] (si algún nivel es COMPARTIDA).
+- Validaciones: el actor es propietario; los usuarios de `compartidoCon` comparten hogar.
+- Reemplaza a `CambiarVisibilidadElementoPatrimonial` (#5), que queda como forma simple (un solo nivel para todo).
+
+## Objetivos compartidos por hogar — GAPS G13/P9
+
+### 77. CompartirObjetivoConHogar — objetivoId, hogarId. Todos los miembros lo ven.
+### 78. DefinirDesignadosObjetivo — objetivoId, usuarioIds[]. Solo los designados y el admin lo modifican.
+
+## Cambios en comandos existentes
+
+- **#1 RegistrarElementoPatrimonial**: acepta `visibilidadExistencia` / `visibilidadValor` (dos controles independientes); `naturaleza` (obligatorio para DEUDA/CREDITO); `fechaAlta`. Si categoría ∈ {LIQUIDEZ, RESERVA} y `valorInicial > 0` → emite además un evento `SALDO_INICIAL` + impacto de apertura. Auditoría: + naturaleza (solo DEUDA/CREDITO), + saldo_inicial_evento_id.
+- **#10 RegistrarEventoFinanciero**: acepta `glosa`, `categoriaId`, `etiquetaIds[]`. Nuevo tipo `CONVERSION` (monedas distintas, el destino recibe el equivalente a la tasa vigente). `SALDO_INICIAL` **no** está disponible por este comando.
+- **#12 CorregirEventoFinanciero**: además del monto, corrige `nuevaFecha` y `nuevaGlosa` (GAPS G9).
+- **#11/#12 sobre `SALDO_INICIAL`**: rechazados (usar Ajuste Patrimonial).
+- **Movimiento Programado (#13–#16)**: `tipo` (INGRESO/GASTO/TRANSFERENCIA) + `elementoOrigenId`; el destino es opcional según el tipo.
+- **Todos los `Registrar*` / `Crear*`**: aceptan header `Idempotency-Key`.
+
 # Resumen de cobertura
 
-Total: 52 casos de uso invocables por el usuario, mapeados 1:1 contra los comandos de la Sección T (DDD.docx). No se documentan como casos de uso propios las 4 políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
+Total: **52 casos de uso de Fase 0 + 26 añadidos (Fases 13–52) = 78** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
 
 *Nota de reconciliación: la cifra previa de “~44 comandos” mencionada al iniciar este bloque correspondía a un conteo aproximado. El conteo exacto contra la Sección T, comando por comando, da 52. La diferencia son comandos que existen en la tabla pero no se habían sumado en el estimado inicial (p. ej. ActualizarDatosUsuario, ActualizarDatosHogar, ActualizarDatosPresupuesto, ActualizarDatosAsignacion, ActualizarDatosObjetivoFinanciero, ActualizarMovimientoProgramado, RechazarInvitacion). Este documento es la fuente de verdad del conteo, no la cifra estimada al inicio.

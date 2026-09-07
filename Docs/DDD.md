@@ -675,31 +675,164 @@ Ver Sección U — Registro de Auditoría.
 
 # S. Pendiente
 
-Modelo de dominio cerrado: catálogo completo de comandos por agregado (Sección T), Registro de Auditoría (Sección U), Reconstrucción histórica (Sección V), Políticas del dominio consolidadas (Sección W), y ciclo de vida completo de Objetivo Financiero y Presupuesto, incluyendo estado Activo/Cerrado para Presupuesto específico.
+Modelo de dominio cerrado: catálogo completo de comandos por agregado (Sección T), Registro de Auditoría (Sección U), Reconstrucción histórica (Sección V), Políticas del dominio consolidadas (Sección W), y ciclo de vida completo de Objetivo Financiero y Presupuesto.
 
-- Revisar si Movimiento Programado requiere reglas de visibilidad/propiedad propias o hereda las del Elemento Patrimonial destino.
-- Diseño de la base de datos.
-- Diseño de APIs y casos de uso — el catálogo de comandos de la Sección T es, en la práctica, el mapa de Application Services.
-- Diseño UX/flujos de usuario.
+- ~~Revisar si Movimiento Programado requiere reglas de visibilidad/propiedad propias~~ → **resuelto: hereda las del elemento** (Sección X, más abajo — GAPS.md G2/P12).
+- ~~Diseño de la base de datos~~ → `DATABASE_DESIGN.md` + `api/db/`.
+- ~~Diseño de APIs y casos de uso~~ → `API_DESIGN.md` + `APPLICATION_SERVICES.md`.
+- ~~Diseño UX/flujos de usuario~~ → `UX_FLOWS.md`.
 
-Adenda Fases 50–51 (anexada automáticamente — ver Docs/ADENDA-dominio-fases-50-51.md)
+Lo único que sigue abierto son 3 integraciones externas (`GAPS.md` §3): captcha
+anti-bot (G4), envío push real (G20), importación automática de tipos de cambio (G21).
 
-T · Naturaleza de la deuda/crédito. Al registrar el elemento se declara su naturaleza:
+---
 
-FINANCIERA — un crédito o préstamo real: hipotecario, crédito de consumo, saldo de tarjeta, un préstamo entre personas que se espera devolver como obligación.
+# X. Decisiones de dominio posteriores a Fase 0 (Fases 1–52)
 
-CUSTODIA_INFORMAL — dinero que solo pasa por las cuentas del usuario y nunca fue suyo: un tercero le transfiere un monto para que le compre algo. El neto patrimonial se comporta igual que una deuda (el dinero recibido no es patrimonio propio), pero no es una obligación financiera: se "salda" entregando lo comprado, no pagando.
+Esta sección recoge las decisiones de dominio tomadas durante la implementación,
+cada una registrada en `GAPS.md` con su alternativa considerada. Extiende, no
+reemplaza, las secciones A–W.
 
-naturaleza es un atributo del comando RegistrarElementoPatrimonial cuando la categoría funcional es DEUDA o CREDITO (obligatorio para esas categorías, por defecto FINANCIERA; no aplica al resto). Se distingue desde el comando —y no mediante un flag interno de presentación— siguiendo el mismo criterio que CondonarDeuda vs DeclararIncobrable: si mañana se necesita tratamiento legal/contable diferenciado (p. ej. no informar la custodia como deuda del usuario), la distinción ya está en el modelo. No genera comando nuevo, no dispara políticas sobre el patrimonio y no altera el cálculo del valor vigente ni del estado operativo.
+## X.1 · Elemento Patrimonial (§E)
 
-En la fila RegistrarElementoPatrimonial de la tabla de la Sección E, columna "Qué registra auditoría", añadir: "… + naturaleza (solo DEUDA/CREDITO)".
+**Visibilidad granular** (GAPS G6). La visibilidad deja de ser un enum único: se
+declara por **tipo de información** — `EXISTENCIA`, `VALOR`, `MOVIMIENTOS` — y por
+**nivel** — `PRIVADA` (nadie), `COMPARTIDA` (personas concretas), `FAMILIAR`
+(todos los co-miembros). El nivel base del elemento aplica salvo que se
+sobreescriba un tipo puntual. Comando: `DefinirVisibilidadElementoPatrimonial`.
+Regla §M: un co-miembro que no ve la `EXISTENCIA` de un elemento no lo encuentra
+en ningún listado ni selector; si ve la existencia pero no el `VALOR`, los montos
+llegan en 0 con `valorOculto = true`.
 
-T · El saldo inicial de una cuenta es un hecho económico.
+**Ventana de existencia** (GAPS G18). El elemento tiene `fecha_alta` (obligatoria,
+por defecto hoy) y `fecha_baja` (al Desactivar). La reconstrucción histórica
+(§V) solo lo considera dentro de `[fecha_alta, fecha_baja)`.
 
-Cuando se registra un elemento de categoría LIQUIDEZ o RESERVA con un valorInicial > 0, el comando RegistrarElementoPatrimonial crea —en la misma transacción— un EventoFinanciero de tipo SALDO_INICIAL y su ImpactoPatrimonial (+valorInicial, fecha = fecha_alta del elemento). El elemento nace con valor_vigente = 0 y el impacto lo lleva a su valor: así la reconstrucción histórica de estas cuentas queda 100 % basada en impactos.
+**Saldo inicial como hecho económico** (GAPS G29). Al registrar un elemento
+`LIQUIDEZ` o `RESERVA` con `valorInicial > 0`, `RegistrarElementoPatrimonial`
+crea en la misma transacción un `EventoFinanciero` de tipo **`SALDO_INICIAL`** y
+su impacto (`+valorInicial`, `fecha = fecha_alta`). El elemento nace en 0 y el
+impacto lo lleva a su valor → la reconstrucción de estas cuentas queda 100 %
+basada en impactos. `INVERSION`/`ACTIVO` **no** lo generan (el valor de apertura
+de un inmueble o un fondo no es un ingreso — es una valorización inicial).
+`SALDO_INICIAL` no es invocable por el usuario, no se anula ni se corrige (para
+ajustar una apertura mal cargada: Ajuste Patrimonial).
 
-SALDO_INICIAL no se genera para INVERSION ni ACTIVO (el valor de apertura de un inmueble o un fondo no es un ingreso). No es un comando disponible al usuario, no se puede anular ni corregir; para ajustar un saldo de apertura mal cargado se usa un Ajuste Patrimonial.
+## X.2 · Deuda / Crédito (§E, especialización)
 
-Lecturas: en resumen-financiero un SALDO_INICIAL suma a porMoneda.ingresos y al balance, y aparece como rubro propio "Saldo inicial". En el presupuesto NO cuenta como ingreso del período. patrimonio-individual y la reconstrucción histórica no cambian su resultado.
+**Estado operativo derivado** (GAPS G1). De `valor_pendiente` y
+`valor_pendiente_inicial` + las fechas se deriva —como política, no como campo—
+uno de: `VIGENTE`, `PARCIALMENTE_PAGADA`, `EN_MORA`, `SALDADA`, `CONDONADA`,
+`INCOBRABLE`. Se recalcula tras cada impacto que toque el pendiente.
 
-Reporte · transferencias visibles: resumen-financiero.movimientos ya no filtra TRANSFERENCIA/CONVERSION; se devuelven con efectoPropio (impacto neto sobre las cuentas propias del alcance, con signo) y NO contribuyen a porMoneda ni porRubro.
+**Información adicional** (GAPS G-J, REQUISITES §J). Campos opcionales:
+contraparte, fecha de inicio/término, monto de cuota, tasa de interés,
+observaciones. El **interés** se registra como `RegistrarAjustePatrimonial`
+(no requiere comando ni tabla nuevos).
+
+**Naturaleza** (GAPS G28). Al registrar se declara `naturaleza`:
+- **`FINANCIERA`** — crédito o préstamo real (hipotecario, consumo, tarjeta, un
+  préstamo entre personas que se espera devolver como obligación).
+- **`CUSTODIA_INFORMAL`** — dinero de un tercero que solo pasa por las cuentas del
+  usuario y nunca fue suyo (un encargo: me transfieren para que compre algo). El
+  neto patrimonial se comporta igual que una deuda, pero no es una obligación
+  financiera: se "salda" entregando lo comprado, no pagando.
+
+`naturaleza` es **atributo del comando `RegistrarElementoPatrimonial`** cuando la
+categoría es DEUDA/CREDITO (obligatorio, por defecto `FINANCIERA`; NULL en el
+resto). Se distingue desde el comando —no con un flag de presentación— por el
+mismo criterio que `CondonarDeuda` vs `DeclararIncobrable`: si mañana hace falta
+tratamiento legal/contable diferenciado, la distinción ya está en el modelo. No
+genera comando nuevo, no dispara políticas sobre el patrimonio, no altera el
+valor vigente ni el estado operativo.
+
+## X.3 · Evento Financiero (§D)
+
+**Tipos**: `INGRESO`, `GASTO`, `TRANSFERENCIA`, `CONVERSION` (cambio de moneda
+entre dos elementos, GAPS G8), `SALDO_INICIAL` (X.1). `PRESTAMO` se descartó —
+un préstamo es un elemento Deuda/Crédito, no un tipo de evento.
+
+**Glosa y categoría** (GAPS G22/G23). El evento acepta una `glosa` (texto libre
+corto) y una `categoria_id` opcional. La categoría pertenece al **hogar**
+(vocabulario compartido), puede anidarse en 2 niveles, y tiene un
+`tipo_aplicable` (INGRESO/GASTO/AMBOS). Glosa y categoría son **anotación, no
+hecho económico**: su historial vive solo en `auditoria`, no participan de la
+reconstrucción (§V).
+
+**Etiquetas** (GAPS G23). Ortogonales a la categoría: personales, transversales,
+N:M con el evento. Comando `EtiquetarEvento` (reemplazo del conjunto).
+
+**Transferencias en las lecturas** (GAPS G30 / F1). `resumen-financiero.movimientos`
+incluye TRANSFERENCIA/CONVERSION como filas neutras con `efectoPropio` (impacto
+neto sobre las cuentas propias del alcance consultado); **no** suman a los
+totales de ingreso/gasto. La vista consolidada del hogar
+(`/hogares/:id/eventos-financieros`) colapsa la transferencia a un solo
+movimiento (REQUISITES línea 213) y filtra por §M: solo eventos que tocan un
+elemento consolidado del hogar o de propiedad del actor.
+
+## X.4 · Movimiento Programado (§S, resuelto)
+
+Gana `tipo` (INGRESO/GASTO/TRANSFERENCIA) y `elemento_origen_id`; el destino pasa
+a opcional (GAPS G2). **Visibilidad y propiedad se heredan del elemento**
+afectado — no hay columnas ni reglas propias. Materializar dispara un
+`RegistrarEventoFinanciero` del tipo correspondiente.
+
+## X.5 · Objetivo Financiero y Asignación (§H, §J)
+
+**Propiedad** (GAPS G13). Son **personales** del creador por defecto. Un objetivo
+puede además **compartirse con un hogar** (`CompartirObjetivoConHogar`): todos
+los miembros lo ven, los **designados** (`DefinirDesignadosObjetivo`) lo
+modifican, el admin asigna. El estado del objetivo sigue siendo solo una etiqueta
+de intención — no afecta patrimonio ni las reservas asociadas.
+
+**Moneda** (GAPS G16). Objetivo, asignación y presupuesto llevan `moneda` como
+**etiqueta** (sin conversión): solo afecta a esa entidad, no se ramifica. La
+reserva usa la moneda de su elemento origen.
+
+## X.6 · Presupuesto (§K)
+
+**Propiedad** (GAPS G15): INDIVIDUAL → del creador; FAMILIAR → del hogar.
+
+**Por rubro** (GAPS G26). `presupuesto_linea` fija el monto esperado por
+categoría; `presupuesto_linea_ahorro` el ahorro esperado por objetivo. La
+proyección `desviacion_presupuestaria` se desglosa `porRubro` + `porObjetivo` +
+`sinClasificar`. `SALDO_INICIAL` **no** cuenta como ingreso presupuestable.
+
+## X.7 · Multimoneda (§Q, REQUISITES §S)
+
+Comando **`RegistrarTipoCambio`** (#53). `tipo_cambio` es global e inmutable (una
+fila por tasa con su fecha de vigencia). `ConversionService` triangula por pivote
+si no hay par directo. El consolidado del hogar trae `total` en su moneda (o
+`conversionesFaltantes`). Las demás vistas siguen sin conversión (desglose por
+moneda) — GAPS G7.
+
+## X.8 · Catálogo de comandos — añadidos a la Sección T
+
+| Agregado | Comandos nuevos |
+|---|---|
+| Elemento Patrimonial | `DefinirVisibilidadElementoPatrimonial` |
+| Evento Financiero | `CrearCategoriaMovimiento`, `ActualizarCategoriaMovimiento`, `ArchivarCategoriaMovimiento`, `ReordenarCategoriasMovimiento`, `CrearEtiqueta`, `ActualizarEtiqueta`, `EliminarEtiqueta`, `EtiquetarEvento`, `CrearPlantillaMovimiento`, `ActualizarPlantillaMovimiento`, `EliminarPlantillaMovimiento` |
+| Elemento Patrimonial (visualización) | `CrearAgrupacion`, `ActualizarAgrupacion`, `EliminarAgrupacion`, `DefinirElementosAgrupacion`, `CrearTipoElemento`, `ActualizarTipoElemento`, `ArchivarTipoElemento` |
+| Objetivo Financiero | `CompartirObjetivoConHogar`, `DefinirDesignadosObjetivo` |
+| Presupuesto | `DefinirLineasPresupuesto`, `DefinirLineasAhorroPresupuesto` |
+| Tipo de Cambio | `RegistrarTipoCambio` |
+
+Estos comandos que operan sobre **categorías, etiquetas, agrupaciones, tipos de
+elemento y plantillas** son configuración/anotación: escriben en `auditoria`
+pero no generan impactos patrimoniales ni participan de la reconstrucción (§V).
+El detalle de cada uno (input · validaciones · output) está en
+`APPLICATION_SERVICES.md`.
+
+## X.9 · Simplificaciones asumidas (de `DOMINIO_PENDIENTE.md` §C)
+
+- **Multi-hogar**: un usuario puede pertenecer a varios hogares, pero un elemento
+  con `participa_consolidacion` entra en la consolidación de **todo** hogar donde
+  alguno de sus propietarios sea miembro. No hay `elemento.hogar_consolidacion_id`
+  (GAPS G19). Solo importaría con un usuario en 2+ hogares consolidando en serio.
+- **Proyecciones en vivo**: `patrimonio_individual`, consolidado, progreso de
+  objetivo y desviación presupuestaria se calculan en cada consulta, no se
+  materializan (GAPS G7). Decisión revisable si aparece un problema de performance.
+- **Sin conversión** fuera del consolidado del hogar: los reportes por período y
+  la reconstrucción dan desglose por moneda, sin total único.
+- **Comentarios y adjuntos** en entidades (REQUISITES §D/§M): sin modelar — única
+  decisión de dominio de `DOMINIO_PENDIENTE.md` §B que sigue abierta (§B4).

@@ -337,20 +337,98 @@ Candidatas (a definir su implementación — vista SQL vs. tabla materializada �
 
 Deuda/Crédito: no tiene tabla propia — es `elemento_patrimonial` con `categoria_funcional IN ('DEUDA','CREDITO')` y `valor_pendiente` poblado. Confirmado contra Sección T: “no un agregado nuevo”.
 
-Pendiente explícito (heredado de la Sección S del DDD, no resuelto en este bloque por decisión tuya): visibilidad y propiedad de Movimiento Programado.
+Pendiente explícito (heredado de la Sección S del DDD, no resuelto en este bloque por decisión tuya): visibilidad y propiedad de Movimiento Programado. **→ resuelto en la migración 015 (tipo/origen) + decisión de que la visibilidad se hereda del elemento (GAPS.md G2 / P12).**
 
-Adenda Fases 50–51 (anexada automáticamente — ver Docs/ADENDA-dominio-fases-50-51.md)
+---
 
-Tabla elemento_patrimonial — nueva columna:
+# 13. Cambios de esquema desde Fase 0 (migraciones 001–024)
 
-naturaleza TEXT NULL salvo DEUDA/CREDITO — Naturaleza de una deuda/crédito: FINANCIERA (crédito/préstamo real) o CUSTODIA_INFORMAL (dinero de un tercero que solo pasa por las cuentas). Obligatoria para categoria_funcional IN ('DEUDA','CREDITO') — por defecto 'FINANCIERA'; NULL en el resto.
+Las secciones 1–12 describen el esquema tal como se diseñó en Fase 0. Lo que sigue
+son los cambios incrementales aplicados durante la implementación (Fases 1–52).
+El SQL exacto de cada uno está en [`../api/db/migrations/NNN_*.sql`](../api/db/migrations/);
+el esquema consolidado y ejecutable en [`../api/db/init/01_schema.sql`](../api/db/init/01_schema.sql).
+Cada migración cita el gap de `GAPS.md` que la motivó.
 
-`CHECK ck_naturaleza_valores: naturaleza IS NULL OR naturaleza IN ('FINANCIERA','CUSTODIA_INFORMAL'). CHECK ck_naturaleza_categoria: (categoria_funcional IN ('DEUDA','CREDITO') AND naturaleza IS NOT NULL) OR (categoria_funcional NOT IN ('DEUDA','CREDITO') AND naturaleza IS NULL). Migración 023.`
+## Propiedad y ámbito de las entidades de planificación
 
-`Backfill: UPDATE elemento_patrimonial SET naturaleza = 'FINANCIERA' WHERE categoria_funcional IN ('DEUDA','CREDITO') AND naturaleza IS NULL.`
+| # | Cambio | Motivo |
+|---|---|---|
+| 001 | `objetivo_financiero.usuario_id`, `asignacion.usuario_id` (FK `usuario`) | GAPS G13. El DDD no definía dueño; decisión: son **personales** del creador. |
+| 002 | `presupuesto.usuario_id` + `presupuesto.hogar_id` (FK) + CHECK `ck_presupuesto_propietario` | GAPS G15. INDIVIDUAL → `usuario_id` = creador, `hogar_id` NULL; FAMILIAR → ambos. |
+| 021 | `objetivo_financiero.hogar_id` (FK, nullable) + tabla **`objetivo_designado`** (`objetivo_id`, `usuario_id`) | GAPS G13/P9. Un objetivo puede compartirse con un hogar: todos los miembros lo ven, los **designados** lo modifican, el admin asigna. |
+| 022 | `moneda` en `objetivo_financiero` (NOT NULL DEFAULT 'CLP'), `asignacion` (nullable — hereda del elemento origen), `presupuesto` (NOT NULL DEFAULT 'CLP') | GAPS G16/P11. **Etiqueta**, sin conversión: solo afecta a esa entidad, no se ramifica. |
 
-Tabla evento_financiero — columna tipo, dominio ampliado (migración 024):
+## Reconstrucción histórica
 
-`CHECK (tipo IN ('INGRESO','GASTO','TRANSFERENCIA','CONVERSION','PRESTAMO','SALDO_INICIAL'))`
+| # | Cambio | Motivo |
+|---|---|---|
+| 004 | `impacto_patrimonial.fecha DATE NOT NULL` (denormalizada del origen, inmutable) + `ix_impacto_fecha` | DDD §V. Permite "¿cuál era el valor a la fecha X?" sin joins. |
+| 020 | `elemento_patrimonial.fecha_alta DATE NOT NULL`, `fecha_baja DATE` (nullable) | GAPS G18/P10. La reconstrucción usa la **ventana de existencia** del elemento; fuera de ella el elemento no aporta. |
 
-SALDO_INICIAL — evento generado exclusivamente por RegistrarElementoPatrimonial para la apertura de una cuenta LIQUIDEZ/RESERVA. Un único impacto +valorInicial sobre el elemento recién creado, con fecha = fecha_alta. No editable por comandos de evento.
+## Deuda / Crédito (especialización de `elemento_patrimonial`)
+
+| # | Cambio | Motivo |
+|---|---|---|
+| 003 | CHECK de `impacto_patrimonial.origen_tipo` += `CONDONACION`, `DECLARACION_INCOBRABLE` | AS #47/#48. El `origen_id` apunta a la entrada de `auditoria` del comando. |
+| 014 | Columnas opcionales en `elemento_patrimonial`: `contraparte`, `fecha_inicio`, `fecha_termino`, `cuota_monto NUMERIC(18,2)`, `tasa_interes NUMERIC(9,4)`, `observaciones`, `valor_pendiente_inicial NUMERIC(18,2)` | REQUISITES §J / GAPS G-J. Solo aplican a DEUDA/CREDITO. `valor_pendiente_inicial` deriva el **estado operativo** (VIGENTE·PARCIALMENTE_PAGADA·EN_MORA·SALDADA·CONDONADA·INCOBRABLE), calculado, no persistido — GAPS G1. |
+| 023 | `elemento_patrimonial.naturaleza TEXT` + CHECK `ck_naturaleza_valores` (`FINANCIERA` \| `CUSTODIA_INFORMAL`) + CHECK `ck_naturaleza_categoria` (NOT NULL sii DEUDA/CREDITO) | GAPS G28. `CUSTODIA_INFORMAL` = dinero de un tercero que solo pasa por las cuentas (encargo). Backfill: toda deuda/crédito previa → `FINANCIERA`. |
+
+## Evento Financiero, categorización y anotación
+
+| # | Cambio | Motivo |
+|---|---|---|
+| 009 | Tabla **`categoria_movimiento`** (`hogar_id`, `nombre` único por hogar, `tipo_aplicable` INGRESO/GASTO/AMBOS, `orden`, `estado` ACTIVA/ARCHIVADA) + `evento_financiero.glosa TEXT` + `evento_financiero.categoria_id` (FK) | GAPS G22/G23. Categorías **del hogar**, opcionales en el evento. Es anotación → su historial vive solo en `auditoria`, no participa de la reconstrucción (§V). |
+| 017 | `categoria_movimiento.categoria_padre_id` (FK a sí misma, 2 niveles) | GAPS P7/B9. Jerarquía de categorías del hogar. |
+| 012 | Tablas **`etiqueta`** (personal, `UNIQUE(usuario_id, nombre)`, `color`) y **`evento_etiqueta`** (N:M, PK `(evento_id, etiqueta_id)`, ambas FK `ON DELETE CASCADE`) | GAPS G23. Clasificación transversal y personal, ortogonal a la categoría. |
+| 024 | CHECK de `evento_financiero.tipo` += `SALDO_INICIAL` | GAPS G29. Evento generado solo por `RegistrarElementoPatrimonial` para la apertura de una cuenta LIQUIDEZ/RESERVA (`valorInicial > 0`): un único impacto `+valorInicial`, `fecha = fecha_alta`. No editable por comandos de evento. |
+
+## Elemento Patrimonial — visibilidad, tipos, agrupación
+
+| # | Cambio | Motivo |
+|---|---|---|
+| 016 | Tablas **`elemento_visibilidad`** (`elemento_id`, `tipo_info` EXISTENCIA/VALOR/MOVIMIENTOS, `nivel` PRIVADA/COMPARTIDA/FAMILIAR — una fila solo si sobreescribe el nivel base) y **`elemento_comparticion`** (`elemento_id`, `usuario_id` — con quién se comparte si el nivel es COMPARTIDA) | GAPS G6 / REQUISITES §M. Antes había un único enum `visibilidad`. |
+| 018 | Tabla **`tipo_elemento`** (por hogar: `nombre`, `categoria_sugerida`, `estado` ACTIVA/ARCHIVADA) + backfill | GAPS Fase 40. Catálogo configurable de tipos (cuenta corriente, fondo mutuo…). |
+| 013 | Tablas **`agrupacion_elemento`** (personal, `UNIQUE(usuario_id, nombre)`, `color`, `orden`) y **`agrupacion_miembro`** (`elemento_id` **PK** → un elemento en una sola carpeta; FK `ON DELETE CASCADE`) | GAPS G23. Carpetas de visualización, no afectan consolidación ni valor. |
+
+## Movimiento Programado
+
+| # | Cambio | Motivo |
+|---|---|---|
+| 015 | `movimiento_programado.tipo` (NOT NULL, CHECK INGRESO/GASTO/TRANSFERENCIA) + `elemento_origen_id` (FK); `elemento_destino_id` pasa a nullable; CHECK `ck_mov_prog_elementos` amarra los slots al tipo | GAPS G2. Antes solo modelaba INGRESO hacia un destino. Visibilidad/propiedad = heredadas del elemento (decisión, no columna). |
+
+## Presupuesto por rubro
+
+| # | Cambio | Motivo |
+|---|---|---|
+| 010 | Tabla **`presupuesto_linea`** (`presupuesto_id` FK `ON DELETE CASCADE`, `categoria_id` FK, `monto_esperado >= 0`, UNIQUE por par) | GAPS G26. Monto esperado por categoría dentro de un presupuesto → `desviacion_presupuestaria` se desglosa `porRubro`. |
+| 019 | Tabla **`presupuesto_linea_ahorro`** (`presupuesto_id`, `objetivo_id`, `monto_esperado >= 0`) | GAPS P6/B7. Ahorro esperado por objetivo dentro del presupuesto. |
+
+## Infraestructura (no dominio — no genera auditoría, regenerable)
+
+| # | Tabla / cambio | Motivo |
+|---|---|---|
+| 005 | **`notificacion`** (`usuario_id`, `tipo`, `titulo`, `cuerpo`, `entidad_tipo`, `entidad_id`, `leida`, `created_at`) | DDD Principio 4. Registro in-app de los avisos de las políticas. |
+| 008 | **`dispositivo_push`** (`usuario_id`, Expo push token) | Envío push real (best-effort). |
+| 006 | **`idempotencia`** (`clave`, `usuario_id`, respuesta guardada, `created_at`) | API_DESIGN §43. Header `Idempotency-Key` en comandos de creación. |
+| 007 | **`tipo_cambio`** (par de monedas, tasa, fecha de vigencia — **inmutable**, una fila por tasa) | REQUISITES §514–532. Dato de referencia **global**, no de un hogar. La puebla el comando `RegistrarTipoCambio` (#53). |
+| 011 | **`plantilla_movimiento`** (personal, `UNIQUE(usuario_id, nombre)`, `tipo`, resto nullable — es un molde sin fecha) | GAPS G24. Usar una plantilla **no** invoca un comando: solo rellena `RegistrarEventoFinanciero`. |
+
+## Resumen de trazabilidad — entidades añadidas
+
+| Concepto | Tabla(s) | Migración |
+|---|---|---|
+| Categoría de movimiento (del hogar, jerárquica) | `categoria_movimiento` | 009, 017 |
+| Etiqueta de movimiento (personal) | `etiqueta`, `evento_etiqueta` | 012 |
+| Agrupación de elementos (personal) | `agrupacion_elemento`, `agrupacion_miembro` | 013 |
+| Tipo de elemento (del hogar) | `tipo_elemento` | 018 |
+| Visibilidad granular | `elemento_visibilidad`, `elemento_comparticion` | 016 |
+| Línea de presupuesto (por rubro / por objetivo) | `presupuesto_linea`, `presupuesto_linea_ahorro` | 010, 019 |
+| Objetivo compartido por hogar | `objetivo_designado` (+ `objetivo_financiero.hogar_id`) | 021 |
+| Plantilla de movimiento (personal) | `plantilla_movimiento` | 011 |
+| Tipo de cambio (global, inmutable) | `tipo_cambio` | 007 |
+| Notificación / push (infraestructura) | `notificacion`, `dispositivo_push` | 005, 008 |
+| Idempotencia (infraestructura) | `idempotencia` | 006 |
+
+Deuda/Crédito sigue **sin tabla propia** — es `elemento_patrimonial` con
+`categoria_funcional IN ('DEUDA','CREDITO')`, ahora con `naturaleza` y los campos
+de detalle de la migración 014.

@@ -190,9 +190,75 @@ Decisión de UX explícita, justificada por el dominio: el botón “Reabrir” 
 
 # Resumen y vacíos detectados en este bloque
 
-Este documento no introdujo reglas de negocio nuevas — cada paso de cada flujo se apoya en un comando o consulta ya definido en API_DESIGN.docx. Sin embargo, construir los flujos end-to-end expuso 2 puntos que no estaban visibles al nivel de abstracción de los documentos anteriores:
+Este documento no introdujo reglas de negocio nuevas — cada paso de cada flujo se apoya en un comando o consulta ya definido en API_DESIGN.md. Sin embargo, construir los flujos end-to-end expuso 2 puntos que no estaban visibles al nivel de abstracción de los documentos anteriores:
 
-1. Estado operativo intermedio de Deuda/Crédito no nombrado (detectado en Flujo 4). La Sección T del DDD dice que el estado se “deriva automáticamente del valor pendiente” pero no enumera los valores posibles más allá de los extremos (activa / pagada por completo vía condonación o incobrabilidad). Falta decidir si esto es un cálculo trivial de UI (% pagado) o un estado formal que debería vivir en el modelo.
-2. Ausencia de concepto “gasto con expectativa de reembolso informal” (detectado en Flujo 1, paso 6 — el caso real de “pagué el mercado de mis papás, me devuelven en 3 días”). El dominio ya cubre esto correctamente vía Crédito (Sección J, REQUISITES), pero es una decisión consciente que la UX debe comunicar activamente — no es un vacío de modelado, es una nota de que la interfaz necesita guiar al usuario hacia el flujo correcto en vez de dejarlo perderse en un gasto sin trazabilidad.
+1. ~~Estado operativo intermedio de Deuda/Crédito no nombrado~~ → **resuelto (GAPS G1)**: 6 estados derivados — `VIGENTE`, `PARCIALMENTE_PAGADA`, `EN_MORA`, `SALDADA`, `CONDONADA`, `INCOBRABLE` — calculados, no persistidos. Ver `DDD.md` §X.2.
+2. ~~Ausencia de concepto "gasto con expectativa de reembolso informal"~~ → **resuelto en dos capas (GAPS G28/G30)**: (a) el dominio distingue `naturaleza = CUSTODIA_INFORMAL` en el elemento Deuda/Crédito; (b) la UI **guía activamente** — al registrar un INGRESO o un GASTO, un aviso propone crear un Crédito/Deuda si el dinero es de un tercero o se va a devolver (ver Parte 3, "Registrar movimiento").
 
-Ninguno de los dos bloquea continuar — son candidatos a resolver en la siguiente iteración de UX o como ajuste menor al DDD, no señales de que este bloque esté incompleto.
+---
+
+# PARTE 3 — Arquitectura de información y pantallas (Fases 15–52)
+
+> El diseño de navegación evolucionó bastante desde los 6 flujos originales. Esta
+> parte documenta la IA vigente. Los flujos 1–6 siguen siendo válidos como
+> recorridos; cambia dónde viven las pantallas.
+
+## Navegación principal — 4 tabs
+
+| Tab | Rol | Contenido |
+|---|---|---|
+| **Inicio** | El patrimonio de un vistazo | Hero (patrimonio neto + variación), desglose KPI de composición (6 categorías funcionales), tira de disponibilidad (líquido / apartado / disponible), alertas (máx 3, por prioridad), atajos, "Primeros pasos". Engranaje → Ajustes. |
+| **Movimientos** | El flujo, por período | Un selector **Mes / Año / Recientes**; debajo, juntos: KPIs del período (ingresos − gastos = balance, "Disponible hoy") + dona de gastos por rubro + la lista de movimientos de ese período. Incluye transferencias como fila neutra. |
+| **Planificar** | Metas y límites | Objetivos (con avance), "Apartado" (asignaciones/reservas), presupuesto vigente. Submenú: programados, plantillas, evolución. |
+| **Hogar** | Lo compartido | Personas (miembros, invitaciones), "Qué se comparte", Patrimonio del hogar, **Movimientos del hogar**. |
+
+**Ajustes** vive en una pantalla apilada (no es tab), abierta desde el engranaje
+de Inicio: perfil, notificaciones, apariencia (tema), y los catálogos
+(categorías, tipos de elemento, etiquetas, agrupaciones, tipos de cambio).
+
+**Alcance Míos / Del hogar**: un único control compartido y persistido
+(`patrimonia.alcance`), presente en Inicio y Movimientos; cambia el alcance de
+todas las cifras a la vez.
+
+**Paleta**: monocromática (blanco/negro puro); rojo/verde reservados para el
+signo de una cifra. Sigue el tema del sistema por defecto.
+
+## Pantallas nuevas respecto de Fase 0
+
+| Pantalla | Para qué | Endpoints |
+|---|---|---|
+| Movimientos (mensual/anual) | reemplaza el "hub" — `resumen-financiero` / `resumen-anual` | Fase 16 |
+| Patrimonio › sección | drill-down de una categoría funcional desde el desglose de Inicio | Fase 49 |
+| Movimientos del hogar | feed consolidado, transferencia como movimiento único (REQUISITES 213) | `hogares/:id/eventos-financieros` |
+| Evolución del patrimonio | `serie-patrimonial` + `variacion-patrimonial` | Fase 9/15g |
+| Categorías / Tipos de elemento / Etiquetas / Agrupaciones | catálogos, con alta inline | Fase 15c–j / 40 |
+| Plantillas de movimiento | moldes; "Guardar como plantilla" desde el detalle de un movimiento | Fase 15h |
+| Tipos de cambio | tasas registradas (alta manual) | Fase 13 |
+| Ajustes / Notificaciones (preferencias) | silenciar tipos de notificación | Fase 15c/49 |
+| Presupuesto › rubros | editor de `presupuesto_linea` + `linea_ahorro` | Fase 15d/41 |
+
+## Registrar movimiento — guías activas (GAPS G30)
+
+Al elegir el tipo, la pantalla muestra una nota contextual:
+
+- **INGRESO** → *"¿Te van a devolver este dinero, o es de un tercero para comprarle algo? No lo registres como ingreso —se sumaría a tus ingresos del mes—. Créalo como un Crédito (te deben) o una Deuda tipo 'encargo'."* + enlace directo a "Agregar cuenta o bien" preseleccionando categoría CRÉDITO.
+- **GASTO** → *"¿Alguien más puso parte? Registra primero una transferencia desde su cuenta a la tuya y luego este gasto por el total: así queda el rastro de quién aportó cuánto."*
+- **CONVERSION** → nota sobre la tasa de cambio vigente.
+
+Estas guías materializan lo que el "Flujo 1, paso 6" original solo pedía como
+intención. El gasto co-financiado (varias personas aportan) se resuelve con el
+patrón "transferencia primero"; no se modeló un evento con múltiples orígenes
+(GAPS G30, decisión del usuario).
+
+## Visibilidad al crear un elemento (GAPS G6 / F2)
+
+El wizard "Agregar cuenta o bien" pregunta **explícitamente**, con dos controles
+separados (solo si el usuario tiene co-miembros):
+
+1. *"¿El hogar puede ver que esta cuenta existe?"* (EXISTENCIA — sí/no)
+2. si sí → *"¿También puede ver el saldo?"* (VALOR — sí/no, independiente)
+
+Por defecto (sin tocar nada): ambos privados — pero como **elección explícita**,
+no como herencia silenciosa. Antes, todo nacía `PRIVADA` sin preguntar, lo que
+impedía el paso 4 del Flujo 1 (transferir a la cuenta de otro miembro, que no
+aparecía en el selector).
