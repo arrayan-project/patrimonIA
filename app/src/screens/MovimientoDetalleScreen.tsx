@@ -5,6 +5,7 @@ import {
   api,
   ApiError,
   type CategoriaMovimientoDTO,
+  type ElementoPatrimonialDTO,
   type EtiquetaDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
@@ -48,6 +49,7 @@ export function MovimientoDetalleScreen() {
   const contexto = nav.route.params?.contexto as string | undefined;
 
   const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
+  const [nombresImpacto, setNombresImpacto] = useState<Record<string, string>>({});
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
@@ -67,6 +69,22 @@ export function MovimientoDetalleScreen() {
     try {
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
       setEvento(ev);
+      if (ev.tipo === 'TRANSFERENCIA' || ev.tipo === 'CONVERSION') {
+        const pares = await Promise.all(
+          ev.impactos.map(async (im) => {
+            try {
+              const el = await api.get<ElementoPatrimonialDTO>(
+                `/elementos-patrimoniales/${im.elementoId}`,
+                token,
+              );
+              return [im.elementoId, el.nombre] as const;
+            } catch {
+              return [im.elementoId, 'otra cuenta'] as const;
+            }
+          }),
+        );
+        setNombresImpacto(Object.fromEntries(pares));
+      }
       setNuevoMonto(String(ev.monto));
       setNuevaFecha(ev.fecha);
       setNuevaGlosa(ev.glosa ?? '');
@@ -141,6 +159,9 @@ export function MovimientoDetalleScreen() {
   }
 
   const impacto = evento.impactos.find((i) => i.elementoId === elementoId);
+  const esInterno = evento.tipo === 'TRANSFERENCIA' || evento.tipo === 'CONVERSION';
+  const origen = esInterno ? evento.impactos.find((i) => i.monto < 0) : undefined;
+  const destino = esInterno ? evento.impactos.find((i) => i.monto > 0) : undefined;
   const esCorreccion = evento.correccionDeId !== null;
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
   const puedePlantilla = !evento.anulado && evento.tipo !== 'CONVERSION';
@@ -197,6 +218,18 @@ export function MovimientoDetalleScreen() {
 
       <Panel>
         <Row left="Fecha" right={fechaLegible(evento.fecha)} />
+        {esInterno && (
+          <>
+            <Row
+              left="Desde"
+              right={origen ? (nombresImpacto[origen.elementoId] ?? '…') : '—'}
+            />
+            <Row
+              left="Hacia"
+              right={destino ? (nombresImpacto[destino.elementoId] ?? '…') : '—'}
+            />
+          </>
+        )}
         {evento.glosa ? <Row left="Detalle" right={evento.glosa} /> : null}
         {evento.categoriaId ? (
           <Row

@@ -18,46 +18,67 @@ export interface Paleta {
   text: string;
   /** Texto secundario. */
   muted: string;
+  /** Texto terciario (fechas, pies de fila, unidades). Más tenue que `muted`. */
+  mutedDim: string;
   border: string;
+  /** Acento monocromo — casi blanco en oscuro, casi negro en claro. */
   primary: string;
+  /** Texto/ícono sobre un relleno `primary`. */
   primaryText: string;
   danger: string;
-  /** Relleno tenue para chips, íconos, barras de fondo. */
+  /** Verde de "va bien / positivo" (signo de un ingreso, objetivo adelantado). */
+  ok: string;
+  /** Relleno tenue para chips, íconos, barras de fondo, divisores internos. */
   faint: string;
-  /** Tinte para cajas de ayuda / información. */
+  /** Segundo nivel de relleno tenue (bordes de fila dentro de una lista). */
+  panelAlt: string;
+  /** Tinte muy sutil para cajas de ayuda / información. */
   info: string;
 }
 
+/**
+ * Rediseño "estilo Rimu" (variante C, sesión 2026-09-06): monocromo de alto
+ * contraste. El blanco/negro es el protagonista; el color se reserva para el
+ * signo (rojo negativo, verde positivo). Sin azul primario.
+ *
+ * Claro = blanco puro, paneles gris casi imperceptible, texto casi negro —
+ * misma jerarquía que el oscuro (número gigante, curva con degradado, barra
+ * fina, mayúsculas con tracking) para que se sientan como la misma app.
+ */
 export const CLARO: Paleta = {
-  fondo: '#f3f4f6',
-  bg: '#ffffff',
-  text: '#111827',
-  muted: '#4b5563',
-  border: '#e5e7eb',
-  primary: '#1d4ed8',
+  fondo: '#ffffff',
+  bg: '#f7f7f8',
+  text: '#0a0a0a',
+  muted: '#6b6b70',
+  mutedDim: '#9a9a9e',
+  border: '#e4e4e6',
+  primary: '#0a0a0a',
   primaryText: '#ffffff',
-  danger: '#b91c1c',
-  faint: '#eef1f5',
-  info: '#eff6ff',
+  danger: '#c0392b',
+  ok: '#1e8e5a',
+  faint: '#efeff1',
+  panelAlt: '#e9e9ec',
+  info: '#f0f0f2',
 };
 
 /**
- * Estética inspirada en apps tipo "rimu": fondo casi negro, tarjetas apenas
- * más claras que el fondo (la separación la da el borde, no la sombra),
- * bordes muy sutiles y un solo acento saturado — acá se mantiene el azul en
- * vez de pasar a verde (decisión del usuario, sesión 2026-09-04).
+ * Oscuro = negro puro (#000, no gris azulado), paneles apenas más claros que
+ * el fondo; la separación la da el espacio, no el borde marcado.
  */
 export const OSCURO: Paleta = {
-  fondo: '#08090a',
-  bg: '#111214',
-  text: '#f2f2f0',
-  muted: '#8b8b90',
-  border: '#242429',
-  primary: '#3b82f6',
-  primaryText: '#ffffff',
-  danger: '#ef4444',
-  faint: '#0d0e10',
-  info: '#101a2c',
+  fondo: '#000000',
+  bg: '#0a0a0a',
+  text: '#f5f5f5',
+  muted: '#8a8a8e',
+  mutedDim: '#5a5a5e',
+  border: '#1c1c1e',
+  primary: '#f5f5f5',
+  primaryText: '#000000',
+  danger: '#ff5c5c',
+  ok: '#34d399',
+  faint: '#141416',
+  panelAlt: '#111113',
+  info: '#0f0f10',
 };
 
 export type ModoTema = 'sistema' | 'claro' | 'oscuro';

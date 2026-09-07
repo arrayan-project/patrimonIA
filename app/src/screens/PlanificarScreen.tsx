@@ -1,54 +1,212 @@
+import { useCallback, useState } from 'react';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
+import {
+  api,
+  ApiError,
+  type AsignacionDTO,
+  type DesviacionPresupuestariaDTO,
+  type ObjetivoFinancieroDTO,
+  type PresupuestoDTO,
+} from '../api/client';
+import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { GroupLabel, MenuLink, Screen, Title } from '../ui';
+import { money } from '../format';
+import {
+  EmptyState,
+  ErrorText,
+  GoalCard,
+  GroupLabel,
+  IconButton,
+  LinkButton,
+  MiniGrid,
+  MiniPanel,
+  PillDate,
+  Screen,
+  Skeleton,
+  Title,
+  TopRow,
+} from '../ui';
 
-/** Tab "Planificar": todo lo que mira hacia adelante — metas, presupuestos, moldes. */
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+function diasRestantes(fecha: string | null): string | undefined {
+  if (!fecha) return undefined;
+  const d = Math.round((new Date(`${fecha}T12:00:00`).getTime() - Date.now()) / 86_400_000);
+  if (d < 0) return 'vencido';
+  if (d === 0) return 'hoy';
+  return `${d}d`;
+}
+
+/** Tab "Planificar": sólo lo prospectivo — objetivos, lo apartado, presupuesto. */
 export function PlanificarScreen() {
+  const { token } = useSession();
   const nav = useNav();
+
+  const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[] | null>(null);
+  const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
+  const [presupuesto, setPresupuesto] = useState<PresupuestoDTO | null>(null);
+  const [desv, setDesv] = useState<DesviacionPresupuestariaDTO | null>(null);
+  const [noLeidas, setNoLeidas] = useState(0);
+  const [error, setError] = useState('');
+
+  const cargar = useCallback(async () => {
+    setError('');
+    try {
+      const [objs, asgs] = await Promise.all([
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
+        api.get<AsignacionDTO[]>('/asignaciones', token).catch(() => []),
+      ]);
+      setObjetivos(objs);
+      setAsignaciones(asgs);
+      try {
+        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
+        const vig = presus.find((p) => p.vigente && p.estado !== 'CERRADO') ?? null;
+        setPresupuesto(vig);
+        setDesv(
+          vig ? await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token) : null,
+        );
+      } catch {
+        setPresupuesto(null);
+        setDesv(null);
+      }
+      try {
+        const { noLeidas: n } = await api.get<{ noLeidas: number }>(
+          '/usuarios/me/notificaciones/no-leidas',
+          token,
+        );
+        setNoLeidas(n);
+      } catch {
+        setNoLeidas(0);
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    }
+  }, [token]);
+
+  useCargaAlEnfocar(cargar);
+
+  const enProgreso = (objetivos ?? []).filter((o) => o.estado === 'EN_PROGRESO');
+  const completados = (objetivos ?? []).filter((o) => o.estado === 'COMPLETADO').length;
+  const monedasUnicas = new Set(enProgreso.map((o) => o.moneda));
+  const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
+  const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
+  const pctTotal = meta > 0 ? Math.round((avance / meta) * 100) : 0;
+  const hoy = new Date();
+
+  const totalApartado = asignaciones.reduce((s, a) => s + a.totalReservado, 0);
+  const monedaApartado = asignaciones[0]?.moneda ?? 'CLP';
+  const gastoPct =
+    desv && desv.esperado.gastos > 0 ? Math.round((desv.real.gastos / desv.esperado.gastos) * 100) : 0;
+
   return (
-    <Screen>
-      <Title>Planificar</Title>
+    <Screen onRefresh={cargar}>
+      <TopRow
+        left={<Title>Planificar</Title>}
+        right={
+          <>
+            <IconButton
+              icon="notifications-outline"
+              badge={noLeidas || undefined}
+              accessibilityLabel="Notificaciones"
+              onPress={() => nav.go('Notificaciones')}
+            />
+            <IconButton icon="add" accessibilityLabel="Nuevo objetivo" onPress={() => nav.go('Objetivos')} />
+          </>
+        }
+      />
+      <PillDate icon="flag-outline">
+        {`${enProgreso.length} ${enProgreso.length === 1 ? 'objetivo activo' : 'objetivos activos'}`}
+      </PillDate>
 
-      <GroupLabel>Metas</GroupLabel>
-      <MenuLink
-        icon="flag-outline"
-        title="Objetivos financieros"
-        subtitle="Metas de ahorro con reservas y progreso"
-        onPress={() => nav.go('Objetivos')}
-      />
-      <MenuLink
-        icon="bookmark-outline"
-        title="Asignaciones"
-        subtitle="Dinero apartado — con objetivo o suelto (fondo de emergencia…)"
-        onPress={() => nav.go('Asignaciones')}
-      />
+      {objetivos === null ? (
+        <Skeleton filas={2} />
+      ) : (
+        <>
+          <MiniGrid>
+            <MiniPanel label="En progreso" value={String(enProgreso.length)} tone="ok" />
+            <MiniPanel label="Completados" value={String(completados)} />
+          </MiniGrid>
 
-      <GroupLabel>Presupuesto y flujo</GroupLabel>
-      <MenuLink
-        icon="pie-chart-outline"
-        title="Presupuestos"
-        subtitle="Esperado vs. real, con seguimiento por rubro"
-        onPress={() => nav.go('Presupuestos')}
-      />
-      <MenuLink
-        icon="calendar-outline"
-        title="Movimientos programados"
-        subtitle="Ingresos futuros con fecha, listos para materializar"
-        onPress={() => nav.go('MovimientosProgramados')}
-      />
-      <MenuLink
-        icon="copy-outline"
-        title="Plantillas de movimiento"
-        subtitle="Moldes para el gasto o ingreso de siempre"
-        onPress={() => nav.go('Plantillas')}
-      />
+          <GroupLabel right={<LinkButton title="Ver todos ›" onPress={() => nav.go('Objetivos')} />}>
+            Objetivos
+          </GroupLabel>
+          {enProgreso.length === 0 ? (
+            <EmptyState
+              icon="flag-outline"
+              titulo="Sin objetivos activos"
+              descripcion="Crea una meta de ahorro para seguir su avance acá."
+              accion="Crear objetivo"
+              onAccion={() => nav.go('Objetivos')}
+            />
+          ) : (
+            <>
+              {monedasUnicas.size === 1 && enProgreso.length > 1 && (
+                <GoalCard
+                  name={`Avance total · ${enProgreso.length} objetivos`}
+                  hint={`${pctTotal}%`}
+                  pct={pctTotal}
+                  footLeft={`${money(avance, [...monedasUnicas][0])} / ${money(meta, [...monedasUnicas][0])}`}
+                />
+              )}
+              {enProgreso.map((o) => (
+                <GoalCard
+                  key={o.id}
+                  name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
+                  hint={diasRestantes(o.fechaObjetivo) ?? `${o.progresoPorcentaje}%`}
+                  pct={o.progresoPorcentaje}
+                  ok={o.progresoPorcentaje >= 100}
+                  footLeft={`${money(o.progreso, o.moneda)} / ${money(o.montoObjetivo, o.moneda)}`}
+                  footRight={`${o.progresoPorcentaje}%`}
+                  onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+                />
+              ))}
+            </>
+          )}
 
-      <GroupLabel>Seguimiento</GroupLabel>
-      <MenuLink
-        icon="trending-up-outline"
-        title="Evolución de mi patrimonio"
-        subtitle="Cómo cambió tu patrimonio en el tiempo"
-        onPress={() => nav.go('EvolucionPatrimonio')}
-      />
+          <GroupLabel right={<LinkButton title="Detalle ›" onPress={() => nav.go('Asignaciones')} />}>
+            Apartado
+          </GroupLabel>
+          <MiniGrid>
+            <MiniPanel
+              label="Total apartado"
+              value={money(totalApartado, monedaApartado)}
+              sub={`${asignaciones.length} ${asignaciones.length === 1 ? 'asignación' : 'asignaciones'}`}
+              onPress={() => nav.go('Asignaciones')}
+            />
+          </MiniGrid>
+
+          {desv && presupuesto ? (
+            <>
+              <GroupLabel
+                right={<LinkButton title="Todos ›" onPress={() => nav.go('Presupuestos')} />}
+              >
+                {`Presupuesto de ${MESES[hoy.getMonth()]}`}
+              </GroupLabel>
+              <GoalCard
+                name="Gasto total"
+                hint={`${gastoPct}%`}
+                pct={gastoPct}
+                ok={gastoPct <= 100}
+                footLeft={`${money(desv.real.gastos, presupuesto.moneda)} gastado`}
+                footRight={`de ${money(desv.esperado.gastos, presupuesto.moneda)}`}
+                onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
+              />
+            </>
+          ) : (
+            <>
+              <GroupLabel>Presupuesto</GroupLabel>
+              <MiniGrid>
+                <MiniPanel label="Sin presupuesto vigente" value="—" sub="Crea uno" onPress={() => nav.go('Presupuestos')} />
+              </MiniGrid>
+            </>
+          )}
+        </>
+      )}
+
+      <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }

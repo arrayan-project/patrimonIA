@@ -235,6 +235,8 @@ export interface ElementoPatrimonialDTO {
   valorPendienteInicial: number | null;
   /** §B2: VIGENTE · PARCIALMENTE_PAGADA · EN_MORA · SALDADA · CONDONADA · INCOBRABLE · null. */
   estadoOperativo: string | null;
+  /** §G28: solo DEUDA/CREDITO — 'FINANCIERA' · 'CUSTODIA_INFORMAL'. null en el resto. */
+  naturaleza: string | null;
 }
 
 export interface EventoFinancieroDTO {
@@ -525,14 +527,21 @@ export interface RubroReporteDTO {
 
 export interface MovimientoReporteDTO {
   eventoId: string;
-  fecha: string;
+  /** INGRESO · GASTO · TRANSFERENCIA · CONVERSION. */
   tipo: string;
+  fecha: string;
   monto: number;
   moneda: string;
   glosa: string | null;
   categoriaId: string | null;
   etiquetaIds: string[];
   corregido: boolean;
+  /**
+   * Solo TRANSFERENCIA/CONVERSION: efecto neto sobre las cuentas propias dentro
+   * del alcance (negativo = salió, positivo = entró). null para INGRESO/GASTO.
+   * No se suma a ningún total del período.
+   */
+  efectoPropio: number | null;
 }
 
 export interface ResumenFinancieroDTO {

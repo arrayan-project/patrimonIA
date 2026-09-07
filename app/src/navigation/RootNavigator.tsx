@@ -48,6 +48,8 @@ import { HogarConsolidadoScreen } from '../screens/HogarConsolidadoScreen';
 import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
+import { AjustesNotificacionesScreen } from '../screens/AjustesNotificacionesScreen';
+import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
@@ -81,9 +83,9 @@ function Tabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: c.primary,
-        tabBarInactiveTintColor: c.muted,
-        tabBarStyle: { backgroundColor: c.bg, borderTopColor: c.border },
+        tabBarActiveTintColor: c.text,
+        tabBarInactiveTintColor: c.mutedDim,
+        tabBarStyle: { backgroundColor: c.fondo, borderTopColor: c.border },
       }}
     >
       <Tab.Screen
@@ -94,7 +96,7 @@ function Tabs() {
       <Tab.Screen
         name="Movimientos"
         component={MovimientosScreen}
-        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('receipt-outline') }}
+        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('stats-chart-outline') }}
       />
       <Tab.Screen
         name="Planificar"
@@ -105,11 +107,6 @@ function Tabs() {
         name="Hogar"
         component={HogarScreen}
         options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('people-outline') }}
-      />
-      <Tab.Screen
-        name="Ajustes"
-        component={AjustesScreen}
-        options={{ tabBarLabel: 'Config', tabBarIcon: icono('settings-outline') }}
       />
     </Tab.Navigator>
   );
@@ -146,6 +143,9 @@ const TITULOS: Record<string, string> = {
   HogarConsolidado: 'Patrimonio del hogar',
   Notificaciones: 'Notificaciones',
   TiposCambio: 'Tipos de cambio',
+  Ajustes: 'Ajustes',
+  AjustesNotificaciones: 'Notificaciones',
+  PatrimonioSeccion: 'Patrimonio',
   Categorias: 'Categorías de movimiento',
   TiposElemento: 'Tipos de elemento patrimonial',
   Etiquetas: 'Etiquetas',
@@ -182,6 +182,9 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['HogarConsolidado', HogarConsolidadoScreen],
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
+  ['Ajustes', AjustesScreen],
+  ['AjustesNotificaciones', AjustesNotificacionesScreen],
+  ['PatrimonioSeccion', PatrimonioSeccionScreen],
   ['Categorias', CategoriasScreen],
   ['TiposElemento', TiposElementoScreen],
   ['Etiquetas', EtiquetasScreen],
@@ -229,9 +232,10 @@ export function RootNavigator() {
         screenOptions={{
           headerShown: true,
           headerBackButtonDisplayMode: 'minimal',
-          headerTintColor: c.primary,
+          headerTintColor: c.text,
           headerTitleStyle: { color: c.text },
-          headerStyle: { backgroundColor: c.bg },
+          headerStyle: { backgroundColor: c.fondo },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: c.fondo },
         }}
         initialRouteName={session ? (inicial ?? 'Bienvenida') : 'Registro'}

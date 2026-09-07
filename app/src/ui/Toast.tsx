@@ -39,11 +39,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           pointerEvents="none"
           style={[
             styles.toast,
-            { backgroundColor: msg.tono === 'error' ? c.danger : c.text },
-            { bottom: insets.bottom + 24, opacity: opacidad },
+            {
+              backgroundColor: msg.tono === 'error' ? c.danger : c.primary,
+              bottom: insets.bottom + 24,
+              opacity: opacidad,
+            },
           ]}
         >
-          <Text style={styles.texto}>{msg.texto}</Text>
+          <Text style={[styles.texto, { color: msg.tono === 'error' ? '#fff' : c.primaryText }]}>
+            {msg.texto}
+          </Text>
         </Animated.View>
       )}
     </Ctx.Provider>
@@ -60,9 +65,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     right: 24,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  texto: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  texto: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
 });

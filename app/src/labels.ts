@@ -13,12 +13,17 @@ const DICCIONARIO: Record<string, string> = {
   CREDITO: 'Crédito por cobrar',
   DEUDA: 'Deuda',
 
+  // Naturaleza de una deuda/crédito (§G28)
+  FINANCIERA: 'Financiera',
+  CUSTODIA_INFORMAL: 'Encargo o custodia',
+
   // Tipo de evento financiero
   INGRESO: 'Ingreso',
   GASTO: 'Gasto',
   TRANSFERENCIA: 'Transferencia',
   CONVERSION: 'Conversión de moneda',
   PRESTAMO: 'Préstamo',
+  SALDO_INICIAL: 'Saldo inicial',
 
   // tipo_aplicable de una categoría de movimiento
   AMBOS: 'Ingresos y gastos',

@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type ObjetivoFinancieroDTO } from '../api/client';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
@@ -12,13 +12,12 @@ import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
-  Card,
   EmptyState,
   ErrorText,
   etiqueta,
   Field,
+  GoalCard,
   MoneyField,
-  ProgressBar,
   Segmented,
   Select,
   Skeleton,
@@ -114,13 +113,12 @@ export function ObjetivosScreen() {
           const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
           const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
           return enProgreso.length > 1 && monedas.size === 1 ? (
-            <Panel>
-              <Text style={styles.nombre}>Avance total ({enProgreso.length} objetivos activos)</Text>
-              <ProgressBar pct={pct} />
-              <Text style={styles.muted}>
-                {money(avance, [...monedas][0])} de {money(meta, [...monedas][0])} · {pct}%
-              </Text>
-            </Panel>
+            <GoalCard
+              name={`Avance total · ${enProgreso.length} objetivos activos`}
+              hint={`${pct}%`}
+              pct={pct}
+              footLeft={`${money(avance, [...monedas][0])} / ${money(meta, [...monedas][0])}`}
+            />
           ) : null;
         })()
       )}
@@ -128,19 +126,16 @@ export function ObjetivosScreen() {
       {objetivos !== null &&
         objetivos.length > 0 &&
         objetivos.map((o) => (
-          <Card key={o.id} onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}>
-            <View style={styles.head}>
-              <Text style={styles.nombre}>{o.nombre}</Text>
-              <Text style={styles.estado}>
-                {o.hogarId ? '· del hogar · ' : ''}
-                {etiqueta(o.estado)}
-              </Text>
-            </View>
-            <ProgressBar pct={o.progresoPorcentaje} />
-            <Text style={styles.muted}>
-              {money(o.progreso, o.moneda)} de {money(o.montoObjetivo, o.moneda)} · {o.progresoPorcentaje}%
-            </Text>
-          </Card>
+          <GoalCard
+            key={o.id}
+            name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
+            hint={etiqueta(o.estado)}
+            pct={o.progresoPorcentaje}
+            ok={o.estado === 'COMPLETADO' || o.progresoPorcentaje >= 100}
+            footLeft={`${money(o.progreso, o.moneda)} / ${money(o.montoObjetivo, o.moneda)}`}
+            footRight={`${o.progresoPorcentaje}%`}
+            onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+          />
         ))}
 
       <Panel>
@@ -171,8 +166,6 @@ export function ObjetivosScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between' },
   nombre: { fontSize: 16, fontWeight: '700', color: c.text },
-  estado: { fontSize: 12, fontWeight: '600', color: c.muted },
   muted: tipoDe(c).nota,
 });

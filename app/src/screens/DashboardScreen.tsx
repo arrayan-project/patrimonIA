@@ -1,58 +1,86 @@
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
-  type AgrupacionDTO,
+  type DesviacionPresupuestariaDTO,
   type ElementoPatrimonialDTO,
   type HogarDTO,
+  type MetricasHogarDTO,
+  type ObjetivoFinancieroDTO,
+  type PatrimonioConsolidadoDTO,
   type PatrimonioIndividualDTO,
+  type PresupuestoDTO,
+  type ResumenFinancieroDTO,
+  type SeriePatrimonialDTO,
   type VariacionPatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Ionicons } from '@expo/vector-icons';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
+import { useAlcance } from '../ui/alcance';
 import {
-  Button,
-  colorCategoria,
   EmptyState,
   ErrorText,
   etiqueta,
-  FAB,
-  MenuLink,
+  FabMenu,
+  GroupLabel,
+  Hero,
+  IconButton,
+  MiniGrid,
+  MiniPanel,
   MoneyText,
+  Panel,
+  PillToggle,
+  ProgressBar,
+  QuickActions,
+  Row,
   Screen,
   SelectRow,
-  Title,
   Skeleton,
-  Panel,
+  TopRow,
   useC,
   type Paleta,
   tipoDe,
 } from '../ui';
+import { Sparkline } from '../ui/charts';
+
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+/** Categorías funcionales, en el orden en que se muestran en la composición. */
+const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
 
 export function DashboardScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
   const nav = useNav();
+  const { alcance, setAlcance } = useAlcance();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
+  const claveOnb = `patrimonia.onboarding.${usuario.id}`;
 
   const [hogares, setHogares] = useState<HogarDTO[]>([]);
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
+  const [metricas, setMetricas] = useState<MetricasHogarDTO | null>(null);
+  const [consolidado, setConsolidado] = useState<PatrimonioConsolidadoDTO | null>(null);
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
+  const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
-  const [agrupaciones, setAgrupaciones] = useState<AgrupacionDTO[]>([]);
+  const [flujo, setFlujo] = useState<{ ingresos: number; gastos: number; moneda: string } | null>(null);
+  const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
+  const [presuExcedido, setPresuExcedido] = useState<PresupuestoDTO | null>(null);
+  const [noLeidas, setNoLeidas] = useState(0);
   const [pasos, setPasos] = useState({ cuenta: false, movimiento: false, objetivo: false });
   const [onbOculto, setOnbOculto] = useState(true);
-  const claveOnb = `patrimonia.onboarding.${usuario.id}`;
   const [error, setError] = useState('');
-  const [noLeidas, setNoLeidas] = useState(0);
 
   const elegirHogar = useCallback(
     (id: string) => {
@@ -75,28 +103,71 @@ export function DashboardScreen() {
       const activo = lista.find((h) => h.id === guardado)?.id ?? lista[0].id;
       setHogarId(activo);
 
-      const [h, p, els, ags] = await Promise.all([
+      const hoy = new Date();
+      const hace90 = new Date(Date.now() - 90 * 86_400_000);
+      const q = alcance === 'hogar' ? `&alcance=hogar&hogarId=${activo}` : '&alcance=mios';
+
+      const [h, p, els] = await Promise.all([
         api.get<HogarDTO>(`/hogares/${activo}`, token),
         api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
-        api.get<AgrupacionDTO[]>('/usuarios/me/agrupaciones', token).catch(() => []),
       ]);
       setHogar(h);
       setPatrimonio(p);
       setElementos(els);
-      setAgrupaciones(ags);
+
+      if (alcance === 'hogar') {
+        try {
+          const [m, cons] = await Promise.all([
+            api.get<MetricasHogarDTO>(`/hogares/${activo}/metricas`, token),
+            api.get<PatrimonioConsolidadoDTO>(`/hogares/${activo}/patrimonio-consolidado`, token),
+          ]);
+          setMetricas(m);
+          setConsolidado(cons);
+        } catch {
+          setMetricas(null);
+          setConsolidado(null);
+        }
+      }
+
+      try {
+        const desde = iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+        const hasta = iso(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0));
+        const r = await api.get<ResumenFinancieroDTO>(
+          `/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`,
+          token,
+        );
+        const pm = r.porMoneda[0];
+        setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
+      } catch {
+        setFlujo(null);
+      }
+
+      let objs: ObjetivoFinancieroDTO[] = [];
+      try {
+        objs = await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token);
+        setObjetivos(objs);
+      } catch {
+        setObjetivos([]);
+      }
+
+      try {
+        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
+        const vig = presus.find((x) => x.vigente && x.estado !== 'CERRADO');
+        if (vig) {
+          const d = await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token);
+          setPresuExcedido(d.real.gastos > d.esperado.gastos && d.esperado.gastos > 0 ? vig : null);
+        } else {
+          setPresuExcedido(null);
+        }
+      } catch {
+        setPresuExcedido(null);
+      }
 
       try {
         const onbHecho = (await leer(claveOnb)) === 'ok';
-        const [objs, evs] = await Promise.all([
-          api.get<unknown[]>('/objetivos-financieros', token).catch(() => []),
-          api.get<unknown[]>(`/hogares/${activo}/eventos-financieros`, token).catch(() => []),
-        ]);
-        const p3 = {
-          cuenta: els.length > 0,
-          movimiento: evs.length > 0,
-          objetivo: objs.length > 0,
-        };
+        const evs = await api.get<unknown[]>(`/hogares/${activo}/eventos-financieros`, token).catch(() => []);
+        const p3 = { cuenta: els.length > 0, movimiento: evs.length > 0, objetivo: objs.length > 0 };
         setPasos(p3);
         setOnbOculto(onbHecho || (p3.cuenta && p3.movimiento && p3.objetivo));
       } catch {
@@ -104,15 +175,15 @@ export function DashboardScreen() {
       }
 
       try {
-        const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
         setVariacion(
-          await api.get<VariacionPatrimonialDTO>(
-            `/usuarios/me/variacion-patrimonial?desde=${hace30}`,
-            token,
-          ),
+          await api.get<VariacionPatrimonialDTO>(`/usuarios/me/variacion-patrimonial?desde=${iso(hace90)}`, token),
+        );
+        setSerie(
+          await api.get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(hace90)}&pasos=8`, token),
         );
       } catch {
         setVariacion(null);
+        setSerie(null);
       }
       try {
         const { noLeidas: n } = await api.get<{ noLeidas: number }>(
@@ -126,19 +197,9 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav, claveHogar, claveOnb]);
+  }, [token, nav, claveHogar, claveOnb, alcance]);
 
   useCargaAlEnfocar(cargar);
-
-  // recarga el detalle al cambiar de hogar activo
-  useEffect(() => {
-    if (!hogarId) return;
-    let vivo = true;
-    api
-      .get<HogarDTO>(`/hogares/${hogarId}`, token)
-      .then((h) => vivo && setHogar(h))
-      .catch(() => undefined);
-  }, [hogarId, token]);
 
   if (!hogar || !patrimonio) {
     return (
@@ -149,215 +210,342 @@ export function DashboardScreen() {
     );
   }
 
+  const hoy = new Date();
+  const principal = patrimonio.porMoneda[0] ?? null;
+  const monedaPrin = alcance === 'hogar'
+    ? (consolidado?.monedaConsolidacion ?? metricas?.porMoneda[0]?.moneda ?? hogar.monedaConsolidacion)
+    : (principal?.moneda ?? 'CLP');
+
+  // ── Hero ───────────────────────────────────────────────────────────────
+  const heroValor =
+    alcance === 'hogar'
+      ? (consolidado?.total != null
+          ? money(consolidado.total, consolidado.monedaConsolidacion)
+          : metricas?.porMoneda[0]
+            ? money(metricas.porMoneda[0].patrimonioNeto, metricas.porMoneda[0].moneda)
+            : money(0, monedaPrin))
+      : money(principal?.patrimonio ?? 0, monedaPrin);
+  const v = principal ? variacion?.porMoneda.find((x) => x.moneda === principal.moneda) : undefined;
+  const puntos = principal
+    ? (serie?.puntos ?? []).map((pt) => pt.porMoneda.find((m) => m.moneda === principal.moneda)?.patrimonio ?? 0)
+    : [];
+
+  // ── Composición ────────────────────────────────────────────────────────
+  const composicion: { cat: string; valor: number; sub: string }[] = [];
+  if (alcance === 'hogar' && metricas?.porMoneda[0]) {
+    const m = metricas.porMoneda[0];
+    const act = new Map(m.distribucionPorActivo.map((d) => [d.categoria, d]));
+    const pas = new Map(m.distribucionPorPasivo.map((d) => [d.categoria, d]));
+    for (const cat of CATS) {
+      const d = act.get(cat) ?? pas.get(cat);
+      if (d) composicion.push({ cat, valor: d.valor, sub: `${Math.round(d.porcentaje)}%` });
+    }
+  } else {
+    for (const cat of CATS) {
+      const delCat = elementos.filter((e) => e.categoriaFuncional === cat);
+      if (delCat.length === 0) continue;
+      const valor = delCat
+        .filter((e) => e.moneda === monedaPrin)
+        .reduce((s, e) => s + e.valorVigente, 0);
+      composicion.push({ cat, valor, sub: `${delCat.length} ${delCat.length === 1 ? 'elemento' : 'elementos'}` });
+    }
+  }
+
+  // ── Objetivos ──────────────────────────────────────────────────────────
+  const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
+  const monedasObj = new Set(enProgreso.map((o) => o.moneda));
+  const metaObj = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
+  const avanceObj = enProgreso.reduce((s, o) => s + o.progreso, 0);
+  const pctObj = metaObj > 0 ? Math.round((avanceObj / metaObj) * 100) : 0;
+
+  // ── Alertas (máx 3, por prioridad) ─────────────────────────────────────
+  const enMora = elementos.filter(
+    (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
+  );
+  const alertas: { texto: string; danger?: boolean; onPress: () => void }[] = [];
+  if (enMora.length > 0)
+    alertas.push({
+      texto: `${enMora.length} ${enMora.length === 1 ? 'deuda' : 'deudas'} en mora`,
+      danger: true,
+      onPress: () => nav.go('ElementoDetalle', { elementoId: enMora[0].id }),
+    });
+  if (presuExcedido)
+    alertas.push({
+      texto: `Presupuesto de ${MESES[hoy.getMonth()]} excedido`,
+      danger: true,
+      onPress: () => nav.go('PresupuestoDetalle', { presupuestoId: presuExcedido.id }),
+    });
+  if (noLeidas > 0)
+    alertas.push({
+      texto: `${noLeidas} ${noLeidas === 1 ? 'notificación sin leer' : 'notificaciones sin leer'}`,
+      onPress: () => nav.go('Notificaciones'),
+    });
+
   const cerrarOnboarding = () => {
     setOnbOculto(true);
     void guardar(claveOnb, 'ok');
   };
 
-  const PasoOnb = ({ hecho, texto, onPress }: { hecho: boolean; texto: string; onPress: () => void }) => (
-    <Pressable style={styles.paso} onPress={onPress}>
-      <Text style={{ fontSize: 16 }}>{hecho ? '✅' : '⬜️'}</Text>
-      <Text style={[styles.pasoTexto, hecho && { color: c.muted, textDecorationLine: 'line-through' }]}>
-        {texto}
-      </Text>
-    </Pressable>
-  );
-
   return (
     <Screen
       onRefresh={cargar}
       fab={
-        elementos.length > 0 ? (
-          <FAB icon="add" onPress={() => nav.go('RegistrarMovimiento')} />
-        ) : undefined
+        <FabMenu
+          actions={[
+            { icon: 'swap-vertical-outline', label: 'Registrar movimiento', onPress: () => nav.go('RegistrarMovimiento') },
+            { icon: 'add-circle-outline', label: 'Agregar cuenta o bien', onPress: () => nav.go('AgregarElemento') },
+          ]}
+        />
       }
     >
-      <Title>{hogar.nombre}</Title>
+      <TopRow
+        left={
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={setAlcance}
+            format={(x) => (x === 'mios' ? 'Míos' : 'Del hogar')}
+          />
+        }
+        right={
+          <>
+            <IconButton
+              icon="notifications-outline"
+              badge={noLeidas || undefined}
+              accessibilityLabel="Notificaciones"
+              onPress={() => nav.go('Notificaciones')}
+            />
+            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+          </>
+        }
+      />
+
+      <Hero
+        label={alcance === 'hogar' ? `${hogar.nombre} · patrimonio` : 'Patrimonio neto'}
+        value={heroValor}
+        change={
+          alcance === 'mios' && v && v.variacion !== 0
+            ? `${v.variacion >= 0 ? '▲' : '▼'} ${
+                v.variacionPorcentaje != null
+                  ? `${Math.abs(v.variacionPorcentaje)}%`
+                  : money(Math.abs(v.variacion), monedaPrin)
+              }`
+            : undefined
+        }
+        changeDir={v && v.variacion < 0 ? 'neg' : 'pos'}
+      >
+        {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} /> : null}
+      </Hero>
+
+      {alcance === 'hogar' && consolidado?.total == null && (consolidado?.conversionesFaltantes.length ?? 0) > 0 && (
+        <ErrorText>{`Falta tipo de cambio para: ${consolidado!.conversionesFaltantes.join(', ')}.`}</ErrorText>
+      )}
+
+      {alertas.length > 0 && (
+        <Panel gap={0}>
+          {alertas.slice(0, 3).map((a, i) => (
+            <Pressable
+              key={i}
+              onPress={a.onPress}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.alerta, i > 0 && styles.alertaSep, pressed && { opacity: 0.6 }]}
+            >
+              <View style={[styles.alertaPunto, { backgroundColor: a.danger ? c.danger : c.muted }]} />
+              <Text style={styles.alertaTxt}>{a.texto}</Text>
+              <Text style={styles.alertaChev}>›</Text>
+            </Pressable>
+          ))}
+          {alertas.length > 3 && (
+            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')}>
+              <Text style={[styles.alertaTxt, { color: c.muted }]}>Ver todas ({alertas.length})</Text>
+            </Pressable>
+          )}
+        </Panel>
+      )}
 
       {!onbOculto && (
         <Panel>
-          <View style={styles.head}>
-            <Text style={styles.sectionTitle}>Primeros pasos</Text>
+          <View style={styles.headRow}>
+            <Text style={styles.section}>Primeros pasos</Text>
             <Pressable hitSlop={8} onPress={cerrarOnboarding}>
               <Text style={styles.muted}>Ocultar</Text>
             </Pressable>
           </View>
-          <PasoOnb hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} />
-          <PasoOnb hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
-          <PasoOnb hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos')} />
+          <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
+          <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} c={c} styles={styles} />
+          <Paso hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos')} c={c} styles={styles} />
         </Panel>
       )}
 
       {hogares.length > 1 && (
         <Panel>
-          <Text style={styles.sectionTitle}>Hogar activo</Text>
+          <Text style={styles.section}>Hogar activo</Text>
           {hogares.map((h) => (
-            <SelectRow
-              key={h.id}
-              label={h.nombre}
-              selected={h.id === hogarId}
-              onPress={() => elegirHogar(h.id)}
-            />
+            <SelectRow key={h.id} label={h.nombre} selected={h.id === hogarId} onPress={() => elegirHogar(h.id)} />
           ))}
         </Panel>
       )}
 
-      <Panel>
-        <Text style={styles.sectionTitle}>Mi patrimonio</Text>
-        {patrimonio.porMoneda.length === 0 ? (
-          <Text style={styles.muted}>Aún no tienes cuentas ni bienes.</Text>
-        ) : (
-          patrimonio.porMoneda.map((m) => {
-            const v = variacion?.porMoneda.find((x) => x.moneda === m.moneda);
-            return (
-              <View key={m.moneda} style={styles.resumen}>
-                <MoneyText monto={m.patrimonio} moneda={m.moneda} style={styles.resumenNeto} />
-                <View style={styles.resumenFila}>
-                  <Text style={styles.muted}>
-                    {m.valorReservado > 0
-                      ? `Libre ${money(m.valorLibre, m.moneda)} · líquido ${money(m.valorLiquido, m.moneda)} − reservado ${money(m.valorReservado, m.moneda)}`
-                      : `Líquido ${money(m.valorLiquido, m.moneda)}`}
-                  </Text>
-                  {v && v.variacion !== 0 && (
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: '600',
-                        color: v.variacion >= 0 ? c.primary : c.danger,
-                      }}
-                    >
-                      {v.variacion >= 0 ? '▲' : '▼'} {money(Math.abs(v.variacion), m.moneda)}
-                      {v.variacionPorcentaje != null ? ` (${v.variacionPorcentaje}%)` : ''} · 30 días
-                    </Text>
-                  )}
-                </View>
-              </View>
-            );
-          })
-        )}
-      </Panel>
-
-      <Panel>
-        <Text style={styles.sectionTitle}>Cuentas y bienes</Text>
-        {(() => {
-          const fila = (el: ElementoPatrimonialDTO) => (
-            <Pressable
-              key={el.id}
-              style={styles.elemento}
-              onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.elementoNombre}>{el.nombre}</Text>
-                <Text
-                  style={[
-                    styles.muted,
-                    (el.estadoOperativo === 'EN_MORA' || el.estadoOperativo === 'INCOBRABLE') && {
-                      color: c.danger,
-                    },
-                  ]}
-                >
-                  {etiqueta(el.categoriaFuncional)}
-                  {el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : ''}
-                </Text>
-              </View>
-              <MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.elementoValor} />
-
-              <Ionicons name="chevron-forward" size={16} color={c.muted} />
-            </Pressable>
-          );
-          if (elementos.length === 0) {
-            return (
-              <EmptyState
-                icon="wallet-outline"
-                titulo="Aún no tienes cuentas ni bienes"
-                descripcion="Agrega tu primera cuenta, inversión o deuda para empezar a llevar tu patrimonio."
-                accion="Agregar mi primera cuenta"
-                onAccion={() => nav.go('AgregarElemento')}
-              />
-            );
-          }
-          const agrupados = new Set(agrupaciones.flatMap((a) => a.elementoIds));
-          const sinAgrupar = elementos.filter((el) => !agrupados.has(el.id));
-          const hayGrupos = agrupaciones.some((a) => a.elementoIds.length > 0);
-          return (
-            <>
-              {agrupaciones.map((a, i) => {
-                const els = elementos.filter((el) => a.elementoIds.includes(el.id));
-                if (els.length === 0) return null;
-                return (
-                  <View key={a.id}>
-                    <View style={styles.grupoHead}>
-                      <View style={[styles.grupoPunto, { backgroundColor: colorCategoria(a.color, i) }]} />
-                      <Text style={styles.grupoTitulo}>{a.nombre}</Text>
-                    </View>
-                    {els.map(fila)}
-                  </View>
-                );
-              })}
-              {sinAgrupar.length > 0 && hayGrupos && (
-                <Text style={[styles.grupoTitulo, { marginLeft: 14 }]}>Sin agrupar</Text>
-              )}
-              {sinAgrupar.map(fila)}
-            </>
-          );
-        })()}
-        {elementos.length > 0 && (
-          <View style={styles.actions}>
-            <Button title="Agregar elemento" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
-            <Button title="Registrar movimiento" onPress={() => nav.go('RegistrarMovimiento')} />
-          </View>
-        )}
-      </Panel>
-
-      {noLeidas > 0 && (
-        <MenuLink
-          icon="notifications-outline"
-          title="Notificaciones"
-          subtitle={`${noLeidas} sin leer`}
-          badge={noLeidas}
-          onPress={() => nav.go('Notificaciones')}
+      <GroupLabel>Composición</GroupLabel>
+      {composicion.length === 0 && alcance === 'mios' ? (
+        <EmptyState
+          icon="wallet-outline"
+          titulo="Aún no tienes cuentas ni bienes"
+          descripcion="Agrega tu primera cuenta, inversión o deuda para empezar."
+          accion="Agregar mi primera cuenta"
+          onAccion={() => nav.go('AgregarElemento')}
         />
+      ) : composicion.length === 0 ? (
+        <Panel>
+          <Text style={styles.muted}>Sin desglose disponible para el patrimonio del hogar.</Text>
+        </Panel>
+      ) : (
+        <MiniGrid>
+          {composicion.map((x) => (
+            <MiniPanel
+              key={x.cat}
+              label={etiqueta(x.cat)}
+              value={money(Math.abs(x.valor), monedaPrin)}
+              sub={x.sub}
+              tone={x.valor < 0 ? 'danger' : undefined}
+              onPress={() =>
+                nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin })
+              }
+            />
+          ))}
+        </MiniGrid>
       )}
+
+      {alcance === 'mios' && principal && (
+        <Panel>
+          <Text style={styles.section}>Disponibilidad</Text>
+          <View style={styles.dispRow}>
+            <Disp label="Líquido" valor={money(principal.valorLiquido, principal.moneda)} styles={styles} />
+            <Disp label="Apartado" valor={money(principal.valorReservado, principal.moneda)} styles={styles} onPress={() => nav.go('Planificar')} />
+            <Disp label="Disponible" valor={money(principal.valorLibre, principal.moneda)} styles={styles} strong />
+          </View>
+          <Text style={styles.muted}>“Apartado” son reservas para tus metas: sigue en la cuenta, pero comprometido.</Text>
+        </Panel>
+      )}
+
+      <Panel>
+        <View style={styles.headRow}>
+          <Text style={styles.section}>Flujo de {MESES[hoy.getMonth()]}</Text>
+          <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')}>
+            <Text style={styles.link}>Ver movimientos ›</Text>
+          </Pressable>
+        </View>
+        {flujo ? (
+          <>
+            <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
+            <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
+            <Row
+              left="Balance"
+              right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
+            />
+          </>
+        ) : (
+          <Text style={styles.muted}>Sin movimientos este mes.</Text>
+        )}
+      </Panel>
+
+      {enProgreso.length > 0 && monedasObj.size === 1 && (
+        <Panel>
+          <View style={styles.headRow}>
+            <Text style={styles.section}>Objetivos</Text>
+            <Pressable hitSlop={8} onPress={() => nav.go('Planificar')}>
+              <Text style={styles.link}>Planificar ›</Text>
+            </Pressable>
+          </View>
+          <ProgressBar pct={pctObj} />
+          <Text style={styles.muted}>
+            {money(avanceObj, [...monedasObj][0])} de {money(metaObj, [...monedasObj][0])} · {pctObj}% · {enProgreso.length}{' '}
+            {enProgreso.length === 1 ? 'objetivo' : 'objetivos'}
+          </Text>
+        </Panel>
+      )}
+
+      <GroupLabel>Accesos rápidos</GroupLabel>
+      <QuickActions
+        items={[
+          { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
+          { icon: 'flag-outline', label: 'Objetivos', onPress: () => nav.go('Objetivos') },
+          { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
+          { icon: 'trending-up-outline', label: 'Evolución', onPress: () => nav.go('EvolucionPatrimonio') },
+        ]}
+      />
 
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
 
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  card: {
-    backgroundColor: c.bg,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 14,
-    padding: 16,
-    gap: 8,
-  },
-  sectionTitle: tipoDe(c).seccion,
-  muted: tipoDe(c).nota,
-  resumen: { gap: 4, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
-  resumenNeto: { fontSize: 24, fontWeight: '800' },
-  resumenFila: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
-  grupoHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  grupoPunto: { width: 8, height: 8, borderRadius: 4 },
-  grupoTitulo: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: c.muted,
-    textTransform: 'uppercase',
-  },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  pasoTexto: { fontSize: 14, color: c.text },
-  elemento: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: c.faint,
-    paddingVertical: 10,
-  },
-  elementoNombre: { fontSize: 15, color: c.text, fontWeight: '600' },
-  elementoValor: { fontSize: 15 },
-  actions: { gap: 8, marginTop: 8 },
-});
+function Paso({
+  hecho,
+  texto,
+  onPress,
+  c,
+  styles,
+}: {
+  hecho: boolean;
+  texto: string;
+  onPress: () => void;
+  c: Paleta;
+  styles: ReturnType<typeof crearEstilos>;
+}) {
+  return (
+    <Pressable style={styles.paso} onPress={onPress}>
+      <Text style={{ fontSize: 15 }}>{hecho ? '✓' : '○'}</Text>
+      <Text style={[styles.pasoTxt, hecho && { color: c.mutedDim, textDecorationLine: 'line-through' }]}>{texto}</Text>
+    </Pressable>
+  );
+}
+
+function Disp({
+  label,
+  valor,
+  strong,
+  onPress,
+  styles,
+}: {
+  label: string;
+  valor: string;
+  strong?: boolean;
+  onPress?: () => void;
+  styles: ReturnType<typeof crearEstilos>;
+}) {
+  const cuerpo = (
+    <>
+      <Text style={styles.dispLbl}>{label}</Text>
+      <Text style={[styles.dispVal, strong && styles.dispValStrong]}>{valor}</Text>
+    </>
+  );
+  return onPress ? (
+    <Pressable style={styles.dispCol} onPress={onPress} accessibilityRole="button">
+      {cuerpo}
+    </Pressable>
+  ) : (
+    <View style={styles.dispCol}>{cuerpo}</View>
+  );
+}
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    section: tipoDe(c).seccion,
+    muted: tipoDe(c).nota,
+    link: { fontSize: 13, color: c.text, fontWeight: '600' },
+    headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    balance: { fontSize: 14, fontWeight: '700' },
+    paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+    pasoTxt: { fontSize: 14, color: c.text },
+    alerta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11 },
+    alertaSep: { borderTopWidth: 1, borderTopColor: c.panelAlt },
+    alertaPunto: { width: 7, height: 7, borderRadius: 4 },
+    alertaTxt: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
+    alertaChev: { fontSize: 18, color: c.mutedDim },
+    dispRow: { flexDirection: 'row', gap: 8 },
+    dispCol: { flex: 1, gap: 3 },
+    dispLbl: { fontSize: 11, color: c.mutedDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+    dispVal: { fontSize: 15, color: c.muted, fontWeight: '600' },
+    dispValStrong: { color: c.text, fontWeight: '800' },
+  });

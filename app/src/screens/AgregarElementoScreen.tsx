@@ -79,6 +79,9 @@ export function AgregarElementoScreen() {
   const [moneda, setMoneda] = useState('CLP');
   const [fechaAlta, setFechaAlta] = useState('');
   const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
+  const [naturaleza, setNaturaleza] = useState<'Financiera' | 'Encargo o custodia'>('Financiera');
+  const [verHogar, setVerHogar] = useState<'No' | 'Sí'>('No');
+  const [verSaldo, setVerSaldo] = useState<'No' | 'Sí'>('No');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -166,7 +169,10 @@ export function AgregarElementoScreen() {
     cuota !== '' ||
     moneda !== 'CLP' ||
     fechaAlta !== '' ||
-    propiedad !== 'Solo mía';
+    propiedad !== 'Solo mía' ||
+    naturaleza !== 'Financiera' ||
+    verHogar !== 'No' ||
+    verSaldo !== 'No';
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
   // ── Validación por paso ───────────────────────────────────────────────────
@@ -226,6 +232,8 @@ export function AgregarElementoScreen() {
           ...(esDeudaOCredito
             ? {
                 valorPendiente: Number(valorPendiente) || 0,
+                naturaleza:
+                  naturaleza === 'Encargo o custodia' ? 'CUSTODIA_INFORMAL' : 'FINANCIERA',
                 ...(contraparte.trim() ? { contraparte: contraparte.trim() } : {}),
                 ...(fechaTermino.trim() ? { fechaTermino: fechaTermino.trim() } : {}),
                 ...(Number(cuota) > 0 ? { cuotaMonto: Number(cuota) } : {}),
@@ -235,6 +243,14 @@ export function AgregarElementoScreen() {
                 participaValorLiquido: categoria === 'LIQUIDEZ',
                 admiteValorizacion: valorizable === 'Sí',
               }),
+          ...(verHogar === 'Sí'
+            ? {
+                visibilidadPorTipo: {
+                  EXISTENCIA: 'FAMILIAR',
+                  VALOR: verSaldo === 'Sí' ? 'FAMILIAR' : 'PRIVADA',
+                },
+              }
+            : {}),
         },
         token,
         key,
@@ -349,6 +365,18 @@ export function AgregarElementoScreen() {
                   ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
                   : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
               </Paragraph>
+              <Segmented
+                label="¿Qué tipo es?"
+                options={['Financiera', 'Encargo o custodia'] as const}
+                value={naturaleza}
+                onChange={setNaturaleza}
+                formatearOpcion={(v) => v}
+              />
+              <Ayuda>
+                {naturaleza === 'Encargo o custodia'
+                  ? 'Encargo: plata que solo pasa por tus cuentas para comprarle algo a alguien. No es tuya ni la debes de verdad — la app la muestra aparte de las deudas financieras.'
+                  : 'Financiera: un crédito real, un préstamo entre personas, el saldo de una tarjeta.'}
+              </Ayuda>
               <Field
                 label={categoria === 'DEUDA' ? 'Acreedor (opcional)' : 'Deudor (opcional)'}
                 value={contraparte}
@@ -426,6 +454,31 @@ export function AgregarElementoScreen() {
           ) : (
             <Nota>Quedas como propietario al 100%.</Nota>
           )}
+
+          <Segmented
+            label="¿El hogar puede ver que esta cuenta existe?"
+            options={['No', 'Sí'] as const}
+            value={verHogar}
+            onChange={(v) => {
+              setVerHogar(v);
+              if (v === 'No') setVerSaldo('No');
+            }}
+          />
+          {verHogar === 'Sí' ? (
+            <Segmented
+              label="¿También puede ver el saldo?"
+              options={['No', 'Sí'] as const}
+              value={verSaldo}
+              onChange={setVerSaldo}
+            />
+          ) : null}
+          <Ayuda>
+            {verHogar === 'No'
+              ? 'Si el hogar no ve la cuenta, nadie del hogar puede transferirte a ella.'
+              : verSaldo === 'No'
+                ? 'El hogar verá que la cuenta existe (para poder transferirte), pero no el saldo ni los movimientos.'
+                : 'El hogar verá la cuenta y su saldo. Los movimientos siguen siendo privados.'}
+          </Ayuda>
         </>
       )}
 

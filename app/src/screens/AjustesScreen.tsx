@@ -1,7 +1,7 @@
 import { useAuth } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
-import { Button, GroupLabel, MenuLink, Screen, Segmented, Title, useTema, type ModoTema } from '../ui';
+import { Button, GroupLabel, MenuList, Screen, Segmented, Title, useTema, type ModoTema } from '../ui';
 
 const OPC_TEMA: ModoTema[] = ['sistema', 'claro', 'oscuro'];
 const ETIQUETA_TEMA: Record<ModoTema, string> = {
@@ -11,8 +11,8 @@ const ETIQUETA_TEMA: Record<ModoTema, string> = {
 };
 
 /**
- * Configuración — consolidador único de toda la configuración de la app
- * (G25). Lo que es del hogar se ve también desde la pestaña Hogar.
+ * Consolidador único de configuración. Todo lo que se ajusta una vez y se
+ * olvida: cuenta, cómo se clasifican las cosas, datos de referencia.
  */
 export function AjustesScreen() {
   const nav = useNav();
@@ -27,7 +27,25 @@ export function AjustesScreen() {
 
   return (
     <Screen>
-      <Title>Configuración</Title>
+      <Title>Ajustes</Title>
+
+      <GroupLabel>Cuenta</GroupLabel>
+      <MenuList
+        items={[
+          {
+            title: 'Mi perfil',
+            subtitle: 'Nombre y datos de la cuenta',
+            icon: 'person-outline',
+            onPress: () => nav.go('Perfil'),
+          },
+          {
+            title: 'Notificaciones',
+            subtitle: 'Qué avisos recibir, en la app y como push',
+            icon: 'notifications-outline',
+            onPress: () => nav.go('AjustesNotificaciones'),
+          },
+        ]}
+      />
 
       <GroupLabel>Apariencia</GroupLabel>
       <Segmented
@@ -38,56 +56,52 @@ export function AjustesScreen() {
         formatearOpcion={(v) => ETIQUETA_TEMA[v]}
       />
 
-      <GroupLabel>Mi cuenta</GroupLabel>
-      <MenuLink
-        icon="person-outline"
-        title="Mi perfil"
-        subtitle="Nombre, notificaciones y datos de la cuenta"
-        onPress={() => nav.go('Perfil')}
-      />
-      <MenuLink
-        icon="pricetags-outline"
-        title="Etiquetas"
-        subtitle="Marcas personales transversales para tus movimientos"
-        onPress={() => nav.go('Etiquetas')}
-      />
-      <MenuLink
-        icon="folder-outline"
-        title="Agrupaciones de elementos"
-        subtitle="Carpetas para ordenar tus cuentas y activos"
-        onPress={() => nav.go('Agrupaciones')}
-      />
-      <MenuLink
-        icon="copy-outline"
-        title="Plantillas de movimiento"
-        subtitle="Moldes para registrar tus movimientos habituales en dos toques"
-        onPress={() => nav.go('Plantillas')}
+      <GroupLabel>Clasificación</GroupLabel>
+      <MenuList
+        items={[
+          {
+            title: 'Categorías de movimiento',
+            subtitle: 'Rubros para clasificar ingresos y gastos — los ven todos en el hogar',
+            icon: 'list-outline',
+            onPress: () => nav.go('Categorias'),
+          },
+          {
+            title: 'Tipos de elemento patrimonial',
+            subtitle: 'Cuenta corriente, APV, propiedad… — vocabulario del hogar',
+            icon: 'pricetag-outline',
+            onPress: () => nav.go('TiposElemento'),
+          },
+          {
+            title: 'Etiquetas',
+            subtitle: 'Marcas personales transversales para tus movimientos',
+            icon: 'pricetags-outline',
+            onPress: () => nav.go('Etiquetas'),
+          },
+        ]}
       />
 
-      <GroupLabel>Configuración del hogar</GroupLabel>
-      <MenuLink
-        icon="list-outline"
-        title="Categorías de movimiento"
-        subtitle="Rubros para clasificar ingresos y gastos (los ven todos)"
-        onPress={() => nav.go('Categorias')}
+      <GroupLabel>Datos de referencia</GroupLabel>
+      <MenuList
+        items={[
+          {
+            title: 'Tipos de cambio',
+            subtitle: 'Tasas para convertir entre monedas',
+            icon: 'swap-horizontal-outline',
+            onPress: () => nav.go('TiposCambio'),
+          },
+        ]}
       />
-      <MenuLink
-        icon="pricetag-outline"
-        title="Tipos de elemento patrimonial"
-        subtitle="Cuenta corriente, APV, propiedad… — vocabulario del hogar"
-        onPress={() => nav.go('TiposElemento')}
-      />
-      <MenuLink
-        icon="swap-horizontal-outline"
-        title="Tipos de cambio"
-        subtitle="Tasas para convertir entre monedas"
-        onPress={() => nav.go('TiposCambio')}
-      />
-      <MenuLink
-        icon="people-outline"
-        title="Gestionar hogar"
-        subtitle="Miembros, roles, moneda de consolidación e invitaciones"
-        onPress={() => nav.go('Hogar')}
+
+      <GroupLabel>Organización</GroupLabel>
+      <MenuList
+        items={[
+          {
+            title: 'Agrupaciones de elementos',
+            subtitle: 'Carpetas para ordenar tus cuentas y activos',
+            icon: 'folder-outline',
+            onPress: () => nav.go('Agrupaciones'),
+          },
+        ]}
       />
 
       <GroupLabel>Sesión</GroupLabel>

@@ -70,35 +70,44 @@ function agruparMiles(entero: string): string {
   return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+/** '#rrggbb' + alpha → 'rgba(r,g,b,a)'. Para rellenos translúcidos (pills de signo). */
+export function tinte(hex: string, alpha: number): string {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+  if (!m) return hex;
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
+}
+
 /**
  * @deprecated Paleta clara estática. En componentes usa `useC()` para que
  * respete el modo oscuro; esto queda solo para código aún sin migrar.
  */
 export const colors = CLARO;
 
-/** Sombra sutil compartida por las tarjetas (iOS + Android). */
+/**
+ * @deprecated El rediseño monocromo es plano — sin sombras, la separación la
+ * dan el borde y el espacio. Se mantiene como no-op para imports antiguos.
+ */
 export const sombra = {
-  shadowColor: '#0f172a',
-  shadowOpacity: 0.06,
-  shadowRadius: 6,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
+  shadowColor: 'transparent',
+  shadowOpacity: 0,
+  shadowRadius: 0,
+  shadowOffset: { width: 0, height: 0 },
+  elevation: 0,
 } as const;
 
 /** Escala de espaciado (múltiplos de 4). Usar para `gap` / `margin` / `padding`. */
 export const escala = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 /**
- * Contenedor tipo tarjeta (panel blanco con borde). Fuente única del "look" de
- * tarjeta — antes cada pantalla lo redefinía. El `gap` interno lo pone `Panel`
- * o cada pantalla.
+ * Contenedor tipo tarjeta (panel con borde sutil). Fuente única del "look" de
+ * tarjeta. El `gap` interno lo pone `Panel` o cada pantalla.
  */
 export const panelDe = (c: Paleta) =>
   ({
     backgroundColor: c.bg,
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: escala.lg,
   }) as const;
 /** @deprecated usa `panelDe(useC())` o el componente `<Panel>`. */
@@ -111,7 +120,7 @@ export const panel = panelDe(CLARO);
  */
 export const tipoDe = (c: Paleta) =>
   ({
-    titulo: { fontSize: 24, fontWeight: '700', color: c.text },
+    titulo: { fontSize: 24, fontWeight: '700', color: c.text, letterSpacing: -0.4 },
     seccion: { fontSize: 16, fontWeight: '700', color: c.text },
     cuerpo: { fontSize: 15, color: c.text, lineHeight: 22 },
     dato: { fontSize: 14, color: c.text, fontWeight: '600' },
@@ -137,9 +146,6 @@ export function Screen({
   const c = useC();
   const styles = useEstilos();
   const insets = useSafeAreaInsets();
-  // Si hay header nativo de navegación (altura > 0), él cubre el área segura
-  // superior. Ojo: el native-stack expone el contexto con valor 0 aun cuando
-  // el header está oculto (pantallas de tab) — por eso el > 0.
   const alturaHeader = useContext(HeaderHeightContext);
   const conHeader = typeof alturaHeader === 'number' && alturaHeader > 0;
   const [refrescando, setRefrescando] = useState(false);
@@ -163,7 +169,7 @@ export function Screen({
         contentContainerStyle={[
           styles.screenContent,
           {
-            paddingTop: conHeader ? 16 : 24 + insets.top,
+            paddingTop: conHeader ? 16 : 20 + insets.top,
             paddingBottom: 24 + (conHeader ? insets.bottom : 0) + (fab ? 72 : 0),
           },
         ]}
@@ -181,7 +187,6 @@ export function Screen({
         <View
           style={[
             styles.fabWrap,
-            // en pantallas de tab (sin header) hay que despejar la barra inferior
             { bottom: insets.bottom + (conHeader ? 20 : 72) },
           ]}
         >
@@ -202,13 +207,91 @@ export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void 
       style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
       accessibilityRole="button"
     >
-      <Ionicons name={icon} size={26} color={c.primaryText} />
+      <Ionicons name={icon} size={24} color={c.primaryText} />
     </Pressable>
   );
 }
 
-export function Title({ children }: { children: ReactNode }) {
+/**
+ * FAB que abre una hoja con varias acciones. Para cuando el "+" no es una sola
+ * cosa (registrar un movimiento — frecuente — vs. agregar una cuenta — raro).
+ */
+export function FabMenu({
+  actions,
+}: {
+  actions: { icon: NombreIcono; label: string; onPress: () => void }[];
+}) {
   const c = useC();
+  const styles = useEstilos();
+  const [abierto, setAbierto] = useState(false);
+  return (
+    <>
+      <Pressable
+        onPress={() => setAbierto(true)}
+        style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
+        accessibilityRole="button"
+        accessibilityLabel="Crear"
+      >
+        <Ionicons name="add" size={24} color={c.primaryText} />
+      </Pressable>
+      <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
+        <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()}>
+            {actions.map((a) => (
+              <Pressable
+                key={a.label}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.faint }]}
+                onPress={() => {
+                  setAbierto(false);
+                  a.onPress();
+                }}
+              >
+                <Ionicons name={a.icon} size={20} color={c.text} />
+                <Text style={styles.fabActionTxt}>{a.label}</Text>
+              </Pressable>
+            ))}
+            <LinkButton title="Cancelar" onPress={() => setAbierto(false)} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+/** Toggle compacto de 2 opciones para una barra superior (p. ej. Míos / Del hogar). */
+export function PillToggle<T extends string>({
+  options,
+  value,
+  onChange,
+  format = (v) => v,
+}: {
+  options: readonly [T, T];
+  value: T;
+  onChange: (v: T) => void;
+  format?: (v: T) => string;
+}) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.pillToggle}>
+      {options.map((opt) => (
+        <Pressable
+          key={opt}
+          onPress={() => onChange(opt)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: value === opt }}
+          style={[styles.pillToggleOpt, value === opt && styles.pillToggleOptActive]}
+        >
+          <Text style={[styles.pillToggleTxt, value === opt && styles.pillToggleTxtActive]}>
+            {format(opt)}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+export function Title({ children }: { children: ReactNode }) {
   const styles = useEstilos();
   return (
     <Text style={styles.title} accessibilityRole="header">
@@ -235,9 +318,327 @@ export function Migaja({ children }: { children: ReactNode }) {
 }
 
 /**
- * Tarjeta blanca con sombra sutil. Si se pasa `onPress`, es tocable y muestra
- * un chevron "ver más" a la derecha. `franja` pinta una barra de color a la
- * izquierda (p. ej. para diferenciar agrupaciones).
+ * Fila superior de una pantalla-hub: pill de contexto a la izquierda, acciones
+ * (íconos circulares) a la derecha. Patrón "top-row" del rediseño.
+ */
+export function TopRow({ left, right }: { left?: ReactNode; right?: ReactNode }) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.topRow}>
+      <View style={styles.topRowSide}>{left}</View>
+      <View style={styles.topActions}>{right}</View>
+    </View>
+  );
+}
+
+/** Pill redondeado de fecha / contexto / filtro. */
+export function PillDate({ icon, children }: { icon?: NombreIcono; children: ReactNode }) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <View style={styles.pillDate}>
+      {icon ? <Ionicons name={icon} size={13} color={c.muted} /> : null}
+      <Text style={styles.pillDateTxt} numberOfLines={1}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+/** Botón de ícono circular (34px). `badge` pinta un punto con número. */
+export function IconButton({
+  icon,
+  badge,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: NombreIcono;
+  badge?: number;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+    >
+      <Ionicons name={icon} size={16} color={c.text} />
+      {badge ? (
+        <View style={styles.iconBtnBadge}>
+          <Text style={styles.iconBtnBadgeTxt}>{badge}</Text>
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+/**
+ * "Hero" de una métrica: label en mayúsculas, número gigante, pill de cambio
+ * opcional, sub-stats y un slot (`children`) para una curva/sparkline debajo.
+ * Firma visual del rediseño (patrón "Balance" de Rimu).
+ */
+export function Hero({
+  label,
+  value,
+  change,
+  changeDir,
+  substats,
+  children,
+}: {
+  label: string;
+  value: ReactNode;
+  change?: string;
+  changeDir?: 'pos' | 'neg';
+  substats?: { label: string; value: string }[];
+  children?: ReactNode;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <View style={styles.hero}>
+      <Text style={styles.heroLbl}>{label}</Text>
+      <View style={styles.heroRow}>
+        {typeof value === 'string' ? <Text style={styles.heroVal}>{value}</Text> : value}
+        {change ? (
+          <Text
+            style={[
+              styles.heroChg,
+              {
+                color: changeDir === 'neg' ? c.danger : c.ok,
+                backgroundColor: tinte(changeDir === 'neg' ? c.danger : c.ok, 0.15),
+              },
+            ]}
+          >
+            {change}
+          </Text>
+        ) : null}
+      </View>
+      {substats && substats.length > 0 ? (
+        <View style={styles.heroSubs}>
+          {substats.map((s, i) => (
+            <Text key={i} style={styles.heroSub}>
+              {s.label} <Text style={styles.heroSubB}>{s.value}</Text>
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      {children ? <View style={styles.heroChart}>{children}</View> : null}
+    </View>
+  );
+}
+
+/** Fila de accesos rápidos: íconos circulares con etiqueta corta debajo. */
+export function QuickActions({
+  items,
+}: {
+  items: { icon: NombreIcono; label: string; onPress: () => void }[];
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <View style={styles.quickRow}>
+      {items.map((it, i) => (
+        <Pressable
+          key={i}
+          onPress={it.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={it.label}
+          style={({ pressed }) => [styles.quickItem, pressed && { opacity: 0.6 }]}
+        >
+          <View style={styles.quickIc}>
+            <Ionicons name={it.icon} size={18} color={c.text} />
+          </View>
+          <Text style={styles.quickTxt}>{it.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Fila de transacción: logo cuadrado de color, título + subtítulo, monto a la
+ * derecha (verde si `positivo`). `virtual` la marca como reserva/proyección
+ * (logo con borde punteado + etiqueta discreta).
+ */
+export function TxRow({
+  title,
+  subtitle,
+  amount,
+  positivo,
+  logo,
+  virtual,
+  tag,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  amount: string;
+  positivo?: boolean;
+  logo?: { icon?: NombreIcono; text?: string; color?: string };
+  virtual?: boolean;
+  tag?: string;
+  onPress?: () => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const cuerpo = (
+    <>
+      <View
+        style={[
+          styles.txLogo,
+          virtual
+            ? { backgroundColor: c.panelAlt, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }
+            : { backgroundColor: logo?.color ?? c.panelAlt },
+        ]}
+      >
+        {logo?.icon ? (
+          <Ionicons name={logo.icon} size={16} color={virtual ? c.muted : '#fff'} />
+        ) : (
+          <Text style={[styles.txLogoTxt, { color: virtual ? c.muted : '#fff' }]}>
+            {(logo?.text ?? title).slice(0, 1).toUpperCase()}
+          </Text>
+        )}
+      </View>
+      <View style={styles.txMain}>
+        <Text style={styles.txTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle || tag ? (
+          <Text style={styles.txSub} numberOfLines={1}>
+            {tag ? <Text style={styles.txTag}>{tag}</Text> : null}
+            {tag && subtitle ? ' · ' : ''}
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      <Text style={[styles.txAmt, positivo && { color: c.ok }]}>{amount}</Text>
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.txRow, pressed && { opacity: 0.6 }]}
+      >
+        {cuerpo}
+      </Pressable>
+    );
+  }
+  return <View style={styles.txRow}>{cuerpo}</View>;
+}
+
+/**
+ * Tarjeta de objetivo / meta: nombre + pista a la derecha (días, %), barra de
+ * progreso fina y pie con montos. `ok` pinta la barra en verde.
+ */
+export function GoalCard({
+  name,
+  hint,
+  pct,
+  footLeft,
+  footRight,
+  ok,
+  onPress,
+}: {
+  name: string;
+  hint?: string;
+  pct: number;
+  footLeft?: string;
+  footRight?: string;
+  ok?: boolean;
+  onPress?: () => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const w = `${Math.max(0, Math.min(100, pct))}%` as const;
+  const cuerpo = (
+    <>
+      <View style={styles.goalTop}>
+        <Text style={styles.goalName} numberOfLines={1}>
+          {name}
+        </Text>
+        {hint ? <Text style={[styles.goalHint, ok && { color: c.ok }]}>{hint}</Text> : null}
+      </View>
+      <View style={styles.goalBar}>
+        <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.text }]} />
+      </View>
+      {footLeft || footRight ? (
+        <View style={styles.goalFoot}>
+          <Text style={styles.goalFootTxt}>{footLeft}</Text>
+          <Text style={[styles.goalFootTxt, ok && { color: c.ok }]}>{footRight}</Text>
+        </View>
+      ) : null}
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.goalCard, pressed && { opacity: 0.7 }]}
+      >
+        {cuerpo}
+      </Pressable>
+    );
+  }
+  return <View style={styles.goalCard}>{cuerpo}</View>;
+}
+
+/** Rejilla de mini-métricas (2 columnas). */
+export function MiniGrid({ children }: { children: ReactNode }) {
+  const styles = useEstilos();
+  return <View style={styles.miniGrid}>{children}</View>;
+}
+
+/** Panel de una métrica dentro de `<MiniGrid>`. Con `onPress`, es tocable. */
+export function MiniPanel({
+  label,
+  value,
+  sub,
+  tone,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: 'ok' | 'danger';
+  onPress?: () => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const color = tone === 'ok' ? c.ok : tone === 'danger' ? c.danger : c.text;
+  const cuerpo = (
+    <>
+      <Text style={styles.miniLbl}>{label}</Text>
+      <Text style={[styles.miniVal, { color }]}>{value}</Text>
+      {sub ? <Text style={styles.miniSub}>{sub}</Text> : null}
+      {onPress ? (
+        <Ionicons name="chevron-forward" size={13} color={c.mutedDim} style={styles.miniChev} />
+      ) : null}
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.miniPanel, pressed && { opacity: 0.7 }]}
+      >
+        {cuerpo}
+      </Pressable>
+    );
+  }
+  return <View style={styles.miniPanel}>{cuerpo}</View>;
+}
+
+/**
+ * Tarjeta blanca con borde. Si se pasa `onPress`, es tocable y muestra un
+ * chevron "ver más" a la derecha. `franja` pinta una barra de color a la izq.
  */
 export function Card({
   children,
@@ -274,8 +675,7 @@ export function Card({
 }
 
 /**
- * Contenedor de contenido en tarjeta (vertical, no tocable). Reemplaza el
- * `<View style={styles.card}>` que cada pantalla redefinía. `gap` controla la
+ * Contenedor de contenido en tarjeta (vertical, no tocable). `gap` controla la
  * separación entre hijos.
  */
 export function Panel({
@@ -288,28 +688,24 @@ export function Panel({
   style?: object;
 }) {
   const c = useC();
-  const styles = useEstilos();
   return <View style={[panelDe(c), { gap }, style]}>{children}</View>;
 }
 
 /** Encabezado de una tarjeta / sección de contenido. */
 export function SectionTitle({ children }: { children: ReactNode }) {
-  const c = useC();
   const styles = useEstilos();
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
 /** Texto secundario corto (13px, gris). Para pies de tarjeta y aclaraciones. */
 export function Nota({ children }: { children: ReactNode }) {
-  const c = useC();
   const styles = useEstilos();
   return <Text style={styles.nota}>{children}</Text>;
 }
 
 /**
  * Fila de una lista de contenido: título + subtítulo opcional + valor a la
- * derecha + chevron si es tocable. Unifica los `Pressable`/`View` sueltos que
- * cada pantalla armaba para sus listas.
+ * derecha + chevron si es tocable.
  */
 export function ListItem({
   title,
@@ -362,7 +758,6 @@ export function Stat({
   value: ReactNode;
   hint?: string;
 }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <View style={{ gap: 2 }}>
@@ -374,7 +769,6 @@ export function Stat({
 }
 
 export function Paragraph({ children }: { children: ReactNode }) {
-  const c = useC();
   const styles = useEstilos();
   return <Text style={styles.paragraph}>{children}</Text>;
 }
@@ -391,7 +785,7 @@ export function Field({
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
-        placeholderTextColor={c.muted}
+        placeholderTextColor={c.mutedDim}
         autoCapitalize="none"
         {...props}
       />
@@ -440,7 +834,7 @@ export function DateField({
             accessibilityRole="button"
             accessibilityLabel={`${label}: ${value ? fechaLegible(value) : placeholder}`}
           >
-            <Text style={{ fontSize: 16, color: value ? c.text : c.muted }}>
+            <Text style={{ fontSize: 16, color: value ? c.text : c.mutedDim }}>
               {value ? fechaLegible(value) : placeholder}
             </Text>
           </Pressable>
@@ -483,14 +877,12 @@ export function MoneyField({
       : agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
 
   const alEscribir = (t: string) => {
-    // El texto viene con formato de display: '.' = miles, ',' = decimal.
     let limpio = t.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
     const i = limpio.indexOf('.');
     if (i !== -1) {
-      // una sola coma decimal, máx. 2 dígitos
       limpio = limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '').slice(0, 2);
     }
-    limpio = limpio.replace(/^0+(?=\d)/, ''); // sin ceros a la izquierda
+    limpio = limpio.replace(/^0+(?=\d)/, '');
     onChange(limpio);
   };
 
@@ -503,7 +895,7 @@ export function MoneyField({
         value={display}
         onChangeText={alEscribir}
         placeholder={placeholder}
-        placeholderTextColor={c.muted}
+        placeholderTextColor={c.mutedDim}
       />
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </View>
@@ -526,7 +918,7 @@ export function Button({
   const c = useC();
   const styles = useEstilos();
   const outline = variant === 'secondary' || variant === 'danger';
-  const tinte = variant === 'danger' ? c.danger : c.primary;
+  const tinteBtn = variant === 'danger' ? c.danger : c.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -542,9 +934,9 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={outline ? tinte : c.primaryText} />
+        <ActivityIndicator color={outline ? tinteBtn : c.primaryText} />
       ) : (
-        <Text style={[styles.buttonText, outline && { color: tinte }]}>{title}</Text>
+        <Text style={[styles.buttonText, outline && { color: tinteBtn }]}>{title}</Text>
       )}
     </Pressable>
   );
@@ -561,10 +953,8 @@ export function Segmented<T extends string>({
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
-  /** Cómo se muestra cada opción (por defecto, la etiqueta legible del enum). */
   formatearOpcion?: (v: T) => string;
 }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <View style={styles.field}>
@@ -597,7 +987,6 @@ export function SelectRow({
   selected: boolean;
   onPress: () => void;
 }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <Pressable
@@ -659,7 +1048,7 @@ export function Select({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <Text style={{ fontSize: 16, color: conocida || value ? c.text : c.muted }}>
+        <Text style={{ fontSize: 16, color: conocida || value ? c.text : c.mutedDim }}>
           {texto}
         </Text>
         <Text style={styles.selectCaret}>▾</Text>
@@ -677,7 +1066,7 @@ export function Select({
                   onChangeText={setOtro}
                   autoFocus
                   placeholder="Escribe el valor"
-                  placeholderTextColor={c.muted}
+                  placeholderTextColor={c.mutedDim}
                 />
                 <Button
                   title="Usar"
@@ -728,7 +1117,6 @@ export function Select({
 
 /** Cabecera de un formulario por pasos: "Paso N de M" + barra de avance. */
 export function Pasos({ actual, total }: { actual: number; total: number }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <View style={{ gap: 6 }}>
@@ -741,7 +1129,6 @@ export function Pasos({ actual, total }: { actual: number; total: number }) {
 }
 
 export function ProgressBar({ pct }: { pct: number }) {
-  const c = useC();
   const styles = useEstilos();
   const clamped = Math.max(0, Math.min(100, pct));
   return (
@@ -753,8 +1140,8 @@ export function ProgressBar({ pct }: { pct: number }) {
 
 /** Paleta estable para categorías sin color propio (índice → hex). */
 export const PALETA_CATEGORIA = [
-  '#1d4ed8', '#0891b2', '#16a34a', '#ca8a04', '#dc2626',
-  '#9333ea', '#db2777', '#ea580c', '#4b5563', '#0d9488', '#7c3aed',
+  '#3b82f6', '#0891b2', '#16a34a', '#ca8a04', '#dc2626',
+  '#9333ea', '#db2777', '#ea580c', '#64748b', '#0d9488', '#7c3aed',
 ];
 
 export function colorCategoria(color: string | null, i: number): string {
@@ -767,7 +1154,6 @@ export function BarraDistribucion({
 }: {
   segmentos: { valor: number; color: string }[];
 }) {
-  const c = useC();
   const styles = useEstilos();
   const total = segmentos.reduce((s, x) => s + Math.max(0, x.valor), 0);
   if (total <= 0) return <View style={[styles.progressTrack, { height: 14 }]} />;
@@ -787,12 +1173,11 @@ export function BarraDistribucion({
 
 /** Punto de color (leyenda de categoría). */
 export function Punto({ color }: { color: string }) {
-  const c = useC();
   const styles = useEstilos();
   return <View style={[styles.punto, { backgroundColor: color }]} />;
 }
 
-/** Etiqueta compacta. Con `onPress` funciona como toggle (borde relleno si `activo`). */
+/** Etiqueta compacta. Con `onPress` funciona como toggle (relleno si `activo`). */
 export function Chip({
   label,
   activo,
@@ -806,15 +1191,15 @@ export function Chip({
 }) {
   const c = useC();
   const styles = useEstilos();
-  const tinte = color ?? c.primary;
+  const tinteChip = color ?? c.primary;
   const cuerpo = (
     <View
       style={[
         styles.chip,
-        activo ? { backgroundColor: tinte, borderColor: tinte } : { borderColor: c.border },
+        activo ? { backgroundColor: tinteChip, borderColor: tinteChip } : { borderColor: c.border },
       ]}
     >
-      <Text style={[styles.chipText, activo && { color: c.primaryText }]}>{label}</Text>
+      <Text style={[styles.chipText, activo && { color: color ? '#fff' : c.primaryText }]}>{label}</Text>
     </View>
   );
   return onPress ? (
@@ -847,7 +1232,6 @@ export function MoneyText({
   contable?: boolean;
 }) {
   const c = useC();
-  const styles = useEstilos();
   const abs = Math.abs(monto).toLocaleString('es-CL', { maximumFractionDigits: 2 });
   const neg = monto < 0;
   const texto = neg ? (contable ? `(${abs} ${moneda})` : `−${abs} ${moneda}`) : `${abs} ${moneda}`;
@@ -855,7 +1239,6 @@ export function MoneyText({
 }
 
 export function Row({ left, right }: { left: string; right: ReactNode }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <View style={styles.dataRow}>
@@ -866,14 +1249,12 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
 }
 
 export function ErrorText({ children }: { children: ReactNode }) {
-  const c = useC();
   const styles = useEstilos();
   if (!children) return null;
   return <Text style={styles.error}>{children}</Text>;
 }
 
 export function LinkButton({ title, onPress }: { title: string; onPress: () => void }) {
-  const c = useC();
   const styles = useEstilos();
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button">
@@ -882,7 +1263,10 @@ export function LinkButton({ title, onPress }: { title: string; onPress: () => v
   );
 }
 
-/** Fila de menú: título + subtítulo opcional + chevron. Para las pantallas "hub". */
+/**
+ * Fila de menú: título + subtítulo opcional + chevron. Para las pantallas "hub".
+ * Para varias seguidas, preferir `<MenuList>` (las agrupa en una sola tarjeta).
+ */
 export function MenuLink({
   title,
   subtitle,
@@ -907,7 +1291,7 @@ export function MenuLink({
     >
       {icon ? (
         <View style={styles.menuIcono}>
-          <Ionicons name={icon} size={20} color={c.primary} />
+          <Ionicons name={icon} size={18} color={c.text} />
         </View>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -924,24 +1308,75 @@ export function MenuLink({
   );
 }
 
-/** Encabezado de grupo dentro de una pantalla hub. */
-export function GroupLabel({ children }: { children: ReactNode }) {
+/** Lista de accesos agrupados en una sola tarjeta (patrón "list-menu"). */
+export function MenuList({
+  items,
+}: {
+  items: {
+    key?: string;
+    title: string;
+    subtitle?: string;
+    icon?: NombreIcono;
+    badge?: number;
+    onPress: () => void;
+  }[];
+}) {
   const c = useC();
   const styles = useEstilos();
-  return <Text style={styles.groupLabel}>{children}</Text>;
+  return (
+    <View style={styles.menuList}>
+      {items.map((it, i) => (
+        <Pressable
+          key={it.key ?? it.title}
+          onPress={it.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={it.subtitle ? `${it.title}. ${it.subtitle}` : it.title}
+          style={({ pressed }) => [
+            styles.menuListFila,
+            i === items.length - 1 && { borderBottomWidth: 0 },
+            pressed && { backgroundColor: c.faint },
+          ]}
+        >
+          {it.icon ? (
+            <Ionicons name={it.icon} size={16} color={c.muted} style={{ width: 20, textAlign: 'center' }} />
+          ) : null}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.menuListTxt}>{it.title}</Text>
+            {it.subtitle ? <Text style={styles.menuLinkSub}>{it.subtitle}</Text> : null}
+          </View>
+          {it.badge ? (
+            <View style={styles.menuBadge}>
+              <Text style={styles.menuBadgeText}>{it.badge}</Text>
+            </View>
+          ) : null}
+          <Text style={styles.menuListChev}>›</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/** Encabezado de grupo dentro de una pantalla hub. `right` = acción a la derecha. */
+export function GroupLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.groupLabelRow}>
+      <Text style={styles.groupLabel}>{children}</Text>
+      {right}
+    </View>
+  );
 }
 
 /**
  * Caja de ayuda contextual: un ícono de info + una explicación breve, sobre
- * fondo azul muy tenue. Para conceptos que la gente no maneja (objetivos,
- * asignaciones, reservas…). Discreta, no una tarjeta.
+ * fondo apenas tintado. Para conceptos que la gente no maneja. Discreta.
  */
 export function Ayuda({ children }: { children: ReactNode }) {
   const c = useC();
   const styles = useEstilos();
   return (
     <View style={styles.ayuda}>
-      <Ionicons name="information-circle-outline" size={18} color={c.primary} />
+      <Ionicons name="information-circle-outline" size={18} color={c.muted} />
       <Text style={styles.ayudaTexto}>{children}</Text>
     </View>
   );
@@ -949,7 +1384,6 @@ export function Ayuda({ children }: { children: ReactNode }) {
 
 /** Placeholder mientras carga una lista — mejor que un spinner suelto. */
 export function Skeleton({ filas = 3 }: { filas?: number }) {
-  const c = useC();
   const styles = useEstilos();
   const pulso = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
@@ -993,7 +1427,7 @@ export function EmptyState({
   const styles = useEstilos();
   return (
     <View style={styles.empty}>
-      {icon ? <Ionicons name={icon} size={40} color={c.muted} /> : null}
+      {icon ? <Ionicons name={icon} size={36} color={c.mutedDim} /> : null}
       <Text style={styles.emptyTitulo}>{titulo}</Text>
       {descripcion ? <Text style={styles.emptyDesc}>{descripcion}</Text> : null}
       {accion && onAccion ? (
@@ -1010,44 +1444,188 @@ const crearEstilos = (c: Paleta) => {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.fondo },
     screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
-    fabWrap: { position: 'absolute', right: 20 },
+    fabWrap: { position: 'absolute', right: 18 },
     fab: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: 52,
+      height: 52,
+      borderRadius: 26,
       backgroundColor: c.primary,
       alignItems: 'center',
       justifyContent: 'center',
-      ...sombra,
-      elevation: 6,
     },
+    fabAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 13,
+      paddingHorizontal: 8,
+      borderRadius: 10,
+    },
+    fabActionTxt: { fontSize: 16, color: c.text, fontWeight: '500' },
+    pillToggle: {
+      flexDirection: 'row',
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      padding: 2,
+    },
+    pillToggleOpt: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 },
+    pillToggleOptActive: { backgroundColor: c.primary },
+    pillToggleTxt: { fontSize: 12, fontWeight: '600', color: c.muted },
+    pillToggleTxtActive: { color: c.primaryText },
+
+    // hub / hero
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    topRowSide: { flexShrink: 1 },
+    topActions: { flexDirection: 'row', gap: 8 },
+    pillDate: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      alignSelf: 'flex-start',
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+    },
+    pillDateTxt: { fontSize: 12, color: c.text, fontWeight: '500' },
+    iconBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconBtnBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      paddingHorizontal: 3,
+      backgroundColor: c.danger,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconBtnBadgeTxt: { color: '#fff', fontSize: 9, fontWeight: '800' },
+
+    hero: { paddingHorizontal: 2, gap: 6 },
+    heroLbl: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: c.muted,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    heroRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+    heroVal: { fontSize: 34, fontWeight: '700', color: c.text, letterSpacing: -0.5 },
+    heroChg: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
+    heroSubs: { flexDirection: 'row', gap: 18, flexWrap: 'wrap' },
+    heroSub: { fontSize: 12, color: c.muted },
+    heroSubB: { color: c.text, fontWeight: '600' },
+    heroChart: { marginTop: 10 },
+
+    quickRow: { flexDirection: 'row', gap: 10 },
+    quickItem: { flex: 1, alignItems: 'center', gap: 6, paddingVertical: 8 },
+    quickIc: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickTxt: { fontSize: 10, color: c.muted, fontWeight: '500' },
+
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 9,
+      borderBottomWidth: 1,
+      borderBottomColor: c.panelAlt,
+    },
+    txLogo: {
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    txLogoTxt: { fontSize: 15, fontWeight: '800' },
+    txMain: { flex: 1, minWidth: 0 },
+    txTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+    txSub: { fontSize: 11, color: c.mutedDim, marginTop: 1 },
+    txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
+    txAmt: { fontSize: 14, fontWeight: '700', color: c.text },
+
+    goalCard: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    goalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+    goalName: { fontSize: 14, fontWeight: '600', color: c.text, flex: 1 },
+    goalHint: { fontSize: 11, color: c.mutedDim },
+    goalBar: { height: 3, backgroundColor: c.panelAlt, borderRadius: 2, marginTop: 10, overflow: 'hidden' },
+    goalBarFill: { height: 3 },
+    goalFoot: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+    goalFootTxt: { fontSize: 11, color: c.mutedDim },
+
+    miniGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    miniPanel: {
+      flexGrow: 1,
+      flexBasis: '47%',
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 14,
+      padding: 13,
+      position: 'relative',
+    },
+    miniLbl: {
+      fontSize: 10,
+      color: c.mutedDim,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    miniVal: { fontSize: 18, fontWeight: '700', color: c.text, marginTop: 4 },
+    miniSub: { fontSize: 11, color: c.mutedDim, marginTop: 2 },
+    miniChev: { position: 'absolute', top: 12, right: 10 },
+
     card: {
       backgroundColor: c.bg,
-      borderRadius: 14,
+      borderRadius: 16,
       borderWidth: 1,
       borderColor: c.border,
       padding: 16,
-      ...sombra,
     },
     cardRow: { flexDirection: 'row', alignItems: 'center', gap: 10, overflow: 'hidden' },
     cardPressed: { opacity: 0.7 },
-    cardFranja: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 4,
-    },
+    cardFranja: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
     title: t.titulo,
     sectionTitle: t.seccion,
     nota: t.nota,
-    statValue: { fontSize: 20, fontWeight: '800', color: c.text },
+    statValue: { fontSize: 20, fontWeight: '800', color: c.text, letterSpacing: -0.3 },
     listItem: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
       borderTopWidth: 1,
-      borderTopColor: c.faint,
+      borderTopColor: c.panelAlt,
       paddingVertical: 10,
     },
     listItemTitle: t.dato,
@@ -1060,9 +1638,10 @@ const crearEstilos = (c: Paleta) => {
     input: {
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: 12,
+      backgroundColor: c.fondo,
       paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingVertical: 12,
       fontSize: 16,
       color: c.text,
     },
@@ -1070,52 +1649,39 @@ const crearEstilos = (c: Paleta) => {
     errorInline: { color: c.danger, fontSize: 12 },
     button: {
       backgroundColor: c.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
+      borderRadius: 12,
+      paddingVertical: 15,
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 48,
+      minHeight: 50,
     },
-    buttonSecondary: {
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.primary,
-    },
-    buttonDanger: {
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.danger,
-    },
-    buttonDisabled: { opacity: 0.5 },
+    buttonSecondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.primary },
+    buttonDanger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.danger },
+    buttonDisabled: { opacity: 0.4 },
     buttonPressed: { opacity: 0.85 },
-    buttonText: { color: c.primaryText, fontSize: 16, fontWeight: '600' },
-    buttonTextSecondary: { color: c.primary },
+    buttonText: { color: c.primaryText, fontSize: 16, fontWeight: '700' },
     error: { color: c.danger, fontSize: 14 },
-    link: { color: c.primary, fontSize: 14, fontWeight: '600' },
+    link: { color: c.text, fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
     segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     segment: {
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: 999,
       paddingVertical: 8,
-      paddingHorizontal: 12,
-      minHeight: 44,
+      paddingHorizontal: 14,
+      minHeight: 40,
       justifyContent: 'center',
     },
     segmentActive: { backgroundColor: c.primary, borderColor: c.primary },
-    segmentText: { fontSize: 13, color: c.text, fontWeight: '600' },
+    segmentText: { fontSize: 13, color: c.muted, fontWeight: '600' },
     segmentTextActive: { color: c.primaryText },
-    selectRow: {
-      borderWidth: 1,
-      borderColor: c.border,
-      borderRadius: 8,
-      padding: 12,
-    },
-    selectRowActive: { borderColor: c.primary, backgroundColor: c.info },
+    selectRow: { borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 12 },
+    selectRowActive: { borderColor: c.primary, backgroundColor: c.faint },
     selectBox: {
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: 12,
+      backgroundColor: c.fondo,
       paddingHorizontal: 12,
       paddingVertical: 12,
       flexDirection: 'row',
@@ -1123,48 +1689,36 @@ const crearEstilos = (c: Paleta) => {
       alignItems: 'center',
     },
     selectCaret: { fontSize: 14, color: c.muted },
-    modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+    modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
     modalHoja: {
       backgroundColor: c.bg,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 18,
+      borderTopRightRadius: 18,
+      borderWidth: 1,
+      borderColor: c.border,
       padding: 20,
       paddingBottom: 32,
       gap: 8,
     },
     modalTitulo: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 4 },
-    modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.faint },
+    modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.panelAlt },
     modalOpcionTxt: { fontSize: 16, color: c.text },
     selectRowText: { fontSize: 15, color: c.text },
-    selectRowTextActive: { color: c.primary, fontWeight: '600' },
-    dataRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 6,
-    },
+    selectRowTextActive: { color: c.text, fontWeight: '600' },
+    dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },
     dataLeft: { fontSize: 14, color: c.muted },
-    dataRight: { fontSize: 14, color: c.text, fontWeight: '600' },
-    progressTrack: {
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: c.faint,
-      overflow: 'hidden',
-    },
-    progressFill: { height: 10, borderRadius: 5, backgroundColor: c.primary },
+    dataRight: { fontSize: 14, color: c.text, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
+    progressTrack: { height: 4, borderRadius: 2, backgroundColor: c.panelAlt, overflow: 'hidden' },
+    progressFill: { height: 4, borderRadius: 2, backgroundColor: c.primary },
     distTrack: {
       flexDirection: 'row',
-      height: 14,
-      borderRadius: 7,
-      backgroundColor: c.faint,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: c.panelAlt,
       overflow: 'hidden',
     },
     punto: { width: 10, height: 10, borderRadius: 5 },
-    chip: {
-      borderWidth: 1,
-      borderRadius: 999,
-      paddingVertical: 5,
-      paddingHorizontal: 12,
-    },
+    chip: { borderWidth: 1, borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },
     chipText: { fontSize: 13, color: c.text, fontWeight: '600' },
     menuLink: {
       flexDirection: 'row',
@@ -1172,21 +1726,40 @@ const crearEstilos = (c: Paleta) => {
       gap: 12,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 10,
+      borderRadius: 12,
       paddingVertical: 14,
       paddingHorizontal: 16,
+      backgroundColor: c.bg,
     },
     menuLinkTitle: { fontSize: 15, fontWeight: '600', color: c.text },
-    menuLinkSub: { fontSize: 12, color: c.muted, marginTop: 2 },
+    menuLinkSub: { fontSize: 12, color: c.mutedDim, marginTop: 2 },
     menuIcono: {
-      width: 34,
-      height: 34,
+      width: 32,
+      height: 32,
       borderRadius: 8,
       backgroundColor: c.faint,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    menuChevron: { fontSize: 22, color: c.muted },
+    menuChevron: { fontSize: 22, color: c.mutedDim },
+    menuList: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      overflow: 'hidden',
+    },
+    menuListFila: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 13,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: c.panelAlt,
+    },
+    menuListTxt: { fontSize: 13, color: c.text, fontWeight: '500' },
+    menuListChev: { fontSize: 15, color: c.mutedDim },
     menuBadge: {
       minWidth: 22,
       height: 22,
@@ -1197,31 +1770,39 @@ const crearEstilos = (c: Paleta) => {
       paddingHorizontal: 6,
     },
     menuBadgeText: { color: c.primaryText, fontSize: 12, fontWeight: '700' },
+    groupLabelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 4,
+    },
     groupLabel: {
-      fontSize: 12,
+      fontSize: 10,
       fontWeight: '700',
-      color: c.muted,
-      marginTop: 8,
+      color: c.mutedDim,
       textTransform: 'uppercase',
+      letterSpacing: 1,
     },
     ayuda: {
       flexDirection: 'row',
       gap: 8,
       alignItems: 'flex-start',
       backgroundColor: c.info,
-      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
       padding: 12,
     },
-    ayudaTexto: { flex: 1, fontSize: 13, color: c.text, lineHeight: 19 },
+    ayudaTexto: { flex: 1, fontSize: 13, color: c.muted, lineHeight: 19 },
     skelCard: {
       backgroundColor: c.bg,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 14,
+      borderRadius: 16,
       padding: 16,
       gap: 10,
     },
-    skelBar: { height: 12, borderRadius: 6, backgroundColor: c.faint },
+    skelBar: { height: 12, borderRadius: 6, backgroundColor: c.panelAlt },
     empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 8 },
     emptyTitulo: { fontSize: 15, fontWeight: '700', color: c.text, textAlign: 'center' },
     emptyDesc: { fontSize: 13, color: c.muted, textAlign: 'center', lineHeight: 19 },

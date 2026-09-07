@@ -23,6 +23,7 @@ import {
   etiqueta,
   Field,
   fechaLegible,
+  Hero,
   ListItem,
   MoneyText,
   Nota,
@@ -32,8 +33,7 @@ import {
   Screen,
   SectionTitle,
   Skeleton,
-  Stat,
-  Title,
+  TxRow,
   useC,
   type Paleta,
 } from '../ui';
@@ -177,15 +177,17 @@ export function ElementoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>{el.nombre}</Title>
       {el.valorOculto ? (
-        <Stat label="Valor vigente" value="—" hint="El propietario no comparte el monto de este elemento." />
+        <Hero label={el.nombre} value="—" />
       ) : (
-        <Stat
-          label="Valor vigente"
+        <Hero
+          label={`${el.nombre} · valor vigente`}
           value={<MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.valor} />}
         />
       )}
+      {el.valorOculto ? (
+        <Nota>El propietario no comparte el monto de este elemento.</Nota>
+      ) : null}
 
       <Panel>
         <Row left="Categoría" right={etiqueta(el.categoriaFuncional)} />
@@ -224,6 +226,14 @@ export function ElementoDetalleScreen() {
       {(esDeuda || esCredito) && (
         <Panel>
           <SectionTitle>{esDeuda ? 'Deuda' : 'Crédito'}</SectionTitle>
+          {el.naturaleza === 'CUSTODIA_INFORMAL' && (
+            <Row
+              left="Tipo"
+              right={
+                <Text style={[styles.movMonto, { color: c.muted }]}>Encargo o custodia</Text>
+              }
+            />
+          )}
           {el.estadoOperativo && (
             <Row
               left="Estado"
@@ -334,12 +344,20 @@ export function ElementoDetalleScreen() {
                     ? `corregido · ${fechaLegible(ev.fecha)}`
                     : fechaLegible(ev.fecha);
                 return (
-                  <ListItem
+                  <TxRow
                     key={ev.id}
                     title={ev.glosa || etiqueta(ev.tipo)}
                     subtitle={ev.glosa ? `${etiqueta(ev.tipo)} · ${sufijo}` : sufijo}
-                    tachado={ev.anulado}
-                    right={montoMov(monto, ev.moneda, ev.anulado)}
+                    amount={`${monto < 0 ? '−' : monto > 0 ? '+' : ''}${money(Math.abs(monto), ev.moneda)}`}
+                    positivo={!ev.anulado && monto > 0}
+                    logo={{
+                      icon:
+                        ev.tipo === 'INGRESO'
+                          ? 'arrow-down-outline'
+                          : ev.tipo === 'GASTO'
+                            ? 'arrow-up-outline'
+                            : 'swap-horizontal-outline',
+                    }}
                     onPress={() =>
                       nav.go('MovimientoDetalle', {
                         eventoId: ev.id,
@@ -492,7 +510,7 @@ export function ElementoDetalleScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  valor: { fontSize: 28, fontWeight: '800' },
+  valor: { fontSize: 34, fontWeight: '700', letterSpacing: -0.5 },
   movMonto: { fontSize: 15, fontWeight: '700' },
   tachado: { textDecorationLine: 'line-through', color: c.muted },
 });

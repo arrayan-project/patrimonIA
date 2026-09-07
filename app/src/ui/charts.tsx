@@ -131,6 +131,63 @@ export function Dona({
 }
 
 /**
+ * Curva compacta para el hero: solo línea + área con degradado hacia
+ * transparente y etiquetas de eje abajo. Sin números de eje. Patrón "Balance"
+ * de Rimu.
+ */
+export function Sparkline({
+  valores,
+  etiquetas,
+  alto = 90,
+  color,
+}: {
+  valores: number[];
+  etiquetas?: string[];
+  alto?: number;
+  color?: string;
+}) {
+  const { c, styles } = useCharts();
+  const [gradId] = useState(() => `spk-${Math.random().toString(36).slice(2)}`);
+  const ancho = 343;
+  if (valores.length < 2) {
+    return <Text style={styles.vacio}>Faltan datos para el gráfico.</Text>;
+  }
+  const min = Math.min(...valores);
+  const max = Math.max(...valores);
+  const rango = max - min || 1;
+  const trazo = color ?? c.text;
+  const x = (i: number) => (i / (valores.length - 1)) * ancho;
+  const y = (v: number) => 6 + (1 - (v - min) / rango) * (alto - 12);
+  const coords = valores.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  const area = `M ${x(0)},${alto} L ${coords.split(' ').join(' L ')} L ${x(valores.length - 1)},${alto} Z`;
+  return (
+    <View style={{ gap: 4 }}>
+      <View style={{ height: alto }}>
+        <Svg width="100%" height={alto} viewBox={`0 0 ${ancho} ${alto}`} preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={trazo} stopOpacity={0.18} />
+              <Stop offset="1" stopColor={trazo} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Path d={area} fill={`url(#${gradId})`} stroke="none" />
+          <Polyline points={coords} fill="none" stroke={trazo} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        </Svg>
+      </View>
+      {etiquetas && etiquetas.length > 0 ? (
+        <View style={styles.ejeFila}>
+          {etiquetas.map((e, i) => (
+            <Text key={i} style={styles.ejeTxt}>
+              {e}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/**
  * Gráfico de línea simple para una serie temporal. `puntos` en orden; se
  * escala solo al alto/ancho dados. Muestra el valor mín/máx y las fechas
  * de los extremos.
