@@ -1,15 +1,19 @@
 # Vacíos y decisiones pendientes
 
-Formato tomado de `Docs/UX_FLOWS.docx` § "Resumen y vacíos detectados": qué se
+Formato tomado de `Docs/UX_FLOWS.md` § "Resumen y vacíos detectados": qué se
 necesita, por qué no está resuelto, qué opciones existen. Nada de esto se
 resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 
-**Estado de cada gap** (revisión 2026-09-05, tras Fases 29–46 — P1–P13 hechos):
-`✅ RESUELTO` · `🟡 PARCIAL` (núcleo hecho, quedan sub-ítems) · `⬜ PENDIENTE`
-(accionable ya, sin decisión) · `📋 DECISIÓN` (necesita definición del usuario
-antes) · `🔒 EXTERNO` (bloqueado por proveedor externo / build de despliegue).
+> **Este archivo es el _ledger_ de decisiones**: registra el porqué de cada
+> vacío y la alternativa que se descartó. Las decisiones ya `✅ RESUELTO` están
+> **integradas en los canónicos** — `DDD.md` §X, `DATABASE_DESIGN.md` §13,
+> `APPLICATION_SERVICES.md` (#53+), `API_DESIGN.md`, `UX_FLOWS.md` Parte 3.
+> Lo único **abierto** son los 3 items `🔒 EXTERNO` (G4, G20-push, G21-import) —
+> ver "Qué queda" al final.
 
-El resumen ordenado por facilidad está **al final** (§ "Qué queda — por facilidad").
+**Estado de cada gap:** `✅ RESUELTO` · `🟡 PARCIAL` (núcleo hecho, quedan
+sub-ítems) · `⬜ PENDIENTE` (accionable ya, sin decisión) · `📋 DECISIÓN`
+(necesita definición del usuario) · `🔒 EXTERNO` (bloqueado por proveedor externo).
 
 ---
 
@@ -612,8 +616,7 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   distinción vive en el modelo, no en un flag de presentación. No cambia el
   patrimonio ni genera comando nuevo. El wizard de alta lo pregunta; la app
   agrupa los `CUSTODIA_INFORMAL` bajo "Encargos y custodia", aparte de las deudas
-  financieras. Ver `Docs/ADENDA-dominio-fases-50-51.md` (prosa para §T y DATABASE_DESIGN)
-  y `Docs/DOMINIO_PENDIENTE.md` §B-custodia.
+  financieras. Ver `Docs/DDD.md` §X.2, `Docs/DATABASE_DESIGN.md` §13.
 - **Para decidir**: si más adelante hace falta, un tercer valor para "garantía /
   depósito en prenda" seguiría el mismo patrón (agregar al CHECK).
 

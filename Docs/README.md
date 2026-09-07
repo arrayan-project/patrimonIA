@@ -16,8 +16,8 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 ## Registro de decisiones y estado
 
 - **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G30), por qué, qué se decidió, y a qué documento se integró. Lo único pendiente son 3 items bloqueados por proveedores externos.
-- **[DOMINIO_PENDIENTE.md](DOMINIO_PENDIENTE.md)** — análisis dominio-vs-implementación (histórico; sus conclusiones ya viven en DDD.md y UX_FLOWS.md).
-- **[UI_UX_BACKLOG.md](UI_UX_BACKLOG.md)** — backlog de UI/UX (lo hecho está en UX_FLOWS.md; quedan los items marcados pendientes).
+- **[DOMINIO_PENDIENTE.md](DOMINIO_PENDIENTE.md)** — *retirado*. Análisis de Fase 28; sus conclusiones están en `DDD.md` §X y `UX_FLOWS.md` Parte 3.
+- **[UI_UX_BACKLOG.md](UI_UX_BACKLOG.md)** — *journal* de la implementación de UI/UX. El estado vigente está en `UX_FLOWS.md` Parte 3; quedan 3 pulidos P2/P3 sueltos.
 
 ## Operación
 

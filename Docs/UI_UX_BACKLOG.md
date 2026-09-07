@@ -1,5 +1,22 @@
 # Backlog de UI / UX
 
+> **Estado (2026-09-06):** el backlog A–J está **hecho** (Fases 15–52). El estado
+> vigente de la app —navegación, pantallas, componentes— está en `UX_FLOWS.md`
+> Parte 3. Este documento se conserva como **journal** de la implementación de
+> UI/UX (útil para entender por qué está cada cosa donde está).
+>
+> **Solo quedan pulidos P2/P3 sueltos**, no bloqueantes:
+> - **H3** — validación en vivo (`error?` + `tocado`/`intento`) en los formularios
+>   que aún no la tienen (hecha en Agregar elemento, Registrar movimiento/ajuste,
+>   Valorizar, Crear hogar, Perfil).
+> - **I1** — barrido de accesibilidad por pantalla de los `Pressable` sueltos
+>   (los componentes compartidos de `ui/` ya tienen `accessibilityRole/State/Label`).
+> - **G1** — adoptar `ListItem` en las pocas listas que aún se arman a mano.
+>
+> Nada de esto toca dominio ni backend.
+
+---
+
 Revisión del cliente Expo tras la Fase 14 (navegación, sesión, tests, CI, 14c).
 Recoge todo lo que **no está en el código hoy** y hace que la app se sienta sin
 pulir. Basado en la revisión de las 26 pantallas, el esquema y los 6 documentos

@@ -2,7 +2,7 @@
 
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
-*Catálogo de casos de uso, uno por comando de la Sección T (DDD.docx). Cada caso de uso es la capa de orquestación entre la API y el dominio: recibe un DTO, valida, invoca las políticas del agregado, y deja que la auditoría (Sección U) y el recálculo transversal (Sección W) ocurran como consecuencia — no los repite.
+*Catálogo de casos de uso, uno por comando de la Sección T (DDD.md). Cada caso de uso es la capa de orquestación entre la API y el dominio: recibe un DTO, valida, invoca las políticas del agregado, y deja que la auditoría (Sección U) y el recálculo transversal (Sección W) ocurran como consecuencia — no los repite.
 
 Convención: “Recalcula (W)” significa que dispara la Política transversal única de recálculo de la Sección W — no se detalla en cada caso de uso porque ya está definida una sola vez ahí.*
 

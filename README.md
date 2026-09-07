@@ -3,7 +3,7 @@
 Gestión de patrimonio familiar. Backend NestJS + PostgreSQL, cliente React Native (Expo).
 
 Documentos de diseño (fuente de verdad): `Docs/` — leer en el orden de
-`Docs/BUILD_INSTRUCTIONS.docx`.
+`Docs/BUILD_INSTRUCTIONS.md`.
 
 ## Estructura
 
@@ -211,19 +211,25 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     barra de avance total en la lista de Objetivos.
   - [x] Fix: en iPhone el título quedaba bajo el notch en las pantallas de tab.
 
-**Cobertura**: los 52 Application Services + `RegistrarTipoCambio` (nº 53).
-Modelo de dominio **transaccional** cerrado; deuda técnica de Fase 14 saldada.
-La Fase 15 (UI/UX) sí abre dominio nuevo: categorización de movimientos y
-preferencias. Ver `Docs/UI_UX_BACKLOG.md` y `GAPS.md`.
+**Cobertura**: los 52 Application Services de Fase 0 + 26 comandos añadidos en
+Fases 13–52 (categorías, etiquetas, agrupaciones, tipos de elemento, plantillas,
+presupuesto por rubro, visibilidad granular, objetivos del hogar, tipo de
+cambio). Ver `Docs/APPLICATION_SERVICES.md` §"Casos de uso añadidos".
+
+Fases posteriores a la 19 (rediseño monocromático, reorganización de IA, y el
+cierre de los hallazgos del análisis de dominio) están en `GAPS.md` (G27–G30) y
+`Docs/UX_FLOWS.md` Parte 3. Los `.docx` de diseño se migraron a Markdown el
+2026-09-06 (originales en `Docs/_baseline/`).
 
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 112 e2e
-cd app && npx tsc --noEmit
+cd api && npm run test:all   # 20 unitarios + 157 e2e
+cd app && npx tsc --noEmit && npx expo export --platform web
 ```
 
-Vacíos y decisiones pendientes: ver `GAPS.md`.
+Vacíos y decisiones pendientes: ver `GAPS.md`. Solo quedan 3 integraciones
+externas (captcha, push real, import de tipos de cambio).
 
 ## Requisitos de entorno
 

@@ -2,7 +2,7 @@
 
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
-*Documento de diseño de flujos, construido sobre el modelo ya cerrado (DDD, Application Services, API Design). No introduce reglas de negocio nuevas: cada paso de cada flujo se mapea a un comando o consulta ya definido en API_DESIGN.docx. Donde un flujo requiere una decisión de interacción no cubierta por el dominio (ej. cómo se presenta un error de validación), se marca explícitamente como decisión de UX, no de dominio.*
+*Documento de diseño de flujos, construido sobre el modelo ya cerrado (DDD, Application Services, API Design). No introduce reglas de negocio nuevas: cada paso de cada flujo se mapea a un comando o consulta ya definido en API_DESIGN.md. Donde un flujo requiere una decisión de interacción no cubierta por el dominio (ej. cómo se presenta un error de validación), se marca explícitamente como decisión de UX, no de dominio.*
 
 ## Estructura de este documento
 
@@ -13,7 +13,7 @@
 
 ## Flujo 1 — Día a día financiero (caso de uso típico, REQUISITES)
 
-*Basado directamente en el “Caso de uso típico” de REQUISITES.docx — sueldo, gastos, ahorro provisional, transferencias entre miembros del hogar.*
+*Basado directamente en el “Caso de uso típico” de REQUISITES.md — sueldo, gastos, ahorro provisional, transferencias entre miembros del hogar.*
 
 | Paso | Acción del usuario | Comando/Consulta API | Efecto en el dominio |
 | --- | --- | --- | --- |
@@ -68,7 +68,7 @@ Nota de UX: el paso 4 es donde más se nota la diferencia entre “editar” (lo
 | 3 | El amigo no puede pagar el resto, se declara incobrable | `POST /comandos/DeclararIncobrable` (motivo) | Impacto patrimonial lleva `valor_pendiente` a cero · elemento se conserva para efectos históricos (Sección T, DDD). |
 | 4 | Consulta cuánto le corresponde a cada propietario del crédito original | `GET /elementos-patrimoniales/{id}` | Devuelve el elemento con el desglose de propiedad — el % de cada uno aplica sobre el valor pendiente restante en cada momento, no solo al final. |
 
-Nota de diseño detectada en este flujo (no resuelta, para tu decisión): el DATABASE_DESIGN.docx no define un estado operativo explícito con valores intermedios (ej. “parcialmente pagada”) — la Sección T del DDD dice que el estado operativo “se deriva automáticamente del valor pendiente, como política, no como comando”, pero no especifica los valores posibles de ese estado derivado más allá de que llega a cero. Esto es un vacío pequeño mío que no había visto en los bloques anteriores: la UX necesita mostrar algo entre “activa” y “pagada completamente”, y ese “algo” no está nombrado en ningún documento. No lo resuelvo yo aquí — lo marco para que decidas si es un valor calculado trivial (ej. simplemente mostrar el % pagado) o si necesita nombrarse como estado formal.
+Nota de diseño detectada en este flujo (no resuelta, para tu decisión): el DATABASE_DESIGN.md no define un estado operativo explícito con valores intermedios (ej. “parcialmente pagada”) — la Sección T del DDD dice que el estado operativo “se deriva automáticamente del valor pendiente, como política, no como comando”, pero no especifica los valores posibles de ese estado derivado más allá de que llega a cero. Esto es un vacío pequeño mío que no había visto en los bloques anteriores: la UX necesita mostrar algo entre “activa” y “pagada completamente”, y ese “algo” no está nombrado en ningún documento. No lo resuelvo yo aquí — lo marco para que decidas si es un valor calculado trivial (ej. simplemente mostrar el % pagado) o si necesita nombrarse como estado formal.
 
 ## Flujo 5 — Objetivo financiero con asignación y reserva, hasta completarse
 
@@ -97,7 +97,7 @@ Nota de UX: el paso 5 es el único de los seis flujos donde el sistema actúa si
 | 4 | Consulta el historial del elemento | `GET /eventos-financieros?elemento={elemento_id}` | Ve 2 eventos: el original -$50.000 y la corrección +$5.000 — el neto es -$45.000. |
 | 5 | En la vista consolidada del hogar | `GET /eventos-financieros?hogar={hogar_id}` | El par original+corrección puede colapsarse visualmente en una sola línea de $45.000 (decisión de UX, sugerida por el propio DDD, Sección T). |
 
-Decisión de UX explícita: el paso 5 requiere que la capa de presentación sepa agrupar un evento con su(s) corrección(es) usando `correccion_de_id` — esto no es un endpoint nuevo, es lógica de agregación en el cliente o en el servicio de lectura, ya anticipada en API_DESIGN.docx pero nunca antes bajada a “así se ve en pantalla”.
+Decisión de UX explícita: el paso 5 requiere que la capa de presentación sepa agrupar un evento con su(s) corrección(es) usando `correccion_de_id` — esto no es un endpoint nuevo, es lógica de agregación en el cliente o en el servicio de lectura, ya anticipada en API_DESIGN.md pero nunca antes bajada a “así se ve en pantalla”.
 
 # PARTE 2 — DESGLOSE DE PANTALLAS
 

@@ -2,7 +2,7 @@
 
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
-*Modelo relacional lógico, trazado 1:1 contra los agregados del DDD (DDD.docx) y los casos de uso de Application Services. Cada tabla referencia su agregado de origen. Los invariantes ya definidos en el dominio se traducen a constraints; donde una regla no es expresable como constraint de esquema, se marca explícitamente “validado en Application Service” con la razón.*
+*Modelo relacional lógico, trazado 1:1 contra los agregados del DDD (DDD.md) y los casos de uso de Application Services. Cada tabla referencia su agregado de origen. Los invariantes ya definidos en el dominio se traducen a constraints; donde una regla no es expresable como constraint de esquema, se marca explícitamente “validado en Application Service” con la razón.*
 
 ## Convenciones
 

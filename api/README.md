@@ -158,4 +158,4 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
 
 Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
 de los 52 Application Services entra en fases siguientes, un flujo vertical a la
-vez. Ver `Docs/BUILD_INSTRUCTIONS.docx` y `../GAPS.md`.
+vez. Ver `Docs/BUILD_INSTRUCTIONS.md` y `../GAPS.md`.

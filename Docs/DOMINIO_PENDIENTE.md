@@ -1,5 +1,17 @@
 # Dominio vs. implementación — qué falta y cómo guía la UI
 
+> **RETIRADO (2026-09-06).** Este documento fue un análisis puntual (Fase 28) de
+> lo que el dominio modelaba pero la UI no exponía. Sus conclusiones ya están
+> integradas:
+> - **§A** (conceptos a exponer) → `UX_FLOWS.md` Parte 3.
+> - **§B** (decisiones de dominio) → `DDD.md` §X + `GAPS.md`. Única abierta: **§B4**
+>   (comentarios y adjuntos en entidades).
+> - **§C** (simplificaciones asumidas) → `DDD.md` §X.9.
+>
+> Se conserva como registro histórico del razonamiento. No se actualiza.
+
+---
+
 Relectura completa de los 6 docs (`DDD`, `APPLICATION_SERVICES`, `DATABASE_DESIGN`,
 `REQUISITES`, `UX_FLOWS`, `API_DESIGN`) contra el estado del código a la Fase 28.
 
@@ -213,8 +225,7 @@ pero no es mía). Sin distinción, queda mezclado con el hipotecario y las tarje
 patrón que `CondonarDeuda` vs `DeclararIncobrable`: distinción explícita en el
 modelo, no un flag de UI. No hay comando nuevo, no cambia el patrimonio. El
 wizard de alta lo pregunta; la app muestra los `CUSTODIA_INFORMAL` bajo "Encargos
-y custodia", separados de las deudas/créditos financieros. Prosa para DDD §T y
-DATABASE_DESIGN en `Docs/ADENDA-dominio-fases-50-51.md`.
+y custodia", separados de las deudas/créditos financieros. Integrado en `DDD.md` §X.2 y `DATABASE_DESIGN.md` §13.
 
 ### B4 · Comentarios y documentos adjuntos — `REQUISITES §M / §D`
 Listados como tipos de información con visibilidad propia. **No modelados.**

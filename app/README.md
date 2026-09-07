@@ -28,7 +28,7 @@ npm run web         # navegador
 
 ### Fase 1 — Flujo 2 (Alta de hogar)
 
-Pantallas (Docs/UX_FLOWS.docx "Desglose — Flujo 2"):
+Pantallas (Docs/UX_FLOWS.md "Desglose — Flujo 2"):
 
 | Pantalla | Comando/consulta |
 |----------|------------------|

@@ -40,9 +40,9 @@ Regla general: construir vertical, no horizontal. No se construye “todo el bac
 
 ### Fase 1 — Esqueleto vertical: Flujo 2 (Alta de hogar)
 
-Implementar de punta a punta, siguiendo `UX_FLOWS.docx` sección “Desglose — Flujo 2”:
+Implementar de punta a punta, siguiendo `UX_FLOWS.md` sección “Desglose — Flujo 2”:
 
-- Backend: los Application Services #34 (CrearHogar), #37 (InvitarMiembro), #38 (AceptarInvitacion), #39 (RechazarInvitacion), #43 (RegistrarUsuario) — con sus endpoints correspondientes de `API_DESIGN.docx`. Incluye la tabla `auditoria` funcionando desde el primer comando (no se pospone “para después” — es parte del contrato de cada Application Service).
+- Backend: los Application Services #34 (CrearHogar), #37 (InvitarMiembro), #38 (AceptarInvitacion), #39 (RechazarInvitacion), #43 (RegistrarUsuario) — con sus endpoints correspondientes de `API_DESIGN.md`. Incluye la tabla `auditoria` funcionando desde el primer comando (no se pospone “para después” — es parte del contrato de cada Application Service).
 - Móvil: las pantallas de Registro, Bienvenida/Elegir camino, Crear Hogar, Ingresar código/ver invitaciones — tal como están descritas en el desglose de pantallas.
 - Validación de fase: un usuario puede registrarse, crear un hogar, invitar a otro usuario (de prueba), y ese usuario puede aceptar — todo desde la app, contra el backend real, con las filas correspondientes verificables en `auditoria`.
 
@@ -52,23 +52,24 @@ Se define al cerrar la Fase 1, según qué se aprenda de ese primer ciclo comple
 
 ## 4. Qué hacer ante un vacío o ambigüedad
 
-Este es el punto más importante del documento. El modelo de dominio tiene 2 vacíos ya identificados y documentados (no descubrirlos de nuevo, no improvisar una solución):
+Este es el punto más importante del documento. Los 2 vacíos originales de Fase 0
+**ya se resolvieron** (estado operativo de Deuda/Crédito → 6 estados derivados,
+`GAPS.md` G1; visibilidad de Movimiento Programado → hereda del elemento, G2).
+El registro completo de vacíos y decisiones está en **`GAPS.md`** (G1–G30); lo
+único abierto son 3 integraciones externas (G4, G20-push, G21-import).
 
-1. Estado operativo intermedio de Deuda/Crédito (ver `UX_FLOWS.docx`, sección “Resumen y vacíos detectados”, punto 1). No implementar un estado formal sin decisión explícita — usar el cálculo trivial (% pagado = `(monto_original - valor_pendiente) / monto_original`) como placeholder, dejando comentario en código señalando que es provisional.
-2. Visibilidad/propiedad de Movimiento Programado (`DDD.docx`, Sección S). No agregar columnas ni lógica de visibilidad a `movimiento_programado` sin decisión explícita.
+Si Claude Code encuentra un vacío nuevo, no listado en `GAPS.md`, la regla es:
 
-Si Claude Code encuentra un vacío nuevo, no listado arriba, la regla es:
-
-- No decidir en silencio. Detener la implementación de esa pieza específica, documentar el vacío con el mismo formato usado en `UX_FLOWS.docx` (qué se necesita, por qué no está resuelto, qué opciones existen), y continuar con otra parte del trabajo que no dependa de esa decisión.
+- No decidir en silencio. Detener la implementación de esa pieza específica, documentar el vacío con el mismo formato usado en `UX_FLOWS.md` (qué se necesita, por qué no está resuelto, qué opciones existen), y continuar con otra parte del trabajo que no dependa de esa decisión.
 - No inventar una regla de negocio nueva para rellenar el vacío, aunque parezca trivial. Ejemplo de lo que NO hacer: si no está claro qué pasa al eliminar un usuario con deudas activas, no asumir un comportamiento — señalarlo.
-- Esto aplica con más fuerza a decisiones de dominio (afectan `DDD.docx`) que a decisiones puramente técnicas (ej. qué librería de validación de formularios usar en Expo) — estas últimas Claude Code puede decidirlas y simplemente justificarlas brevemente en el commit o README.
+- Esto aplica con más fuerza a decisiones de dominio (afectan `DDD.md`) que a decisiones puramente técnicas (ej. qué librería de validación de formularios usar en Expo) — estas últimas Claude Code puede decidirlas y simplemente justificarlas brevemente en el commit o README.
 
 ## 5. Convenciones de código
 
 - Nombres: los nombres de comando (`RegistrarElementoPatrimonial`, etc.) se mantienen literales en el código — en el nombre del endpoint, en el nombre de la clase/función del Application Service, y en el campo `comando` de la tabla `auditoria`. No traducir ni renombrar a convención REST/CRUD (evitar `createElement`, usar `registrarElementoPatrimonial` o el nombre de clase equivalente) — la trazabilidad 1:1 entre DDD → Application Services → API → código es el activo más valioso de todo este trabajo de diseño, y se pierde si el código usa nombres distintos a los del dominio.
-- Auditoría no es opcional ni se pospone. Cada Application Service que ejecuta un comando debe escribir su entrada de auditoría como parte de la misma transacción — no como un paso “para agregar después”. Ver `DDD.docx` Sección U para la regla de campos condicionales y encadenamiento.
+- Auditoría no es opcional ni se pospone. Cada Application Service que ejecuta un comando debe escribir su entrada de auditoría como parte de la misma transacción — no como un paso “para agregar después”. Ver `DDD.md` Sección U para la regla de campos condicionales y encadenamiento.
 - Patrón de corrección/compensación (Evento Financiero, Valorización, Ajuste Patrimonial): nunca UPDATE de una fila ya creada — siempre INSERT de una fila nueva enlazada vía `correccion_de_id`. Este patrón está en 3 tablas distintas y debe implementarse de forma idéntica en las 3, no reinventado cada vez.
-- Validaciones de invariantes que no son CHECK de SQL (ej. “al menos un propietario”, “suma de % = 100%”) viven en la capa de Application Service, dentro de la misma transacción que la escritura — nunca solo en el cliente/frontend. Ver `DATABASE_DESIGN.docx`, tablas de “Invariantes → mecanismo” de cada agregado, para la lista completa.
+- Validaciones de invariantes que no son CHECK de SQL (ej. “al menos un propietario”, “suma de % = 100%”) viven en la capa de Application Service, dentro de la misma transacción que la escritura — nunca solo en el cliente/frontend. Ver `DATABASE_DESIGN.md`, tablas de “Invariantes → mecanismo” de cada agregado, para la lista completa.
 
 ## 6. Qué NO se construye en la Fase 1 (alcance explícito)
 
