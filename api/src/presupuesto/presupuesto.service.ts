@@ -524,7 +524,8 @@ export class PresupuestoService {
           real.gastos += Number(e.monto);
           sumarCat(e.categoria_id, 'gastos', Number(e.monto));
         }
-        // TRANSFERENCIA / CONVERSION / PRESTAMO: no cuentan como ingreso ni gasto del período.
+        // TRANSFERENCIA / CONVERSION / PRESTAMO / SALDO_INICIAL: no cuentan como
+        // ingreso ni gasto del presupuesto del período.
       }
       real.ahorro = real.ingresos - real.gastos;
     }

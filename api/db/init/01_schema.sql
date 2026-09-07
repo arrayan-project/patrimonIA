@@ -91,9 +91,20 @@ CREATE TABLE elemento_patrimonial (
     observaciones             TEXT,
     valor_pendiente_inicial   NUMERIC(18,2),  -- saldo al registrar; deriva el estado operativo
 
+    -- migración 023: naturaleza de una DEUDA/CREDITO (GAPS.md G28). NOT NULL para
+    -- esas categorías (default 'FINANCIERA'), NULL en el resto.
+    naturaleza                TEXT,           -- FINANCIERA | CUSTODIA_INFORMAL
+
     CONSTRAINT ck_valor_pendiente_categoria CHECK (
         (categoria_funcional IN ('DEUDA', 'CREDITO') AND valor_pendiente IS NOT NULL)
         OR (categoria_funcional NOT IN ('DEUDA', 'CREDITO') AND valor_pendiente IS NULL)
+    ),
+    CONSTRAINT ck_naturaleza_valores CHECK (
+        naturaleza IS NULL OR naturaleza IN ('FINANCIERA', 'CUSTODIA_INFORMAL')
+    ),
+    CONSTRAINT ck_naturaleza_categoria CHECK (
+        (categoria_funcional IN ('DEUDA', 'CREDITO') AND naturaleza IS NOT NULL)
+        OR (categoria_funcional NOT IN ('DEUDA', 'CREDITO') AND naturaleza IS NULL)
     )
 );
 
@@ -232,7 +243,8 @@ CREATE INDEX ix_movimiento_programado_origen ON movimiento_programado (elemento_
 CREATE TABLE evento_financiero (
     id                                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tipo                              TEXT NOT NULL CHECK (tipo IN
-                                       ('INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION', 'PRESTAMO')),
+                                       -- migración 024: SALDO_INICIAL (apertura de cuenta, GAPS.md G29)
+                                       ('INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION', 'PRESTAMO', 'SALDO_INICIAL')),
     monto                             NUMERIC(18,2) NOT NULL,
     moneda                            TEXT NOT NULL,
     fecha                             DATE NOT NULL,

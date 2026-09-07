@@ -116,12 +116,35 @@ las asignaciones independientes **no se pueden crear ni ver**.
 **Falta:** una pantalla "Asignaciones" (o dentro de Planificar) que liste todas
 —con y sin objetivo— y permita crear una suelta.
 
-### A8 · Transferir a un elemento de otro miembro del hogar — ✅ HECHO (Fase 34)
+### A8 · Transferir a un elemento de otro miembro del hogar — ✅ HECHO (Fase 34; alta explícita Fase 50)
 `UX_FLOWS` Flujo 1 paso 4 ("le transfiero a mi esposa para Netflix"). El backend
 ya lo permitía (`evento.service #validarDestino`). Con §B1 resuelto, se agregó
 `GET /elementos-patrimoniales?alcance=hogar` (elementos de co-miembros cuya
 EXISTENCIA el actor puede ver) y el picker de destino en Registrar movimiento
 (TRANSFERENCIA) los ofrece.
+**Fase 50** — el bloqueo real era que todo elemento nacía `PRIVADA` en silencio,
+así que la cuenta destino nunca aparecía para el otro miembro (F2 de
+`Docs/mockup/casos-dominio-probados.html`). El wizard de alta ahora **pregunta**
+la visibilidad (Control A: ¿el hogar ve que existe? · Control B: ¿ve el saldo?),
+y `RegistrarElementoPatrimonial` acepta `visibilidadPorTipo` para aplicarlo en la
+misma transacción (usa la granularidad de §B1, sin columnas nuevas).
+
+### A8c · Saldo inicial de una cuenta = evento SALDO_INICIAL — ✅ HECHO (Fase 51)
+`GAPS G29`. `valorInicial` de un elemento LIQUIDEZ/RESERVA ya no solo inicializa
+`valor_vigente`: `RegistrarElementoPatrimonial` crea un `evento_financiero`
+`SALDO_INICIAL` + impacto (fecha = `fecha_alta`) en la misma transacción, para que
+la apertura de la cuenta cuente como ingreso del mes en `resumen-financiero`.
+INVERSION/ACTIVO no lo generan. No es invocable a mano ni anulable/corregible.
+Decisión de dominio explícita del usuario (había dos opciones: "disponible aparte"
+vs. "cuenta como ingreso" — eligió la segunda).
+
+### A8b · Transferencias visibles en Movimientos — ✅ HECHO (Fase 50)
+`reporte.service` filtraba `resumen-financiero.movimientos` a INGRESO/GASTO, así
+que una transferencia (entre miembros o hacia afuera) no aparecía en ningún lado
+salvo el detalle de la cuenta — el patrimonio "bajaba sin explicación" (F1). Ahora
+`movimientos` incluye TRANSFERENCIA/CONVERSION como filas neutras
+(`efectoPropio` = impacto sobre las cuentas propias) que **no** suman a
+`porMoneda`/`porRubro`. `MovimientoDetalle` muestra ambos lados ("Desde X → Hacia Y").
 
 ### A9 · Colapso visual de corrección + original
 `GAPS G10` + `UX_FLOWS` Flujo 6: hoy el detalle de un elemento muestra el evento
@@ -176,6 +199,22 @@ opcionales en `elemento_patrimonial` (no tabla hija) — `contraparte` (acreedor
 deudor), `fecha_inicio`, `fecha_termino`, `cuota_monto`, `tasa_interes`,
 `observaciones`. Se capturan al crear (wizard) y se editan con
 `ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`.
+
+### B-custodia · Naturaleza de Deuda/Crédito: financiera vs. custodia informal — `GAPS G28` — ✅ RESUELTO (Fase 50)
+**Problema**: el "caso de uso típico" (REQUISITES línea 430) — un amigo me
+transfiere plata para que le compre algo — obliga a modelar ese dinero como un
+Crédito/Deuda para que el patrimonio neto cuadre (la plata pasó por mis cuentas
+pero no es mía). Sin distinción, queda mezclado con el hipotecario y las tarjetas.
+**Decisión (Fase 50)**: columna `elemento_patrimonial.naturaleza`
+(`FINANCIERA` | `CUSTODIA_INFORMAL`), NOT NULL para DEUDA/CREDITO (default
+`FINANCIERA`), NULL en el resto (migración 023, CHECK `ck_naturaleza_valores` +
+`ck_naturaleza_categoria`). Es un **atributo del comando
+`RegistrarElementoPatrimonial`** cuando la categoría es DEUDA/CREDITO — mismo
+patrón que `CondonarDeuda` vs `DeclararIncobrable`: distinción explícita en el
+modelo, no un flag de UI. No hay comando nuevo, no cambia el patrimonio. El
+wizard de alta lo pregunta; la app muestra los `CUSTODIA_INFORMAL` bajo "Encargos
+y custodia", separados de las deudas/créditos financieros. Prosa para DDD §T y
+DATABASE_DESIGN en `Docs/DDD-adenda-naturaleza.md`.
 
 ### B4 · Comentarios y documentos adjuntos — `REQUISITES §M / §D`
 Listados como tipos de información con visibilidad propia. **No modelados.**

@@ -18,6 +18,8 @@ interface MovimientoInterno {
   categoriaId: string | null;
   glosa: string | null;
   corregido: boolean;
+  /** Solo TRANSFERENCIA/CONVERSION: efecto neto sobre las cuentas del actor. NULL en el resto. */
+  efectoPropio: number | null;
 }
 
 /**
@@ -50,19 +52,22 @@ export class ReporteService {
 
     const porMoneda = this.#totalesPorMoneda(movs);
 
-    // porRubro: (categoriaId | null, tipo) → total
+    // porRubro: (categoriaId | null, tipo) → total. SALDO_INICIAL entra como un
+    // rubro de ingreso propio ("Saldo inicial"); las transferencias no.
     const acc = new Map<string, RubroReporteDTO>();
     for (const m of movs) {
-      if (m.tipo !== 'INGRESO' && m.tipo !== 'GASTO') continue;
-      const key = `${m.categoriaId ?? '∅'}|${m.tipo}`;
+      if (m.tipo !== 'INGRESO' && m.tipo !== 'GASTO' && m.tipo !== 'SALDO_INICIAL') continue;
+      const esSaldo = m.tipo === 'SALDO_INICIAL';
+      const tipo: 'INGRESO' | 'GASTO' = m.tipo === 'GASTO' ? 'GASTO' : 'INGRESO';
+      const key = esSaldo ? 'saldo-inicial|INGRESO' : `${m.categoriaId ?? '∅'}|${tipo}`;
       const cat = m.categoriaId ? categorias.get(m.categoriaId) : null;
       const fila =
         acc.get(key) ??
         ({
-          categoriaId: m.categoriaId,
-          nombre: cat?.nombre ?? 'Sin clasificar',
+          categoriaId: esSaldo ? null : m.categoriaId,
+          nombre: esSaldo ? 'Saldo inicial' : (cat?.nombre ?? 'Sin clasificar'),
           color: cat?.color ?? null,
-          tipo: m.tipo,
+          tipo,
           total: 0,
         } as RubroReporteDTO);
       fila.total += m.monto;
@@ -86,6 +91,7 @@ export class ReporteService {
           categoriaId: m.categoriaId,
           etiquetaIds: etiquetasPorEvento.get(m.eventoId) ?? [],
           corregido: m.corregido,
+          efectoPropio: m.efectoPropio,
         }),
       ),
     };
@@ -116,7 +122,12 @@ export class ReporteService {
 
   // ── Núcleo ────────────────────────────────────────────────────────────────
 
-  /** Movimientos INGRESO/GASTO en la ventana, con el monto neto de correcciones. */
+  /**
+   * Movimientos de la ventana con el monto neto de correcciones. Incluye
+   * TRANSFERENCIA/CONVERSION como filas neutras (no cuentan para ingreso/gasto —
+   * ver `#totalesPorMoneda` y el bucle de `porRubro`); llevan `efectoPropio` con
+   * el impacto sobre las cuentas del actor.
+   */
   async #movimientosDelPeriodo(
     elementoIds: string[],
     desde: Date,
@@ -154,14 +165,21 @@ export class ReporteService {
       deltaPorRaiz.set(c.correccion_de_id, (deltaPorRaiz.get(c.correccion_de_id) ?? 0) + delta);
     }
 
+    const propios = new Set(elementoIds);
+    const esInterno = (tipo: string) => tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
+
     const filas: MovimientoInterno[] = [];
     for (const e of eventos) {
       if (e.correccion_de_id) continue; // el compensatorio se pliega en su raíz
       if (!eventoIdsBase.includes(e.id)) continue;
       if (e.anulado) continue;
-      if (e.tipo !== 'INGRESO' && e.tipo !== 'GASTO') continue;
       if (e.fecha < desde || e.fecha > hasta) continue;
       const delta = deltaPorRaiz.get(e.id) ?? 0;
+      const efectoPropio = esInterno(e.tipo)
+        ? todosLosImpactos
+            .filter((i) => i.origen_id === e.id && propios.has(i.elemento_id))
+            .reduce((s, i) => s + Number(i.monto), 0)
+        : null;
       filas.push({
         eventoId: e.id,
         fecha: e.fecha.toISOString().slice(0, 10),
@@ -171,6 +189,7 @@ export class ReporteService {
         categoriaId: e.categoria_id,
         glosa: e.glosa,
         corregido: deltaPorRaiz.has(e.id),
+        efectoPropio,
       });
     }
     return filas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
@@ -179,9 +198,12 @@ export class ReporteService {
   #totalesPorMoneda(movs: MovimientoInterno[]): TotalesPorMoneda[] {
     const acc = new Map<string, { ingresos: number; gastos: number }>();
     for (const m of movs) {
+      // TRANSFERENCIA/CONVERSION son neutras: no crean fila de moneda ni suman.
+      // SALDO_INICIAL (apertura de cuenta) cuenta como ingreso del período (§G29).
+      if (m.tipo !== 'INGRESO' && m.tipo !== 'GASTO' && m.tipo !== 'SALDO_INICIAL') continue;
       const cur = acc.get(m.moneda) ?? { ingresos: 0, gastos: 0 };
-      if (m.tipo === 'INGRESO') cur.ingresos += m.monto;
-      else if (m.tipo === 'GASTO') cur.gastos += m.monto;
+      if (m.tipo === 'GASTO') cur.gastos += m.monto;
+      else cur.ingresos += m.monto;
       acc.set(m.moneda, cur);
     }
     return [...acc.entries()]

@@ -96,12 +96,14 @@ el() { # el TOKEN JSON  → id
 CC=$(el "$DT" "{\"nombre\":\"Cuenta corriente\",\"tipo\":\"Cuenta corriente\",\"categoriaFuncional\":\"LIQUIDEZ\",\"valorInicial\":1200000,\"moneda\":\"CLP\",\"participaValorLiquido\":true,\"fechaAlta\":\"$HACE_2A\"}")
 AHORRO=$(el "$DT" "{\"nombre\":\"Cuenta de ahorro\",\"tipo\":\"Cuenta de ahorro\",\"categoriaFuncional\":\"RESERVA\",\"valorInicial\":4000000,\"moneda\":\"CLP\",\"fechaAlta\":\"$HACE_2A\"}")
 FM=$(el "$DT" "{\"nombre\":\"Fondo mutuo Fintual\",\"tipo\":\"Fondo mutuo\",\"categoriaFuncional\":\"INVERSION\",\"valorInicial\":6500000,\"moneda\":\"CLP\",\"admiteValorizacion\":true,\"fechaAlta\":\"$HACE_1A\"}")
-USD=$(el "$DT" "{\"nombre\":\"Cuenta en dólares\",\"tipo\":\"Billetera digital\",\"categoriaFuncional\":\"LIQUIDEZ\",\"valorInicial\":2500,\"moneda\":\"USD\"}")
+USD=$(el "$DT" "{\"nombre\":\"Cuenta en dólares\",\"tipo\":\"Billetera digital\",\"categoriaFuncional\":\"LIQUIDEZ\",\"valorInicial\":2500,\"moneda\":\"USD\",\"fechaAlta\":\"$HACE_1A\"}")
 TC=$(el "$DT" "{\"nombre\":\"Tarjeta de crédito\",\"tipo\":\"Tarjeta de crédito\",\"categoriaFuncional\":\"DEUDA\",\"valorPendiente\":380000,\"moneda\":\"CLP\"}")
 HIP=$(el "$DT" "{\"nombre\":\"Crédito hipotecario\",\"tipo\":\"Crédito hipotecario\",\"categoriaFuncional\":\"DEUDA\",\"valorPendiente\":48000000,\"moneda\":\"CLP\",\"contraparte\":\"Banco Estado\",\"tasaInteres\":4.2,\"fechaInicio\":\"$HACE_2A\",\"fechaTermino\":\"$EN_10A\",\"cuotaMonto\":420000}")
+# Encargo de un tercero: plata que solo pasa por las cuentas (naturaleza = custodia informal, §G28)
+ENC=$(el "$DT" "{\"nombre\":\"Encargo de Nico\",\"tipo\":\"Encargo\",\"categoriaFuncional\":\"DEUDA\",\"valorPendiente\":80000,\"moneda\":\"CLP\",\"naturaleza\":\"CUSTODIA_INFORMAL\",\"contraparte\":\"Nico\"}")
 # Departamento en co-propiedad 60/40 (Demo y Pareja comparten hogar → P12 OK)
 DEP=$(el "$DT" "{\"nombre\":\"Departamento\",\"tipo\":\"Propiedad\",\"categoriaFuncional\":\"ACTIVO\",\"valorInicial\":95000000,\"moneda\":\"CLP\",\"admiteValorizacion\":true,\"participaConsolidacion\":true,\"fechaAlta\":\"$HACE_2A\",\"propietarios\":[{\"usuarioId\":\"$(api GET /usuarios/me '' "$DT" | jget '["id"]')\",\"porcentaje\":60},{\"usuarioId\":\"$PID\",\"porcentaje\":40}]}")
-SUELDO_P=$(el "$PT" "{\"nombre\":\"Cuenta sueldo\",\"tipo\":\"Cuenta corriente\",\"categoriaFuncional\":\"LIQUIDEZ\",\"valorInicial\":900000,\"moneda\":\"CLP\"}")
+SUELDO_P=$(el "$PT" "{\"nombre\":\"Cuenta sueldo\",\"tipo\":\"Cuenta corriente\",\"categoriaFuncional\":\"LIQUIDEZ\",\"valorInicial\":900000,\"moneda\":\"CLP\",\"fechaAlta\":\"$HACE_1A\"}")
 
 # ── Movimientos ─────────────────────────────────────────────────────────────
 echo "→ Movimientos…"

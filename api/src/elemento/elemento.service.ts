@@ -14,7 +14,7 @@ import {
   type ElementoPatrimonialDTO,
   type ImpactoPatrimonialDTO,
 } from './elemento.dto.js';
-import type { RegistrarElementoDto } from './dto/registrar-elemento.dto.js';
+import type { NivelPorTipoDto, RegistrarElementoDto } from './dto/registrar-elemento.dto.js';
 import type {
   ActualizarDatosElementoDto,
   CambiarAdmiteValorizacionDto,
@@ -97,6 +97,25 @@ export class ElementoService {
       valorVigente = new Prisma.Decimal(dto.valorInicial ?? 0);
     }
 
+    // §G28 — naturaleza: solo DEUDA/CREDITO. FINANCIERA (crédito real, préstamo)
+    // o CUSTODIA_INFORMAL (plata que solo pasa por mis cuentas). Por defecto
+    // FINANCIERA — no cambia el patrimonio, cambia cómo lo agrupa la app.
+    if (!esDeudaOCredito && dto.naturaleza !== undefined) {
+      throw new BadRequestException('naturaleza solo aplica a DEUDA/CREDITO');
+    }
+    const naturaleza = esDeudaOCredito ? (dto.naturaleza ?? 'FINANCIERA') : null;
+
+    // §G29 — el saldo inicial de una cuenta LIQUIDEZ/RESERVA es un hecho
+    // económico: se registra también como un evento SALDO_INICIAL (+ impacto)
+    // con fecha = fecha_alta, para que cuente en el flujo del mes en que se
+    // crea la cuenta. El elemento nace en 0 y el impacto lo lleva a su valor.
+    const emiteSaldoInicial =
+      !esDeudaOCredito &&
+      (dto.categoriaFuncional === 'LIQUIDEZ' || dto.categoriaFuncional === 'RESERVA') &&
+      valorVigente.greaterThan(0);
+
+    await this.#validarCompartidoCon(dto.compartidoCon);
+
     const detalle = esDeudaOCredito
       ? {
           contraparte: dto.contraparte ?? null,
@@ -125,9 +144,39 @@ export class ElementoService {
           estado: 'ACTIVO',
           fecha_alta: dto.fechaAlta ? new Date(dto.fechaAlta) : new Date(),
           valor_pendiente: valorPendiente,
+          naturaleza,
+          ...(emiteSaldoInicial ? { valor_vigente: new Prisma.Decimal(0) } : {}),
           ...detalle,
         },
       });
+
+      let saldoInicialEventoId: string | null = null;
+      if (emiteSaldoInicial) {
+        const saldoEvento = await tx.evento_financiero.create({
+          data: {
+            tipo: 'SALDO_INICIAL',
+            monto: valorVigente,
+            moneda: creado.moneda,
+            fecha: creado.fecha_alta,
+            anulado: false,
+            glosa: 'Saldo inicial',
+          },
+        });
+        await tx.impacto_patrimonial.create({
+          data: {
+            elemento_id: creado.id,
+            monto: valorVigente,
+            origen_tipo: 'EVENTO_FINANCIERO',
+            origen_id: saldoEvento.id,
+            fecha: creado.fecha_alta,
+          },
+        });
+        await tx.elemento_patrimonial.update({
+          where: { id: creado.id },
+          data: { valor_vigente: valorVigente },
+        });
+        saldoInicialEventoId = saldoEvento.id;
+      }
 
       await tx.elemento_propietario.createMany({
         data: propietarios.map((p) => ({
@@ -136,6 +185,15 @@ export class ElementoService {
           porcentaje: new Prisma.Decimal(p.porcentaje),
         })),
       });
+
+      // §M — visibilidad granular elegida en el alta (misma transacción).
+      await this.#aplicarVisibilidadGranular(
+        tx,
+        creado.id,
+        creado.visibilidad,
+        dto.visibilidadPorTipo,
+        dto.compartidoCon,
+      );
 
       await this.auditoria.registrar(tx, {
         comando: 'RegistrarElementoPatrimonial',
@@ -146,12 +204,14 @@ export class ElementoService {
           nombre: creado.nombre,
           categoria_funcional: creado.categoria_funcional,
           valor_inicial: esDeudaOCredito ? valorVigente.toNumber() : (dto.valorInicial ?? 0),
-          ...(esDeudaOCredito ? { valor_pendiente: dto.valorPendiente } : {}),
+          ...(esDeudaOCredito ? { valor_pendiente: dto.valorPendiente, naturaleza } : {}),
           moneda: creado.moneda,
           propietarios: propietarios.map((p) => ({
             usuario_id: p.usuarioId,
             porcentaje: p.porcentaje,
           })),
+          ...(dto.visibilidadPorTipo ? { visibilidad_por_tipo: dto.visibilidadPorTipo } : {}),
+          ...(saldoInicialEventoId ? { saldo_inicial_evento_id: saldoInicialEventoId } : {}),
         },
       });
 
@@ -294,49 +354,21 @@ export class ElementoService {
   ): Promise<ElementoPatrimonialDTO> {
     const el = await this.#cargarConPropietario(dto.elementoId, actorId);
     const niveles = dto.niveles ?? {};
-    const tipos = ['EXISTENCIA', 'VALOR', 'MOVIMIENTOS'] as const;
 
-    if (dto.compartidoCon && dto.compartidoCon.length > 0) {
-      const usuarios = await this.prisma.usuario.findMany({
-        where: { id: { in: dto.compartidoCon }, estado: 'ACTIVO' },
-        select: { id: true },
-      });
-      if (usuarios.length !== new Set(dto.compartidoCon).size) {
-        throw new BadRequestException('Algún usuario de compartidoCon no es válido');
-      }
-    }
+    await this.#validarCompartidoCon(dto.compartidoCon);
 
     await this.prisma.$transaction(async (tx) => {
       const anteriores = await tx.elemento_visibilidad.findMany({
         where: { elemento_id: el.id },
       });
-      for (const tipo of tipos) {
-        const nivel = niveles[tipo];
-        if (nivel === undefined) continue;
-        if (nivel === el.visibilidad) {
-          await tx.elemento_visibilidad.deleteMany({
-            where: { elemento_id: el.id, tipo_info: tipo },
-          });
-        } else {
-          await tx.elemento_visibilidad.upsert({
-            where: { elemento_id_tipo_info: { elemento_id: el.id, tipo_info: tipo } },
-            create: { elemento_id: el.id, tipo_info: tipo, nivel },
-            update: { nivel },
-          });
-        }
-      }
 
-      if (dto.compartidoCon !== undefined) {
-        await tx.elemento_comparticion.deleteMany({ where: { elemento_id: el.id } });
-        if (dto.compartidoCon.length > 0) {
-          await tx.elemento_comparticion.createMany({
-            data: [...new Set(dto.compartidoCon)].map((usuario_id) => ({
-              elemento_id: el.id,
-              usuario_id,
-            })),
-          });
-        }
-      }
+      await this.#aplicarVisibilidadGranular(
+        tx,
+        el.id,
+        el.visibilidad,
+        dto.niveles,
+        dto.compartidoCon,
+      );
 
       await this.auditoria.registrar(tx, {
         comando: 'DefinirVisibilidadElementoPatrimonial',
@@ -353,6 +385,60 @@ export class ElementoService {
       });
     });
     return this.obtenerElemento(el.id, actorId);
+  }
+
+  /** Valida que cada usuario de `compartidoCon` exista y esté activo. */
+  async #validarCompartidoCon(ids: string[] | undefined): Promise<void> {
+    if (!ids || ids.length === 0) return;
+    const usuarios = await this.prisma.usuario.findMany({
+      where: { id: { in: ids }, estado: 'ACTIVO' },
+      select: { id: true },
+    });
+    if (usuarios.length !== new Set(ids).size) {
+      throw new BadRequestException('Algún usuario de compartidoCon no es válido');
+    }
+  }
+
+  /**
+   * §M — aplica los overrides de visibilidad granular dentro de una transacción.
+   * Un nivel igual al base borra su override. Reutilizado por el alta
+   * (`registrarElemento`) y por `definirVisibilidad`.
+   */
+  async #aplicarVisibilidadGranular(
+    tx: Prisma.TransactionClient,
+    elementoId: string,
+    base: string,
+    niveles: NivelPorTipoDto | undefined,
+    compartidoCon: string[] | undefined,
+  ): Promise<void> {
+    const tipos = ['EXISTENCIA', 'VALOR', 'MOVIMIENTOS'] as const;
+    for (const tipo of tipos) {
+      const nivel = niveles?.[tipo];
+      if (nivel === undefined) continue;
+      if (nivel === base) {
+        await tx.elemento_visibilidad.deleteMany({
+          where: { elemento_id: elementoId, tipo_info: tipo },
+        });
+      } else {
+        await tx.elemento_visibilidad.upsert({
+          where: { elemento_id_tipo_info: { elemento_id: elementoId, tipo_info: tipo } },
+          create: { elemento_id: elementoId, tipo_info: tipo, nivel },
+          update: { nivel },
+        });
+      }
+    }
+
+    if (compartidoCon !== undefined) {
+      await tx.elemento_comparticion.deleteMany({ where: { elemento_id: elementoId } });
+      if (compartidoCon.length > 0) {
+        await tx.elemento_comparticion.createMany({
+          data: [...new Set(compartidoCon)].map((usuario_id) => ({
+            elemento_id: elementoId,
+            usuario_id,
+          })),
+        });
+      }
+    }
   }
 
   /** AS #6 — CambiarParticipacionEnConsolidacion. */

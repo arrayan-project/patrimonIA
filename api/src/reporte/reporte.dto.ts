@@ -4,6 +4,7 @@ export type AlcanceReporte = 'mios' | 'hogar';
 export interface MovimientoReporteDTO {
   eventoId: string;
   fecha: string;
+  /** INGRESO · GASTO · TRANSFERENCIA · CONVERSION. */
   tipo: string;
   /** Monto neto tras las correcciones vivas. */
   monto: number;
@@ -12,6 +13,12 @@ export interface MovimientoReporteDTO {
   categoriaId: string | null;
   etiquetaIds: string[];
   corregido: boolean;
+  /**
+   * Solo TRANSFERENCIA/CONVERSION: efecto neto sobre las cuentas que el actor
+   * posee dentro del alcance (negativo = salió de sus cuentas, positivo = entró).
+   * NULL para INGRESO/GASTO. No se suma a ningún total del período.
+   */
+  efectoPropio: number | null;
 }
 
 export interface TotalesPorMoneda {

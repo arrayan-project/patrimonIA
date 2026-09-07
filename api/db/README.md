@@ -129,6 +129,17 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   `objetivo_designado` (objetivos compartidos por hogar, GAPS.md P9/B6). Ya incluida.
 - `022_moneda_planificacion.sql` — `moneda` (etiqueta, sin conversión) en
   objetivo / asignación / presupuesto (GAPS.md P11/B8). Ya incluida.
+- `023_elemento_naturaleza.sql` — `elemento_patrimonial.naturaleza`
+  (`FINANCIERA` | `CUSTODIA_INFORMAL`) + 2 CHECK. NOT NULL para DEUDA/CREDITO
+  (default `FINANCIERA`), NULL en el resto. Distingue una deuda/crédito real de
+  la plata que solo pasa por las cuentas (encargo de un tercero). GAPS.md G28,
+  DDD.docx §T (ver `Docs/DDD-adenda-naturaleza.md`). Ya incluida en `init/01_schema.sql`.
+- `024_evento_saldo_inicial.sql` — amplía el CHECK de `evento_financiero.tipo`
+  con `SALDO_INICIAL`. `RegistrarElementoPatrimonial`, para LIQUIDEZ/RESERVA con
+  valorInicial > 0, crea también un evento SALDO_INICIAL + impacto (fecha =
+  fecha_alta) para que la apertura de la cuenta cuente como ingreso del mes en el
+  reporte financiero. No requiere `prisma:pull` (`tipo` sigue TEXT). GAPS.md G29.
+  Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 

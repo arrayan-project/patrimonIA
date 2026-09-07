@@ -49,7 +49,9 @@ describe('Reportes financieros (e2e)', () => {
     ).body.id;
     cuentaId = (
       await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
-        .send({ nombre: 'Cuenta', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 5_000_000, moneda: 'CLP' })
+        // fechaAlta pasada: el evento SALDO_INICIAL (§G29) no debe caer en los
+        // períodos que este spec consulta (marzo/mayo 2026, año 2026, mes actual).
+        .send({ nombre: 'Cuenta', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 5_000_000, moneda: 'CLP', fechaAlta: '2024-01-01' })
         .expect(201)
     ).body.id;
     const cats = (
@@ -141,5 +143,86 @@ describe('Reportes financieros (e2e)', () => {
         `/usuarios/me/resumen-financiero?desde=2026-03-01&hasta=2026-03-31&alcance=hogar&hogarId=${hogarAjeno}`,
       ),
     ).expect(403);
+  });
+
+  it('una TRANSFERENCIA aparece como fila neutra y no toca los totales', async () => {
+    // Segunda cuenta del mismo usuario y una transferencia entre ambas en abril.
+    const ahorroId = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'Ahorro', tipo: 'cuenta_vista', categoriaFuncional: 'RESERVA', valorInicial: 0, moneda: 'CLP' })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({
+        tipo: 'TRANSFERENCIA',
+        monto: 100_000,
+        moneda: 'CLP',
+        elementoOrigenId: cuentaId,
+        elementoDestinoId: ahorroId,
+        fecha: '2026-04-10',
+      })
+      .expect(201);
+
+    const r = await auth(
+      request(http).get('/usuarios/me/resumen-financiero?desde=2026-04-01&hasta=2026-04-30&alcance=mios'),
+    ).expect(200);
+
+    const transfer = r.body.movimientos.find(
+      (m: { tipo: string }) => m.tipo === 'TRANSFERENCIA',
+    );
+    expect(transfer).toBeTruthy();
+    expect(transfer.monto).toBe(100_000);
+    expect(transfer.efectoPropio).toBe(0); // salió de una cuenta propia, entró en otra
+    // No cuenta como ingreso/gasto ni aparece en el desglose por rubro.
+    expect(r.body.porMoneda).toHaveLength(0);
+    expect(r.body.porRubro).toHaveLength(0);
+  });
+
+  it('el saldo inicial de una cuenta cuenta como ingreso del mes en que se abre (§G29)', async () => {
+    const nueva = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({
+          nombre: 'Cuenta nueva',
+          tipo: 'cuenta_corriente',
+          categoriaFuncional: 'LIQUIDEZ',
+          valorInicial: 800_000,
+          moneda: 'CLP',
+          fechaAlta: '2026-07-15',
+        })
+        .expect(201)
+    ).body;
+    expect(nueva.valorVigente).toBe(800_000); // el elemento queda en su valor
+
+    const r = await auth(
+      request(http).get('/usuarios/me/resumen-financiero?desde=2026-07-01&hasta=2026-07-31&alcance=mios'),
+    ).expect(200);
+    const clp = r.body.porMoneda.find((m: { moneda: string }) => m.moneda === 'CLP');
+    expect(clp).toMatchObject({ ingresos: 800_000, gastos: 0, balance: 800_000 });
+    const fila = r.body.movimientos.find((m: { tipo: string }) => m.tipo === 'SALDO_INICIAL');
+    expect(fila).toMatchObject({ monto: 800_000, glosa: 'Saldo inicial', efectoPropio: null });
+    const rubro = r.body.porRubro.find((x: { nombre: string }) => x.nombre === 'Saldo inicial');
+    expect(rubro).toMatchObject({ tipo: 'INGRESO', total: 800_000 });
+
+    // No se puede anular ni corregir.
+    await auth(request(http).post('/comandos/AnularEventoFinanciero'))
+      .send({ eventoId: fila.eventoId, motivo: 'no debería dejar' })
+      .expect(400);
+  });
+
+  it('un activo (no LIQUIDEZ/RESERVA) NO genera evento de saldo inicial', async () => {
+    await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+      .send({
+        nombre: 'Auto',
+        tipo: 'vehiculo',
+        categoriaFuncional: 'ACTIVO',
+        valorInicial: 9_000_000,
+        moneda: 'CLP',
+        fechaAlta: '2026-08-10',
+      })
+      .expect(201);
+    const r = await auth(
+      request(http).get('/usuarios/me/resumen-financiero?desde=2026-08-01&hasta=2026-08-31&alcance=mios'),
+    ).expect(200);
+    expect(r.body.movimientos.filter((m: { tipo: string }) => m.tipo === 'SALDO_INICIAL')).toHaveLength(0);
   });
 });

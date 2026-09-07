@@ -171,6 +171,11 @@ export class EventoFinancieroService {
   async anularEvento(actorId: string, dto: AnularEventoDto): Promise<EventoFinancieroDTO> {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
     if (evento.anulado) throw new ConflictException('El evento ya está anulado');
+    if (evento.tipo === 'SALDO_INICIAL') {
+      throw new BadRequestException(
+        'El saldo inicial no se anula: ajústalo con un ajuste patrimonial o desactiva la cuenta',
+      );
+    }
     if (await this.tieneCorreccionViva(evento.id)) {
       throw new ConflictException('El evento tiene una corrección vigente — anúlala primero');
     }
@@ -240,6 +245,11 @@ export class EventoFinancieroService {
   async corregirEvento(actorId: string, dto: CorregirEventoDto): Promise<EventoFinancieroDTO> {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
     if (evento.anulado) throw new ConflictException('No se puede corregir un evento anulado');
+    if (evento.tipo === 'SALDO_INICIAL') {
+      throw new BadRequestException(
+        'El saldo inicial no se corrige: usa un ajuste patrimonial sobre la cuenta',
+      );
+    }
     if (evento.tipo === 'CONVERSION') {
       throw new BadRequestException(
         'Una CONVERSION se corrige anulándola y registrándola de nuevo (la tasa cambia ambos lados)',

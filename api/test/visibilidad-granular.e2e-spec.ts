@@ -165,4 +165,58 @@ describe('Visibilidad granular del elemento (e2e)', () => {
       'DefinirVisibilidadElementoPatrimonial',
     );
   });
+
+  it('visibilidadPorTipo en el alta: B ve la existencia (no el monto) y puede transferirle', async () => {
+    // A crea una cuenta declarando EXISTENCIA visible / VALOR oculto en el propio alta.
+    const cuentaA = (
+      await request(http)
+        .post('/comandos/RegistrarElementoPatrimonial')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({
+          nombre: 'Cuenta sueldo de A',
+          tipo: 'cuenta_corriente',
+          categoriaFuncional: 'LIQUIDEZ',
+          valorInicial: 300_000,
+          moneda: 'CLP',
+          visibilidadPorTipo: { EXISTENCIA: 'FAMILIAR', VALOR: 'PRIVADA' },
+        })
+        .expect(201)
+    ).body.id;
+
+    // B la ve en el alcance del hogar, con el monto oculto.
+    const lista = await request(http)
+      .get('/elementos-patrimoniales?alcance=hogar')
+      .set('Authorization', `Bearer ${tokenB}`)
+      .expect(200);
+    const vista = lista.body.find((e: { id: string }) => e.id === cuentaA);
+    expect(vista).toBeTruthy();
+    expect(vista.valorOculto).toBe(true);
+
+    // B tiene su propia cuenta y puede transferirle a la de A (cierra F2 del análisis).
+    const cuentaB = (
+      await request(http)
+        .post('/comandos/RegistrarElementoPatrimonial')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({
+          nombre: 'Cuenta de B',
+          tipo: 'cuenta_corriente',
+          categoriaFuncional: 'LIQUIDEZ',
+          valorInicial: 500_000,
+          moneda: 'CLP',
+        })
+        .expect(201)
+    ).body.id;
+    await request(http)
+      .post('/comandos/RegistrarEventoFinanciero')
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({
+        tipo: 'TRANSFERENCIA',
+        monto: 120_000,
+        moneda: 'CLP',
+        elementoOrigenId: cuentaB,
+        elementoDestinoId: cuentaA,
+        fecha: '2026-05-02',
+      })
+      .expect(201);
+  });
 });

@@ -49,6 +49,20 @@ export const CATEGORIAS_ELEMENTO = [
 ] as const;
 export const VISIBILIDADES = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
 export const AMBITOS = ['PERSONAL', 'HOGAR'] as const;
+export const TIPOS_INFO_ELEMENTO = ['EXISTENCIA', 'VALOR', 'MOVIMIENTOS'] as const;
+
+/** Naturaleza de un elemento DEUDA/CREDITO (GAPS.md G28). NULL fuera de esas categorías. */
+export const NATURALEZAS_DEUDA = ['FINANCIERA', 'CUSTODIA_INFORMAL'] as const;
+
+/**
+ * §B1/§M — nivel de visibilidad por tipo de información. Ausente = hereda el
+ * nivel base `visibilidad`. Compartido por DefinirVisibilidad y por el alta.
+ */
+export class NivelPorTipoDto {
+  @IsOptional() @IsIn(VISIBILIDADES) EXISTENCIA?: (typeof VISIBILIDADES)[number];
+  @IsOptional() @IsIn(VISIBILIDADES) VALOR?: (typeof VISIBILIDADES)[number];
+  @IsOptional() @IsIn(VISIBILIDADES) MOVIMIENTOS?: (typeof VISIBILIDADES)[number];
+}
 
 export class PropietarioDto {
   @IsUUID()
@@ -110,6 +124,27 @@ export class RegistrarElementoDto extends DetalleDeudaDto {
   @IsOptional()
   @IsIn(VISIBILIDADES)
   visibilidad?: (typeof VISIBILIDADES)[number];
+
+  /**
+   * §M — visibilidad granular elegida en el alta (el wizard la pregunta
+   * explícitamente). Ausente = todo hereda `visibilidad` (por defecto PRIVADA).
+   * Se aplica en la misma transacción que la creación.
+   */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NivelPorTipoDto)
+  visibilidadPorTipo?: NivelPorTipoDto;
+
+  /** Usuarios con los que se comparte cuando algún nivel es COMPARTIDA. */
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  compartidoCon?: string[];
+
+  /** Solo DEUDA/CREDITO. Por defecto 'FINANCIERA'. Debe omitirse en otras categorías. */
+  @IsOptional()
+  @IsIn(NATURALEZAS_DEUDA)
+  naturaleza?: (typeof NATURALEZAS_DEUDA)[number];
 
   /** Si se omite: [{ usuarioId: <actor>, porcentaje: 100 }]. */
   @IsOptional()

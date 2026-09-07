@@ -48,6 +48,8 @@ export interface ElementoPatrimonialDTO {
   valorPendienteInicial: number | null;
   /** Estado operativo derivado (§B2): VIGENTE·PARCIALMENTE_PAGADA·EN_MORA·SALDADA·CONDONADA·INCOBRABLE. */
   estadoOperativo: string | null;
+  /** §G28 — solo DEUDA/CREDITO: FINANCIERA · CUSTODIA_INFORMAL. NULL en el resto. */
+  naturaleza: string | null;
 }
 
 export interface ImpactoPatrimonialDTO {
@@ -110,6 +112,7 @@ export function toElementoDTO(
     observaciones: oculto ? null : (e.observaciones ?? null),
     valorPendienteInicial: numOculto(e.valor_pendiente_inicial),
     estadoOperativo: opciones.estadoOperativo ?? null,
+    naturaleza: e.naturaleza ?? null,
   };
 }
 

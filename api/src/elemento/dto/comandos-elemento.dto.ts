@@ -11,7 +11,12 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { DetalleDeudaDto, PropietarioDto, VISIBILIDADES } from './registrar-elemento.dto.js';
+import {
+  DetalleDeudaDto,
+  NivelPorTipoDto,
+  PropietarioDto,
+  VISIBILIDADES,
+} from './registrar-elemento.dto.js';
 
 export class ActualizarDatosElementoDto extends DetalleDeudaDto {
   @IsUUID() elementoId!: string;
@@ -26,14 +31,6 @@ export class CorregirDatosElementoDto extends ActualizarDatosElementoDto {
 export class CambiarVisibilidadDto {
   @IsUUID() elementoId!: string;
   @IsIn(VISIBILIDADES) visibilidad!: (typeof VISIBILIDADES)[number];
-}
-
-export const TIPOS_INFO_ELEMENTO = ['EXISTENCIA', 'VALOR', 'MOVIMIENTOS'] as const;
-
-class NivelPorTipoDto {
-  @IsOptional() @IsIn(VISIBILIDADES) EXISTENCIA?: (typeof VISIBILIDADES)[number];
-  @IsOptional() @IsIn(VISIBILIDADES) VALOR?: (typeof VISIBILIDADES)[number];
-  @IsOptional() @IsIn(VISIBILIDADES) MOVIMIENTOS?: (typeof VISIBILIDADES)[number];
 }
 
 /**

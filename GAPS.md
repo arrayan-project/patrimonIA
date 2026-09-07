@@ -582,10 +582,69 @@ vacíos que requieren **decisión de dominio + migración** antes de ser UI.
   - **Correcciones**: se colapsan igual que `eventosDelHogar` — `monto` es el neto
     tras las correcciones vivas (`monto` del raíz + Σ deltas).
   - **Sin conversión de moneda** (G7/G16): `porRubro.total` suma montos crudos;
-    `porMoneda` da el desglose exacto. Solo INGRESO/GASTO (transferencias y
-    conversiones no cuentan). Eventos anulados fuera.
+    `porMoneda` da el desglose exacto. `porMoneda`/`porRubro` solo INGRESO/GASTO.
+    Eventos anulados fuera.
+  - **Transferencias visibles (Fase 50)**: `movimientos` incluye
+    TRANSFERENCIA/CONVERSION como filas neutras (`efectoPropio` = impacto sobre
+    las cuentas propias del alcance) — **no** suman a `porMoneda` ni a `porRubro`.
+    Antes se filtraban por completo y el patrimonio "bajaba sin explicación"
+    (F1 de `Docs/mockup/casos-dominio-probados.html`).
 - **Para decidir**: ¿comparación automática con el período anterior en el
   endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+
+---
+
+### G28 — Dinero en custodia informal (naturaleza de Deuda/Crédito)  ✅ RESUELTO (Fase 50)
+- **Qué faltaba**: cuando un tercero me transfiere plata para que le compre algo,
+  ese dinero "pasa por mis cuentas pero nunca fue mío". El modelo lo obliga a
+  representarse como un Crédito/Deuda (para que el neto patrimonial cuadre), pero
+  no había forma de distinguirlo de una deuda financiera real — quedaba mezclado
+  con el hipotecario y las tarjetas. F3 de `Docs/mockup/casos-dominio-probados.html`
+  (escenario de REQUISITES línea 430, "caso de uso típico").
+- **Por qué no se resolvió antes**: el DDD modela Deuda/Crédito como una sola
+  especialización de Elemento Patrimonial; UX_FLOWS pedía "sugerir crear un
+  Crédito/Deuda" pero sin sub-tipos.
+- **Decisión (Fase 50)**: columna `elemento_patrimonial.naturaleza`
+  (`FINANCIERA` | `CUSTODIA_INFORMAL`), NOT NULL para DEUDA/CREDITO
+  (default `FINANCIERA`), NULL en el resto (migración 023, 2 CHECK). Es un
+  **atributo del comando `RegistrarElementoPatrimonial`** cuando la categoría es
+  DEUDA/CREDITO — mismo patrón que `CondonarDeuda` vs `DeclararIncobrable`: la
+  distinción vive en el modelo, no en un flag de presentación. No cambia el
+  patrimonio ni genera comando nuevo. El wizard de alta lo pregunta; la app
+  agrupa los `CUSTODIA_INFORMAL` bajo "Encargos y custodia", aparte de las deudas
+  financieras. Ver `Docs/DDD-adenda-naturaleza.md` (prosa para §T y DATABASE_DESIGN)
+  y `Docs/DOMINIO_PENDIENTE.md` §B-custodia.
+- **Para decidir**: si más adelante hace falta, un tercer valor para "garantía /
+  depósito en prenda" seguiría el mismo patrón (agregar al CHECK).
+
+---
+
+### G29 — El saldo inicial de una cuenta como hecho económico  ✅ RESUELTO (Fase 51)
+- **Qué faltaba**: al crear una cuenta LIQUIDEZ/RESERVA con `valorInicial`, ese
+  monto solo inicializaba `valor_vigente` — no era un evento, así que el reporte
+  del mes mostraba solo el flujo posterior (crear una cuenta con 1.000.000 y
+  gastar 250.000 daba "balance del mes: −250.000"). El usuario lo reportó como
+  defecto: quiere que la apertura cuente como ingreso del mes.
+- **Decisión (Fase 51, elección del usuario)**: `RegistrarElementoPatrimonial`,
+  **solo** para categoría LIQUIDEZ o RESERVA con `valorInicial > 0`, crea también
+  un `evento_financiero` de tipo **`SALDO_INICIAL`** (migración 024 amplía el
+  CHECK de `evento_financiero.tipo`) + su `impacto_patrimonial` (`+valorInicial`,
+  fecha = `fecha_alta`), en la misma transacción. El elemento nace en 0 y el
+  impacto lo lleva a su valor → la reconstrucción histórica queda 100 % basada en
+  impactos para estas cuentas. INVERSION/ACTIVO **no** lo generan (un inmueble o
+  un fondo no es "ingreso del mes").
+- **Efecto en las lecturas**:
+  - `resumen-financiero`: `SALDO_INICIAL` suma a `porMoneda.ingresos`/`balance` y
+    aparece en `porRubro` como un rubro propio "Saldo inicial". En `movimientos`
+    sale como fila con `glosa: 'Saldo inicial'`.
+  - **Presupuesto**: NO cuenta como ingreso real del período (abrir una cuenta no
+    es ingreso presupuestable) — `presupuesto.service` solo mira INGRESO/GASTO.
+  - `patrimonio-individual` / reconstrucción: sin cambio de valor final.
+- **Restricciones**: no se puede crear a mano (`SALDO_INICIAL` no está en
+  `TIPOS_EVENTO`), ni anular ni corregir (usar un Ajuste Patrimonial sobre la
+  cuenta). App: la vista Movimientos se unificó en un solo selector de período
+  (Mes / Año / Recientes) que muestra KPIs + lista juntos, y agrega
+  "Disponible hoy" (líquido real) para el alcance propio.
 
 ---
 

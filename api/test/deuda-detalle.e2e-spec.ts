@@ -141,5 +141,43 @@ describe('Deuda/Crédito — detalle y estado operativo (e2e)', () => {
     const d = await get(id).expect(200);
     expect(d.body.contraparte).toBeNull();
     expect(d.body.estadoOperativo).toBeNull();
+    expect(d.body.naturaleza).toBeNull();
+  });
+
+  it('naturaleza: por defecto FINANCIERA; CUSTODIA_INFORMAL cuando se declara', async () => {
+    const financiera = (
+      await nueva({
+        nombre: 'Crédito de consumo',
+        tipo: 'credito',
+        categoriaFuncional: 'DEUDA',
+        valorPendiente: 2_000_000,
+        moneda: 'CLP',
+      }).expect(201)
+    ).body;
+    expect(financiera.naturaleza).toBe('FINANCIERA');
+
+    const encargo = (
+      await nueva({
+        nombre: 'Encargo de Nico',
+        tipo: 'encargo',
+        categoriaFuncional: 'DEUDA',
+        valorPendiente: 80_000,
+        moneda: 'CLP',
+        naturaleza: 'CUSTODIA_INFORMAL',
+      }).expect(201)
+    ).body;
+    expect(encargo.naturaleza).toBe('CUSTODIA_INFORMAL');
+    expect((await get(encargo.id).expect(200)).body.naturaleza).toBe('CUSTODIA_INFORMAL');
+  });
+
+  it('naturaleza en una categoría que no es deuda/crédito → 400', async () => {
+    await nueva({
+      nombre: 'Cuenta',
+      tipo: 'cuenta_corriente',
+      categoriaFuncional: 'LIQUIDEZ',
+      valorInicial: 0,
+      moneda: 'CLP',
+      naturaleza: 'CUSTODIA_INFORMAL',
+    }).expect(400);
   });
 });
