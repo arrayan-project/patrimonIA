@@ -21,7 +21,8 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 ## Operación
 
-- **[CORRER_EN_LOCAL.md](CORRER_EN_LOCAL.md)** — arrancar todo desde cero.
+- **[CORRER_EN_LOCAL.md](CORRER_EN_LOCAL.md)** — arrancar todo desde cero (local).
+- **[DESPLIEGUE.md](DESPLIEGUE.md)** — hospedar: Expo → Render → Neon, $0/mes.
 - **[../api/db/README.md](../api/db/README.md)** — base de datos, migraciones.
 
 ## Análisis de diseño (artefactos, no canónicos)

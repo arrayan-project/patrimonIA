@@ -708,7 +708,13 @@ patrimonial** por hogar (migración 018, módulo `tipo-elemento/`) con alta inli
 y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 único (Fase 46).
 
-### 3 · Bloqueado por algo externo (🔒)
+### 3 · Frente activo — despliegue (🚀)
+
+| # | Qué | Estado |
+|---|-----|--------|
+| P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. Ojo: `JWT_SECRET` nuevo (no reusar el de dev), esquema a Neon vía `api/db/init/01_schema.sql`, `EXPO_PUBLIC_API_URL` en la app. | ⬜ PENDIENTE (accionable ya) |
+
+### 4 · Bloqueado por algo externo (🔒) — relegado
 
 | # | Gap | Qué falta |
 |---|-----|-----------|
@@ -716,9 +722,16 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | P15 | **G20** (push) | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). |
 | P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). |
 
+### 5 · Pulido de UI pendiente (P2/P3)
+
+| # | Qué | Detalle en |
+|---|-----|-----------|
+| U1 | **H3** — validación en vivo (`error?` + `tocado`/`intento`) en los formularios que aún no la tienen | `UI_UX_BACKLOG.md` §H |
+| U2 | **I1** — barrido de accesibilidad por pantalla de los `Pressable` sueltos | `UI_UX_BACKLOG.md` §I |
+| U3 | **G1** — adoptar `ListItem` en las listas que aún se arman a mano | `UI_UX_BACKLOG.md` §G |
+
 ### Siguiente
-Los bloques §1 (P1–P4) y §2 (P5–P13) están hechos (Fases 36–46). Lo único que
-queda es el bloque §3 (P14–P16), bloqueado por proveedores externos:
-- **P14 (G4)** — captcha / anti-bot antes de emitir el token de registro.
-- **P15 (G20)** — push remoto real (development build + `projectId` de EAS).
-- **P16 (G21)** — importación automática de tipos de cambio.
+Los bloques §1 y §2 (P1–P13) están hechos (Fases 36–46). El frente actual es el
+**despliegue** (P17, `Docs/DESPLIEGUE.md`) + el **pulido de UI** (U1–U3). El
+bloque §4 (P14–P16, proveedores externos) queda **relegado** hasta después del
+despliegue.
