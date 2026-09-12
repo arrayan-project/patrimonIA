@@ -37,8 +37,12 @@ jobs:
       - run: npm ci
       - name: Cargar el esquema (patrimonia + patrimonia_test)
         run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE patrimonia_test"
+          # psql (libpq) no entiende "?schema=public" — es una extensión propia
+          # de Prisma en DATABASE_URL. Se usa una URL "limpia" solo para psql;
+          # DATABASE_URL sigue intacta para los pasos de Prisma más abajo.
+          PSQL_URL="postgresql://patrimonia:patrimonia@localhost:5432/patrimonia"
+          psql "$PSQL_URL" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
+          psql "$PSQL_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE patrimonia_test"
           psql "postgresql://patrimonia:patrimonia@localhost:5432/patrimonia_test" -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
       - run: npm run prisma:generate
       - run: npm run lint
