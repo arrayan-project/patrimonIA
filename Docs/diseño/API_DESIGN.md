@@ -1,5 +1,9 @@
 # Diseño de API — PatrimonIA
 
+**Objetivo:** el contrato REST — un endpoint por cada Application Service
+(`POST /comandos/{Nombre}` para mutaciones, REST clásico para consultas).
+Si un endpoint del código no está acá, o viceversa, el contrato está roto.
+
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
 *Contrato de API que expone los 52 casos de uso de Application Services (APPLICATION_SERVICES.md) y las proyecciones de lectura del modelo de datos (DATABASE_DESIGN.md, sección 12). Estilo híbrido: comandos explícitos para mutaciones, REST clásico para consultas — ver justificación de la decisión al inicio de este bloque de trabajo.*

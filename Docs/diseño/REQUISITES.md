@@ -1,5 +1,10 @@
 # Requerimientos iniciales — PatrimonIA 2.0
 
+**Objetivo:** los requerimientos de producto originales — qué debe hacer la
+app, para quién, y con qué reglas de negocio de alto nivel. Es el punto de
+partida de todos los demás documentos de diseño (`DDD.md` los formaliza como
+modelo de dominio).
+
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
 ## TEMARIO

@@ -1,5 +1,10 @@
 # Application Services — PatrimonIA
 
+**Objetivo:** un caso de uso por cada comando de `DDD.md` §T — qué recibe,
+qué valida, qué orquesta y qué devuelve. Es el puente entre el modelo de
+dominio (DDD.md) y el contrato de API (API_DESIGN.md); cada Application
+Service acá descrito debe tener un endpoint 1:1 en ese documento.
+
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
 *Catálogo de casos de uso, uno por comando de la Sección T (DDD.md). Cada caso de uso es la capa de orquestación entre la API y el dominio: recibe un DTO, valida, invoca las políticas del agregado, y deja que la auditoría (Sección U) y el recálculo transversal (Sección W) ocurran como consecuencia — no los repite.

@@ -2,7 +2,13 @@
 
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
-*Este documento es la capa operativa entre el diseño (5 documentos fuente) y la implementación. No repite decisiones de dominio, API o base de datos — las referencia. Su función es dar el “cómo” que los documentos de diseño no cubren: stack, estructura, orden de trabajo, y qué hacer ante ambigüedad.*
+**Objetivo:** la capa operativa entre el diseño (documentos de `diseño/`) y la
+implementación. No repite decisiones de dominio, API o base de datos — las
+referencia. Su función es dar el "cómo" que los documentos de diseño no
+cubren: stack, estructura, y qué hacer ante ambigüedad (§4, la parte que
+sigue vigente). Su §3 ("Orden de construcción") describe solo Fase 0/1 —
+es historia congelada del arranque del proyecto, no un roadmap actualizado;
+el estado real de cada fase está en `../README.md`.
 
 ## 1. Documentos fuente (leer en este orden antes de escribir código)
 

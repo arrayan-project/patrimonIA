@@ -1,7 +1,10 @@
 # Backlog de UI / UX
 
+**Objetivo original:** backlog A-J de mejoras de UI/UX a implementar — ver el
+estado abajo para dónde vive la información vigente hoy.
+
 > **Estado (2026-09-06):** el backlog A–J está **hecho** (Fases 15–52). El estado
-> vigente de la app —navegación, pantallas, componentes— está en `UX_FLOWS.md`
+> vigente de la app —navegación, pantallas, componentes— está en `../diseño/UX_FLOWS.md`
 > Parte 3. Este documento se conserva como **journal** de la implementación de
 > UI/UX (útil para entender por qué está cada cosa donde está).
 >

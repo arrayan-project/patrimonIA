@@ -2,7 +2,11 @@
 
 Gestión de patrimonio familiar. Backend NestJS + PostgreSQL, cliente React Native (Expo).
 
-Documentos de diseño (fuente de verdad): `Docs/` — leer en el orden de
+**Objetivo de este archivo:** punto de entrada del repo — qué es el proyecto,
+su estructura, el changelog de fases construidas hasta ahora, y cómo correrlo.
+Para el diseño de dominio/API/UX, ver `Docs/` (empieza por `Docs/README.md`).
+
+Documentos de diseño (fuente de verdad): `Docs/diseño/` — leer en el orden de
 `Docs/BUILD_INSTRUCTIONS.md`.
 
 ## Estructura
@@ -127,7 +131,7 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `ExpoPushSender`, G20). Falta solo el captcha y un development build para el
     push real.
 
-- [ ] **Fase 15 — UI / UX** (backlog en `Docs/UI_UX_BACKLOG.md`):
+- [ ] **Fase 15 — UI / UX** (backlog en `Docs/retirado/UI_UX_BACKLOG.md`):
   - [x] **15a** — auto-refresh al enfocar (`useCargaAlEnfocar`), pull-to-refresh
     (`Screen onRefresh=`), `Idempotency-Key` en las altas (`api.comando`),
     401 → logout automático.

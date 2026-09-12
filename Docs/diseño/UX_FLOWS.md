@@ -1,5 +1,10 @@
 # UX / Flujos de Usuario — PatrimonIA
 
+**Objetivo:** cómo se ve y se navega cada flujo, pantalla por pantalla, sobre
+el modelo ya cerrado en `DDD.md`/`APPLICATION_SERVICES.md`/`API_DESIGN.md`.
+La Parte 3 es el estado vigente de la app (navegación, pantallas actuales) —
+es lo primero a mirar si algo en `UI_UX_BACKLOG.md` (retirado) parece contradecirlo.
+
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
 *Documento de diseño de flujos, construido sobre el modelo ya cerrado (DDD, Application Services, API Design). No introduce reglas de negocio nuevas: cada paso de cada flujo se mapea a un comando o consulta ya definido en API_DESIGN.md. Donde un flujo requiere una decisión de interacción no cubierta por el dominio (ej. cómo se presenta un error de validación), se marca explícitamente como decisión de UX, no de dominio.*

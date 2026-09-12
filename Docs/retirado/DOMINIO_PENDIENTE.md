@@ -1,12 +1,16 @@
 # Dominio vs. implementación — qué falta y cómo guía la UI
 
+**Objetivo original:** análisis puntual de qué modelaba el dominio pero la UI
+todavía no exponía (Fase 28) — ver el estado RETIRADO abajo para dónde vive
+esa información hoy.
+
 > **RETIRADO (2026-09-06).** Este documento fue un análisis puntual (Fase 28) de
 > lo que el dominio modelaba pero la UI no exponía. Sus conclusiones ya están
 > integradas:
-> - **§A** (conceptos a exponer) → `UX_FLOWS.md` Parte 3.
-> - **§B** (decisiones de dominio) → `DDD.md` §X + `GAPS.md`. Única abierta: **§B4**
+> - **§A** (conceptos a exponer) → `../diseño/UX_FLOWS.md` Parte 3.
+> - **§B** (decisiones de dominio) → `../diseño/DDD.md` §X + `../../GAPS.md`. Única abierta: **§B4**
 >   (comentarios y adjuntos en entidades).
-> - **§C** (simplificaciones asumidas) → `DDD.md` §X.9.
+> - **§C** (simplificaciones asumidas) → `../diseño/DDD.md` §X.9.
 >
 > Se conserva como registro histórico del razonamiento. No se actualiza.
 

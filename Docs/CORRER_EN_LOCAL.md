@@ -1,5 +1,9 @@
 # Cómo probar PatrimonIA en el teléfono
 
+**Objetivo:** instructivo paso a paso para levantar la app en desarrollo —
+con el backend en la nube (lo normal) o local (solo si vas a tocar `api/`) —
+y para volver de un modo al otro sin dejar procesos colgados.
+
 Desde el despliegue (2026-09-07) hay **dos escenarios**. El de arriba es el que
 usás casi siempre.
 
@@ -105,6 +109,46 @@ pareja@patrimonia.cl / demo1234     (miembro)
 ./scripts/estado.sh
 ```
 
+## Salir del modo B y volver al modo A (producción)
+
+Paso a paso, en orden:
+
+1. **Cortar backend y Metro**:
+   ```bash
+   cd ~/Desktop/WebSiteProject/PatrimonIA
+   ./scripts/parar.sh
+   ```
+   Cierra lo que esté en los puertos 3000 y 8081. **No toca Docker** (a propósito).
+
+2. **Bajar Docker** (Postgres, y `banking-worker` si lo usaste). Ojo: si
+   arrancaste la base con `./scripts/db.sh`, quedó en un proyecto Docker
+   distinto (`patrimonia-db`) del que usa `banking-worker`
+   (`patrimonia`, definido en el `docker-compose.yml` de la raíz) — un solo
+   `docker compose down` no baja los dos, hacen falta ambos:
+   ```bash
+   cd ~/Desktop/WebSiteProject/PatrimonIA
+   docker compose down                 # banking-worker (si lo levantaste)
+   cd api/db && docker compose down    # Postgres
+   ```
+   El volumen `patrimonia_pgdata` es externo — sobrevive a `docker compose down`
+   sin importar cuál de los dos comandos lo toque; los datos no se pierden.
+   Confirmar que no queda nada: `docker ps` debe salir vacío.
+
+3. **Restaurar `app/.env`**: la línea `EXPO_PUBLIC_API_URL=https://patrimonia-q3lz.onrender.com`
+   debe quedar **descomentada** (es el default de fábrica — si en el paso B la
+   comentaste a mano en vez de exportar la variable inline, hay que
+   descomentarla de nuevo acá).
+
+4. **Reiniciar Expo normal**:
+   ```bash
+   cd ~/Desktop/WebSiteProject/PatrimonIA
+   ./scripts/app.sh
+   ```
+   **Importante**: los `EXPO_PUBLIC_*` se inyectan al bundle una sola vez, al
+   arrancar Metro — un simple refresh/hot-reload de la app **no** recoge el
+   cambio de `.env`. Hay que matar el proceso de Metro viejo (`parar.sh` ya lo
+   hace) y arrancarlo de nuevo.
+
 ---
 
 # Subir cambios del backend a producción
@@ -126,6 +170,8 @@ pareja@patrimonia.cl / demo1234     (miembro)
 | Expo Go: "There was a problem running the requested project" | Metro cayó / versión de Node | Mirá la terminal. `node -v` debe decir `v22.x` |
 | (modo B) `http://<ip>:3000/health` no carga en el teléfono | Firewall o AP isolation | `sudo ufw allow 3000/tcp`; si es red de oficina/hotel, usá el modo A (túnel) |
 | `EADDRINUSE :::3000` | Backend viejo colgado | `./scripts/parar.sh` y de nuevo |
+| `docker compose down` no bajó Postgres | `db.sh` la arrancó en un proyecto Docker separado (`patrimonia-db`) del de la raíz (`patrimonia`) | Bajar los dos por separado — ver "Salir del modo B" arriba |
+| Cambié `app/.env` y la app sigue pegándole a la URL vieja | Metro solo lee `EXPO_PUBLIC_*` al arrancar | Matar Metro (`./scripts/parar.sh`) y arrancarlo de nuevo, no alcanza con recargar |
 
 ---
 

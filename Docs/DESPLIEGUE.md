@@ -1,5 +1,9 @@
 # Despliegue — PatrimonIA
 
+**Objetivo:** cómo hospedar el backend y la base de datos (una sola vez), y
+qué hacer cada vez que hay una migración o un cambio nuevo que subir. No es
+para el día a día de desarrollo — para eso, `CORRER_EN_LOCAL.md`.
+
 Stack: **Expo (local, sin cambios)** → **Render** (NestJS) → **Neon** (PostgreSQL).
 Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 

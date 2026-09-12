@@ -1,6 +1,13 @@
 # Vacíos y decisiones pendientes
 
-Formato tomado de `Docs/UX_FLOWS.md` § "Resumen y vacíos detectados": qué se
+**Objetivo:** el ledger vivo de decisiones de dominio de todo el proyecto —
+cada vacío que apareció construyendo, por qué no estaba resuelto de antemano,
+qué opciones se evaluaron y cuál se eligió. Es el único lugar donde se
+registra el *porqué*; los documentos de `Docs/diseño/` reflejan el *qué*
+ya resuelto. (Nota: los documentos que este archivo referencia como
+`DDD.md`, `DATABASE_DESIGN.md`, etc. viven en `Docs/diseño/`.)
+
+Formato tomado de `Docs/diseño/UX_FLOWS.md` § "Resumen y vacíos detectados": qué se
 necesita, por qué no está resuelto, qué opciones existen. Nada de esto se
 resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 

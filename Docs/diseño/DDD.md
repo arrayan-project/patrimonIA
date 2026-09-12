@@ -1,5 +1,10 @@
 # Domain-Driven Design — PatrimonIA
 
+**Objetivo:** modelo de dominio completo — agregados, invariantes, catálogo
+de comandos (§T) y reglas de auditoría (§U). Es la fuente de verdad de las
+reglas de negocio: si el código y este documento no coinciden, manda este
+documento (o se abre un gap en `GAPS.md` si la regla todavía no existe acá).
+
 > **Migrado de `.docx` a Markdown el 2026-09-06** (el original está en `Docs/_baseline/`). Este `.md` es ahora la fuente de verdad; las decisiones posteriores a Fase 0 se integran aquí y se registran en `GAPS.md`.
 
 *Documento vivo de modelado de dominio*
