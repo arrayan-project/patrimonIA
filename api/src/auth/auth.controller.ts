@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, Ip, Post, HttpException, HttpStatus } from 
 import { AuthService, type LoginResult } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegistroTokenDto } from './dto/registro-token.dto.js';
+import { ResetPasswordDto, SolicitarResetPasswordDto } from './dto/reset-password.dto.js';
 import { Public } from './public.decorator.js';
 import { RateLimiter } from '../common/rate-limiter.js';
 
@@ -28,5 +29,27 @@ export class AuthController {
       throw new HttpException('Demasiadas solicitudes, intenta más tarde', HttpStatus.TOO_MANY_REQUESTS);
     }
     return this.auth.emitirTokenRegistro(dto.email);
+  }
+
+  @Public()
+  @Post('solicitar-reset-password')
+  @HttpCode(200)
+  solicitarResetPassword(@Body() dto: SolicitarResetPasswordDto, @Ip() ip: string) {
+    // 10 por IP y 3 por email, por hora — evita usar el endpoint para spamear.
+    const email = dto.email.toLowerCase();
+    if (
+      !this.rate.permitir(`reset-ip:${ip}`, 10, 60 * 60 * 1000) ||
+      !this.rate.permitir(`reset-email:${email}`, 3, 60 * 60 * 1000)
+    ) {
+      throw new HttpException('Demasiadas solicitudes, intenta más tarde', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    return this.auth.solicitarResetPassword(email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(200)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto.token, dto.nuevaPassword);
   }
 }

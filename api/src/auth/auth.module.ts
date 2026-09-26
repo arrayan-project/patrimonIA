@@ -8,6 +8,7 @@ import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { ConsoleEmailSender, EMAIL_SENDER } from './email-sender.js';
 import { RateLimiter } from '../common/rate-limiter.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Global()
 @Module({
@@ -28,8 +29,9 @@ import { RateLimiter } from '../common/rate-limiter.js';
     { provide: EMAIL_SENDER, useClass: ConsoleEmailSender },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector, jwt: JwtService) => new JwtAuthGuard(reflector, jwt),
-      inject: [Reflector, JwtService],
+      useFactory: (reflector: Reflector, jwt: JwtService, prisma: PrismaService) =>
+        new JwtAuthGuard(reflector, jwt, prisma),
+      inject: [Reflector, JwtService, PrismaService],
     },
   ],
   exports: [JwtModule, EMAIL_SENDER],

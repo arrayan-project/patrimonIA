@@ -140,6 +140,9 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   valorInicial > 0, crea también un evento SALDO_INICIAL + impacto (fecha =
   fecha_alta) para que la apertura de la cuenta cuente como ingreso del mes en el
   reporte financiero. No requiere `prisma:pull` (`tipo` sigue TEXT). GAPS.md G29.
+- `025_usuario_token_version.sql` — columna `token_version` en `usuario`. Se
+  incrementa al resetear la contraseña: invalida las sesiones previas y el token
+  de reset ya usado. Ya incluida en `init/01_schema.sql`. GAPS.md G31.
   Ya incluida en `init/01_schema.sql`.
 
 ## Estado
