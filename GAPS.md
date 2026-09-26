@@ -682,6 +682,45 @@ ya cerrados en Fases 50–51).
 
 ---
 
+### G31 — Recuperación de contraseña olvidada (login)  📋 DECISIÓN
+
+- **Qué falta**: no existe ningún mecanismo para que un usuario recupere el
+  acceso si olvida su contraseña. `POST /auth/login` (`api/src/auth/auth.controller.ts`)
+  es el único endpoint de autenticación además de `POST /auth/registro-token`
+  (que solo sirve para verificar el email al registrarse, ver G4). Hoy, un
+  usuario bloqueado solo puede recuperarse con una intervención manual directa
+  sobre `usuario.password_hash` en la base de datos.
+- **Por qué no está resuelto**: ni el DDD ni API_DESIGN contemplaron el login
+  como parte del dominio (`auth.service.ts` lo dice explícitamente:
+  "Autenticación — infraestructura, no dominio") — el flujo de recuperación
+  quedó fuera del alcance original y no se había detectado hasta una revisión
+  de seguridad (sesión 2026-09-16).
+- **Opciones evaluadas**:
+  - (a) **Reset propio vía email** — mismo patrón que el token de registro (G4):
+    `POST /auth/solicitar-reset-password { email }` emite un JWT de propósito
+    acotado (`purpose: 'reset'`, vida corta) enviado por `EmailSender`;
+    `POST /auth/reset-password { token, nuevaPassword }` lo valida y actualiza
+    `password_hash`. Bajo esfuerzo (reutiliza infraestructura existente:
+    `EmailSender`, `hashPassword`, patrón de JWT de propósito acotado), pero
+    sigue siendo seguridad de credenciales mantenida a mano — sin invalidación
+    de un solo uso salvo que se agregue una tabla de tokens consumidos.
+  - (b) **Externalizar el login** (Auth0 / Clerk / Supabase Auth / Cognito /
+    Firebase Auth) — el proveedor resuelve reset, verificación de email y MFA
+    de fábrica. Costo: mapear el `sub` externo a `usuario.id`, reescribir
+    `JwtAuthGuard` para verificar JWKS del proveedor en vez del HS256 propio, y
+    mover `RegistrarUsuario` / `registro-token` (G4) a los hooks del proveedor.
+    Migrar ahora (antes de tener usuarios reales en prod — ver P17, despliegue)
+    es más barato que después.
+- **Recomendación**: (a) para no bloquear el despliegue — cierra el gap crítico
+  con cambios acotados; evaluar (b) más adelante si se quiere sumar MFA/login
+  social o dejar de mantener credenciales propias.
+- **Para decidir**: ¿(a) o (b)? Si es (a): ¿el token de reset es de un solo uso
+  (requiere tabla) o basta con la ventana corta de expiración, como en G4?
+  ¿se invalidan las sesiones (JWT de 7 días) ya emitidas al resetear la
+  contraseña?
+
+---
+
 ## Qué queda — por facilidad
 
 Revisión 2026-09-04. Nada de esto está implementado todavía — es la lista de
@@ -720,6 +759,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | # | Qué | Estado |
 |---|-----|--------|
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. Ojo: `JWT_SECRET` nuevo (no reusar el de dev), esquema a Neon vía `api/db/init/01_schema.sql`, `EXPO_PUBLIC_API_URL` en la app. | ⬜ PENDIENTE (accionable ya) |
+| P18 | **G31** — Recuperación de contraseña olvidada: hoy no existe ninguna forma de recuperarla. Decidir (a) reset propio vía email (patrón del token de registro, G4) o (b) externalizar el login (Auth0/Clerk/Supabase Auth/…); implementar antes de tener usuarios reales en prod. | 📋 DECISIÓN |
 
 ### 4 · Bloqueado por algo externo (🔒) — relegado
 
