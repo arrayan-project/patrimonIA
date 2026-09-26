@@ -14,6 +14,7 @@ import { useC, useTema } from '../ui';
 
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegistroScreen } from '../screens/RegistroScreen';
+import { RecuperarPasswordScreen } from '../screens/RecuperarPasswordScreen';
 import { BienvenidaScreen } from '../screens/BienvenidaScreen';
 import { CrearHogarScreen } from '../screens/CrearHogarScreen';
 import { InvitacionesScreen } from '../screens/InvitacionesScreen';
@@ -247,6 +248,11 @@ export function RootNavigator() {
           <>
             <Stack.Screen name="Registro" component={RegistroScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="RecuperarPassword"
+              component={RecuperarPasswordScreen}
+              options={{ headerShown: false }}
+            />
           </>
         ) : (
           <>

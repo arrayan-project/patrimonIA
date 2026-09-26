@@ -8,6 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 export type RouteName =
   | 'Login'
   | 'Registro'
+  | 'RecuperarPassword'
   | 'Tabs'
   | 'Bienvenida'
   | 'CrearHogar'

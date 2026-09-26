@@ -682,7 +682,7 @@ ya cerrados en Fases 50–51).
 
 ---
 
-### G31 — Recuperación de contraseña olvidada (login)  📋 DECISIÓN
+### G31 — Recuperación de contraseña olvidada (login)  🟡 PARCIAL (falta `EmailSender` real en prod)
 
 - **Qué falta**: no existe ningún mecanismo para que un usuario recupere el
   acceso si olvida su contraseña. `POST /auth/login` (`api/src/auth/auth.controller.ts`)
@@ -718,6 +718,28 @@ ya cerrados en Fases 50–51).
   (requiere tabla) o basta con la ventana corta de expiración, como en G4?
   ¿se invalidan las sesiones (JWT de 7 días) ya emitidas al resetear la
   contraseña?
+- **Decisión (2026-09-26)**: **(a) reset propio vía email.** (b) queda para
+  cuando se quiera MFA o login social. Las dos preguntas abiertas se resuelven
+  con una sola columna, `usuario.token_version` (migración 025):
+  - `POST /auth/solicitar-reset-password { email }` → siempre `{ enviado: true }`
+    (no revela si el email existe); si hay un usuario ACTIVO, envía por
+    `EmailSender` un JWT `purpose: 'reset'` de 30 min con `tv = token_version`.
+    El token nunca viaja en la respuesta, ni en dev. Rate-limit: 10/h por IP y
+    3/h por email.
+  - `POST /auth/reset-password { token, nuevaPassword }` → valida el token y
+    actualiza `password_hash` e incrementa `token_version` en un solo `UPDATE`
+    filtrado por `tv`, así el token es **de un solo uso** sin tabla aparte (y
+    atómico ante dos requests simultáneos).
+  - **Sesiones invalidadas**: el JWT de sesión lleva `tv` y `JwtAuthGuard` lo
+    compara contra `usuario.token_version` (una lectura por request). Además,
+    el guard ahora rechaza tokens con `purpose` (registro/reset), que antes
+    eran aceptados como sesión por firmarse con el mismo secreto.
+  - Tests: `api/test/reset-password.e2e-spec.ts`.
+  - App: link "¿Olvidaste tu contraseña?" en Login → `RecuperarPasswordScreen`
+    (email → código + nueva contraseña → volver a Login).
+- **Pendiente**: `EmailSender` real en prod (hoy `ConsoleEmailSender`,
+  compartido con G4) — sin él el código no llega a nadie; aplicar la migración
+  025 en Neon si el esquema ya estaba cargado.
 
 ---
 
@@ -759,7 +781,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | # | Qué | Estado |
 |---|-----|--------|
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. Ojo: `JWT_SECRET` nuevo (no reusar el de dev), esquema a Neon vía `api/db/init/01_schema.sql`, `EXPO_PUBLIC_API_URL` en la app. | ⬜ PENDIENTE (accionable ya) |
-| P18 | **G31** — Recuperación de contraseña olvidada: hoy no existe ninguna forma de recuperarla. Decidir (a) reset propio vía email (patrón del token de registro, G4) o (b) externalizar el login (Auth0/Clerk/Supabase Auth/…); implementar antes de tener usuarios reales en prod. | 📋 DECISIÓN |
+| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Backend y pantalla en la app hechos; falta un `EmailSender` real en prod. | 🟡 PARCIAL |
 
 ### 4 · Bloqueado por algo externo (🔒) — relegado
 

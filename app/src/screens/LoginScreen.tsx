@@ -55,6 +55,7 @@ export function LoginScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button title="Entrar" onPress={onSubmit} loading={loading} />
+      <LinkButton title="¿Olvidaste tu contraseña?" onPress={() => nav.go('RecuperarPassword')} />
       <LinkButton title="No tengo cuenta — registrarme" onPress={() => nav.go('Registro')} />
     </Screen>
   );
