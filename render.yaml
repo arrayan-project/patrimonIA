@@ -16,3 +16,7 @@ services:
         sync: false # generar uno nuevo — NO reusar el de desarrollo
       - key: AUTH_REGISTRO_TOKEN_REQUERIDO
         value: "false"
+      - key: BREVO_API_KEY
+        sync: false # sin ella los emails solo van al log (GAPS G31)
+      - key: EMAIL_REMITENTE
+        sync: false # email verificado como sender en Brevo

@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { hashPassword, verifyPassword } from '../common/password.js';
@@ -19,6 +19,8 @@ export interface LoginResult {
  */
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -84,12 +86,16 @@ export class AuthService {
         purpose: 'reset',
       };
       const token = await this.jwt.signAsync(claims, { expiresIn: '30m' });
-      await this.email.enviar(
-        usuario.email,
-        'Restablecer tu contraseña de PatrimonIA',
-        `Usa este token para elegir una nueva contraseña (vence en 30 minutos):\n\n${token}\n\n` +
-          'Si no lo pediste, ignora este correo: tu contraseña no cambia.',
-      );
+      // Un fallo de envío no se propaga: un 500 solo para emails existentes
+      // revelaría qué cuentas existen.
+      await this.email
+        .enviar(
+          usuario.email,
+          'Restablecer tu contraseña de PatrimonIA',
+          `Usa este token para elegir una nueva contraseña (vence en 30 minutos):\n\n${token}\n\n` +
+            'Si no lo pediste, ignora este correo: tu contraseña no cambia.',
+        )
+        .catch((e: unknown) => this.logger.error(`No se pudo enviar el email de reset: ${String(e)}`));
     }
     return { enviado: true };
   }

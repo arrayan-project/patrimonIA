@@ -31,7 +31,9 @@ Variables de entorno del backend (`api/src` las lee vía `@nestjs/config`):
 | `JWT_SECRET` | sí (`getOrThrow` — sin ella el proceso no arranca) | el que generaste arriba |
 | `PORT` | la pone Render sola | — |
 | `AUTH_REGISTRO_TOKEN_REQUERIDO` | no | `false` por ahora (aún no hay captcha — GAPS G4) |
-| `EMAIL_SENDER` / `PUSH_SENDER` | no | sin definir → usan los adapters de consola (no envían nada real) |
+| `BREVO_API_KEY` | no, pero sin ella **no se envían emails** (reset de contraseña, token de registro) — solo van al log | API key de Brevo (SMTP & API → API Keys) |
+| `EMAIL_REMITENTE` | sí, si hay `BREVO_API_KEY` (sin ella el proceso no arranca) | el email verificado en Brevo → Senders |
+| `EMAIL_REMITENTE_NOMBRE` | no | nombre visible del remitente; por defecto `PatrimonIA` |
 
 ---
 
@@ -92,6 +94,8 @@ valores de `DATABASE_URL` y `JWT_SECRET` (marcados `sync: false`).
    | `DATABASE_URL` | la connection string **pooled** de Neon, entre comillas no, tal cual: `postgresql://neondb_owner:…@ep-…-pooler.…neon.tech/neondb?sslmode=require` |
    | `JWT_SECRET` | el secreto generado en el paso 0 (no el de `api/.env`) |
    | `AUTH_REGISTRO_TOKEN_REQUERIDO` | `false` |
+   | `BREVO_API_KEY` | API key de Brevo (ver "Email" abajo) |
+   | `EMAIL_REMITENTE` | el email verificado como sender en Brevo |
 
    `PORT` la inyecta Render sola — no la agregues. Si el arranque falla con un
    error de `channel_binding`, quita `&channel_binding=require` de la URL.
@@ -101,6 +105,28 @@ valores de `DATABASE_URL` y `JWT_SECRET` (marcados `sync: false`).
 
 > Render free tier **duerme** el servicio tras 15 min sin tráfico; la primera
 > request después tarda ~50 s en despertar. Aceptable para desarrollo/demo.
+
+---
+
+## 2b · Email (Brevo) — para reset de contraseña y token de registro
+
+Sin esto el backend funciona, pero los emails solo quedan en el log de Render
+(nadie recibe el código de "¿Olvidaste tu contraseña?"). GAPS G31.
+
+1. Crear cuenta gratis en brevo.com (300 emails/día).
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: tu email
+   (p. ej. el Gmail). Brevo manda un correo de confirmación — abrirlo.
+3. **SMTP & API → API Keys → Generate a new API key**. Copiarla (se muestra una
+   sola vez).
+4. En Render → Environment: `BREVO_API_KEY` = la key, `EMAIL_REMITENTE` = el
+   email del paso 2. Guardar (Render redespliega solo).
+5. Probar: en la app, "¿Olvidaste tu contraseña?" con tu email → debe llegar el
+   código. Si no llega, revisar spam y el log de Render (`No se pudo enviar el
+   email de reset: …`).
+
+> Sin dominio propio el remitente es un Gmail/Outlook, y esos correos pueden
+> caer en spam. Si más adelante hay dominio, verificarlo en Brevo (SPF/DKIM) y
+> cambiar `EMAIL_REMITENTE`.
 
 ---
 

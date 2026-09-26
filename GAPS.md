@@ -105,8 +105,8 @@ sub-ítems) · `⬜ PENDIENTE` (accionable ya, sin decisión) · `📋 DECISIÓN
   - `POST /auth/registro-token` (anónimo, **rate-limit 10/hora por IP** —
     `RateLimiter` en memoria) emite un JWT `{ purpose: 'registro' }` de 15 min.
     Si se le pasa `email`, el token queda **ligado a ese email** y se **envía por
-    correo** (`EmailSender` → `ConsoleEmailSender` por defecto; se cambia el
-    provider `EMAIL_SENDER` por Resend/SES en prod).
+    correo** (`EmailSender`: `BrevoEmailSender` si hay `BREVO_API_KEY`, si no
+    `ConsoleEmailSender` — ver G31).
   - En modo requerido (`AUTH_REGISTRO_TOKEN_REQUERIDO=true`) el token **no** se
     devuelve en la respuesta (`{ enviado: true }`), solo llega al email; y
     `RegistroTokenGuard` exige que el `email` del token coincida con el del alta.
@@ -682,7 +682,7 @@ ya cerrados en Fases 50–51).
 
 ---
 
-### G31 — Recuperación de contraseña olvidada (login)  🟡 PARCIAL (falta `EmailSender` real en prod)
+### G31 — Recuperación de contraseña olvidada (login)  🟡 PARCIAL (código listo; falta configurar Brevo en Render)
 
 - **Qué falta**: no existe ningún mecanismo para que un usuario recupere el
   acceso si olvida su contraseña. `POST /auth/login` (`api/src/auth/auth.controller.ts`)
@@ -737,9 +737,15 @@ ya cerrados en Fases 50–51).
   - Tests: `api/test/reset-password.e2e-spec.ts`.
   - App: link "¿Olvidaste tu contraseña?" en Login → `RecuperarPasswordScreen`
     (email → código + nueva contraseña → volver a Login).
-- **Pendiente**: `EmailSender` real en prod (hoy `ConsoleEmailSender`,
-  compartido con G4) — sin él el código no llega a nadie; aplicar la migración
-  025 en Neon si el esquema ya estaba cargado.
+  - Migración 025 aplicada en Neon (2026-09-26).
+  - Email real: **Brevo** (sin dominio propio — remitente = un email verificado
+    en Brevo; 300/día gratis). `BrevoEmailSender` (fetch a su API, sin SDK) se
+    activa con `BREVO_API_KEY` + `EMAIL_REMITENTE`; sin ellas, consola. Un fallo
+    de envío en el reset se loguea y no se propaga (un 500 solo para emails
+    existentes delataría la cuenta). Compartido con G4.
+- **Pendiente**: crear la cuenta de Brevo, verificar el remitente y cargar las
+  env vars en Render (`Docs/DESPLIEGUE.md`). Sin dominio propio los correos
+  pueden caer en spam; con dominio, autenticarlo en Brevo (SPF/DKIM).
 
 ---
 
@@ -781,7 +787,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | # | Qué | Estado |
 |---|-----|--------|
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. Ojo: `JWT_SECRET` nuevo (no reusar el de dev), esquema a Neon vía `api/db/init/01_schema.sql`, `EXPO_PUBLIC_API_URL` en la app. | ⬜ PENDIENTE (accionable ya) |
-| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Backend y pantalla en la app hechos; falta un `EmailSender` real en prod. | 🟡 PARCIAL |
+| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Backend, app y `BrevoEmailSender` hechos; falta configurar Brevo en Render. | 🟡 PARCIAL |
 
 ### 4 · Bloqueado por algo externo (🔒) — relegado
 
