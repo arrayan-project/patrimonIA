@@ -682,7 +682,7 @@ ya cerrados en Fases 50–51).
 
 ---
 
-### G31 — Recuperación de contraseña olvidada (login)  🟡 PARCIAL (código listo; falta configurar Brevo en Render)
+### G31 — Recuperación de contraseña olvidada (login)  ✅ RESUELTO (verificado en prod 2026-09-27)
 
 - **Qué falta**: no existe ningún mecanismo para que un usuario recupere el
   acceso si olvida su contraseña. `POST /auth/login` (`api/src/auth/auth.controller.ts`)
@@ -743,9 +743,20 @@ ya cerrados en Fases 50–51).
     activa con `BREVO_API_KEY` + `EMAIL_REMITENTE`; sin ellas, consola. Un fallo
     de envío en el reset se loguea y no se propaga (un 500 solo para emails
     existentes delataría la cuenta). Compartido con G4.
-- **Pendiente**: crear la cuenta de Brevo, verificar el remitente y cargar las
-  env vars en Render (`Docs/DESPLIEGUE.md`). Sin dominio propio los correos
-  pueden caer en spam; con dominio, autenticarlo en Brevo (SPF/DKIM).
+  - Brevo configurado en Render (`Docs/DESPLIEGUE.md` §2b). **Verificado en
+    prod (2026-09-27)**: el email llega, el reset vuelve a Login y se entra con
+    la nueva contraseña.
+- **Mejora de UX pendiente (no bloqueante)**: el "código" que se pega es el JWT
+  completo (~250 caracteres) — funciona, pero es incómodo de copiar, sobre todo
+  en el teléfono. Afecta igual al token de registro (G4). Opciones:
+  - **Código corto** (6 dígitos): guardar su hash + expiración + intentos en
+    una tabla (o columnas en `usuario`), con tope de intentos para que no se
+    pueda adivinar por fuerza bruta. Es el cambio más directo para el usuario.
+  - **Deep link**: el email trae un link `patrimonia://reset?token=…` que abre
+    la pantalla con el token ya cargado — el usuario no copia nada, pero
+    requiere configurar el scheme/universal links en la app.
+- **Nota**: sin dominio propio los correos pueden caer en spam; si hay dominio,
+  autenticarlo en Brevo (SPF/DKIM) y cambiar `EMAIL_REMITENTE`.
 
 ---
 
@@ -787,7 +798,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | # | Qué | Estado |
 |---|-----|--------|
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. Ojo: `JWT_SECRET` nuevo (no reusar el de dev), esquema a Neon vía `api/db/init/01_schema.sql`, `EXPO_PUBLIC_API_URL` en la app. | ⬜ PENDIENTE (accionable ya) |
-| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Backend, app y `BrevoEmailSender` hechos; falta configurar Brevo en Render. | 🟡 PARCIAL |
+| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Hecho y verificado en prod (2026-09-27). Mejora de UX pendiente: el código es el JWT completo (muy largo) → código de 6 dígitos o deep link. | ✅ RESUELTO |
 
 ### 4 · Bloqueado por algo externo (🔒) — relegado
 
