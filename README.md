@@ -3,7 +3,8 @@
 Gestión de patrimonio familiar. Backend NestJS + PostgreSQL, cliente React Native (Expo).
 
 **Objetivo de este archivo:** punto de entrada del repo — qué es el proyecto,
-su estructura, el changelog de fases construidas hasta ahora, y cómo correrlo.
+su estructura, qué queda pendiente, el changelog de fases construidas y cómo
+correrlo.
 Para el diseño de dominio/API/UX, ver `Docs/` (empieza por `Docs/README.md`).
 
 Documentos de diseño (fuente de verdad): `Docs/diseño/` — leer en el orden de
@@ -25,6 +26,24 @@ DDD → Application Services → API → código es más fácil de mantener en u
 ## Estado de construcción
 
 Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
+
+### Pendiente
+
+El detalle y la prioridad de todo lo abierto viven en **`GAPS.md` → Parte 1**.
+En resumen:
+
+- [ ] **Usabilidad del flujo completo** para un usuario nuevo — onboarding, mapa
+  de navegación, conexión entre secciones (G32).
+- [ ] **Código de recuperación / registro más corto** — hoy es el JWT completo;
+  código de 6 dígitos o deep link (G31, G4).
+- [ ] **Preferencias de visualización** con forma definida (G25) y reintentos de
+  push fallidos (G20).
+- [ ] **Decisiones de dominio abiertas**: valorizaciones intermedias (G11) y
+  consumo parcial de reservas (G14).
+- [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20),
+  importación de tipos de cambio (G21).
+
+### Implementado
 
 - [x] **Fase 0 — DB**: esquema PostgreSQL ejecutado y verificado en Docker
   (`postgres:16`). Ver `api/db/README.md`.
@@ -131,7 +150,7 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     `ExpoPushSender`, G20). Falta solo el captcha y un development build para el
     push real.
 
-- [ ] **Fase 15 — UI / UX** (backlog en `Docs/retirado/UI_UX_BACKLOG.md`):
+- [x] **Fase 15 — UI / UX** (backlog en `Docs/retirado/UI_UX_BACKLOG.md`):
   - [x] **15a** — auto-refresh al enfocar (`useCargaAlEnfocar`), pull-to-refresh
     (`Screen onRefresh=`), `Idempotency-Key` en las altas (`api.comando`),
     401 → logout automático.
@@ -181,8 +200,10 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
   - [x] **15l** — pulido: iconos en los menús (hubs), `EmptyState` en las
     listas principales, deep-link al tocar una notificación, card "Primeros
     pasos" en el Dashboard.
-  - [ ] 15m+ — design tokens completos, buscadores en pickers, co-propietarios
-    con %, F3 en más pantallas, FAB.
+  - [x] 15m+ — lo que quedaba (design tokens, buscador en pickers,
+    co-propietarios con %, montos contables, FAB) se cerró en las Fases 18–26;
+    ver `Docs/retirado/UI_UX_BACKLOG.md`. Solo queda `ListItem` en dos listas
+    (diferido a propósito, U3 en `GAPS.md`).
 
 - [x] **Fase 16 — Reportes financieros + reorganización de navegación**:
   - [x] Backend: `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=` y
@@ -215,25 +236,32 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
     barra de avance total en la lista de Objetivos.
   - [x] Fix: en iPhone el título quedaba bajo el notch en las pantallas de tab.
 
+- [x] **Fases 20–53** — rediseño monocromático, reorganización de la
+  navegación, cierre de los hallazgos del análisis de dominio y pulido de UI.
+  Detalle en `GAPS.md` (Parte 2, G27–G30 y plan P1–P13 / U1–U2) y
+  `Docs/diseño/UX_FLOWS.md` Parte 3.
+- [x] **Despliegue** — backend en Render + base en Neon, $0/mes
+  (`Docs/DESPLIEGUE.md`; P17 en `GAPS.md`).
+- [x] **Recuperación de contraseña** — reset por email con token de un solo uso
+  que cierra las sesiones abiertas; emails reales vía Brevo. Verificado en
+  producción el 2026-09-27 (G31).
+
 **Cobertura**: los 52 Application Services de Fase 0 + 26 comandos añadidos en
 Fases 13–52 (categorías, etiquetas, agrupaciones, tipos de elemento, plantillas,
 presupuesto por rubro, visibilidad granular, objetivos del hogar, tipo de
-cambio). Ver `Docs/APPLICATION_SERVICES.md` §"Casos de uso añadidos".
+cambio). Ver `Docs/diseño/APPLICATION_SERVICES.md` §"Casos de uso añadidos".
 
-Fases posteriores a la 19 (rediseño monocromático, reorganización de IA, y el
-cierre de los hallazgos del análisis de dominio) están en `GAPS.md` (G27–G30) y
-`Docs/UX_FLOWS.md` Parte 3. Los `.docx` de diseño se migraron a Markdown el
-2026-09-06 (originales en `Docs/_baseline/`).
+Los `.docx` de diseño se migraron a Markdown el 2026-09-06 (originales en
+`Docs/_baseline/`).
 
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 20 unitarios + 157 e2e
+cd api && npm run test:all   # 24 unitarios + 161 e2e
 cd app && npx tsc --noEmit && npx expo export --platform web
 ```
 
-Vacíos y decisiones pendientes: ver `GAPS.md`. Solo quedan 3 integraciones
-externas (captcha, push real, import de tipos de cambio).
+Vacíos y decisiones pendientes: ver `GAPS.md` (Parte 1).
 
 ## Requisitos de entorno
 
