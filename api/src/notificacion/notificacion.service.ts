@@ -85,7 +85,12 @@ export class NotificacionService {
         select: { expo_push_token: true },
       });
       if (disp.length > 0) {
-        await this.push.enviar(disp.map((d) => d.expo_push_token), titulo, cuerpo);
+        const invalidos = await this.push.enviar(disp.map((d) => d.expo_push_token), titulo, cuerpo);
+        if (invalidos.length > 0) {
+          await this.prisma.dispositivo_push.deleteMany({
+            where: { usuario_id: usuarioId, expo_push_token: { in: invalidos } },
+          });
+        }
       }
     } catch {
       // best-effort

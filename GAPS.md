@@ -56,7 +56,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 |---|-----|-----------|------|
 | U4 | **G32** | Evaluación de usabilidad del flujo completo para un usuario nuevo: onboarding, mapa de navegación, conexión entre secciones. Hoy ni el autor siente que todo esté "conectado" y sea facilísimo de usar. | ⬜ accionable |
 | — | **G31** | Código de reset (y de registro, G4) más corto: hoy es el JWT completo (~250 caracteres). Código de 6 dígitos o deep link. | ⬜ accionable (mejora UX) |
-| — | **G20** | Reintentos de envío de notificaciones push fallidas. | ⬜ accionable |
 | — | **G25** | Darle forma al objeto de preferencias (formato de fecha, secciones del dashboard, densidad, moneda de despliegue) y decidir qué es del usuario y qué del hogar. | ⬜ + 📋 |
 | — | **G11** | ¿Anular/corregir valorizaciones **intermedias** (no solo la última) re-encadenando? | 📋 decisión |
 | — | **G14** | "Consumir reserva" es grueso (todas las ACTIVAS de golpe): ¿consumir solo hasta el monto del evento? | 📋 decisión |
@@ -102,11 +101,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   `AnularValorizacion` **elimina** el impacto asociado (DDD #18 dice "eliminar",
   y el esquema no tiene flag en `impacto_patrimonial`).
 - **`admite_valorizacion`**: se fija al crear el elemento
-  (`RegistrarElementoPatrimonial`). No hay comando para activarlo/desactivarlo
-  después — si creaste un elemento sin ese flag, no puedes valorizarlo. La app
-  lo activa por defecto para categorías ACTIVO / INVERSION.
+  (`RegistrarElementoPatrimonial`; la app lo activa por defecto para categorías
+  ACTIVO / INVERSION) y se cambia después con `CambiarAdmiteValorizacion`
+  (Fase 36, ver arriba).
 - **Para decidir**: ¿anular/corregir valorizaciones intermedias re-encadenando?
-  ¿un comando para cambiar `admite_valorizacion`?
 
 ### Tema F · Planificación: objetivos, reservas, presupuestos y programados
 
@@ -128,8 +126,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Se registra embebido en la entrada de RegistrarEventoFinanciero.
 - **Disponibilidad / valor libre**: `valor_vigente − Σ reservas ACTIVAS`,
   calculado en vivo. La reserva no mueve `valor_vigente` (no es hecho económico).
-- **AnularEventoFinanciero** de un evento que consumió reservas: no las
-  "des-consume" (quedan CONSUMIDA). Pendiente.
+- **AnularEventoFinanciero** de un evento que consumió reservas: las
+  "des-consume" (vuelven a ACTIVA) — ✅ Fase 36, ver arriba.
 
 ### Tema G · Monedas, proyecciones y reportes
 
@@ -146,12 +144,17 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 ### Tema H · Notificaciones
 
-#### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL (in-app + preferencias ✅; push remoto 🔒; reintentos ⬜)
+#### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL (in-app + preferencias ✅; push remoto 🔒; reintentos ✅)
 - In-app: ✅. **Preferencias por tipo: ✅ (Fase 36, P4)** —
   `usuario.preferencias.notificaciones[<tipo>] === false` silencia el aviso
   (in-app + push); `NotificacionService.emitir` lo consulta; toggles en "Mi
   perfil". Push remoto: 🔒 EXTERNO (development build + `projectId` de EAS).
-  Reintentos de envío fallido: ⬜ PENDIENTE.
+  **Reintentos de envío fallido: ✅** — `ExpoPushSender` reintenta ante error
+  de red, 429 o 5xx (2 reintentos, 1 s y 4 s; un 4xx no se reintenta) y
+  devuelve los tokens con ticket `DeviceNotRegistered`, que
+  `NotificacionService` borra de `dispositivo_push`. Tests:
+  `src/notificacion/push-sender.spec.ts` (con `fetch` mockeado — el envío real
+  depende del push remoto, P15).
 - **In-app (Fase 11)**: tabla `notificacion` (migración 005), registro que NO es
   dominio (sin auditoría, regenerable). Se emite dentro de la transacción del
   comando. Generadores: **OBJETIVO_COMPLETADO**, **RESERVA_CONSUMIDA**,
@@ -165,8 +168,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   el token al iniciar sesión (`src/push/registerPush.ts`).
 - **Pendiente**: el push remoto necesita un **development build + `projectId` de
   EAS** — en Expo Go SDK 53+ está limitado, y en web/simulador `registerPush`
-  devuelve null (no rompe nada). Preferencias de notificación y reintentos de
-  envío fallido tampoco están.
+  devuelve null (no rompe nada).
 
 ### Tema I · App: preferencias y usabilidad
 
@@ -183,10 +185,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Estado actual**: `usuario.preferencias JSONB` **ya existe** en el esquema
   (DATABASE_DESIGN §87) y `ActualizarDatosUsuario` (#44) ya la acepta (reemplazo
   del objeto completo). DDD Sección B lista "Preferencias globales" como
-  responsabilidad del Usuario. **Falta el lado de lectura**: `toUsuarioDTO` /
-  `GET /usuarios/me` **no devuelven `preferencias`** hoy.
+  responsabilidad del Usuario. El lado de lectura ya está: `GET /usuarios/me`
+  devuelve `preferencias`.
 - **Recomendación**:
-  - Exponer `preferencias` en `GET /usuarios/me` y darle forma (esquema de
+  - Darle forma a `preferencias` (esquema de
     preferencias conocido, con defaults en el cliente).
   - Preferencias **personales** → `usuario.preferencias`. Config **del hogar**
     (categorías, moneda de consolidación, tipos de elemento sugeridos) → tabla

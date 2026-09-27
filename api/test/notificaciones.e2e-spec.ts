@@ -10,6 +10,7 @@ const pushEnviados: { tokens: string[]; titulo: string }[] = [];
 const pushSpy: PushSender = {
   async enviar(tokens, titulo) {
     pushEnviados.push({ tokens, titulo });
+    return [];
   },
 };
 
