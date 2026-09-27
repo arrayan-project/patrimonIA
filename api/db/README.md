@@ -143,15 +143,24 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `025_usuario_token_version.sql` — columna `token_version` en `usuario`. Se
   incrementa al resetear la contraseña: invalida las sesiones previas y el token
   de reset ya usado. Ya incluida en `init/01_schema.sql`. GAPS.md G31.
-  Ya incluida en `init/01_schema.sql`.
 
 ## Estado
 
-- Fase 0 — esquema completo (16 tablas) ejecutado y verificado contra `postgres:16`.
-  Corre limpio, sin errores. CHECKs, índices únicos parciales y FKs validados con
-  inserts de prueba.
-- Migraciones formales (Prisma) se incorporan al inicializar el proyecto NestJS
-  en `api/`. Hasta entonces este SQL es la única fuente de estructura.
+**Pendiente**
+
+- [ ] No hay un runner automático de migraciones: cada `migrations/NNN_*.sql`
+  se aplica a mano en local, en `patrimonia_test` y en Neon
+  (`Docs/DESPLIEGUE.md` §1). Prisma solo introspecciona (`prisma:pull`), no migra.
+
+**Hecho**
+
+- [x] Fase 0 — esquema inicial (16 tablas) ejecutado y verificado contra
+  `postgres:16`: CHECKs, índices únicos parciales y FKs validados con inserts de
+  prueba.
+- [x] Migraciones **001–025** aplicadas y plegadas en `init/01_schema.sql`
+  (32 tablas). `init/01_schema.sql` sigue siendo la única fuente de estructura;
+  CI la carga tal cual.
+- [x] Neon (producción) al día hasta la **025** (2026-09-26).
 
 ## Verificación rápida
 

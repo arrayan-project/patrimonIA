@@ -434,6 +434,20 @@ A partir de la consolidación pueden calcularse:
 - Principio D: Toda operación derivada (consolidaciones, métricas, proyecciones e indicadores) debe obtenerse exclusivamente a partir de la información primaria vigente.
 - Principio E: El usuario interactúa con PatrimonIA mediante comandos que expresan intenciones del negocio. El dominio ejecuta dichas intenciones y garantiza la consistencia de la información primaria mediante sus políticas internas. La auditoría registra los comandos ejecutados, mientras que toda información derivada se actualiza como consecuencia del nuevo estado del dominio.
 
+# S. Pendiente
+
+Modelo de dominio cerrado: catálogo completo de comandos por agregado (Sección T), Registro de Auditoría (Sección U), Reconstrucción histórica (Sección V), Políticas del dominio consolidadas (Sección W), y ciclo de vida completo de Objetivo Financiero y Presupuesto.
+
+- ~~Revisar si Movimiento Programado requiere reglas de visibilidad/propiedad propias~~ → **resuelto: hereda las del elemento** (Sección X, más abajo — GAPS.md G2/P12).
+- ~~Diseño de la base de datos~~ → `DATABASE_DESIGN.md` + `api/db/`.
+- ~~Diseño de APIs y casos de uso~~ → `API_DESIGN.md` + `APPLICATION_SERVICES.md`.
+- ~~Diseño UX/flujos de usuario~~ → `UX_FLOWS.md`.
+
+Lo que sigue abierto (integraciones externas, decisiones menores y mejoras de
+UX) está en `GAPS.md` → Parte 1 (Pendiente), con un resumen priorizado.
+
+---
+
 # T. Catálogo de comandos del dominio
 
 Metodología aplicada: para cada agregado se identifican las intenciones reales que un usuario o el propio dominio pueden expresar sobre él, clasificadas en cuatro familias de comportamiento:
@@ -677,20 +691,6 @@ Tras la ejecución de cualquier comando que modifique información primaria (pat
 ### Política de auditoría (transversal a todo comando)
 
 Ver Sección U — Registro de Auditoría.
-
-# S. Pendiente
-
-Modelo de dominio cerrado: catálogo completo de comandos por agregado (Sección T), Registro de Auditoría (Sección U), Reconstrucción histórica (Sección V), Políticas del dominio consolidadas (Sección W), y ciclo de vida completo de Objetivo Financiero y Presupuesto.
-
-- ~~Revisar si Movimiento Programado requiere reglas de visibilidad/propiedad propias~~ → **resuelto: hereda las del elemento** (Sección X, más abajo — GAPS.md G2/P12).
-- ~~Diseño de la base de datos~~ → `DATABASE_DESIGN.md` + `api/db/`.
-- ~~Diseño de APIs y casos de uso~~ → `API_DESIGN.md` + `APPLICATION_SERVICES.md`.
-- ~~Diseño UX/flujos de usuario~~ → `UX_FLOWS.md`.
-
-Lo único que sigue abierto son 3 integraciones externas (`GAPS.md` §3): captcha
-anti-bot (G4), envío push real (G20), importación automática de tipos de cambio (G21).
-
----
 
 # X. Decisiones de dominio posteriores a Fase 0 (Fases 1–52)
 

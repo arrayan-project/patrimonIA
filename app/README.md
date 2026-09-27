@@ -26,6 +26,29 @@ npm run web         # navegador
 
 ## Estado
 
+### Pendiente
+
+Detalle y prioridad en `../GAPS.md` → Parte 1. Lo que toca la app:
+
+- [ ] **Evaluación de usabilidad del flujo completo** para un usuario nuevo
+  (G32): onboarding, mapa de navegación, conexión entre secciones.
+- [ ] **Código de recuperación / registro más corto** (G31): hoy se pega el JWT
+  completo; código de 6 dígitos o deep link.
+- [ ] **Push remoto real** (G20): necesita un development build + `projectId`
+  de EAS.
+- [ ] **Preferencias de visualización** con forma definida (G25).
+- [ ] `ListItem` en Categorías y Tipos de elemento — diferido a propósito (U3).
+
+### Implementado
+
+Journal por fase (Fases 1–19). Las fases 20 en adelante (rediseño,
+reorganización de la navegación, pulido) están descritas en
+`../Docs/diseño/UX_FLOWS.md` Parte 3.
+
+- **Recuperación de contraseña** (G31): link "¿Olvidaste tu contraseña?" en
+  Login → `RecuperarPasswordScreen` (email → código + nueva contraseña → vuelta
+  a Login). Verificado en producción el 2026-09-27.
+
 ### Fase 1 — Flujo 2 (Alta de hogar)
 
 Pantallas (Docs/UX_FLOWS.md "Desglose — Flujo 2"):
@@ -40,9 +63,9 @@ Pantallas (Docs/UX_FLOWS.md "Desglose — Flujo 2"):
 | Dashboard del hogar | `GET /usuarios/me/hogares` · `GET /hogares/:id` · `POST /comandos/InvitarMiembro` (solo admin) |
 
 Verificado: `tsc --noEmit` limpio, `expo-doctor` 21/21, `expo export` empaqueta
-sin errores para android y web. La validación con simulador/navegador en vivo
-queda pendiente de un entorno con GUI; el backend está probado end-to-end
-(`../api/test/flujo2-alta-hogar.e2e-spec.ts`) contra los mismos endpoints.
+sin errores para android y web; el backend está probado end-to-end
+(`../api/test/flujo2-alta-hogar.e2e-spec.ts`) contra los mismos endpoints. (En
+ese momento faltaba probarlo en vivo; hoy se usa en el teléfono con Expo Go.)
 
 ### Fase 2 — Flujo 1 (día a día financiero)
 
@@ -148,7 +171,7 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   push token y lo registra en `/usuarios/me/dispositivos-push` (null en web /
   simulador / Expo Go — necesita un development build + `projectId` de EAS).
 
-### Fase 15 — UI / UX (`Docs/UI_UX_BACKLOG.md`)
+### Fase 15 — UI / UX (`Docs/retirado/UI_UX_BACKLOG.md`)
 
 - **15a–15c**: auto-refresh al enfocar, pull-to-refresh, `Idempotency-Key`,
   `DateField` / `MoneyField` / `ToastProvider` / `confirmar()`, glosa y
@@ -241,10 +264,11 @@ queda pendiente de un entorno con GUI; el backend está probado end-to-end
   pantallas de tab vuelven a padear `24 + safe-area-top` y el título no queda
   bajo el notch. Mismo arreglo para la posición del `FAB`.
 
-### Decisiones aún provisionales
+### Decisiones que fueron provisionales (ya cerradas)
 
-- "Registrar movimiento" solo lista tus propios elementos como destino; para
-  transferir a otra persona hay que conocer el id de su elemento (ver GAPS.md G6).
+- "Registrar movimiento" solo listaba tus propios elementos como destino. Desde
+  la Fase 34 (GAPS.md G6, §B1) también lista los elementos de los co-miembros del
+  hogar cuya existencia puedes ver (`GET /elementos-patrimoniales?alcance=hogar`).
 
 ## Estructura
 

@@ -10,6 +10,27 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 > Esto es una tarde de trabajo, no un proyecto. Los pasos van en orden; cada uno
 > se valida antes de pasar al siguiente.
 
+## Estado
+
+**Pendiente**
+
+- [ ] **Captcha antes del registro** — mientras no exista,
+  `AUTH_REGISTRO_TOKEN_REQUERIDO` queda en `false` (GAPS G4).
+- [ ] **Dominio propio para el email** — hoy el remitente es un email verificado
+  en Brevo y los correos pueden caer en spam; con dominio, autenticarlo
+  (SPF/DKIM) y cambiar `EMAIL_REMITENTE` (§2b).
+- [ ] **Backups propios** — hoy solo el historial de 24 h de Neon (ver Notas).
+
+**Hecho**
+
+- [x] §0 Secretos de producción generados.
+- [x] §1 Neon — esquema cargado (2026-09-06); migraciones aplicadas hasta la
+  **025** (2026-09-26).
+- [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).
+- [x] §2b Brevo — emails reales de reset de contraseña (2026-09-27).
+- [x] §3–4 App apuntando a Render y prueba end-to-end, incluido el reset de
+  contraseña (2026-09-27).
+
 ---
 
 ## 0 · Antes de empezar — secretos
@@ -21,7 +42,7 @@ tu primer entorno accesible desde internet. Genera uno nuevo:
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-Guárdalo — va como variable de entorno en Render (paso 3), nunca en el repo.
+Guárdalo — va como variable de entorno en Render (paso 2), nunca en el repo.
 
 Variables de entorno del backend (`api/src` las lee vía `@nestjs/config`):
 
@@ -41,6 +62,8 @@ Variables de entorno del backend (`api/src` las lee vía `@nestjs/config`):
 
 - Proyecto: `twilight-truth-92618037`, branch `production`, región `us-east-2`, PostgreSQL 18.
 - Esquema **cargado y verificado**: 32 tablas (todas las migraciones 001–024 plegadas).
+- Migración **025** (`usuario.token_version`) aplicada a mano el 2026-09-26 desde
+  el SQL Editor de la consola de Neon.
 - La connection string (pooled) va como `DATABASE_URL` en Render (paso 2). **Es un
   secreto** — no la pongas en el repo; solo en Render (y, si corres el backend
   local contra Neon, en `api/.env`, que está en `.gitignore`).
@@ -62,7 +85,11 @@ migraciones propio de Neon y **choca** con el de este proyecto (SQL a mano en
 `api/db/README.md`.
 
 **Migración nueva** (cuando se agregue `api/db/migrations/NNN_*.sql`): correrla
-también contra Neon con el mismo `docker run … psql … < …NNN.sql`.
+también contra Neon **antes** de hacer push del código que la usa (Render
+despliega solo en cada push). Lo más simple es pegar el SQL en la consola de Neon
+→ **SQL Editor** (branch `production`, base `neondb`); si no, el mismo
+`docker run … psql … < …NNN.sql`. Si la consola marca la branch como
+*archived*, es solo porque estuvo sin uso; consultarla la reactiva.
 
 > Neon free tier **autosuspende** la DB tras ~5 min sin uso; la primera consulta
 > después la despierta (~0,5 s). Es esperado.

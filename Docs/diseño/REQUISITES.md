@@ -483,13 +483,17 @@ Punto revisado
 
 ### Punto a revisar
 
-1. Definición del modelo de dominio (agregados, entidades y relaciones).
+1. ~~Definición del modelo de dominio (agregados, entidades y relaciones).~~ →
+   **hecho**: `DDD.md`.
 
 ### Puntos pendientes
 
-1. Diseño de la base de datos.
-2. Diseño de APIs y casos de uso.
-3. Diseño UX/flujos de usuario.
+Todos cerrados (estado al 2026-09-27; lo abierto hoy vive en `../../GAPS.md` →
+Parte 1):
+
+1. ~~Diseño de la base de datos.~~ → `DATABASE_DESIGN.md` + `api/db/`.
+2. ~~Diseño de APIs y casos de uso.~~ → `API_DESIGN.md` + `APPLICATION_SERVICES.md`.
+3. ~~Diseño UX/flujos de usuario.~~ → `UX_FLOWS.md`.
 
 ### Caso de uso tipico
 

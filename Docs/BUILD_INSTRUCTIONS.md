@@ -24,7 +24,7 @@ Regla de precedencia: si algo en este documento de instrucciones contradice cual
 > **Nota (2026-09-06):** los 6 documentos fuente se migraron de `.docx` a Markdown.
 > Los `.docx` originales de Fase 0 quedan en `Docs/_baseline/` como referencia
 > histórica y ya no se editan. El registro de qué cambió respecto de la Fase 0
-> está en `GAPS.md` (G1–G30).
+> está en `GAPS.md` (G1–G32).
 
 ## 2. Stack técnico (decisión ya tomada, no reabrir)
 
@@ -61,8 +61,8 @@ Se define al cerrar la Fase 1, según qué se aprenda de ese primer ciclo comple
 Este es el punto más importante del documento. Los 2 vacíos originales de Fase 0
 **ya se resolvieron** (estado operativo de Deuda/Crédito → 6 estados derivados,
 `GAPS.md` G1; visibilidad de Movimiento Programado → hereda del elemento, G2).
-El registro completo de vacíos y decisiones está en **`GAPS.md`** (G1–G30); lo
-único abierto son 3 integraciones externas (G4, G20-push, G21-import).
+El registro completo de vacíos y decisiones está en **`GAPS.md`** (G1–G32); lo
+abierto está en su Parte 1 (Pendiente), con un resumen priorizado.
 
 Si Claude Code encuentra un vacío nuevo, no listado en `GAPS.md`, la regla es:
 

@@ -51,9 +51,17 @@ conexión a PostgreSQL está viva (`@nestjs/terminus` + `PrismaHealthIndicator`)
 ## Autenticación
 
 Todo endpoint exige `Authorization: Bearer <jwt>` (API_DESIGN), salvo los
-`@Public()`: `GET /health`, `POST /auth/login`, `POST /comandos/RegistrarUsuario`
-(ver GAPS.md G4). El token se obtiene con `POST /auth/login` (email + password).
-La autorización por rol vive dentro de cada Application Service, no en el guard.
+`@Public()`: `GET /health`, `POST /auth/login`, `POST /auth/registro-token`,
+`POST /comandos/RegistrarUsuario` (ver GAPS.md G4), y
+`POST /auth/solicitar-reset-password` / `POST /auth/reset-password` (GAPS.md
+G31). El token se obtiene con `POST /auth/login` (email + password). El guard
+rechaza los tokens de propósito acotado (registro/reset) y las sesiones emitidas
+antes de un reset de contraseña (`usuario.token_version`). La autorización por
+rol vive dentro de cada Application Service, no en el guard.
+
+Emails (token de registro, reset de contraseña): `BrevoEmailSender` si hay
+`BREVO_API_KEY` + `EMAIL_REMITENTE`; si no, `ConsoleEmailSender` (solo log).
+Ver `../Docs/DESPLIEGUE.md` §2b.
 
 ## Estructura
 
@@ -156,6 +164,10 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
 - Requiere migración `db/migrations/001_...sql` (columna `usuario_id`, GAPS.md G13).
 - Verificado: `test/flujo5-objetivo-reserva.e2e-spec.ts`. Ver GAPS.md G14.
 
-Cada comando escribe su entrada de `auditoria` en la misma transacción. El resto
-de los 52 Application Services entra en fases siguientes, un flujo vertical a la
-vez. Ver `Docs/BUILD_INSTRUCTIONS.md` y `../GAPS.md`.
+Cada comando escribe su entrada de `auditoria` en la misma transacción.
+
+Las fases 6 en adelante (presupuesto, movimientos programados, deuda/crédito,
+reconstrucción histórica, consolidación, notificaciones, multimoneda, reportes,
+categorías, etiquetas, etc.) están en el changelog del `../README.md`
+("Estado de construcción" → Implementado). Lo pendiente vive en `../GAPS.md`
+Parte 1.
