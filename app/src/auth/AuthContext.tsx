@@ -32,6 +32,8 @@ interface AuthContextValue {
    * entrega directo (dev), o null si lo envió por email y hay que pedir el código.
    */
   solicitarTokenRegistro: (email: string) => Promise<string | null>;
+  /** Canjea el código de 6 dígitos que llegó por email por el token de registro (G4). */
+  verificarCodigoRegistro: (email: string, codigo: string) => Promise<string>;
   registrar: (
     email: string,
     nombre: string,
@@ -107,6 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return r.token ?? null;
   }, []);
 
+  const verificarCodigoRegistro = useCallback(async (email: string, codigo: string) => {
+    const r = await api.post<{ token: string }>('/auth/verificar-codigo-registro', { email, codigo });
+    return r.token;
+  }, []);
+
   const registrar = useCallback(
     async (email: string, nombre: string, password: string, registroToken?: string) => {
       const cuerpo = { email, nombre, password };
@@ -141,8 +148,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [cerrarSesion]);
 
   const value = useMemo(
-    () => ({ session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion }),
-    [session, cargando, solicitarTokenRegistro, registrar, iniciarSesion, cerrarSesion],
+    () => ({
+      session,
+      cargando,
+      solicitarTokenRegistro,
+      verificarCodigoRegistro,
+      registrar,
+      iniciarSesion,
+      cerrarSesion,
+    }),
+    [session, cargando, solicitarTokenRegistro, verificarCodigoRegistro, registrar, iniciarSesion, cerrarSesion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

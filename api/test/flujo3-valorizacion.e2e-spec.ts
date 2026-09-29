@@ -110,56 +110,79 @@ describe('Flujo 3 — valorización de un activo (e2e)', () => {
     ]);
   });
 
-  it('solo deja anular / corregir la última valorización vigente', async () => {
-    const historial = await auth(
-      request(http).get(`/elementos-patrimoniales/${depId}/valorizaciones`),
-    ).expect(200);
-    const primera = historial.body.find(
-      (v: { valorAnterior: number }) => v.valorAnterior === 100_000_000,
-    );
-    const ultima = historial.body.find(
-      (v: { valorAnterior: number }) => v.valorAnterior === 120_000_000,
-    );
+  const historial = async () =>
+    (await auth(request(http).get(`/elementos-patrimoniales/${depId}/valorizaciones`)).expect(200))
+      .body as { id: string; valorAnterior: number; valorNuevo: number; anulada: boolean; correccionDeId: string | null }[];
+  const impactosDe = async (valorizacionId: string) =>
+    (await prisma.impacto_patrimonial.findMany({ where: { origen_tipo: 'VALORIZACION', origen_id: valorizacionId } }))
+      .reduce((s, i) => s + Number(i.monto), 0);
+
+  it('anula una valorización intermedia: la siguiente absorbe la diferencia (G11)', async () => {
+    const h = await historial();
+    const primera = h.find((v) => v.valorAnterior === 100_000_000)!;
+    const segunda = h.find((v) => v.valorAnterior === 120_000_000)!;
 
     await auth(
       request(http)
         .post('/comandos/AnularValorizacion')
         .send({ valorizacionId: primera.id, motivo: 'no era esta' }),
-    ).expect(409);
-
-    await auth(
-      request(http)
-        .post('/comandos/AnularValorizacion')
-        .send({ valorizacionId: ultima.id, motivo: 'tasación incorrecta' }),
     ).expect(200);
-    expect(await valorDep()).toBe(120_000_000); // vuelve al valor anterior a esa valorización
+
+    // La segunda sigue fijando 130M: el valor vigente no cambia...
+    expect(await valorDep()).toBe(130_000_000);
+    // ...y su impacto pasa a ser 100M → 130M (inmutable: se agrega un compensatorio).
+    expect(await impactosDe(primera.id)).toBe(0);
+    expect(await impactosDe(segunda.id)).toBe(30_000_000);
+    const entrada = await prisma.auditoria.findFirst({ where: { comando: 'AnularValorizacion' } });
+    expect(entrada?.entidad_relacionada_id).toBe(segunda.id);
   });
 
-  it('corrige la valorización vigente reemplazando el valor', async () => {
-    const historial = await auth(
-      request(http).get(`/elementos-patrimoniales/${depId}/valorizaciones`),
-    ).expect(200);
-    const vigente = historial.body.find(
-      (v: { anulada: boolean; correccionDeId: string | null }) =>
-        !v.anulada && v.correccionDeId === null,
-    );
+  it('corrige una valorización intermedia re-encadenando la siguiente (G11)', async () => {
+    await auth(
+      request(http)
+        .post('/comandos/RegistrarValorizacion')
+        .send({ elementoId: depId, valorNuevo: 140_000_000 }),
+    ).expect(201);
+    const h = await historial();
+    const segunda = h.find((v) => v.valorAnterior === 120_000_000)!;
+    const tercera = h.find((v) => v.valorAnterior === 130_000_000 && v.correccionDeId === null)!;
 
     const correccion = await auth(
       request(http)
         .post('/comandos/CorregirValorizacion')
-        .send({ valorizacionId: vigente.id, valorCorrecto: 118_000_000, motivo: 'la tasación decía 118' }),
+        .send({ valorizacionId: segunda.id, valorCorrecto: 125_000_000, motivo: 'la tasación decía 125' }),
     ).expect(201);
 
-    expect(correccion.body.valorAnterior).toBe(120_000_000);
-    expect(correccion.body.valorNuevo).toBe(118_000_000);
-    expect(correccion.body.correccionDeId).toBe(vigente.id);
-    expect(await valorDep()).toBe(118_000_000); // reemplaza, no suma delta al anterior
+    expect(correccion.body.valorAnterior).toBe(130_000_000);
+    expect(correccion.body.valorNuevo).toBe(125_000_000);
+    expect(correccion.body.correccionDeId).toBe(segunda.id);
+    expect(await valorDep()).toBe(140_000_000); // la tercera sigue fijando el valor
+    expect(await impactosDe(tercera.id)).toBe(15_000_000); // ahora va de 125M a 140M
 
     const entrada = await prisma.auditoria.findFirst({
       where: { comando: 'CorregirValorizacion' },
     });
-    expect(entrada?.entidad_id).toBe(vigente.id);
+    expect(entrada?.entidad_id).toBe(segunda.id);
     expect(entrada?.entidad_relacionada_id).toBe(correccion.body.id);
-    expect(entrada?.motivo).toBe('la tasación decía 118');
+    expect(entrada?.motivo).toBe('la tasación decía 125');
+  });
+
+  it('anular la última descuenta su delta efectivo', async () => {
+    const tercera = (await historial()).find((v) => v.valorAnterior === 130_000_000 && v.correccionDeId === null)!;
+    await auth(
+      request(http)
+        .post('/comandos/AnularValorizacion')
+        .send({ valorizacionId: tercera.id, motivo: 'tasación incorrecta' }),
+    ).expect(200);
+    expect(await valorDep()).toBe(125_000_000); // vuelve al valor corregido de la segunda
+  });
+
+  it('no deja anular una valorización con corrección vigente', async () => {
+    const segunda = (await historial()).find((v) => v.valorAnterior === 120_000_000)!;
+    await auth(
+      request(http)
+        .post('/comandos/AnularValorizacion')
+        .send({ valorizacionId: segunda.id, motivo: 'no va' }),
+    ).expect(409);
   });
 });

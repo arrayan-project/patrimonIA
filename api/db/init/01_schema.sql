@@ -414,6 +414,18 @@ CREATE TABLE dispositivo_push (
 
 CREATE INDEX ix_dispositivo_push_usuario ON dispositivo_push (usuario_id);
 
+-- Códigos de 6 dígitos por email para registro y reset (migración 026, G31/G4)
+CREATE TABLE codigo_verificacion (
+    email        TEXT        NOT NULL,
+    proposito    TEXT        NOT NULL CONSTRAINT ck_codigo_verificacion_proposito
+                                 CHECK (proposito IN ('REGISTRO', 'RESET')),
+    codigo_hash  TEXT        NOT NULL,
+    expira_en    TIMESTAMPTZ NOT NULL,
+    intentos     INTEGER     NOT NULL DEFAULT 0,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (email, proposito)
+);
+
 -- ============================================================================
 -- 13. Idempotencia de comandos (migración 006 — infraestructura de API)
 -- Guarda la respuesta ya emitida para una (Idempotency-Key, usuario).

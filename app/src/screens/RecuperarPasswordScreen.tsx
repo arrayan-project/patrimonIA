@@ -7,7 +7,8 @@ type Paso = 'email' | 'codigo' | 'listo';
 
 /**
  * Recuperar contraseña olvidada (GAPS.md G31): pide el email, el backend envía
- * un código (token de un solo uso, 30 min) y con él se elige la nueva contraseña.
+ * un código de 6 dígitos (un solo uso, 15 min, 5 intentos) y con él se elige la
+ * nueva contraseña.
  * Al completarse, el backend cierra todas las sesiones abiertas.
  */
 export function RecuperarPasswordScreen() {
@@ -21,7 +22,7 @@ export function RecuperarPasswordScreen() {
   const [intento, setIntento] = useState(false);
 
   const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
-  const errCodigo = codigo.trim() ? '' : 'Pega el código que te enviamos.';
+  const errCodigo = /^\d{6}$/.test(codigo.trim()) ? '' : 'Escribe los 6 dígitos que te enviamos.';
   const errPassword = password.length >= 8 ? '' : 'Mínimo 8 caracteres.';
 
   const ejecutar = async (accion: () => Promise<void>) => {
@@ -50,7 +51,11 @@ export function RecuperarPasswordScreen() {
     setIntento(true);
     if (errCodigo || errPassword) return;
     void ejecutar(async () => {
-      await api.post('/auth/reset-password', { token: codigo.trim(), nuevaPassword: password });
+      await api.post('/auth/reset-password', {
+        email: email.trim(),
+        codigo: codigo.trim(),
+        nuevaPassword: password,
+      });
       setPaso('listo');
     });
   };
@@ -90,12 +95,15 @@ export function RecuperarPasswordScreen() {
       ) : (
         <>
           <Paragraph>
-            Si {email.trim()} tiene una cuenta, te llegará un código que vence en 30 minutos. Pégalo
-            aquí y elige tu nueva contraseña.
+            Si {email.trim()} tiene una cuenta, te llegará un código de 6 dígitos que vence en 15
+            minutos. Escríbelo aquí y elige tu nueva contraseña.
           </Paragraph>
           <Field
             label="Código"
-            autoCapitalize="none"
+            keyboardType="number-pad"
+            maxLength={6}
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
             value={codigo}
             onChangeText={setCodigo}
             error={intento ? errCodigo : undefined}

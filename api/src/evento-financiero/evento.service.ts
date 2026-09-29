@@ -93,17 +93,9 @@ export class EventoFinancieroService {
         await derivarValorPendiente(tx, p.elemento.id);
       }
 
-      let reservasConsumidas: { id: string; monto: number }[] = [];
-      if (asignacion) {
-        const activas = await tx.reserva.findMany({
-          where: { asignacion_id: asignacion.id, estado: 'ACTIVA' },
-        });
-        reservasConsumidas = activas.map((r) => ({ id: r.id, monto: Number(r.monto) }));
-        await tx.reserva.updateMany({
-          where: { asignacion_id: asignacion.id, estado: 'ACTIVA' },
-          data: { estado: 'CONSUMIDA' },
-        });
-      }
+      const reservasConsumidas = asignacion
+        ? await this.#consumirReservas(tx, asignacion.id, monto, moneda, new Set(plan.map((p) => p.elemento.id)))
+        : [];
 
       const entradaId = await this.auditoria.registrar(tx, {
         comando: 'RegistrarEventoFinanciero',
@@ -126,11 +118,12 @@ export class EventoFinancieroService {
       });
 
       if (asignacion && reservasConsumidas.length > 0) {
+        const total = reservasConsumidas.reduce((s, r) => s + r.monto, 0);
         await this.notificaciones.emitir(tx, {
           usuarioId: actorId,
           tipo: 'RESERVA_CONSUMIDA',
           titulo: 'Reservas consumidas',
-          cuerpo: `Se marcaron ${reservasConsumidas.length} reserva(s) como consumidas al asociar un movimiento a "${asignacion.nombre}".`,
+          cuerpo: `Se consumieron ${total} ${moneda} de las reservas de "${asignacion.nombre}" al asociarle un movimiento.`,
           entidadTipo: 'ASIGNACION',
           entidadId: asignacion.id,
         });
@@ -365,6 +358,57 @@ export class EventoFinancieroService {
     }
     const etqs = (await this.etiquetas.deEventos([eventoId])).get(eventoId) ?? [];
     return toEventoDTO(evento, impactos, etqs);
+  }
+
+  /**
+   * G14 — política "Consumir reserva": consume reservas ACTIVAS de la asignación
+   * solo hasta el monto del evento. Solo cuentan las de la misma moneda; primero
+   * las que están sobre un elemento que el evento mueve, luego las más antiguas.
+   * Si una queda a medias se divide: la fila original baja al monto consumido y
+   * pasa a CONSUMIDA, y el resto queda en una reserva ACTIVA nueva (`resto_id`).
+   * Así los estados siguen siendo binarios y anular el evento solo tiene que
+   * reactivar los ids consumidos (el total reservado vuelve a ser el mismo).
+   */
+  async #consumirReservas(
+    tx: Prisma.TransactionClient,
+    asignacionId: string,
+    monto: Prisma.Decimal,
+    moneda: string,
+    elementosEvento: Set<string>,
+  ): Promise<{ id: string; monto: number; resto_id?: string }[]> {
+    const activas = await tx.reserva.findMany({
+      where: { asignacion_id: asignacionId, estado: 'ACTIVA', elemento_patrimonial: { moneda } },
+      orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+    });
+    const candidatas = [
+      ...activas.filter((r) => elementosEvento.has(r.elemento_origen_id)),
+      ...activas.filter((r) => !elementosEvento.has(r.elemento_origen_id)),
+    ];
+
+    const consumidas: { id: string; monto: number; resto_id?: string }[] = [];
+    let restante = monto;
+    for (const r of candidatas) {
+      if (restante.lte(0)) break;
+      const montoReserva = new Prisma.Decimal(r.monto);
+      if (montoReserva.lte(restante)) {
+        await tx.reserva.update({ where: { id: r.id }, data: { estado: 'CONSUMIDA' } });
+        consumidas.push({ id: r.id, monto: montoReserva.toNumber() });
+        restante = restante.minus(montoReserva);
+      } else {
+        const resto = await tx.reserva.create({
+          data: {
+            asignacion_id: r.asignacion_id,
+            elemento_origen_id: r.elemento_origen_id,
+            monto: montoReserva.minus(restante),
+            estado: 'ACTIVA',
+          },
+        });
+        await tx.reserva.update({ where: { id: r.id }, data: { monto: restante, estado: 'CONSUMIDA' } });
+        consumidas.push({ id: r.id, monto: restante.toNumber(), resto_id: resto.id });
+        restante = new Prisma.Decimal(0);
+      }
+    }
+    return consumidas;
   }
 
   /**

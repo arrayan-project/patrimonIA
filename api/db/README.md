@@ -143,6 +143,10 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - `025_usuario_token_version.sql` — columna `token_version` en `usuario`. Se
   incrementa al resetear la contraseña: invalida las sesiones previas y el token
   de reset ya usado. Ya incluida en `init/01_schema.sql`. GAPS.md G31.
+- `026_codigo_verificacion.sql` — tabla `codigo_verificacion` (PK email +
+  propósito `REGISTRO`/`RESET`): hash del código de 6 dígitos que se envía por
+  email, vencimiento (15 min) e intentos (máx. 5). Reemplaza al JWT largo que
+  había que copiar. Ya incluida en `init/01_schema.sql`. GAPS.md G31/G4.
 
 ## Estado
 

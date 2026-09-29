@@ -21,6 +21,7 @@ import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
 import { useAlcance } from '../ui/alcance';
+import { usePreferencias } from '../preferencias';
 import {
   EmptyState,
   ErrorText,
@@ -62,6 +63,7 @@ export function DashboardScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
   const { alcance, setAlcance } = useAlcance();
+  const { preferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
 
@@ -211,7 +213,9 @@ export function DashboardScreen() {
   }
 
   const hoy = new Date();
-  const principal = patrimonio.porMoneda[0] ?? null;
+  const principal =
+    patrimonio.porMoneda.find((m) => m.moneda === preferencias.monedaPreferida) ?? patrimonio.porMoneda[0] ?? null;
+  const ver = preferencias.dashboard;
   const monedaPrin = alcance === 'hogar'
     ? (consolidado?.monedaConsolidacion ?? metricas?.porMoneda[0]?.moneda ?? hogar.monedaConsolidacion)
     : (principal?.moneda ?? 'CLP');
@@ -386,8 +390,8 @@ export function DashboardScreen() {
         </Panel>
       )}
 
-      <GroupLabel>Composición</GroupLabel>
-      {composicion.length === 0 && alcance === 'mios' ? (
+      {ver.composicion && <GroupLabel>Composición</GroupLabel>}
+      {!ver.composicion ? null : composicion.length === 0 && alcance === 'mios' ? (
         <EmptyState
           icon="wallet-outline"
           titulo="Aún no tienes cuentas ni bienes"
@@ -416,7 +420,7 @@ export function DashboardScreen() {
         </MiniGrid>
       )}
 
-      {alcance === 'mios' && principal && (
+      {ver.disponibilidad && alcance === 'mios' && principal && (
         <Panel>
           <Text style={styles.section}>Disponibilidad</Text>
           <View style={styles.dispRow}>
@@ -428,28 +432,30 @@ export function DashboardScreen() {
         </Panel>
       )}
 
-      <Panel>
-        <View style={styles.headRow}>
-          <Text style={styles.section}>Flujo de {MESES[hoy.getMonth()]}</Text>
-          <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')} accessibilityRole="button" accessibilityLabel="Ver movimientos">
-            <Text style={styles.link}>Ver movimientos ›</Text>
-          </Pressable>
-        </View>
-        {flujo ? (
-          <>
-            <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
-            <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
-            <Row
-              left="Balance"
-              right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
-            />
-          </>
-        ) : (
-          <Text style={styles.muted}>Sin movimientos este mes.</Text>
-        )}
-      </Panel>
+      {ver.flujo && (
+        <Panel>
+          <View style={styles.headRow}>
+            <Text style={styles.section}>Flujo de {MESES[hoy.getMonth()]}</Text>
+            <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')} accessibilityRole="button" accessibilityLabel="Ver movimientos">
+              <Text style={styles.link}>Ver movimientos ›</Text>
+            </Pressable>
+          </View>
+          {flujo ? (
+            <>
+              <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
+              <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
+              <Row
+                left="Balance"
+                right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
+              />
+            </>
+          ) : (
+            <Text style={styles.muted}>Sin movimientos este mes.</Text>
+          )}
+        </Panel>
+      )}
 
-      {enProgreso.length > 0 && monedasObj.size === 1 && (
+      {ver.objetivos && enProgreso.length > 0 && monedasObj.size === 1 && (
         <Panel>
           <View style={styles.headRow}>
             <Text style={styles.section}>Objetivos</Text>
@@ -465,15 +471,19 @@ export function DashboardScreen() {
         </Panel>
       )}
 
-      <GroupLabel>Accesos rápidos</GroupLabel>
-      <QuickActions
-        items={[
-          { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
-          { icon: 'flag-outline', label: 'Objetivos', onPress: () => nav.go('Objetivos') },
-          { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
-          { icon: 'trending-up-outline', label: 'Evolución', onPress: () => nav.go('EvolucionPatrimonio') },
-        ]}
-      />
+      {ver.accesos && (
+        <>
+          <GroupLabel>Accesos rápidos</GroupLabel>
+          <QuickActions
+            items={[
+              { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
+              { icon: 'flag-outline', label: 'Objetivos', onPress: () => nav.go('Objetivos') },
+              { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
+              { icon: 'trending-up-outline', label: 'Evolución', onPress: () => nav.go('EvolucionPatrimonio') },
+            ]}
+          />
+        </>
+      )}
 
       <ErrorText>{error}</ErrorText>
     </Screen>

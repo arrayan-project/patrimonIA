@@ -5,6 +5,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { CodigoVerificacionService } from './codigo-verificacion.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { crearEmailSender, EMAIL_SENDER } from './email-sender.js';
 import { RateLimiter } from '../common/rate-limiter.js';
@@ -25,6 +26,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
   controllers: [AuthController],
   providers: [
     AuthService,
+    CodigoVerificacionService,
     RateLimiter,
     { provide: EMAIL_SENDER, useFactory: () => crearEmailSender() },
     {

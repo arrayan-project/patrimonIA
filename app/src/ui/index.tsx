@@ -42,10 +42,18 @@ export function aISO(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** 'YYYY-MM-DD' → "15 mar 2026". Devuelve el string tal cual si no parsea. */
+/** Preferencia del usuario (G25): "15 mar 2026" o "15-03-2026". La fija PreferenciasProvider. */
+export type FormatoFecha = 'legible' | 'numerico';
+let formatoFecha: FormatoFecha = 'legible';
+export function setFormatoFecha(f: FormatoFecha): void {
+  formatoFecha = f;
+}
+
+/** 'YYYY-MM-DD' → "15 mar 2026" (o "15-03-2026" según la preferencia). Devuelve el string tal cual si no parsea. */
 export function fechaLegible(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return iso;
+  if (formatoFecha === 'numerico') return `${m[3]}-${m[2]}-${m[1]}`;
   const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   return `${Number(m[3])} ${meses[Number(m[2]) - 1]} ${m[1]}`;
 }

@@ -12,10 +12,10 @@ const emailSpy: EmailSender = {
     emailsEnviados.push({ a, asunto, cuerpo });
   },
 };
-/** Extrae el token JWT del cuerpo del último email a `destinatario`. */
-const tokenDelEmail = (destinatario: string) => {
+/** Extrae el código de 6 dígitos del cuerpo del último email a `destinatario`. */
+const codigoDelEmail = (destinatario: string) => {
   const email = [...emailsEnviados].reverse().find((e) => e.a === destinatario);
-  return email?.cuerpo.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/)?.[0];
+  return email?.cuerpo.match(/\b\d{6}\b/)?.[0];
 };
 
 /** Recuperación de contraseña olvidada (GAPS.md G31). */
@@ -41,7 +41,7 @@ describe('Reset de contraseña (e2e)', () => {
     prisma = app.get(PrismaService);
     http = app.getHttpServer();
     await prisma.$executeRawUnsafe(
-      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, idempotencia RESTART IDENTITY CASCADE',
+      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, idempotencia, codigo_verificacion RESTART IDENTITY CASCADE',
     );
     await request(http)
       .post('/comandos/RegistrarUsuario')
@@ -62,7 +62,10 @@ describe('Reset de contraseña (e2e)', () => {
     expect(emailsEnviados.some((e) => e.a === 'nadie@e2e.cl')).toBe(false);
   });
 
-  it('flujo completo: el token llega por email, cambia la contraseña y cierra sesiones', async () => {
+  const reset = (codigo: string | undefined, nuevaPassword: string) =>
+    request(http).post('/auth/reset-password').send({ email: 'reset@e2e.cl', codigo, nuevaPassword });
+
+  it('flujo completo: el código llega por email, cambia la contraseña y cierra sesiones', async () => {
     const sesionVieja = (await login('vieja1234').expect(200)).body.accessToken;
     await request(http).get('/usuarios/me/notificaciones').set('Authorization', `Bearer ${sesionVieja}`).expect(200);
 
@@ -70,17 +73,11 @@ describe('Reset de contraseña (e2e)', () => {
       .post('/auth/solicitar-reset-password')
       .send({ email: 'reset@e2e.cl' })
       .expect(200);
-    expect(r.body).toEqual({ enviado: true }); // el token no viaja en la respuesta
-    const tokenReset = tokenDelEmail('reset@e2e.cl');
-    expect(tokenReset).toBeDefined();
+    expect(r.body).toEqual({ enviado: true }); // el código no viaja en la respuesta
+    const codigo = codigoDelEmail('reset@e2e.cl');
+    expect(codigo).toMatch(/^\d{6}$/);
 
-    // El token de reset no sirve como sesión.
-    await request(http).get('/usuarios/me/notificaciones').set('Authorization', `Bearer ${tokenReset}`).expect(401);
-
-    await request(http)
-      .post('/auth/reset-password')
-      .send({ token: tokenReset, nuevaPassword: 'nueva1234' })
-      .expect(200);
+    await reset(codigo, 'nueva1234').expect(200);
 
     await login('vieja1234').expect(401);
     const sesionNueva = (await login('nueva1234').expect(200)).body.accessToken;
@@ -88,29 +85,26 @@ describe('Reset de contraseña (e2e)', () => {
     await request(http).get('/usuarios/me/notificaciones').set('Authorization', `Bearer ${sesionVieja}`).expect(401);
     await request(http).get('/usuarios/me/notificaciones').set('Authorization', `Bearer ${sesionNueva}`).expect(200);
 
-    // Un solo uso: reutilizar el token falla.
-    await request(http)
-      .post('/auth/reset-password')
-      .send({ token: tokenReset, nuevaPassword: 'otra12345' })
-      .expect(401);
+    // Un solo uso: reutilizar el código falla.
+    await reset(codigo, 'otra12345').expect(401);
   });
 
-  it('rechaza un token de sesión o un token inválido como token de reset', async () => {
-    const sesion = (await login('nueva1234').expect(200)).body.accessToken;
-    await request(http)
-      .post('/auth/reset-password')
-      .send({ token: sesion, nuevaPassword: 'otra12345' })
-      .expect(401);
-    await request(http)
-      .post('/auth/reset-password')
-      .send({ token: 'basura', nuevaPassword: 'otra12345' })
-      .expect(401);
+  it('tras 5 intentos fallidos el código deja de servir', async () => {
+    await request(http).post('/auth/solicitar-reset-password').send({ email: 'reset@e2e.cl' }).expect(200);
+    const codigo = codigoDelEmail('reset@e2e.cl')!;
+    const malo = codigo === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 5; i++) await reset(malo, 'otra12345').expect(401);
+    await reset(codigo, 'otra12345').expect(401);
+    await login('nueva1234').expect(200);
   });
 
-  it('valida el largo mínimo de la nueva contraseña', async () => {
-    await request(http)
-      .post('/auth/reset-password')
-      .send({ token: 'x', nuevaPassword: 'corta' })
-      .expect(400);
+  it('un código de registro no sirve para el reset', async () => {
+    await request(http).post('/auth/registro-token').send({ email: 'reset@e2e.cl' }).expect(200);
+    await reset(codigoDelEmail('reset@e2e.cl'), 'otra12345').expect(401);
+  });
+
+  it('valida el formato del código y el largo mínimo de la nueva contraseña', async () => {
+    await reset('abc', 'otra12345').expect(400);
+    await reset('123456', 'corta').expect(400);
   });
 });

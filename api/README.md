@@ -52,9 +52,11 @@ conexión a PostgreSQL está viva (`@nestjs/terminus` + `PrismaHealthIndicator`)
 
 Todo endpoint exige `Authorization: Bearer <jwt>` (API_DESIGN), salvo los
 `@Public()`: `GET /health`, `POST /auth/login`, `POST /auth/registro-token`,
-`POST /comandos/RegistrarUsuario` (ver GAPS.md G4), y
+`POST /auth/verificar-codigo-registro`, `POST /comandos/RegistrarUsuario` (ver
+GAPS.md G4), y
 `POST /auth/solicitar-reset-password` / `POST /auth/reset-password` (GAPS.md
-G31). El token se obtiene con `POST /auth/login` (email + password). El guard
+G31). Registro y reset envían por email un código de 6 dígitos (15 min, 5
+intentos, tabla `codigo_verificacion`). El token se obtiene con `POST /auth/login` (email + password). El guard
 rechaza los tokens de propósito acotado (registro/reset) y las sesiones emitidas
 antes de un reset de contraseña (`usuario.token_version`). La autorización por
 rol vive dentro de cada Application Service, no en el guard.
@@ -124,8 +126,10 @@ Convención de auditoría: `comando` en PascalCase (`RegistrarEventoFinanciero`)
 - `POST /comandos/RegistrarValorizacion` (#17) — reemplaza `valor_vigente` (no
   acumula), genera impacto = nuevo − anterior. Exige `admite_valorizacion`.
 - `POST /comandos/AnularValorizacion` (#18) / `CorregirValorizacion` (#19) —
-  solo sobre la última valorización vigente del elemento. Corregir **reemplaza**
-  el valor (stock, no flujo). Motivo obligatorio.
+  sobre cualquier valorización vigente sin corrección viva; si no es la última,
+  la siguiente absorbe la diferencia con un impacto compensatorio y
+  `valor_vigente` no cambia (GAPS.md G11). Corregir **reemplaza** el valor
+  (stock, no flujo). Motivo obligatorio.
 - `GET /elementos-patrimoniales/:id/valorizaciones` — historial.
 - Verificado: `test/flujo3-valorizacion.e2e-spec.ts`.
 

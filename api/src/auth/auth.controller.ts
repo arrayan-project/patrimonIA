@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Ip, Post, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService, type LoginResult } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
-import { RegistroTokenDto } from './dto/registro-token.dto.js';
+import { RegistroTokenDto, VerificarCodigoRegistroDto } from './dto/registro-token.dto.js';
 import { ResetPasswordDto, SolicitarResetPasswordDto } from './dto/reset-password.dto.js';
 import { Public } from './public.decorator.js';
 import { RateLimiter } from '../common/rate-limiter.js';
@@ -32,6 +32,13 @@ export class AuthController {
   }
 
   @Public()
+  @Post('verificar-codigo-registro')
+  @HttpCode(200)
+  verificarCodigoRegistro(@Body() dto: VerificarCodigoRegistroDto) {
+    return this.auth.verificarCodigoRegistro(dto.email.toLowerCase(), dto.codigo);
+  }
+
+  @Public()
   @Post('solicitar-reset-password')
   @HttpCode(200)
   solicitarResetPassword(@Body() dto: SolicitarResetPasswordDto, @Ip() ip: string) {
@@ -50,6 +57,6 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.auth.resetPassword(dto.token, dto.nuevaPassword);
+    return this.auth.resetPassword(dto.email.toLowerCase(), dto.codigo, dto.nuevaPassword);
   }
 }

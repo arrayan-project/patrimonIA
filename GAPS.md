@@ -34,15 +34,15 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
-| **A** · Cuenta y autenticación | G4 (+ mejora UX de G31) | G31 |
+| **A** · Cuenta y autenticación | G4 (captcha) | G31 |
 | **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30 |
-| **C** · Elementos patrimoniales y visibilidad | G11 | G6, G18, G29 |
+| **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
-| **F** · Planificación: objetivos, reservas, presupuestos y programados | G14 | G2, G13, G15, G16, G26 |
+| **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26 |
 | **G** · Monedas, proyecciones y reportes | G21 | G7, G27 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G25, G32 | — |
+| **I** · App: preferencias y usabilidad | G25 (densidad), G32 | — |
 
 ---
 
@@ -55,10 +55,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
 | U4 | **G32** | Evaluación de usabilidad del flujo completo para un usuario nuevo: onboarding, mapa de navegación, conexión entre secciones. Hoy ni el autor siente que todo esté "conectado" y sea facilísimo de usar. | ⬜ accionable |
-| — | **G31** | Código de reset (y de registro, G4) más corto: hoy es el JWT completo (~250 caracteres). Código de 6 dígitos o deep link. | ⬜ accionable (mejora UX) |
-| — | **G25** | Darle forma al objeto de preferencias (formato de fecha, secciones del dashboard, densidad, moneda de despliegue) y decidir qué es del usuario y qué del hogar. | ⬜ + 📋 |
-| — | **G11** | ¿Anular/corregir valorizaciones **intermedias** (no solo la última) re-encadenando? | 📋 decisión |
-| — | **G14** | "Consumir reserva" es grueso (todas las ACTIVAS de golpe): ¿consumir solo hasta el monto del evento? | 📋 decisión |
+| — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
@@ -77,57 +74,19 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Estado (Fase 12 + 14c)**: **resuelto salvo el captcha**.
   - `POST /auth/registro-token` (anónimo, **rate-limit 10/hora por IP** —
     `RateLimiter` en memoria) emite un JWT `{ purpose: 'registro' }` de 15 min.
-    Si se le pasa `email`, el token queda **ligado a ese email** y se **envía por
-    correo** (`EmailSender`: `BrevoEmailSender` si hay `BREVO_API_KEY`, si no
-    `ConsoleEmailSender` — ver G31).
+    Si se le pasa `email`, se le **envía por correo un código de 6 dígitos**
+    (`EmailSender`: `BrevoEmailSender` si hay `BREVO_API_KEY`, si no
+    `ConsoleEmailSender` — ver G31) que se canjea en
+    `POST /auth/verificar-codigo-registro { email, codigo }` por el token,
+    **ligado a ese email**. Mismo mecanismo que el reset (tabla
+    `codigo_verificacion`, 15 min, 5 intentos — ver G31, migración 026).
   - En modo requerido (`AUTH_REGISTRO_TOKEN_REQUERIDO=true`) el token **no** se
-    devuelve en la respuesta (`{ enviado: true }`), solo llega al email; y
-    `RegistroTokenGuard` exige que el `email` del token coincida con el del alta.
+    devuelve en la respuesta (`{ enviado: true }`), solo se obtiene con el código;
+    y `RegistroTokenGuard` exige que el `email` del token coincida con el del alta.
   - En dev/test el endpoint devuelve el token directo y el guard no bloquea.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-### Tema C · Elementos patrimoniales y visibilidad
-
-#### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  🟡 PARCIAL (`admite_valorizacion` ✅ Fase 36; anular/corregir intermedias 📋)
-- ✅ (Fase 36, P3) Comando `CambiarAdmiteValorizacion {elementoId, admite}` —
-  toggle en "Editar elemento", rechaza habilitar en DEUDA/CREDITO.
-- 📋 Anular/corregir valorizaciones **intermedias** (no solo la última) — decisión.
-- **Qué falta**: AS #18 dice que la cadena de valorizaciones "debe ser
-  recorrible en orden" pero no acota cuál se puede anular.
-- **Decisión provisional (Fase 4)**: solo se puede **anular o corregir la última
-  valorización vigente** del elemento (igual que G9 para eventos).
-  `AnularValorizacion` **elimina** el impacto asociado (DDD #18 dice "eliminar",
-  y el esquema no tiene flag en `impacto_patrimonial`).
-- **`admite_valorizacion`**: se fija al crear el elemento
-  (`RegistrarElementoPatrimonial`; la app lo activa por defecto para categorías
-  ACTIVO / INVERSION) y se cambia después con `CambiarAdmiteValorizacion`
-  (Fase 36, ver arriba).
-- **Para decidir**: ¿anular/corregir valorizaciones intermedias re-encadenando?
-
-### Tema F · Planificación: objetivos, reservas, presupuestos y programados
-
-#### G14 — Fase 5c: políticas y simplificaciones  🟡 PARCIAL (des-consumir al anular ✅ Fase 36; consumo parcial de reservas 📋)
-- ✅ (Fase 36, P2) **AnularEventoFinanciero ahora "des-consume" reservas** — lee
-  la lista `reservas_consumidas` de la auditoría de `RegistrarEventoFinanciero` y
-  las que siguen CONSUMIDA vuelven a ACTIVA; recalcula el progreso del objetivo.
-  `evento.service.#reactivarReservasConsumidas`.
-- 📋 "Consumir reserva" es grueso (todas las ACTIVAS de la asignación de golpe,
-  no hasta el monto del evento) — refinarlo es decisión + más lógica.
-- **"Completar objetivo"**: solo transiciona EN_PROGRESO → COMPLETADO. Si el
-  progreso baja después (LiberarReserva), el objetivo **no** vuelve a
-  EN_PROGRESO solo — el usuario lo hace con `CambiarEstadoObjetivoFinanciero`
-  (Principio 4: última palabra del usuario). Genera fila de auditoría propia
-  encadenada al comando que la disparó (DATABASE_DESIGN §11).
-- **"Consumir reserva"**: al asociar un evento financiero a una asignación
-  (`asignacionId` en RegistrarEventoFinanciero), **todas** sus reservas ACTIVAS
-  pasan a CONSUMIDA (modelo grueso — no se consume "hasta el monto del evento").
-  Se registra embebido en la entrada de RegistrarEventoFinanciero.
-- **Disponibilidad / valor libre**: `valor_vigente − Σ reservas ACTIVAS`,
-  calculado en vivo. La reserva no mueve `valor_vigente` (no es hecho económico).
-- **AnularEventoFinanciero** de un evento que consumió reservas: las
-  "des-consume" (vuelven a ACTIVA) — ✅ Fase 36, ver arriba.
 
 ### Tema G · Monedas, proyecciones y reportes
 
@@ -172,7 +131,23 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 ### Tema I · App: preferencias y usabilidad
 
-#### G25 — Sección de Ajustes / preferencias de visualización  🟡 PARCIAL (tema + hub de Ajustes ✅; forma de las preferencias ⬜; usuario vs. hogar 📋)
+#### G25 — Sección de Ajustes / preferencias de visualización  🟡 PARCIAL (tema + hub ✅; preferencias v1 ✅ 2026-09-29; densidad ⬜)
+- ✅ (2026-09-29) **Preferencias v1** en `usuario.preferencias.visualizacion`
+  (sin migración: el JSONB ya existía y `ActualizarDatosUsuario` lo acepta):
+  `formatoFecha` (`legible` "15 mar 2026" | `numerico` "15-03-2026"),
+  `monedaPreferida` (qué moneda muestra el Inicio como principal si hay varias —
+  **no convierte**) y `dashboard` (mostrar/ocultar Composición, Disponibilidad,
+  Flujo del mes, Objetivos, Accesos rápidos). Defaults en el cliente
+  (`app/src/preferencias.tsx`, `PreferenciasProvider`); pantalla Ajustes ›
+  Apariencia › Visualización. Al guardar se parte del objeto vigente para no
+  pisar `notificaciones`. `fechaLegible()` lee la preferencia, así que aplica a
+  toda la app.
+- **Decisión usuario vs. hogar**: lo personal va en `usuario.preferencias`; lo
+  del hogar ya tiene su lugar normalizado (`categoria_movimiento`,
+  `tipo_elemento`, `hogar.moneda_consolidacion`), así que **no** se agrega
+  `hogar.configuracion JSONB`. El tema sigue siendo del dispositivo.
+- ⬜ Densidad (compacta/cómoda): toca los estilos de todos los componentes de
+  `ui/`; se deja para cuando se revise el sistema de diseño.
 - `GET /usuarios/me` ya devuelve `preferencias`; hay pantalla Ajustes (hub) y
   selector de tema (Fase 28). Falta: darle forma al objeto de preferencias
   (formato de fecha, secciones visibles del dashboard, densidad, moneda de
@@ -271,7 +246,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | # | Qué | Estado |
 |---|-----|--------|
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. | ✅ en producción (verificado 2026-09-27) |
-| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Hecho y verificado en prod (2026-09-27). Mejora de UX pendiente: el código es el JWT completo (muy largo) → código de 6 dígitos o deep link. | ✅ RESUELTO |
+| P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Hecho y verificado en prod (2026-09-27). Mejora de UX: código de 6 dígitos (también en el registro, G4) — migración 026, 2026-09-29. | ✅ RESUELTO |
 
 ### Pulido de UI — Fase 53
 
@@ -284,7 +259,7 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 
 ### Tema A · Cuenta y autenticación
 
-#### G31 — Recuperación de contraseña olvidada (login)  ✅ RESUELTO (verificado en prod 2026-09-27; mejora de UX ⬜)
+#### G31 — Recuperación de contraseña olvidada (login)  ✅ RESUELTO (verificado en prod 2026-09-27; código de 6 dígitos ✅ 2026-09-29)
 - **Qué falta**: no existe ningún mecanismo para que un usuario recupere el
   acceso si olvida su contraseña. `POST /auth/login` (`api/src/auth/auth.controller.ts`)
   es el único endpoint de autenticación además de `POST /auth/registro-token`
@@ -347,13 +322,23 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
   - Brevo configurado en Render (`Docs/DESPLIEGUE.md` §2b). **Verificado en
     prod (2026-09-27)**: el email llega, el reset vuelve a Login y se entra con
     la nueva contraseña.
-- **Mejora de UX pendiente (no bloqueante)**: el "código" que se pega es el JWT
-  completo (~250 caracteres) — funciona, pero es incómodo de copiar, sobre todo
-  en el teléfono. Afecta igual al token de registro (G4). Opciones:
+- **Mejora de UX ✅ (2026-09-29, migración 026)**: el "código" que se pegaba era
+  el JWT completo (~250 caracteres). Ahora es un **código de 6 dígitos**, igual
+  para el registro (G4). Tabla `codigo_verificacion` (PK email + propósito
+  `REGISTRO`/`RESET`, tabla aparte porque en el registro aún no existe el
+  usuario): guarda un HMAC del código (clave `JWT_SECRET`), vence a los
+  **15 min** y admite **5 intentos** (el intento se suma en el mismo `UPDATE`
+  que filtra vigencia y tope; acertar borra la fila filtrando por hash → un solo
+  uso atómico). Pedir otro código reemplaza al anterior.
+  `POST /auth/reset-password` ahora recibe `{ email, codigo, nuevaPassword }`
+  (el `token_version` sigue cerrando las sesiones). App: campo numérico de 6
+  dígitos con autocompletado de código único. Tests en
+  `reset-password.e2e-spec.ts` y `api-idempotencia-registro.e2e-spec.ts`.
+  Opciones que se evaluaron:
   - **Código corto** (6 dígitos): guardar su hash + expiración + intentos en
     una tabla (o columnas en `usuario`), con tope de intentos para que no se
     pueda adivinar por fuerza bruta. Es el cambio más directo para el usuario.
-  - **Deep link**: el email trae un link `patrimonia://reset?token=…` que abre
+  - **Deep link** (descartado por ahora): el email trae un link `patrimonia://reset?token=…` que abre
     la pantalla con el token ya cargado — el usuario no copia nada, pero
     requiere configurar el scheme/universal links en la app.
 - **Nota**: sin dominio propio los correos pueden caer en spam; si hay dominio,
@@ -482,6 +467,41 @@ ya cerrados en Fases 50–51).
   siguen la visibilidad de su asignación/objetivo.
 - **Cubierto por decisión**: la visibilidad propia del movimiento programado se
   mantiene heredada del elemento (DDD §S / G2).
+
+#### G11 — Valorización: cadena lineal y `admite_valorizacion` (Fase 4)  ✅ RESUELTO (`admite_valorizacion` ✅ Fase 36; anular/corregir intermedias ✅ 2026-09-29)
+- ✅ (Fase 36, P3) Comando `CambiarAdmiteValorizacion {elementoId, admite}` —
+  toggle en "Editar elemento", rechaza habilitar en DEUDA/CREDITO.
+- ✅ (2026-09-29) **Anular/corregir valorizaciones intermedias, re-encadenando.**
+  La valorización es un reemplazo (stock): la siguiente vigente de la cadena
+  fija el valor desde su fecha. Entonces, al anular o corregir una intermedia,
+  **`valor_vigente` no cambia** y la siguiente absorbe la diferencia; solo el
+  historial entre ambas cambia. Como `valorizacion` es inmutable (salvo
+  `anulada`), el re-encadenamiento **no** reescribe su `valor_anterior` (que
+  queda como "el valor al registrarla"): se agrega un **impacto compensatorio**
+  ligado a la siguiente (misma fecha, `origen_id` = la siguiente). Por eso el
+  delta efectivo de una valorización es la **suma de sus impactos**, y eso es lo
+  que se descuenta al anularla.
+  - Cadena: vigentes por fecha, con cada corrección justo después de su original
+    (`valorizacion.service.#siguienteEnCadena`).
+  - Si es la última, `valor_vigente −= delta` (corregir: `+=`). Antes se volvía a
+    `valor_anterior` / se fijaba el valor corregido, lo que borraba los
+    movimientos o ajustes registrados después de la valorización.
+  - Sigue sin poder anularse/corregirse una valorización con una corrección
+    vigente (se actúa sobre la corrección). La auditoría guarda
+    `reencadenada_id`. Tests: `flujo3-valorizacion.e2e-spec.ts`.
+  - App: "Corregir" / "Anular" disponibles en cualquier valorización vigente sin
+    corregir; el aviso de anulación explica si el valor actual cambia o no.
+- **Qué falta**: AS #18 dice que la cadena de valorizaciones "debe ser
+  recorrible en orden" pero no acota cuál se puede anular.
+- **Decisión provisional (Fase 4, reemplazada 2026-09-29)**: solo se podía
+  **anular o corregir la última valorización vigente** del elemento (igual que G9
+  para eventos).
+  `AnularValorizacion` **elimina** el impacto asociado (DDD #18 dice "eliminar",
+  y el esquema no tiene flag en `impacto_patrimonial`).
+- **`admite_valorizacion`**: se fija al crear el elemento
+  (`RegistrarElementoPatrimonial`; la app lo activa por defecto para categorías
+  ACTIVO / INVERSION) y se cambia después con `CambiarAdmiteValorizacion`
+  (Fase 36, ver arriba).
 
 #### G18 — Reconstrucción histórica: sin fecha de alta ni de baja (Fase 9)  ✅ RESUELTO (Fase 42, P10 — fecha_alta/fecha_baja; fecha de anulación descartada)
 - **Qué falta**: DDD Sección V pide reconstruir el estado a una fecha pasada
@@ -778,6 +798,37 @@ ya cerrados en Fases 50–51).
   planteamiento monousuario del Flujo 5 (UX_FLOWS). Reflejado también en
   `init/01_schema.sql`.
 - **Para decidir**: ¿objetivos/asignaciones compartidos por hogar?
+
+#### G14 — Fase 5c: políticas y simplificaciones  ✅ RESUELTO (des-consumir al anular ✅ Fase 36; consumo parcial ✅ 2026-09-29)
+- ✅ (Fase 36, P2) **AnularEventoFinanciero ahora "des-consume" reservas** — lee
+  la lista `reservas_consumidas` de la auditoría de `RegistrarEventoFinanciero` y
+  las que siguen CONSUMIDA vuelven a ACTIVA; recalcula el progreso del objetivo.
+  `evento.service.#reactivarReservasConsumidas`.
+- ✅ (2026-09-29) **Consumo parcial**: el evento consume reservas ACTIVAS de la
+  asignación **solo hasta su monto**. Orden: primero las que están sobre un
+  elemento que el evento mueve, luego las más antiguas; solo las de la misma
+  moneda que el evento. **Decisión: dividir** (no columna `monto_consumido`) — si
+  una reserva queda a medias, la fila original baja al monto consumido y pasa a
+  CONSUMIDA, y el resto queda en una reserva ACTIVA nueva. Sin migración, los
+  estados siguen binarios y `AnularEventoFinanciero` no cambia (reactiva los ids
+  consumidos; el total reservado vuelve a ser el mismo, en dos filas). La
+  auditoría guarda `reservas_consumidas: [{ id, monto, resto_id? }]`.
+  `evento.service.#consumirReservas`; tests en `flujo5-objetivo-reserva` y
+  `gaps-p1-p4`.
+- **"Completar objetivo"**: solo transiciona EN_PROGRESO → COMPLETADO. Si el
+  progreso baja después (LiberarReserva), el objetivo **no** vuelve a
+  EN_PROGRESO solo — el usuario lo hace con `CambiarEstadoObjetivoFinanciero`
+  (Principio 4: última palabra del usuario). Genera fila de auditoría propia
+  encadenada al comando que la disparó (DATABASE_DESIGN §11).
+- **"Consumir reserva"**: al asociar un evento financiero a una asignación
+  (`asignacionId` en RegistrarEventoFinanciero), sus reservas ACTIVAS pasan a
+  CONSUMIDA hasta cubrir el monto del evento (ver arriba; antes era "todas de
+  golpe").
+  Se registra embebido en la entrada de RegistrarEventoFinanciero.
+- **Disponibilidad / valor libre**: `valor_vigente − Σ reservas ACTIVAS`,
+  calculado en vivo. La reserva no mueve `valor_vigente` (no es hecho económico).
+- **AnularEventoFinanciero** de un evento que consumió reservas: las
+  "des-consume" (vuelven a ACTIVA) — ✅ Fase 36, ver arriba.
 
 #### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"  ✅ RESUELTO (propiedad: migración 002; ahorro por objetivo: Fase 41, P6)
 - Propiedad: ✅ (migración 002). "Asignaciones esperadas" / línea de ahorro por

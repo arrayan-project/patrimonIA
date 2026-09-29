@@ -274,7 +274,9 @@ Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`
 | `GET /usuarios/me/notificaciones` · `/no-leidas` · `POST …/:id/leer` · `…/leer-todas` | bandeja in-app | Fase 11 |
 | `GET /tipos-cambio` · `POST /comandos/RegistrarTipoCambio` | tasas registradas | Fase 13 |
 | `POST /usuarios/me/dispositivos-push` · `DELETE …` | Expo push tokens | Fase 14c |
-| `POST /auth/registro-token` | token de pre-registro (rate-limit por IP; email opcional) | Fase 12/14c / G4 |
+| `POST /auth/registro-token` | token de pre-registro (rate-limit por IP; email opcional → envía código de 6 dígitos) | Fase 12/14c / G4 |
+| `POST /auth/verificar-codigo-registro` | canjea `{ email, codigo }` por el token de pre-registro | G4 |
+| `POST /auth/solicitar-reset-password` · `POST /auth/reset-password` | reset de contraseña con código de 6 dígitos `{ email, codigo, nuevaPassword }` | G31 |
 
 ## Query params añadidos al listado de elementos
 

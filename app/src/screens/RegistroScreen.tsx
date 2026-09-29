@@ -5,7 +5,7 @@ import { useNav } from '../navigation/navigator';
 import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
 
 export function RegistroScreen() {
-  const { solicitarTokenRegistro, registrar } = useAuth();
+  const { solicitarTokenRegistro, verificarCodigoRegistro, registrar } = useAuth();
   const nav = useNav();
   const [email, setEmail] = useState('');
   const [nombre, setNombre] = useState('');
@@ -20,16 +20,18 @@ export function RegistroScreen() {
   const errNombre = nombre.trim() ? '' : 'Escribe tu nombre.';
   const errPassword = password.length >= 8 ? '' : 'Mínimo 8 caracteres.';
 
-  const crear = async (registroToken?: string) => {
-    if (!registroToken) {
+  /** Sin código pide el token de registro; con código lo canjea por el token (G4). */
+  const crear = async (codigoEmail?: string) => {
+    if (!codigoEmail) {
       setIntento(true);
       if (errEmail || errNombre || errPassword) return;
     }
     setError('');
     setLoading(true);
     try {
-      // Pide (o reutiliza) el token de registro para este email.
-      const token = registroToken ?? (await solicitarTokenRegistro(email.trim()));
+      const token = codigoEmail
+        ? await verificarCodigoRegistro(email.trim(), codigoEmail)
+        : await solicitarTokenRegistro(email.trim());
       if (!token) {
         // El backend lo envió por email — pedimos el código.
         setPideCodigo(true);
@@ -79,14 +81,25 @@ export function RegistroScreen() {
 
       {pideCodigo ? (
         <>
-          <Paragraph>Te enviamos un código de registro a {email.trim()}. Pégalo aquí:</Paragraph>
-          <Field label="Código de registro" value={codigo} onChangeText={setCodigo} />
+          <Paragraph>
+            Te enviamos un código de 6 dígitos a {email.trim()} (vence en 15 minutos). Escríbelo
+            aquí:
+          </Paragraph>
+          <Field
+            label="Código de registro"
+            keyboardType="number-pad"
+            maxLength={6}
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            value={codigo}
+            onChangeText={setCodigo}
+          />
           <ErrorText>{error}</ErrorText>
           <Button
             title="Confirmar registro"
             onPress={() => crear(codigo.trim())}
             loading={loading}
-            disabled={!codigo.trim()}
+            disabled={!/^\d{6}$/.test(codigo.trim())}
           />
           <LinkButton title="Volver" onPress={() => setPideCodigo(false)} />
         </>

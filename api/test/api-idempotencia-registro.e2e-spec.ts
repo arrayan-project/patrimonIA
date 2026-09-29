@@ -12,10 +12,10 @@ const emailSpy: EmailSender = {
     emailsEnviados.push({ a, asunto, cuerpo });
   },
 };
-/** Extrae el token JWT del cuerpo del último email a `destinatario`. */
-const tokenDelEmail = (destinatario: string) => {
+/** Extrae el código de 6 dígitos del cuerpo del último email a `destinatario`. */
+const codigoDelEmail = (destinatario: string) => {
   const email = [...emailsEnviados].reverse().find((e) => e.a === destinatario);
-  return email?.cuerpo.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/)?.[0];
+  return email?.cuerpo.match(/\b\d{6}\b/)?.[0];
 };
 
 /**
@@ -44,7 +44,7 @@ describe('Idempotencia y pre-registro (e2e)', () => {
     prisma = app.get(PrismaService);
     http = app.getHttpServer();
     await prisma.$executeRawUnsafe(
-      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, movimiento_programado, notificacion, idempotencia RESTART IDENTITY CASCADE',
+      'TRUNCATE auditoria, membresia, invitacion, hogar, usuario, elemento_patrimonial, elemento_propietario, evento_financiero, impacto_patrimonial, valorizacion, ajuste_patrimonial, objetivo_financiero, asignacion, reserva, presupuesto, movimiento_programado, notificacion, idempotencia, codigo_verificacion RESTART IDENTITY CASCADE',
     );
     await request(http)
       .post('/comandos/RegistrarUsuario')
@@ -129,13 +129,32 @@ describe('Idempotencia y pre-registro (e2e)', () => {
       delete process.env.AUTH_REGISTRO_TOKEN_REQUERIDO;
     });
 
-    it('en modo requerido el token no se devuelve, solo llega por email', async () => {
+    it('en modo requerido el token no se devuelve, solo llega un código por email', async () => {
       const r = await request(http)
         .post('/auth/registro-token')
         .send({ email: 'con-token@e2e.cl' })
         .expect(200);
       expect(r.body).toEqual({ enviado: true });
-      expect(tokenDelEmail('con-token@e2e.cl')).toBeTruthy();
+      expect(codigoDelEmail('con-token@e2e.cl')).toMatch(/^\d{6}$/);
+    });
+
+    it('el código se canjea una sola vez y se bloquea tras 5 intentos fallidos', async () => {
+      await request(http).post('/auth/registro-token').send({ email: 'intentos@e2e.cl' }).expect(200);
+      const codigo = codigoDelEmail('intentos@e2e.cl')!;
+      const malo = codigo === '000000' ? '111111' : '000000';
+      const canjear = (c: string) =>
+        request(http).post('/auth/verificar-codigo-registro').send({ email: 'intentos@e2e.cl', codigo: c });
+
+      for (let i = 0; i < 5; i++) await canjear(malo).expect(401);
+      // Agotados los intentos, ni el código correcto sirve.
+      await canjear(codigo).expect(401);
+
+      // Uno nuevo reemplaza al anterior y sirve una sola vez.
+      await request(http).post('/auth/registro-token').send({ email: 'intentos@e2e.cl' }).expect(200);
+      const nuevo = codigoDelEmail('intentos@e2e.cl')!;
+      const r = await canjear(nuevo).expect(200);
+      expect(typeof r.body.token).toBe('string');
+      await canjear(nuevo).expect(401);
     });
 
     it('RegistrarUsuario exige un token de registro válido y del mismo email', async () => {
@@ -145,7 +164,12 @@ describe('Idempotencia y pre-registro (e2e)', () => {
         .expect(401);
 
       await request(http).post('/auth/registro-token').send({ email: 'con-token@e2e.cl' }).expect(200);
-      const registroToken = tokenDelEmail('con-token@e2e.cl')!;
+      const registroToken = (
+        await request(http)
+          .post('/auth/verificar-codigo-registro')
+          .send({ email: 'con-token@e2e.cl', codigo: codigoDelEmail('con-token@e2e.cl') })
+          .expect(200)
+      ).body.token as string;
 
       // token ligado a con-token@ no sirve para otro email
       await request(http)

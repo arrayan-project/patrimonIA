@@ -165,8 +165,9 @@ ese momento faltaba probarlo en vivo; hoy se usa en el teléfono con Expo Go.)
 - **Multi-hogar** (14a): si perteneces a más de un hogar, el Dashboard muestra un
   selector; la elección se recuerda por usuario.
 - **Registro con token** (14c): `RegistroScreen` pide el token de registro a
-  `/auth/registro-token`; si el backend lo envía por email (modo producción),
-  pide el código.
+  `/auth/registro-token`; si el backend envía un código por email (modo
+  producción), pide los 6 dígitos y los canjea por el token en
+  `/auth/verificar-codigo-registro` (G4).
 - **Push** (14c): al iniciar sesión, `src/push/registerPush.ts` obtiene el Expo
   push token y lo registra en `/usuarios/me/dispositivos-push` (null en web /
   simulador / Expo Go — necesita un development build + `projectId` de EAS).

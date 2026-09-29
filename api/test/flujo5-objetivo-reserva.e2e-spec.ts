@@ -97,7 +97,7 @@ describe('Flujo 5 — objetivo + asignación + reserva (e2e)', () => {
     expect(raiz?.comando).toBe('CrearReserva');
   });
 
-  it('un evento asociado a la asignación consume sus reservas', async () => {
+  it('un evento asociado a la asignación consume sus reservas solo hasta su monto (G14)', async () => {
     await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
       .send({
         tipo: 'GASTO',
@@ -108,15 +108,33 @@ describe('Flujo 5 — objetivo + asignación + reserva (e2e)', () => {
       })
       .expect(201);
 
+    // Primero la reserva del elemento que mueve el evento (ahorro, 8M): se
+    // divide en 100k CONSUMIDA + 7,9M ACTIVA. La de Fintual (2M) no se toca.
     const reservas = await prisma.reserva.findMany({ where: { asignacion_id: asignacionId } });
-    expect(reservas.every((r) => r.estado === 'CONSUMIDA')).toBe(true);
+    const resumen = reservas
+      .map((r) => `${r.elemento_origen_id === ahorroId ? 'ahorro' : 'fintual'}:${r.estado}:${Number(r.monto)}`)
+      .sort();
+    expect(resumen).toEqual(['ahorro:ACTIVA:7900000', 'ahorro:CONSUMIDA:100000', 'fintual:ACTIVA:2000000']);
 
     const entrada = await prisma.auditoria.findFirst({
       where: { comando: 'RegistrarEventoFinanciero' },
       orderBy: { fecha_hora: 'desc' },
     });
-    const vp = (entrada?.valor_posterior ?? {}) as { reservas_consumidas?: unknown[] };
-    expect(vp.reservas_consumidas).toHaveLength(2);
+    const vp = (entrada?.valor_posterior ?? {}) as { reservas_consumidas?: { monto: number; resto_id?: string }[] };
+    expect(vp.reservas_consumidas).toHaveLength(1);
+    expect(vp.reservas_consumidas?.[0]).toMatchObject({ monto: 100_000, resto_id: expect.any(String) });
+
+    const obj = await auth(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200);
+    expect(obj.body.progreso).toBe(9_900_000);
+  });
+
+  it('un evento mayor que una reserva la consume entera y sigue con la siguiente', async () => {
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 8_500_000, moneda: 'CLP', elementoOrigenId: ahorroId, asignacionId })
+      .expect(201);
+    const activas = await prisma.reserva.findMany({ where: { asignacion_id: asignacionId, estado: 'ACTIVA' } });
+    // 7,9M de ahorro enteros + 600k de los 2M de Fintual → queda 1,4M en Fintual.
+    expect(activas.map((r) => [r.elemento_origen_id, Number(r.monto)])).toEqual([[fintualId, 1_400_000]]);
   });
 
   it('liberar una reserva baja el progreso (pero no revierte el estado)', async () => {

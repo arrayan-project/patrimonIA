@@ -84,10 +84,13 @@ export class ValorizacionService {
   }
 
   /**
-   * AS #18 — AnularValorizacion. Fase 4 solo permite anular la última
-   * valorización vigente del elemento (la cadena debe ser recorrible en orden).
-   * Revierte `valor_vigente` al valor anterior a ella y elimina su impacto.
-   * Auditoría: Anulación — motivo, valorización anulada.
+   * AS #18 — AnularValorizacion. Cualquier valorización vigente de la cadena,
+   * no solo la última (GAPS.md G11). Elimina sus impactos y su efecto se
+   * re-encadena (ver `#propagar`): si hay una valorización posterior, esa fija
+   * el valor desde su fecha y `valor_vigente` no cambia; si era la última,
+   * `valor_vigente` se descuenta en su delta (conserva los movimientos
+   * posteriores a ella, que volver a `valor_anterior` borraría).
+   * Auditoría: Anulación — motivo, valorización anulada, re-encadenada.
    */
   async anularValorizacion(actorId: string, dto: AnularValorizacionDto): Promise<ValorizacionDTO> {
     const valorizacion = await this.cargarValorizacion(dto.valorizacionId, actorId);
@@ -95,16 +98,20 @@ export class ValorizacionService {
     if (await this.tieneCorreccionViva(valorizacion.id)) {
       throw new ConflictException('La valorización tiene una corrección vigente — anúlala primero');
     }
-    await this.exigirUltimaVigente(valorizacion);
 
     const anulada = await this.prisma.$transaction(async (tx) => {
+      const siguiente = await this.#siguienteEnCadena(tx, valorizacion);
+      // Delta efectivo = suma de sus impactos (incluye compensaciones que haya
+      // absorbido de anulaciones/correcciones anteriores a ella).
+      const { _sum } = await tx.impacto_patrimonial.aggregate({
+        where: { origen_tipo: 'VALORIZACION', origen_id: valorizacion.id },
+        _sum: { monto: true },
+      });
+      const delta = new Prisma.Decimal(_sum.monto ?? 0);
       await tx.impacto_patrimonial.deleteMany({
         where: { origen_tipo: 'VALORIZACION', origen_id: valorizacion.id },
       });
-      await tx.elemento_patrimonial.update({
-        where: { id: valorizacion.elemento_id },
-        data: { valor_vigente: valorizacion.valor_anterior },
-      });
+      await this.#propagar(tx, valorizacion.elemento_id, siguiente, delta.negated());
       const actualizada = await tx.valorizacion.update({
         where: { id: valorizacion.id },
         data: { anulada: true },
@@ -117,7 +124,10 @@ export class ValorizacionService {
         entidadId: valorizacion.id,
         motivo: dto.motivo,
         valorAnterior: { anulada: false },
-        valorPosterior: { anulada: true },
+        valorPosterior: { anulada: true, ...(siguiente ? { reencadenada_id: siguiente.id } : {}) },
+        ...(siguiente
+          ? { entidadRelacionadaTipo: 'VALORIZACION', entidadRelacionadaId: siguiente.id }
+          : {}),
       });
 
       return actualizada;
@@ -129,8 +139,9 @@ export class ValorizacionService {
   /**
    * AS #19 — CorregirValorizacion. Patrón de corrección, pero REEMPLAZANDO el
    * valor: se inserta una valorización compensatoria (valor_anterior = el
-   * incorrecto, valor_nuevo = el correcto) enlazada a la original, y
-   * `valor_vigente` pasa a ser el correcto — nunca se suma (stock, no flujo).
+   * incorrecto, valor_nuevo = el correcto) enlazada a la original, con la misma
+   * fecha. Vale para cualquier valorización vigente, no solo la última (G11):
+   * la diferencia se re-encadena como en la anulación (`#propagar`).
    * Auditoría: Corrección — valorización original, compensatoria, motivo.
    */
   async corregirValorizacion(
@@ -142,7 +153,6 @@ export class ValorizacionService {
     if (await this.tieneCorreccionViva(original.id)) {
       throw new ConflictException('La valorización ya tiene una corrección — corrige esa última');
     }
-    await this.exigirUltimaVigente(original);
 
     const valorIncorrecto = new Prisma.Decimal(original.valor_nuevo);
     const valorCorrecto = new Prisma.Decimal(dto.valorCorrecto);
@@ -152,6 +162,8 @@ export class ValorizacionService {
     const delta = valorCorrecto.minus(valorIncorrecto);
 
     const compensatoria = await this.prisma.$transaction(async (tx) => {
+      // Antes de crear la compensatoria, que queda justo después de la original.
+      const siguiente = await this.#siguienteEnCadena(tx, original);
       const creada = await tx.valorizacion.create({
         data: {
           elemento_id: original.elemento_id,
@@ -172,10 +184,7 @@ export class ValorizacionService {
           fecha: original.fecha,
         },
       });
-      await tx.elemento_patrimonial.update({
-        where: { id: original.elemento_id },
-        data: { valor_vigente: valorCorrecto },
-      });
+      await this.#propagar(tx, original.elemento_id, siguiente, delta);
 
       await this.auditoria.registrar(tx, {
         comando: 'CorregirValorizacion',
@@ -184,7 +193,10 @@ export class ValorizacionService {
         entidadId: original.id,
         motivo: dto.motivo,
         valorAnterior: { valor_nuevo: valorIncorrecto.toNumber() },
-        valorPosterior: { valor_nuevo: valorCorrecto.toNumber() },
+        valorPosterior: {
+          valor_nuevo: valorCorrecto.toNumber(),
+          ...(siguiente ? { reencadenada_id: siguiente.id } : {}),
+        },
         entidadRelacionadaTipo: 'VALORIZACION',
         entidadRelacionadaId: creada.id,
       });
@@ -231,17 +243,70 @@ export class ValorizacionService {
     if (!prop) throw new ForbiddenException('No eres propietario de ese elemento');
   }
 
-  /** La valorización debe ser la más reciente vigente de su elemento. */
-  private async exigirUltimaVigente(valorizacion: ValorizacionRow): Promise<void> {
-    const masReciente = await this.prisma.valorizacion.findFirst({
-      where: { elemento_id: valorizacion.elemento_id, anulada: false },
-      orderBy: [{ fecha: 'desc' }, { created_at: 'desc' }],
-    });
-    if (masReciente?.id !== valorizacion.id) {
-      throw new ConflictException(
-        'Solo puede anularse o corregirse la última valorización vigente del elemento',
-      );
+  /**
+   * G11 — la valorización vigente que sigue a `v` en la cadena del elemento, o
+   * null si `v` es la última. Orden: fecha, y cada corrección justo después de
+   * su original (comparten fecha; sin esto, una corrección tardía quedaría
+   * después de valorizaciones del mismo día registradas entre medio).
+   */
+  async #siguienteEnCadena(
+    tx: Prisma.TransactionClient,
+    v: ValorizacionRow,
+  ): Promise<ValorizacionRow | null> {
+    const todas = await tx.valorizacion.findMany({ where: { elemento_id: v.elemento_id } });
+    const porId = new Map(todas.map((x) => [x.id, x]));
+    const raiz = (x: ValorizacionRow): ValorizacionRow => {
+      let r = x;
+      while (r.correccion_de_id && porId.has(r.correccion_de_id)) r = porId.get(r.correccion_de_id)!;
+      return r;
+    };
+    const clave = (x: ValorizacionRow) => {
+      const r = raiz(x);
+      return [r.fecha.getTime(), r.created_at.getTime(), x.created_at.getTime()];
+    };
+    const cadena = todas
+      .filter((x) => !x.anulada)
+      .sort((a, b) => {
+        const [ka, kb] = [clave(a), clave(b)];
+        return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2];
+      });
+    const i = cadena.findIndex((x) => x.id === v.id);
+    return cadena[i + 1] ?? null;
+  }
+
+  /**
+   * G11 — re-encadena un cambio de `ajuste` en el valor de una valorización que
+   * no es necesariamente la última. La valorización es un reemplazo (stock):
+   *  - si hay una `siguiente`, ella fija el valor desde su fecha → su impacto
+   *    debe absorber el cambio (`−ajuste`). Como `valorizacion` es inmutable, se
+   *    agrega un impacto compensatorio ligado a ella, y `valor_vigente` no cambia;
+   *  - si no hay, el cambio llega hasta hoy → `valor_vigente += ajuste`.
+   * El historial entre la valorización tocada y la siguiente queda recalculado.
+   */
+  async #propagar(
+    tx: Prisma.TransactionClient,
+    elementoId: string,
+    siguiente: ValorizacionRow | null,
+    ajuste: Prisma.Decimal,
+  ): Promise<void> {
+    if (ajuste.isZero()) return;
+    if (siguiente) {
+      await tx.impacto_patrimonial.create({
+        data: {
+          elemento_id: elementoId,
+          monto: ajuste.negated(),
+          origen_tipo: 'VALORIZACION',
+          origen_id: siguiente.id,
+          fecha: siguiente.fecha,
+        },
+      });
+      return;
     }
+    const el = await tx.elemento_patrimonial.findUniqueOrThrow({ where: { id: elementoId } });
+    await tx.elemento_patrimonial.update({
+      where: { id: elementoId },
+      data: { valor_vigente: new Prisma.Decimal(el.valor_vigente).plus(ajuste) },
+    });
   }
 
   private async tieneCorreccionViva(valorizacionId: string): Promise<boolean> {

@@ -85,19 +85,19 @@ describe('GAPS P1–P4 (e2e)', () => {
         .send({ tipo: 'GASTO', monto: 50_000, moneda: 'CLP', elementoOrigenId: cuentaId, asignacionId })
         .expect(201)
     ).body.id;
-    // el gasto consumió la reserva → progreso 0
-    expect((await auth(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.progreso).toBe(0);
-    expect(
-      (await prisma.reserva.findFirst({ where: { asignacion_id: asignacionId } }))?.estado,
-    ).toBe('CONSUMIDA');
+    // el gasto consumió 50k de la reserva (G14: solo hasta el monto) → progreso 250k
+    expect((await auth(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.progreso).toBe(250_000);
+    const estados = async () =>
+      (await prisma.reserva.findMany({ where: { asignacion_id: asignacionId }, orderBy: { monto: 'asc' } })).map(
+        (r) => `${r.estado}:${Number(r.monto)}`,
+      );
+    expect(await estados()).toEqual(['CONSUMIDA:50000', 'ACTIVA:250000']);
 
     await auth(request(http).post('/comandos/AnularEventoFinanciero'))
       .send({ eventoId, motivo: 'no ocurrió' })
       .expect(200);
 
-    expect(
-      (await prisma.reserva.findFirst({ where: { asignacion_id: asignacionId } }))?.estado,
-    ).toBe('ACTIVA');
+    expect(await estados()).toEqual(['ACTIVA:50000', 'ACTIVA:250000']);
     expect((await auth(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.progreso).toBe(300_000);
   });
 

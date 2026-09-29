@@ -22,6 +22,7 @@ export function ValorizacionDetalleScreen() {
 
   const [val, setVal] = useState<ValorizacionDTO | null>(null);
   const [esUltimaVigente, setEsUltimaVigente] = useState(false);
+  const [corregida, setCorregida] = useState(false);
   const [error, setError] = useState('');
 
   const [modo, setModo] = useState<null | 'corregir' | 'anular'>(null);
@@ -40,6 +41,7 @@ export function ValorizacionDetalleScreen() {
       setVal(v);
       if (v) setValorCorrecto(String(v.valorNuevo));
       setEsUltimaVigente(lista.filter((x) => !x.anulada)[0]?.id === valorizacionId);
+      setCorregida(lista.some((x) => !x.anulada && x.correccionDeId === valorizacionId));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -59,7 +61,10 @@ export function ValorizacionDetalleScreen() {
         );
         toast.mostrar('Valorización corregida');
       } else {
-        if (!(await confirmar('Anular valorización', 'El valor del elemento vuelve al anterior a esta valorización.', 'Anular'))) {
+        const efecto = esUltimaVigente
+          ? 'El valor del elemento se descuenta en lo que subió o bajó con esta valorización.'
+          : 'El valor actual no cambia (lo fija una valorización posterior); se recalcula el historial entre ambas.';
+        if (!(await confirmar('Anular valorización', efecto, 'Anular'))) {
           setEnviando(false);
           return;
         }
@@ -87,7 +92,9 @@ export function ValorizacionDetalleScreen() {
     );
   }
 
-  const accionable = !val.anulada && val.correccionDeId === null && esUltimaVigente;
+  // G11: cualquier valorización vigente, no solo la última; si ya tiene una
+  // corrección vigente, se actúa sobre la corrección.
+  const accionable = !val.anulada && val.correccionDeId === null && !corregida;
 
   return (
     <Screen onRefresh={cargar}>
@@ -103,10 +110,8 @@ export function ValorizacionDetalleScreen() {
         {val.correccionDeId && (
           <Text style={styles.nota}>Es la corrección de una valorización anterior.</Text>
         )}
-        {!accionable && !val.anulada && !val.correccionDeId && (
-          <Text style={styles.nota}>
-            Solo se puede corregir o anular la última valorización vigente.
-          </Text>
+        {corregida && !val.anulada && (
+          <Text style={styles.nota}>Esta valorización ya fue corregida.</Text>
         )}
       </Panel>
 

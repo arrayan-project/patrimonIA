@@ -47,8 +47,9 @@ export class RegistrarEventoDto {
 
   /**
    * Si se asocia a una asignación, dispara la política "Consumir reserva":
-   * las reservas ACTIVAS de esa asignación pasan a CONSUMIDA y se recalcula el
-   * progreso del objetivo (DDD Sección T / W).
+   * se consumen reservas ACTIVAS de esa asignación (misma moneda) hasta el monto
+   * del evento — dividiendo la última si hace falta (GAPS.md G14) — y se
+   * recalcula el progreso del objetivo (DDD Sección T / W).
    */
   @IsOptional()
   @IsUUID()

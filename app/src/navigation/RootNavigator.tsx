@@ -51,6 +51,7 @@ import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
 import { AjustesNotificacionesScreen } from '../screens/AjustesNotificacionesScreen';
+import { AjustesVisualizacionScreen } from '../screens/AjustesVisualizacionScreen';
 import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
@@ -148,6 +149,7 @@ const TITULOS: Record<string, string> = {
   TiposCambio: 'Tipos de cambio',
   Ajustes: 'Ajustes',
   AjustesNotificaciones: 'Notificaciones',
+  AjustesVisualizacion: 'Visualización',
   PatrimonioSeccion: 'Patrimonio',
   Categorias: 'Categorías de movimiento',
   TiposElemento: 'Tipos de elemento patrimonial',
@@ -188,6 +190,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['TiposCambio', TiposCambioScreen],
   ['Ajustes', AjustesScreen],
   ['AjustesNotificaciones', AjustesNotificacionesScreen],
+  ['AjustesVisualizacion', AjustesVisualizacionScreen],
   ['PatrimonioSeccion', PatrimonioSeccionScreen],
   ['Categorias', CategoriasScreen],
   ['TiposElemento', TiposElementoScreen],

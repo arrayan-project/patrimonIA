@@ -55,6 +55,16 @@ export function AjustesScreen() {
         onChange={setModo}
         formatearOpcion={(v) => ETIQUETA_TEMA[v]}
       />
+      <MenuList
+        items={[
+          {
+            title: 'Visualización',
+            subtitle: 'Formato de fecha, moneda principal y secciones del Inicio',
+            icon: 'options-outline',
+            onPress: () => nav.go('AjustesVisualizacion'),
+          },
+        ]}
+      />
 
       <GroupLabel>Clasificación</GroupLabel>
       <MenuList
