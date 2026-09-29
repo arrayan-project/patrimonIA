@@ -25,7 +25,9 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 - [x] §0 Secretos de producción generados.
 - [x] §1 Neon — esquema cargado (2026-09-06); migraciones aplicadas hasta la
-  **025** (2026-09-26).
+  **026** (2026-09-29).
+- [x] Tanda GAPS 2026-09-29 (G31/G4 código de 6 dígitos, G25, G14, G11)
+  desplegada en Render (commit `7b4e443`, después de la migración 026).
 - [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).
 - [x] §2b Brevo — emails reales de reset de contraseña (2026-09-27).
 - [x] §3–4 App apuntando a Render y prueba end-to-end, incluido el reset de

@@ -34,17 +34,16 @@ En resumen:
 
 - [ ] **Usabilidad del flujo completo** para un usuario nuevo — onboarding, mapa
   de navegación, conexión entre secciones (G32).
-- [ ] **Código de recuperación / registro más corto** — hoy es el JWT completo;
-  código de 6 dígitos o deep link (G31, G4).
-- [ ] **Preferencias de visualización** con forma definida (G25) y reintentos de
-  push fallidos (G20).
-- [ ] **Decisiones de dominio abiertas**: valorizaciones intermedias (G11) y
-  consumo parcial de reservas (G14).
-- [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20),
-  importación de tipos de cambio (G21).
+- [ ] **Densidad** en las preferencias de visualización (resto de G25).
+- [ ] **Bloqueado por proveedor externo**: importación de tipos de cambio (G21,
+  candidato mindicador.cl), captcha (G4), push remoto real (G20).
 
 ### Implementado
 
+- [x] **Tanda GAPS Parte 1 (2026-09-29)** — detalle en `GAPS.md` §2.1:
+  código de 6 dígitos para reset y registro (G31/G4, migración 026),
+  preferencias de visualización v1 (G25), consumo parcial de reservas (G14),
+  anular/corregir valorizaciones intermedias (G11).
 - [x] **Fase 0 — DB**: esquema PostgreSQL ejecutado y verificado en Docker
   (`postgres:16`). Ver `api/db/README.md`.
 - [x] **Fase 0 — backend**: NestJS 12 + Prisma 7 sobre PostgreSQL. `GET /health`

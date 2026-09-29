@@ -248,6 +248,25 @@ y pantalla en Configuración; la vista **Configuración** se consolidó como hub
 | P17 | **Hospedar el backend**: Expo (local) → Render (NestJS) → Neon (PostgreSQL), $0/mes. Pasos, `render.yaml` y checklist en **`Docs/DESPLIEGUE.md`**. | ✅ en producción (verificado 2026-09-27) |
 | P18 | **G31** — Recuperación de contraseña olvidada. Decidido (a) reset propio vía email + `usuario.token_version` (un solo uso + cierra sesiones). Hecho y verificado en prod (2026-09-27). Mejora de UX: código de 6 dígitos (también en el registro, G4) — migración 026, 2026-09-29. | ✅ RESUELTO |
 
+### Tanda GAPS Parte 1 — 2026-09-29
+
+Orden acordado: del más simple al más complejo. Commit `7b4e443`, en `main`
+desplegado en Render después de aplicar la migración 026 en Neon (2026-09-29).
+
+| # | Gap | Decisión y qué se hizo | Estado |
+|---|-----|------------------------|--------|
+| 1 | **G31** | Código de 6 dígitos en vez del JWT: tabla `codigo_verificacion` (migración 026), HMAC, 15 min, 5 intentos. | ✅ |
+| 2 | **G4** | Mismo mecanismo para el registro: `POST /auth/verificar-codigo-registro` canjea el código por el token. | ✅ (captcha sigue 🔒) |
+| 3 | **G25** | Preferencias v1 en `usuario.preferencias.visualizacion`; lo del hogar se queda en sus tablas. Densidad pendiente. | 🟡 |
+| 4 | **G14** | Consumo parcial: se divide la reserva (sin migración). | ✅ |
+| 5 | **G11** | Anular/corregir intermedias: impacto compensatorio en la siguiente (`valorizacion` sigue inmutable). | ✅ |
+| 6 | **U3** | Se deja diferido a propósito (aporta poco). | — |
+
+**Siguiente tanda** (necesita decisión del usuario): G32 (¿revisión heurística
+propia o prueba con alguien nuevo?) → G21 (¿mindicador.cl? ¿cron de Render o
+`@nestjs/schedule`?) → captcha G4 (¿Turnstile o hCaptcha? + claves) → push G20
+(cuenta EAS + `projectId` + teléfono físico).
+
 ### Pulido de UI — Fase 53
 
 | # | Qué | Estado |

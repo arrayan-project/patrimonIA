@@ -22,7 +22,7 @@ móviles, otra WiFi) — no hace falta estar en la misma que el PC.
 1. **nvm + Node 22**: `nvm install 22` (los `.nvmrc` eligen la versión sola).
 2. **Dependencias de la app**:
    ```bash
-   cd ~/Desktop/WebSiteProject/PatrimonIA/app && nvm use && npm install
+   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA/app && nvm use && npm install
    ```
 3. **Expo Go** instalado en el teléfono (App Store / Play Store).
 4. **`app/.env`** ya existe y apunta a Render:
@@ -35,7 +35,7 @@ móviles, otra WiFi) — no hace falta estar en la misma que el PC.
 
 **Una sola terminal:**
 ```bash
-cd ~/Desktop/WebSiteProject/PatrimonIA
+cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
 ./scripts/app.sh
 ```
 
@@ -71,21 +71,21 @@ Acá corren 3 piezas en tu PC y el teléfono va por la **misma WiFi**.
 docker volume create patrimonia_pgdata     # opcional, db.sh lo crea si falta
 sudo ufw allow 3000/tcp
 sudo ufw allow 8081:8090/tcp
-cd ~/Desktop/WebSiteProject/PatrimonIA/api && nvm use && npm install
+cd ~/Desktop/Projects/PersonalProjects/PatrimonIA/api && nvm use && npm install
 ```
 
 ## Cada vez
 
 **Terminal 1 — base de datos + backend:**
 ```bash
-cd ~/Desktop/WebSiteProject/PatrimonIA
+cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
 ./scripts/db.sh
 ./scripts/api.sh          # dejá abierta
 ```
 
 **Terminal 2 — Expo apuntando al backend local:**
 ```bash
-cd ~/Desktop/WebSiteProject/PatrimonIA/app
+cd ~/Desktop/Projects/PersonalProjects/PatrimonIA/app
 # comentá temporalmente la línea de app/.env, o exportá la IP LAN:
 EXPO_PUBLIC_API_URL="http://$(hostname -I | awk '{print $1}'):3000" npm start
 ```
@@ -115,7 +115,7 @@ Paso a paso, en orden:
 
 1. **Cortar backend y Metro**:
    ```bash
-   cd ~/Desktop/WebSiteProject/PatrimonIA
+   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
    ./scripts/parar.sh
    ```
    Cierra lo que esté en los puertos 3000 y 8081. **No toca Docker** (a propósito).
@@ -126,7 +126,7 @@ Paso a paso, en orden:
    (`patrimonia`, definido en el `docker-compose.yml` de la raíz) — un solo
    `docker compose down` no baja los dos, hacen falta ambos:
    ```bash
-   cd ~/Desktop/WebSiteProject/PatrimonIA
+   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
    docker compose down                 # banking-worker (si lo levantaste)
    cd api/db && docker compose down    # Postgres
    ```
@@ -141,7 +141,7 @@ Paso a paso, en orden:
 
 4. **Reiniciar Expo normal**:
    ```bash
-   cd ~/Desktop/WebSiteProject/PatrimonIA
+   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
    ./scripts/app.sh
    ```
    **Importante**: los `EXPO_PUBLIC_*` se inyectan al bundle una sola vez, al

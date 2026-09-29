@@ -32,11 +32,9 @@ Detalle y prioridad en `../GAPS.md` → Parte 1. Lo que toca la app:
 
 - [ ] **Evaluación de usabilidad del flujo completo** para un usuario nuevo
   (G32): onboarding, mapa de navegación, conexión entre secciones.
-- [ ] **Código de recuperación / registro más corto** (G31): hoy se pega el JWT
-  completo; código de 6 dígitos o deep link.
 - [ ] **Push remoto real** (G20): necesita un development build + `projectId`
   de EAS.
-- [ ] **Preferencias de visualización** con forma definida (G25).
+- [ ] **Densidad** (compacta/cómoda) en Ajustes › Visualización (resto de G25).
 - [ ] `ListItem` en Categorías y Tipos de elemento — diferido a propósito (U3).
 
 ### Implementado
@@ -47,7 +45,14 @@ reorganización de la navegación, pulido) están descritas en
 
 - **Recuperación de contraseña** (G31): link "¿Olvidaste tu contraseña?" en
   Login → `RecuperarPasswordScreen` (email → código + nueva contraseña → vuelta
-  a Login). Verificado en producción el 2026-09-27.
+  a Login). Verificado en producción el 2026-09-27. Desde el 2026-09-29 el
+  código es de 6 dígitos (campo numérico con autocompletado), también en el
+  registro (G4).
+- **Preferencias de visualización** (G25): Ajustes › Visualización — formato de
+  fecha, moneda principal del Inicio y secciones visibles. `src/preferencias.tsx`
+  (`PreferenciasProvider`), guardadas en `usuario.preferencias.visualizacion`.
+- **Valorizaciones** (G11): Corregir / Anular en cualquier valorización vigente
+  sin corregir, no solo la última.
 
 ### Fase 1 — Flujo 2 (Alta de hogar)
 
