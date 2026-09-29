@@ -9,6 +9,7 @@ import {
   type EtiquetaDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
+  type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -49,7 +50,9 @@ export function MovimientoDetalleScreen() {
   const contexto = nav.route.params?.contexto as string | undefined;
 
   const [evento, setEvento] = useState<EventoFinancieroDTO | null>(null);
-  const [nombresImpacto, setNombresImpacto] = useState<Record<string, string>>({});
+  // null = la cuenta no es visible para el usuario (no se enlaza).
+  const [nombresImpacto, setNombresImpacto] = useState<Record<string, string | null>>({});
+  const [presupuesto, setPresupuesto] = useState<PresupuestoDTO | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
@@ -69,21 +72,24 @@ export function MovimientoDetalleScreen() {
     try {
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
       setEvento(ev);
-      if (ev.tipo === 'TRANSFERENCIA' || ev.tipo === 'CONVERSION') {
-        const pares = await Promise.all(
-          ev.impactos.map(async (im) => {
-            try {
-              const el = await api.get<ElementoPatrimonialDTO>(
-                `/elementos-patrimoniales/${im.elementoId}`,
-                token,
-              );
-              return [im.elementoId, el.nombre] as const;
-            } catch {
-              return [im.elementoId, 'otra cuenta'] as const;
-            }
-          }),
-        );
-        setNombresImpacto(Object.fromEntries(pares));
+      const pares = await Promise.all(
+        ev.impactos.map(async (im) => {
+          try {
+            const el = await api.get<ElementoPatrimonialDTO>(
+              `/elementos-patrimoniales/${im.elementoId}`,
+              token,
+            );
+            return [im.elementoId, el.nombre] as const;
+          } catch {
+            return [im.elementoId, null] as const;
+          }
+        }),
+      );
+      setNombresImpacto(Object.fromEntries(pares));
+      // G32 H-05 — un gasto del mes en curso enlaza al presupuesto vigente.
+      if (ev.tipo === 'GASTO' && ev.fecha.slice(0, 7) === aISO(new Date()).slice(0, 7)) {
+        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token).catch(() => []);
+        setPresupuesto(presus.find((x) => x.vigente && x.estado !== 'CERRADO') ?? null);
       }
       setNuevoMonto(String(ev.monto));
       setNuevaFecha(ev.fecha);
@@ -160,6 +166,21 @@ export function MovimientoDetalleScreen() {
 
   const impacto = evento.impactos.find((i) => i.elementoId === elementoId);
   const esInterno = evento.tipo === 'TRANSFERENCIA' || evento.tipo === 'CONVERSION';
+  const nombreCategoria = categorias.find((c) => c.id === evento.categoriaId)?.nombre ?? 'Categoría';
+  /** Nombre de la cuenta, tocable si es visible y no es la cuenta desde la que se llegó. */
+  const enlaceCuenta = (id: string | undefined) => {
+    if (!id) return '—';
+    const nombre = nombresImpacto[id];
+    if (nombre === undefined) return '…';
+    if (nombre === null) return 'otra cuenta';
+    if (id === elementoId) return nombre;
+    return (
+      <LinkButton
+        title={`${nombre} ›`}
+        onPress={() => nav.go('ElementoDetalle', { elementoId: id })}
+      />
+    );
+  };
   const origen = esInterno ? evento.impactos.find((i) => i.monto < 0) : undefined;
   const destino = esInterno ? evento.impactos.find((i) => i.monto > 0) : undefined;
   const esCorreccion = evento.correccionDeId !== null;
@@ -218,23 +239,41 @@ export function MovimientoDetalleScreen() {
 
       <Panel>
         <Row left="Fecha" right={fechaLegible(evento.fecha)} />
-        {esInterno && (
+        {esInterno ? (
           <>
-            <Row
-              left="Desde"
-              right={origen ? (nombresImpacto[origen.elementoId] ?? '…') : '—'}
-            />
-            <Row
-              left="Hacia"
-              right={destino ? (nombresImpacto[destino.elementoId] ?? '…') : '—'}
-            />
+            <Row left="Desde" right={enlaceCuenta(origen?.elementoId)} />
+            <Row left="Hacia" right={enlaceCuenta(destino?.elementoId)} />
           </>
-        )}
+        ) : evento.impactos[0] ? (
+          <Row left="Cuenta" right={enlaceCuenta(evento.impactos[0].elementoId)} />
+        ) : null}
         {evento.glosa ? <Row left="Detalle" right={evento.glosa} /> : null}
         {evento.categoriaId ? (
           <Row
             left="Categoría"
-            right={categorias.find((c) => c.id === evento.categoriaId)?.nombre ?? '—'}
+            right={
+              <LinkButton
+                title={`${nombreCategoria} ›`}
+                onPress={() =>
+                  nav.irATab('Movimientos', {
+                    categoriaId: evento.categoriaId,
+                    categoriaNombre: nombreCategoria,
+                    mes: evento.fecha,
+                  })
+                }
+              />
+            }
+          />
+        ) : null}
+        {presupuesto ? (
+          <Row
+            left="Presupuesto"
+            right={
+              <LinkButton
+                title="Ver el del mes ›"
+                onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
+              />
+            }
           />
         ) : null}
         {impacto && (

@@ -41,7 +41,16 @@ export function CrearHogarScreen() {
       );
       // "usuario = Administrador" es resultado automático del comando.
       permitirSalida();
-      nav.reset('Tabs');
+      // G32 H-04 — en vez de un Inicio vacío, seguir directo con la primera cuenta.
+      nav.reset('Tabs', undefined, [
+        {
+          name: 'AgregarElemento',
+          params: {
+            mensaje:
+              'Hogar creado. Empecemos por tu cuenta principal (la corriente o la vista): con ella ya puedes registrar ingresos y gastos.',
+          },
+        },
+      ]);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {

@@ -68,7 +68,7 @@ export function NotificacionesScreen() {
       {lista === null ? (
         <Skeleton />
       ) : lista.length === 0 ? (
-        <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes un objetivo, se consuma una reserva o te inviten a un hogar." />
+        <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes un objetivo, se use dinero apartado o te inviten a un hogar." />
       ) : (
         <>
           {lista.some((n) => !n.leida) && (

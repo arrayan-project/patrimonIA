@@ -5,6 +5,7 @@ import {
   ApiError,
   type AsignacionDTO,
   type DesviacionPresupuestariaDTO,
+  type MovimientoProgramadoDTO,
   type ObjetivoFinancieroDTO,
   type PresupuestoDTO,
 } from '../api/client';
@@ -18,6 +19,7 @@ import {
   GroupLabel,
   IconButton,
   LinkButton,
+  MenuList,
   MiniGrid,
   MiniPanel,
   PillDate,
@@ -49,6 +51,7 @@ export function PlanificarScreen() {
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
   const [presupuesto, setPresupuesto] = useState<PresupuestoDTO | null>(null);
   const [desv, setDesv] = useState<DesviacionPresupuestariaDTO | null>(null);
+  const [programados, setProgramados] = useState<MovimientoProgramadoDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [error, setError] = useState('');
 
@@ -61,6 +64,10 @@ export function PlanificarScreen() {
       ]);
       setObjetivos(objs);
       setAsignaciones(asgs);
+      api
+        .get<MovimientoProgramadoDTO[]>('/movimientos-programados', token)
+        .then(setProgramados)
+        .catch(() => setProgramados([]));
       try {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
         const vig = presus.find((p) => p.vigente && p.estado !== 'CERRADO') ?? null;
@@ -113,7 +120,8 @@ export function PlanificarScreen() {
               accessibilityLabel="Notificaciones"
               onPress={() => nav.go('Notificaciones')}
             />
-            <IconButton icon="add" accessibilityLabel="Nuevo objetivo" onPress={() => nav.go('Objetivos')} />
+            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+            <IconButton icon="add" accessibilityLabel="Nuevo objetivo" onPress={() => nav.go('Objetivos', { nuevo: true })} />
           </>
         }
       />
@@ -139,7 +147,7 @@ export function PlanificarScreen() {
               titulo="Sin objetivos activos"
               descripcion="Crea una meta de ahorro para seguir su avance acá."
               accion="Crear objetivo"
-              onAccion={() => nav.go('Objetivos')}
+              onAccion={() => nav.go('Objetivos', { nuevo: true })}
             />
           ) : (
             <>
@@ -173,7 +181,7 @@ export function PlanificarScreen() {
             <MiniPanel
               label="Total apartado"
               value={money(totalApartado, monedaApartado)}
-              sub={`${asignaciones.length} ${asignaciones.length === 1 ? 'asignación' : 'asignaciones'}`}
+              sub={`${asignaciones.length} ${asignaciones.length === 1 ? 'apartado' : 'apartados'}`}
               onPress={() => nav.go('Asignaciones')}
             />
           </MiniGrid>
@@ -205,6 +213,30 @@ export function PlanificarScreen() {
           )}
         </>
       )}
+
+      {/* G32 H-06 — lo programado es planificación: vive acá, no en Movimientos. */}
+      <GroupLabel>Pagos y cobros futuros</GroupLabel>
+      <MenuList
+        items={[
+          {
+            title: 'Movimientos programados',
+            subtitle: (() => {
+              const n = programados.filter((p) => p.estado === 'PENDIENTE').length;
+              return n > 0
+                ? `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
+                : 'Ingresos y gastos futuros con fecha';
+            })(),
+            icon: 'calendar-outline',
+            onPress: () => nav.go('MovimientosProgramados'),
+          },
+          {
+            title: 'Plantillas de movimiento',
+            subtitle: 'Moldes para el gasto o ingreso de siempre',
+            icon: 'copy-outline',
+            onPress: () => nav.go('Plantillas'),
+          },
+        ]}
+      />
 
       <ErrorText>{error}</ErrorText>
     </Screen>

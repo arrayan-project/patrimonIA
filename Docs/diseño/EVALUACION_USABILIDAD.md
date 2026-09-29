@@ -126,3 +126,24 @@ Ordenada por impacto / costo. Cada punto indica los hallazgos que resuelve.
 **Siguiente paso sugerido**: implementar 1, 3, 6 y 7 (chicos, sin decisión de
 modelo) en una tanda; decidir 2 y 4 (tocan el modelo de navegación) y validar
 con una persona nueva después.
+
+---
+
+## 5. Estado de aplicación (2026-09-29)
+
+Aplicados los 7 puntos, solo en la app (sin cambios de modelo ni migraciones).
+Decisiones del usuario: punto 2 sí, punto 4 como pantalla "Mi patrimonio",
+punto 5 sí.
+
+| Punto | Qué quedó | Hallazgos |
+|---|---|---|
+| 1 · Vocabulario | Categoría `RESERVA` se muestra como "Ahorro / fondo de emergencia". La plata para metas es siempre "Apartado" (títulos, botones, auditoría, notificación `RESERVA_CONSUMIDA`). `GLOSARIO` en `labels.ts` alimenta las `Ayuda` de Apartado, Valorizar y Ajuste. | H-01, H-13 |
+| 2 · Apartar en un paso | ObjetivoDetalle: "Apartar dinero" (cuenta + monto). Crea la asignación con el nombre del objetivo si no hay; si hay una la reutiliza; si hay varias pide la parte. Crear partes queda como opción secundaria. | H-02 |
+| 3 · Detalles conectados | MovimientoDetalle: cuenta(s), categoría (→ Movimientos filtrados) y presupuesto del mes. PresupuestoDetalle: cada rubro → sus movimientos. ProgramadoDetalle: cuentas y movimiento generado. ElementoDetalle: "Registrar movimiento" / "Registrar pago" (deuda) / "Registrar cobro" (crédito) con la cuenta elegida. | H-05, H-07 |
+| 4 · Mi patrimonio | `PatrimonioSeccion` sin categoría = todas las cuentas y bienes por categoría + evolución del último año; enlaza a Evolución para fechas puntuales. Se llega tocando el Hero, "Ver todo" en Composición o el acceso rápido. | H-03, H-08 |
+| 5 · Programados en Planificar | Sección "Pagos y cobros futuros" en Planificar (programados con conteo de pendientes + plantillas). Movimientos pierde el menú "Más"; el formulario de registro enlaza a plantillas. | H-06 |
+| 6 · Onboarding | Bienvenida explica el hogar en lenguaje de usuario. Tras crear el hogar se abre Agregar cuenta con un mensaje. "Primeros pasos" explica las 4 tabs. | H-04 |
+| 7 · Pulido | Categoría resuelta desde el tipo ("Categoría: X · Cambiar"); "+" de Planificar abre el formulario arriba; engranaje en todas las tabs; icono `swap-vertical-outline` en Movimientos; Tipos de cambio muestra fuente y última importación. | H-09 a H-12, H-14 |
+
+Pendiente: validar con una persona nueva (tareas: registrar un gasto, apartar
+para una meta, encontrar una cuenta, pagar una deuda).

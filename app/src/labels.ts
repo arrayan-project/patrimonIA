@@ -7,7 +7,9 @@
 const DICCIONARIO: Record<string, string> = {
   // Categoría funcional del elemento patrimonial
   LIQUIDEZ: 'Liquidez',
-  RESERVA: 'Reserva',
+  // RESERVA es el fondo de emergencia; "Reserva" a secas se confundía con la plata
+  // apartada para metas (G32 H-01).
+  RESERVA: 'Ahorro / fondo de emergencia',
   INVERSION: 'Inversión',
   ACTIVO: 'Activo',
   CREDITO: 'Crédito por cobrar',
@@ -109,14 +111,27 @@ const COMANDOS_AUDITORIA: Record<string, string> = {
   CambiarEstadoObjetivoFinanciero: 'Cambió el estado',
   CompletarObjetivo: 'El objetivo se completó',
   EliminarObjetivoFinanciero: 'Eliminó el objetivo',
-  CrearAsignacion: 'Creó la asignación',
-  ActualizarDatosAsignacion: 'Actualizó la asignación',
+  CrearAsignacion: 'Creó el apartado',
+  ActualizarDatosAsignacion: 'Actualizó el apartado',
   CambiarAsociacionAObjetivo: 'Cambió el objetivo asociado',
-  EliminarAsignacion: 'Eliminó la asignación',
-  CrearReserva: 'Reservó dinero',
-  AjustarMontoReserva: 'Ajustó el monto reservado',
-  LiberarReserva: 'Liberó la reserva',
+  EliminarAsignacion: 'Eliminó el apartado',
+  CrearReserva: 'Apartó dinero',
+  AjustarMontoReserva: 'Ajustó el monto apartado',
+  LiberarReserva: 'Liberó dinero apartado',
 };
+
+/**
+ * Glosario de la UI (G32 H-01/H-13). En pantalla se habla de "Apartado";
+ * Asignación y Reserva quedan como términos internos del dominio.
+ */
+export const GLOSARIO = {
+  apartado:
+    'Apartar es separar plata de una cuenta para una meta. No sale de la cuenta: sigue ahí, pero queda comprometida y no cuenta como disponible.',
+  valorizar:
+    'Una valorización actualiza cuánto vale hoy un bien o inversión (precio de mercado, tasación). No es un movimiento de dinero. El nuevo valor reemplaza al vigente —no se suma— y el cambio queda en el historial.',
+  ajuste:
+    'Un ajuste corrige el valor cuando no puedes reconstruir la causa exacta de una diferencia (el saldo del banco no cuadra con lo registrado, un error viejo). Si sabes qué pasó, registra el movimiento en su lugar.',
+} as const;
 
 /** Frase legible de una acción de auditoría (cae al humanizado del comando). */
 export function accionAuditoria(comando: string): string {

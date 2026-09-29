@@ -5,6 +5,7 @@ import {
   api,
   ApiError,
   type AsignacionDTO,
+  type ElementoPatrimonialDTO,
   type HogarDTO,
   type MiembroDTO,
   type ObjetivoFinancieroDTO,
@@ -12,6 +13,8 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { GLOSARIO } from '../labels';
+import { useToast } from '../ui/Toast';
 import {
   Ayuda,
   Button,
@@ -19,6 +22,7 @@ import {
   etiqueta,
   Field,
   LinkButton,
+  MoneyField,
   ProgressBar,
   Row,
   Screen,
@@ -39,6 +43,7 @@ export function ObjetivoDetalleScreen() {
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const objetivoId = nav.route.params?.objetivoId as string;
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
@@ -47,6 +52,11 @@ export function ObjetivoDetalleScreen() {
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [designados, setDesignados] = useState<string[]>([]);
   const [nombreAsg, setNombreAsg] = useState('');
+  const [verPartes, setVerPartes] = useState(false);
+  const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[]>([]);
+  const [origenId, setOrigenId] = useState<string | null>(null);
+  const [parteId, setParteId] = useState<string | null>(null);
+  const [montoApartar, setMontoApartar] = useState('');
   const [nuevoEstado, setNuevoEstado] = useState<(typeof ESTADOS)[number]>('EN_PROGRESO');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
@@ -60,6 +70,12 @@ export function ObjetivoDetalleScreen() {
       setNuevoEstado(o.estado as (typeof ESTADOS)[number]);
       setDesignados(o.designados);
       setAsignaciones(await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token));
+      if (o.puedoModificar) {
+        const els = await api
+          .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
+          .catch(() => []);
+        setCuentas(els.filter((e) => e.categoriaFuncional !== 'DEUDA' && e.categoriaFuncional !== 'CREDITO'));
+      }
       const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []);
       setHogarId(hs[0]?.id ?? null);
       if (o.esMio && hs[0]) {
@@ -80,6 +96,43 @@ export function ObjetivoDetalleScreen() {
       await fn();
       if (salir) nav.back();
       else await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * G32 H-02 — "apartar para esta meta" en un paso: la asignación es un detalle
+   * del modelo. Si el objetivo no tiene una, se crea con su nombre; si tiene
+   * una sola, se reutiliza; si tiene varias, el usuario elige la parte.
+   */
+  const apartar = async () => {
+    if (!obj || !origenId) return;
+    setBusy(true);
+    setError('');
+    try {
+      let asignacionId = parteId ?? asignaciones[0]?.id;
+      if (!asignacionId) {
+        const nueva = await api.post<AsignacionDTO>(
+          '/comandos/CrearAsignacion',
+          { nombre: obj.nombre, objetivoId },
+          token,
+        );
+        // Si la reserva falla, el reintento reutiliza esta asignación.
+        setAsignaciones([nueva]);
+        asignacionId = nueva.id;
+      }
+      await api.post(
+        '/comandos/CrearReserva',
+        { asignacionId, elementoOrigenId: origenId, monto: Number(montoApartar) },
+        token,
+      );
+      toast.mostrar('Dinero apartado');
+      setMontoApartar('');
+      setOrigenId(null);
+      await cargar();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
@@ -109,43 +162,96 @@ export function ObjetivoDetalleScreen() {
         <Ayuda>Objetivo del hogar. Puedes verlo pero no modificarlo (no eres designado).</Ayuda>
       )}
 
-      <Panel>
-        <Text style={styles.sectionTitle}>Asignaciones</Text>
-        {asignaciones.map((a) => (
-          <Pressable
-            key={a.id}
-            style={styles.asg}
-            accessibilityRole="button"
-            accessibilityLabel={`${a.nombre}, ${money(a.totalReservado, a.moneda)}`}
-            onPress={() =>
-              nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
-            }
-          >
-            <Row left={a.nombre} right={money(a.totalReservado, a.moneda)} />
-          </Pressable>
-        ))}
-        {obj.puedoModificar && (
-          <>
-            <Field label="Nueva asignación" value={nombreAsg} onChangeText={setNombreAsg} autoCapitalize="sentences" />
-            <Button
-              title="Crear asignación"
-              variant="secondary"
-              loading={busy}
-              disabled={!nombreAsg.trim()}
+      {obj.puedoModificar && (
+        <Panel>
+          <Text style={styles.sectionTitle}>Apartar dinero</Text>
+          <Ayuda>{GLOSARIO.apartado}</Ayuda>
+          {cuentas.length === 0 ? (
+            <Text style={styles.muted}>Primero agrega una cuenta desde donde apartar.</Text>
+          ) : (
+            <>
+              <Text style={styles.muted}>¿De qué cuenta?</Text>
+              {cuentas.map((el) => (
+                <SelectRow
+                  key={el.id}
+                  label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
+                  selected={origenId === el.id}
+                  onPress={() => setOrigenId(el.id)}
+                />
+              ))}
+              {asignaciones.length > 1 && (
+                <>
+                  <Text style={styles.muted}>¿Para qué parte de la meta?</Text>
+                  {asignaciones.map((a) => (
+                    <SelectRow
+                      key={a.id}
+                      label={a.nombre}
+                      selected={(parteId ?? asignaciones[0].id) === a.id}
+                      onPress={() => setParteId(a.id)}
+                    />
+                  ))}
+                </>
+              )}
+              <MoneyField label="Monto a apartar" value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
+              <Button
+                title="Apartar dinero"
+                loading={busy}
+                disabled={!origenId || !(Number(montoApartar) > 0)}
+                onPress={apartar}
+              />
+            </>
+          )}
+        </Panel>
+      )}
+
+      {(asignaciones.length > 0 || obj.puedoModificar) && (
+        <Panel>
+          <Text style={styles.sectionTitle}>Lo apartado</Text>
+          {asignaciones.length === 0 && <Text style={styles.muted}>Aún no apartas dinero para esta meta.</Text>}
+          {asignaciones.map((a) => (
+            <Pressable
+              key={a.id}
+              style={styles.asg}
+              accessibilityRole="button"
+              accessibilityLabel={`${a.nombre}, ${money(a.totalReservado, a.moneda)}`}
               onPress={() =>
-                run(async () => {
-                  await api.post(
-                    '/comandos/CrearAsignacion',
-                    { nombre: nombreAsg.trim(), objetivoId },
-                    token,
-                  );
-                  setNombreAsg('');
-                })
+                nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
               }
-            />
-          </>
-        )}
-      </Panel>
+            >
+              <Row left={`${a.nombre} ›`} right={money(a.totalReservado, a.moneda)} />
+            </Pressable>
+          ))}
+          {obj.puedoModificar &&
+            (verPartes ? (
+              <>
+                <Ayuda>
+                  Opcional: divide la meta en partes (p. ej. "Pie" y "Gastos notariales") para
+                  seguir cada una por separado.
+                </Ayuda>
+                <Field label="Nombre de la parte" value={nombreAsg} onChangeText={setNombreAsg} autoCapitalize="sentences" />
+                <Button
+                  title="Agregar parte"
+                  variant="secondary"
+                  loading={busy}
+                  disabled={!nombreAsg.trim()}
+                  onPress={() =>
+                    run(async () => {
+                      await api.post(
+                        '/comandos/CrearAsignacion',
+                        { nombre: nombreAsg.trim(), objetivoId },
+                        token,
+                      );
+                      setNombreAsg('');
+                      setVerPartes(false);
+                    })
+                  }
+                />
+              </>
+            ) : (
+              <LinkButton title="Dividir la meta en partes (opcional)" onPress={() => setVerPartes(true)} />
+            ))}
+        </Panel>
+      )}
 
       {obj.esMio && hogarId && (
         <Panel>
@@ -167,7 +273,7 @@ export function ObjetivoDetalleScreen() {
           />
           {obj.hogarId && (
             <>
-              <Ayuda>Elige quién más puede modificar este objetivo (crear asignaciones, reservar, editar).</Ayuda>
+              <Ayuda>Elige quién más puede modificar este objetivo (apartar dinero, editar).</Ayuda>
               {miembros
                 .filter((m) => m.usuarioId !== usuario.id)
                 .map((m) => (

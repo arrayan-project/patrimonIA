@@ -52,11 +52,18 @@ export function RegistrarMovimientoScreen() {
   const [plantillas, setPlantillas] = useState<PlantillaMovimientoDTO[]>([]);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [etiquetaIds, setEtiquetaIds] = useState<string[]>([]);
-  const [tipo, setTipo] = useState<Tipo>('GASTO');
+  // G32 H-07 — se puede llegar con la cuenta (o el tipo) ya elegidos desde un elemento.
+  const params = nav.route.params ?? {};
+  const cuentaId = params.cuentaId as string | undefined;
+  const [tipo, setTipo] = useState<Tipo>(
+    TIPOS.includes(params.tipo as Tipo) ? (params.tipo as Tipo) : 'GASTO',
+  );
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(aISO(new Date()));
-  const [origenId, setOrigenId] = useState<string | null>(null);
-  const [destinoId, setDestinoId] = useState<string | null>(null);
+  const origenInicial = (params.origenId as string | undefined) ?? cuentaId ?? null;
+  const destinoInicial = (params.destinoId as string | undefined) ?? null;
+  const [origenId, setOrigenId] = useState<string | null>(origenInicial);
+  const [destinoId, setDestinoId] = useState<string | null>(destinoInicial);
   const [filtroEl, setFiltroEl] = useState('');
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [hogarId, setHogarId] = useState<string | null>(null);
@@ -70,8 +77,8 @@ export function RegistrarMovimientoScreen() {
 
   const sucio =
     Number(monto) > 0 ||
-    !!origenId ||
-    !!destinoId ||
+    origenId !== origenInicial ||
+    destinoId !== destinoInicial ||
     glosa.trim() !== '' ||
     categoriaId !== null ||
     etiquetaIds.length > 0;
@@ -108,6 +115,11 @@ export function RegistrarMovimientoScreen() {
       .then(setEtiquetas)
       .catch(() => setEtiquetas([]));
   }, [token]);
+
+  // Si la cuenta vino preelegida y el usuario cambia a Ingreso, la plata entra a esa cuenta.
+  useEffect(() => {
+    if (cuentaId && tipo === 'INGRESO') setDestinoId((d) => d ?? cuentaId);
+  }, [cuentaId, tipo]);
 
   const toggleEtiqueta = (id: string) =>
     setEtiquetaIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
@@ -228,7 +240,7 @@ export function RegistrarMovimientoScreen() {
     <Screen>
       <Title>Registrar movimiento</Title>
 
-      {plantillas.length > 0 && (
+      {plantillas.length > 0 ? (
         <View style={styles.group}>
           <Text style={styles.label}>Desde una plantilla</Text>
           {plantillas.map((p) => (
@@ -239,7 +251,13 @@ export function RegistrarMovimientoScreen() {
               onPress={() => aplicarPlantilla(p)}
             />
           ))}
+          <LinkButton title="Gestionar plantillas" onPress={() => nav.go('Plantillas')} />
         </View>
+      ) : (
+        <LinkButton
+          title="¿Registras siempre lo mismo? Crea una plantilla"
+          onPress={() => nav.go('Plantillas')}
+        />
       )}
 
       <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />

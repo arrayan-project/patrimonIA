@@ -6,6 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
+  Ayuda,
   Button,
   DateField,
   ErrorText,
@@ -58,6 +59,13 @@ export function TiposCambioScreen() {
 
   useCargaAlEnfocar(cargar);
 
+  const ultimaImportada = (lista ?? [])
+    .filter((t) => t.fuente)
+    .reduce<TipoCambioDTO | null>(
+      (max, t) => (!max || t.createdAt > max.createdAt ? t : max),
+      null,
+    );
+
   const registrar = async () => {
     setIntento(true);
     if (errOrigen || errDestino || errTasa) return;
@@ -92,6 +100,15 @@ export function TiposCambioScreen() {
         1 unidad de la moneda origen = tasa unidades de la destino. Se conservan
         históricamente; la conversión usa la más reciente vigente a la fecha.
       </Text>
+
+      {/* G32 H-14 — USD, EUR y UF se importan solos (G21); se dice de dónde y cuándo. */}
+      {ultimaImportada ? (
+        <Ayuda>
+          {`USD, EUR y UF se actualizan solos cada hora desde ${ultimaImportada.fuente}. Última actualización: ${fechaLegible(ultimaImportada.fechaVigencia)}. Registra a mano solo otras monedas o una tasa distinta.`}
+        </Ayuda>
+      ) : (
+        <Ayuda>USD, EUR y UF se actualizan solos cada hora; aún no hay una importación registrada.</Ayuda>
+      )}
 
       <Panel>
         <Text style={styles.sectionTitle}>Registrar tasa</Text>
@@ -133,7 +150,7 @@ export function TiposCambioScreen() {
           {lista.map((t) => (
             <Row
               key={t.id}
-              left={`${t.monedaOrigen} → ${t.monedaDestino} · ${fechaLegible(t.fechaVigencia)}`}
+              left={`${t.monedaOrigen} → ${t.monedaDestino} · ${fechaLegible(t.fechaVigencia)}${t.fuente ? ` · ${t.fuente}` : ' · manual'}`}
               right={String(t.tasa)}
             />
           ))}

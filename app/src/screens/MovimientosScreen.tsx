@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
@@ -23,10 +23,8 @@ import {
   FAB,
   Field,
   fechaLegible,
-  GroupLabel,
   Hero,
   IconButton,
-  MenuList,
   PillToggle,
   Skeleton,
   Screen,
@@ -86,6 +84,18 @@ export function MovimientosScreen() {
 
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('Todos');
+
+  // G32 H-05 — se llega filtrado por categoría desde un movimiento o un rubro del
+  // presupuesto (`mes` = cualquier fecha del mes a mostrar).
+  const categoriaId = nav.route.params?.categoriaId as string | undefined;
+  const categoriaNombre = nav.route.params?.categoriaNombre as string | undefined;
+  const mesParam = nav.route.params?.mes as string | undefined;
+  useEffect(() => {
+    if (!mesParam) return;
+    const [a, m] = mesParam.split('-').map(Number);
+    setPeriodo('Mes');
+    setAnchor({ anio: a, mes: m - 1 });
+  }, [mesParam]);
 
   // Ventana [desde, hasta] según el período elegido.
   const ventana = useMemo(() => {
@@ -182,6 +192,7 @@ export function MovimientosScreen() {
     [resumen],
   );
   const movsFiltrados = movimientos.filter((m) => {
+    if (categoriaId && m.categoriaId !== categoriaId) return false;
     if (filtro === 'Ingresos' && m.tipo !== 'INGRESO' && m.tipo !== 'SALDO_INICIAL') return false;
     if (filtro === 'Gastos' && m.tipo !== 'GASTO') return false;
     if (filtro === 'Transferencias' && m.tipo !== 'TRANSFERENCIA' && m.tipo !== 'CONVERSION')
@@ -218,12 +229,15 @@ export function MovimientosScreen() {
       <TopRow
         left={<Title>Movimientos</Title>}
         right={
-          <IconButton
-            icon="notifications-outline"
-            badge={noLeidas || undefined}
-            accessibilityLabel="Notificaciones"
-            onPress={() => nav.go('Notificaciones')}
-          />
+          <>
+            <IconButton
+              icon="notifications-outline"
+              badge={noLeidas || undefined}
+              accessibilityLabel="Notificaciones"
+              onPress={() => nav.go('Notificaciones')}
+            />
+            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+          </>
         }
       />
       <View style={styles.controles}>
@@ -321,6 +335,15 @@ export function MovimientosScreen() {
 
           <Field label="" value={busca} onChangeText={setBusca} placeholder="Buscar en el detalle…" />
           <View style={styles.chips}>
+            {categoriaId && (
+              <Chip
+                label={`${categoriaNombre ?? 'Categoría'}  ✕`}
+                activo
+                onPress={() =>
+                  nav.go('Movimientos', { categoriaId: undefined, categoriaNombre: undefined, mes: undefined })
+                }
+              />
+            )}
             {FILTROS.map((f) => (
               <Chip key={f} label={f} activo={filtro === f} onPress={() => setFiltro(f)} />
             ))}
@@ -352,24 +375,6 @@ export function MovimientosScreen() {
           )}
         </>
       )}
-
-      <GroupLabel>Más</GroupLabel>
-      <MenuList
-        items={[
-          {
-            title: 'Movimientos programados',
-            subtitle: 'Ingresos y gastos futuros con fecha',
-            icon: 'calendar-outline',
-            onPress: () => nav.go('MovimientosProgramados'),
-          },
-          {
-            title: 'Plantillas de movimiento',
-            subtitle: 'Moldes para el gasto o ingreso de siempre',
-            icon: 'copy-outline',
-            onPress: () => nav.go('Plantillas'),
-          },
-        ]}
-      />
 
       <ErrorText>{error}</ErrorText>
     </Screen>

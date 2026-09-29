@@ -24,6 +24,7 @@ import {
   Nota,
   Pasos,
   Paragraph,
+  Row,
   Screen,
   Segmented,
   Select,
@@ -70,6 +71,8 @@ export function AgregarElementoScreen() {
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>(catInicial);
+  const [cambiarCat, setCambiarCat] = useState(false);
+  const mensaje = nav.route.params?.mensaje as string | undefined;
   const [tiposCat, setTiposCat] = useState<TipoElementoDTO[]>([]);
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [crearTipo, setCrearTipo] = useState(false);
@@ -122,6 +125,7 @@ export function AgregarElementoScreen() {
 
   const elegirTipo = (v: string) => {
     setTipo(v);
+    setCambiarCat(false);
     const t = tiposCat.find((x) => x.nombre === v);
     if (t?.categoriaSugerida) {
       setCategoria(t.categoriaSugerida);
@@ -270,11 +274,14 @@ export function AgregarElementoScreen() {
   };
 
   const esUltimo = paso === totalPasos;
+  const categoriaResuelta =
+    !cambiarCat && tiposCat.find((x) => x.nombre === tipo)?.categoriaSugerida === categoria;
 
   return (
     <Screen>
       <Title>Agregar cuenta o bien</Title>
       <Pasos actual={paso} total={totalPasos} />
+      {mensaje && paso === 1 ? <Ayuda>{mensaje}</Ayuda> : null}
 
       {paso === 1 && (
         <>
@@ -306,20 +313,28 @@ export function AgregarElementoScreen() {
             />
           ) : null}
           {intentado[1] && errTipo ? <ErrorText>{errTipo}</ErrorText> : null}
-          <Select
-            label="¿Qué es?"
-            value={categoria}
-            options={OPC_CATEGORIA}
-            onChange={(c) => {
-              setCategoria(c as (typeof CATEGORIAS)[number]);
-              setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
-            }}
-          />
+          {/* G32 H-09 — si el tipo ya sugiere la categoría, se muestra resuelta. */}
+          {categoriaResuelta ? (
+            <Row
+              left={`Categoría: ${etiqueta(categoria)}`}
+              right={<LinkButton title="Cambiar" onPress={() => setCambiarCat(true)} />}
+            />
+          ) : (
+            <Select
+              label="¿Qué es?"
+              value={categoria}
+              options={OPC_CATEGORIA}
+              onChange={(c) => {
+                setCategoria(c as (typeof CATEGORIAS)[number]);
+                setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
+              }}
+            />
+          )}
           <Ayuda>
             {categoria === 'LIQUIDEZ'
               ? 'Liquidez: efectivo y cuentas de uso diario.'
               : categoria === 'RESERVA'
-                ? 'Reserva: fondo de emergencia, plata que guardas pero no gastas.'
+                ? 'Ahorro / fondo de emergencia: plata que guardas pero no gastas. (Para juntar plata para una meta usa un objetivo.)'
                 : categoria === 'INVERSION'
                   ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
                   : categoria === 'ACTIVO'

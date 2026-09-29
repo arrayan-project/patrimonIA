@@ -3,6 +3,7 @@ import { api, ApiError, type AjustePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { GLOSARIO } from '../labels';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
@@ -82,7 +83,7 @@ export function RegistrarAjusteScreen() {
       <Ayuda>
         {modoInteres
           ? 'El interés de una deuda o crédito se registra como un ajuste que aumenta el saldo. El monto sugerido es saldo × tasa anual ÷ 12 — ajústalo al período real (mora, refinanciación, etc.).'
-          : 'Un ajuste corrige el valor cuando no puedes reconstruir la causa exacta de una diferencia (el saldo del banco no cuadra con lo registrado, un error viejo). Si sabes qué pasó, registra el movimiento en su lugar.'}
+          : GLOSARIO.ajuste}
       </Ayuda>
 
       <Segmented

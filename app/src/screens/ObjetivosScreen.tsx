@@ -93,15 +93,55 @@ export function ObjetivosScreen() {
     }
   };
 
+  // G32 H-10 — el "+" de Planificar llega con `nuevo`: el formulario va primero.
+  const nuevoArriba = nav.route.params?.nuevo === true;
+  const formulario = (
+    <Panel>
+      <Text style={styles.nombre}>Nuevo objetivo</Text>
+      <Field
+        label="Nombre"
+        value={nombre}
+        onChangeText={setNombre}
+        autoCapitalize="sentences"
+        placeholder="Pie vivienda"
+        error={intento ? errNombre : undefined}
+      />
+      <MoneyField
+        label="Monto objetivo"
+        value={monto}
+        onChange={setMonto}
+        moneda={moneda}
+        error={intento ? errMonto : undefined}
+      />
+      <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      {hogarId && (
+        <Segmented
+          label="¿Compartir con el hogar?"
+          options={['No', 'Sí'] as const}
+          value={compartir}
+          onChange={setCompartir}
+          formatearOpcion={(v) => v}
+        />
+      )}
+      {compartir === 'Sí' && (
+        <Text style={styles.muted}>
+          Todos los miembros lo verán. Podrás designar quiénes pueden modificarlo.
+        </Text>
+      )}
+      <Button title="Crear objetivo" onPress={crear} loading={busy} />
+    </Panel>
+  );
+
   return (
     <Screen onRefresh={cargar}>
       <Title>Objetivos financieros</Title>
 
       <Ayuda>
         Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje).
-        Adentro creas asignaciones y les guardas reservas de dinero para ir
-        viendo el avance.
+        Adentro apartas dinero de tus cuentas para ir viendo el avance.
       </Ayuda>
+
+      {nuevoArriba && formulario}
 
       {objetivos === null ? (
         <Skeleton />
@@ -109,7 +149,7 @@ export function ObjetivosScreen() {
         <EmptyState
           icon="flag-outline"
           titulo="Aún no tienes objetivos"
-          descripcion="Créalo abajo y luego asígnale reservas."
+          descripcion={`Créalo ${nuevoArriba ? 'arriba' : 'abajo'} y luego aparta dinero para él.`}
         />
       ) : (
         (() => {
@@ -144,40 +184,7 @@ export function ObjetivosScreen() {
           />
         ))}
 
-      <Panel>
-        <Text style={styles.nombre}>Nuevo objetivo</Text>
-        <Field
-          label="Nombre"
-          value={nombre}
-          onChangeText={setNombre}
-          autoCapitalize="sentences"
-          placeholder="Pie vivienda"
-          error={intento ? errNombre : undefined}
-        />
-        <MoneyField
-          label="Monto objetivo"
-          value={monto}
-          onChange={setMonto}
-          moneda={moneda}
-          error={intento ? errMonto : undefined}
-        />
-        <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
-        {hogarId && (
-          <Segmented
-            label="¿Compartir con el hogar?"
-            options={['No', 'Sí'] as const}
-            value={compartir}
-            onChange={setCompartir}
-            formatearOpcion={(v) => v}
-          />
-        )}
-        {compartir === 'Sí' && (
-          <Text style={styles.muted}>
-            Todos los miembros lo verán. Podrás designar quiénes pueden modificarlo.
-          </Text>
-        )}
-        <Button title="Crear objetivo" onPress={crear} loading={busy} />
-      </Panel>
+      {!nuevoArriba && formulario}
 
       <ErrorText>{error}</ErrorText>
     </Screen>

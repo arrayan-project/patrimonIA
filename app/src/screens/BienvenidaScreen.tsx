@@ -11,7 +11,8 @@ export function BienvenidaScreen() {
     <Screen>
       <Title>Hola, {session?.usuario.nombre}</Title>
       <Paragraph>
-        Todo usuario debe pertenecer a un hogar para usar la plataforma. Elige cómo empezar:
+        PatrimonIA organiza tu plata por hogar. Crea el tuyo (aunque vivas solo) o únete a
+        uno con una invitación.
       </Paragraph>
 
       <View style={{ gap: 12 }}>

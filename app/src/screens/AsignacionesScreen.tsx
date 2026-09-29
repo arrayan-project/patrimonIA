@@ -38,7 +38,7 @@ export function AsignacionesScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [intento, setIntento] = useState(false);
-  const errNombre = nombre.trim() ? '' : 'Ponle un nombre a la asignación.';
+  const errNombre = nombre.trim() ? '' : 'Ponle un nombre al apartado.';
 
   const cargar = useCallback(async () => {
     setError('');
@@ -70,7 +70,7 @@ export function AsignacionesScreen() {
         },
         token,
       );
-      toast.mostrar('Asignación creada');
+      toast.mostrar('Apartado creado');
       setNombre('');
       setMonto('');
       await cargar();
@@ -112,11 +112,11 @@ export function AsignacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Asignaciones</Title>
+      <Title>Apartados</Title>
       <Ayuda>
-        Una asignación "aparta" dinero de tus cuentas para un propósito. Puede
-        colgar de un objetivo (ej. "Pie casa") o ser independiente, como un fondo
-        de emergencia o los regalos de Navidad.
+        Un apartado separa dinero de tus cuentas para un propósito. Puede ser
+        parte de un objetivo (ej. "Pie casa") o independiente, como los regalos de
+        Navidad. La plata no se mueve: solo queda comprometida.
       </Ayuda>
 
       {sueltas.length > 0 && (
@@ -135,23 +135,23 @@ export function AsignacionesScreen() {
 
       {asignaciones.length === 0 && (
         <Panel>
-          <Nota>Aún no tienes asignaciones.</Nota>
+          <Nota>Aún no tienes dinero apartado.</Nota>
         </Panel>
       )}
 
       <Panel>
-        <SectionTitle>Nueva asignación independiente</SectionTitle>
+        <SectionTitle>Nuevo apartado independiente</SectionTitle>
         <Field
           label="Nombre"
           value={nombre}
           onChangeText={setNombre}
           autoCapitalize="sentences"
-          placeholder="Fondo de emergencia"
+          placeholder="Regalos de Navidad"
           error={intento ? errNombre : undefined}
         />
         <MoneyField label="Meta (opcional)" value={monto} onChange={setMonto} />
-        <Nota>Para una asignación dentro de un objetivo, entra al objetivo y créala ahí.</Nota>
-        <Button title="Crear asignación" loading={busy} onPress={crear} />
+        <Nota>Para apartar dinero para un objetivo, entra al objetivo y usa "Apartar dinero".</Nota>
+        <Button title="Crear apartado" loading={busy} onPress={crear} />
       </Panel>
 
       <ErrorText>{error}</ErrorText>

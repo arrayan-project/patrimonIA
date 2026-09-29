@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -186,8 +186,20 @@ export function PresupuestoDetalleScreen() {
               />
             )}
             {rubrosConMeta.map((r) => (
-              <View key={r.categoriaId} style={styles.rubro}>
-                <Text style={styles.rubroTexto}>{r.nombre}</Text>
+              <Pressable
+                key={r.categoriaId}
+                style={({ pressed }) => [styles.rubro, pressed && { opacity: 0.6 }]}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver movimientos de ${r.nombre}`}
+                onPress={() =>
+                  nav.irATab('Movimientos', {
+                    categoriaId: r.categoriaId,
+                    categoriaNombre: r.nombre,
+                    mes: desv.periodo.desde ?? undefined,
+                  })
+                }
+              >
+                <Text style={styles.rubroTexto}>{r.nombre} ›</Text>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.rubroTexto}>
                     {money(r.real, p.moneda)} / {money(r.esperado, p.moneda)}
@@ -198,7 +210,7 @@ export function PresupuestoDetalleScreen() {
                     {sign(r.desviacion)}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </>
         )}

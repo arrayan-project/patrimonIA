@@ -61,14 +61,22 @@ export interface Route {
 export interface NavHandle {
   route: Route;
   go: (name: RouteName, params?: Record<string, unknown>) => void;
-  reset: (name: RouteName, params?: Record<string, unknown>) => void;
+  /** Deja `name` como raíz; `encima` apila pantallas sobre ella (p. ej. un paso de onboarding). */
+  reset: (
+    name: RouteName,
+    params?: Record<string, unknown>,
+    encima?: { name: RouteName; params?: Record<string, unknown> }[],
+  ) => void;
   back: () => void;
+  /** Vuelve a los Tabs (sin apilar otra copia) y abre `tab` con `params`. */
+  irATab: (tab: RouteName, params?: Record<string, unknown>) => void;
   canGoBack: boolean;
 }
 
 interface NavApi {
   navigate: (name: string, params?: Record<string, unknown>) => void;
   goBack: () => void;
+  popTo: (name: string, params?: Record<string, unknown>) => void;
   canGoBack: () => boolean;
   getParent: () => NavApi | undefined;
   reset: (state: { index: number; routes: { name: string; params?: unknown }[] }) => void;
@@ -86,12 +94,14 @@ export function useNav(): NavHandle {
       route: { name: route.name, params: route.params as Record<string, unknown> | undefined },
       go: (name, params) => navigation.navigate(name, params),
       back: () => navigation.goBack(),
-      reset: (name, params) => {
+      irATab: (tab, params) => navigation.popTo('Tabs', { screen: tab, params }),
+      reset: (name, params, encima = []) => {
         // reset siempre sobre el navegador raíz (el stack que contiene los Tabs),
         // no sobre el tab actual.
         let raiz = navigation;
         while (raiz.getParent?.()) raiz = raiz.getParent()!;
-        raiz.reset({ index: 0, routes: [{ name, params }] });
+        const routes = [{ name, params }, ...encima];
+        raiz.reset({ index: routes.length - 1, routes });
       },
       canGoBack: navigation.canGoBack(),
     }),

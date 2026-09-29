@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
+import { Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
+import { api, ApiError, type ElementoPatrimonialDTO, type SeriePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
@@ -9,15 +10,23 @@ import {
   EmptyState,
   ErrorText,
   etiqueta,
+  fechaLegible,
   GroupLabel,
   Hero,
+  LinkButton,
   Nota,
   Panel,
   Screen,
   Skeleton,
   TxRow,
+  useC,
   type NombreIcono,
 } from '../ui';
+import { GraficoLinea } from '../ui/charts';
+
+/** Orden de las categorías en "Mi patrimonio" (igual que la composición de Inicio). */
+const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
+const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function icono(categoria: string): NombreIcono {
   switch (categoria) {
@@ -35,15 +44,21 @@ const COLOR: Record<string, string> = {
   ACTIVO: '#ca8a04', DEUDA: '#dc2626', CREDITO: '#9333ea',
 };
 
-/** Lista de elementos de una categoría funcional. Se llega desde la composición de Inicio. */
+/**
+ * Sin `categoria`: "Mi patrimonio" — todas las cuentas y bienes agrupados por
+ * categoría, con la evolución del último año arriba (G32 H-03/H-08). Con
+ * `categoria`: solo esa sección. Se llega desde el Hero y la composición de Inicio.
+ */
 export function PatrimonioSeccionScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
-  const categoria = nav.route.params?.categoria as string;
+  const categoria = nav.route.params?.categoria as string | undefined;
   const alcance = (nav.route.params?.alcance as 'mios' | 'hogar' | undefined) ?? 'mios';
   const monedaPrin = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
+  const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -54,7 +69,15 @@ export function PatrimonioSeccionScreen() {
           ? '/elementos-patrimoniales?alcance=hogar'
           : '/elementos-patrimoniales?propietario=me';
       const els = await api.get<ElementoPatrimonialDTO[]>(path, token);
-      setElementos(els.filter((e) => e.categoriaFuncional === categoria));
+      setElementos(categoria ? els.filter((e) => e.categoriaFuncional === categoria) : els);
+      if (!categoria && alcance === 'mios') {
+        const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
+        setSerie(
+          await api
+            .get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(haceUnAnio)}&pasos=12`, token)
+            .catch(() => null),
+        );
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -82,10 +105,68 @@ export function PatrimonioSeccionScreen() {
       title={el.nombre}
       subtitle={etiqueta(el.tipo) + (el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : '')}
       amount={el.valorOculto ? '—' : money(el.valorVigente, el.moneda)}
-      logo={{ icon: icono(categoria), color: COLOR[categoria] }}
+      logo={{ icon: icono(el.categoriaFuncional), color: COLOR[el.categoriaFuncional] }}
       onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
     />
   );
+
+  if (!categoria) {
+    const puntos = (serie?.puntos ?? []).map((p) => ({
+      etiqueta: fechaLegible(p.fecha),
+      valor: p.porMoneda.find((m) => m.moneda === monedaPrin)?.patrimonio ?? 0,
+    }));
+    return (
+      <Screen onRefresh={cargar}>
+        <Hero label={alcance === 'hogar' ? 'Patrimonio del hogar' : 'Patrimonio neto'} value={money(subtotal, monedaPrin)} />
+        {otrasMonedas.length > 0 && <Nota>También hay elementos en {otrasMonedas.join(', ')}.</Nota>}
+
+        {puntos.length >= 2 && (
+          <Panel>
+            <GroupLabel>Último año</GroupLabel>
+            <GraficoLinea puntos={puntos} formatoValor={(n) => money(n, monedaPrin)} />
+          </Panel>
+        )}
+        {alcance === 'mios' && (
+          <LinkButton
+            title="Consultar otra fecha o período ›"
+            onPress={() => nav.go('EvolucionPatrimonio')}
+          />
+        )}
+
+        {elementos.length === 0 ? (
+          <EmptyState
+            icon="wallet-outline"
+            titulo="Aún no tienes cuentas ni bienes"
+            descripcion={alcance === 'mios' ? 'Agrega tu primera cuenta, inversión o deuda.' : undefined}
+            accion={alcance === 'mios' ? 'Agregar cuenta o bien' : undefined}
+            onAccion={alcance === 'mios' ? () => nav.go('AgregarElemento') : undefined}
+          />
+        ) : (
+          CATS.map((cat) => {
+            const delCat = elementos.filter((e) => e.categoriaFuncional === cat);
+            if (delCat.length === 0) return null;
+            const sub = delCat
+              .filter((e) => e.moneda === monedaPrin)
+              .reduce((s, e) => s + e.valorVigente, 0);
+            return (
+              <View key={cat} style={{ gap: 8 }}>
+                <GroupLabel right={<Text style={{ color: c.muted, fontWeight: '600' }}>{money(sub, monedaPrin)}</Text>}>
+                  {etiqueta(cat)}
+                </GroupLabel>
+                <Panel gap={0}>{delCat.map(fila)}</Panel>
+              </View>
+            );
+          })
+        )}
+
+        {alcance === 'mios' && elementos.length > 0 && (
+          <Button title="Agregar cuenta o bien" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
+        )}
+
+        <ErrorText>{error}</ErrorText>
+      </Screen>
+    );
+  }
 
   // §G28 — en DEUDA/CREDITO separamos las financieras de los encargos/custodia.
   const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';

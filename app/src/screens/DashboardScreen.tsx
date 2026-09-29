@@ -30,6 +30,7 @@ import {
   GroupLabel,
   Hero,
   IconButton,
+  LinkButton,
   MiniGrid,
   MiniPanel,
   MoneyText,
@@ -285,6 +286,9 @@ export function DashboardScreen() {
       onPress: () => nav.go('Notificaciones'),
     });
 
+  // G32 H-03/H-08 — una sola entrada a "Mi patrimonio" (todas las cuentas y bienes + evolución).
+  const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin });
+
   const cerrarOnboarding = () => {
     setOnbOculto(true);
     void guardar(claveOnb, 'ok');
@@ -324,22 +328,28 @@ export function DashboardScreen() {
         }
       />
 
-      <Hero
-        label={alcance === 'hogar' ? `${hogar.nombre} · patrimonio` : 'Patrimonio neto'}
-        value={heroValor}
-        change={
-          alcance === 'mios' && v && v.variacion !== 0
-            ? `${v.variacion >= 0 ? '▲' : '▼'} ${
-                v.variacionPorcentaje != null
-                  ? `${Math.abs(v.variacionPorcentaje)}%`
-                  : money(Math.abs(v.variacion), monedaPrin)
-              }`
-            : undefined
-        }
-        changeDir={v && v.variacion < 0 ? 'neg' : 'pos'}
+      <Pressable
+        onPress={verPatrimonio}
+        accessibilityRole="button"
+        accessibilityLabel="Ver mi patrimonio completo"
       >
-        {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} /> : null}
-      </Hero>
+        <Hero
+          label={alcance === 'hogar' ? `${hogar.nombre} · patrimonio` : 'Patrimonio neto'}
+          value={heroValor}
+          change={
+            alcance === 'mios' && v && v.variacion !== 0
+              ? `${v.variacion >= 0 ? '▲' : '▼'} ${
+                  v.variacionPorcentaje != null
+                    ? `${Math.abs(v.variacionPorcentaje)}%`
+                    : money(Math.abs(v.variacion), monedaPrin)
+                }`
+              : undefined
+          }
+          changeDir={v && v.variacion < 0 ? 'neg' : 'pos'}
+        >
+          {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} /> : null}
+        </Hero>
+      </Pressable>
 
       {alcance === 'hogar' && consolidado?.total == null && (consolidado?.conversionesFaltantes.length ?? 0) > 0 && (
         <ErrorText>{`Falta tipo de cambio para: ${consolidado!.conversionesFaltantes.join(', ')}.`}</ErrorText>
@@ -377,7 +387,12 @@ export function DashboardScreen() {
           </View>
           <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
           <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} c={c} styles={styles} />
-          <Paso hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos')} c={c} styles={styles} />
+          <Paso hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos', { nuevo: true })} c={c} styles={styles} />
+          <Text style={styles.muted}>
+            Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (ingresos y
+            gastos), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
+            compartes con tu familia).
+          </Text>
         </Panel>
       )}
 
@@ -390,7 +405,13 @@ export function DashboardScreen() {
         </Panel>
       )}
 
-      {ver.composicion && <GroupLabel>Composición</GroupLabel>}
+      {ver.composicion && (
+        <GroupLabel
+          right={composicion.length > 0 ? <LinkButton title="Ver todo ›" onPress={verPatrimonio} /> : undefined}
+        >
+          Composición
+        </GroupLabel>
+      )}
       {!ver.composicion ? null : composicion.length === 0 && alcance === 'mios' ? (
         <EmptyState
           icon="wallet-outline"
@@ -428,7 +449,7 @@ export function DashboardScreen() {
             <Disp label="Apartado" valor={money(principal.valorReservado, principal.moneda)} styles={styles} onPress={() => nav.go('Planificar')} />
             <Disp label="Disponible" valor={money(principal.valorLibre, principal.moneda)} styles={styles} strong />
           </View>
-          <Text style={styles.muted}>“Apartado” son reservas para tus metas: sigue en la cuenta, pero comprometido.</Text>
+          <Text style={styles.muted}>“Apartado” es plata separada para tus metas: sigue en la cuenta, pero comprometida.</Text>
         </Panel>
       )}
 
@@ -479,7 +500,7 @@ export function DashboardScreen() {
               { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
               { icon: 'flag-outline', label: 'Objetivos', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
-              { icon: 'trending-up-outline', label: 'Evolución', onPress: () => nav.go('EvolucionPatrimonio') },
+              { icon: 'wallet-outline', label: 'Mi patrimonio', onPress: verPatrimonio },
             ]}
           />
         </>

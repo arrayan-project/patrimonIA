@@ -91,12 +91,15 @@ export function HogarScreen() {
       <TopRow
         left={<Title>{hogar.nombre}</Title>}
         right={
-          <IconButton
-            icon="notifications-outline"
-            badge={noLeidas || undefined}
-            accessibilityLabel="Notificaciones"
-            onPress={() => nav.go('Notificaciones')}
-          />
+          <>
+            <IconButton
+              icon="notifications-outline"
+              badge={noLeidas || undefined}
+              accessibilityLabel="Notificaciones"
+              onPress={() => nav.go('Notificaciones')}
+            />
+            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+          </>
         }
       />
 

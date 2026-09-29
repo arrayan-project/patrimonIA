@@ -10,6 +10,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { GLOSARIO } from '../labels';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
@@ -92,23 +93,19 @@ export function AsignacionDetalleScreen() {
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{asg.nombre}</Title>
-      <Text style={styles.muted}>Total reservado: {money(asg.totalReservado, asg.moneda)}</Text>
+      <Text style={styles.muted}>Total apartado: {money(asg.totalReservado, asg.moneda)}</Text>
 
-      <Ayuda>
-        Una asignación divide un objetivo en partes. Cada reserva "aparta" un
-        monto de tus cuentas hacia esa parte — el dinero no se mueve, solo queda
-        marcado como comprometido para esta meta.
-      </Ayuda>
+      <Ayuda>{GLOSARIO.apartado}</Ayuda>
 
       <Panel>
-        <Text style={styles.sectionTitle}>Reservas activas</Text>
+        <Text style={styles.sectionTitle}>Apartado desde</Text>
         {reservasActivas.length === 0 ? (
-          <Text style={styles.muted}>Sin reservas.</Text>
+          <Text style={styles.muted}>Aún no apartas dinero aquí.</Text>
         ) : (
           reservasActivas.map((r) => (
             <View key={r.id} style={styles.reserva}>
               <Row
-                left={nombrePorId.get(r.elementoOrigenId) ?? 'Elemento'}
+                left={nombrePorId.get(r.elementoOrigenId) ?? 'Cuenta'}
                 right={money(r.monto, asg.moneda)}
               />
               <Button
@@ -132,7 +129,7 @@ export function AsignacionDetalleScreen() {
       </Panel>
 
       <Panel>
-        <Text style={styles.sectionTitle}>Nueva reserva</Text>
+        <Text style={styles.sectionTitle}>Apartar más dinero</Text>
         {elementos.map((el) => (
           <SelectRow
             key={el.id}
@@ -141,9 +138,9 @@ export function AsignacionDetalleScreen() {
             onPress={() => setOrigenId(el.id)}
           />
         ))}
-        <MoneyField label="Monto a reservar" value={monto} onChange={setMonto} />
+        <MoneyField label="Monto a apartar" value={monto} onChange={setMonto} />
         <Button
-          title="Crear reserva"
+          title="Apartar dinero"
           loading={busy}
           disabled={!origenId || !(Number(monto) > 0)}
           onPress={() =>
@@ -153,7 +150,7 @@ export function AsignacionDetalleScreen() {
                 { asignacionId, elementoOrigenId: origenId, monto: Number(monto) },
                 token,
               );
-              toast.mostrar('Reserva creada');
+              toast.mostrar('Dinero apartado');
               setMonto('');
               setOrigenId(null);
             })
@@ -162,17 +159,17 @@ export function AsignacionDetalleScreen() {
       </Panel>
 
       <Panel>
-        <Field label="Motivo (liberar / eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
+        <Field label="Motivo (para liberar o eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         <Button
-          title="Eliminar asignación"
+          title="Eliminar apartado"
           variant="danger"
           loading={busy}
           disabled={motivo.trim().length < 3}
           onPress={async () => {
             if (
               !(await confirmar(
-                'Eliminar asignación',
-                'Se eliminan también sus reservas activas. No afecta el patrimonio.',
+                'Eliminar apartado',
+                'Se libera todo el dinero apartado aquí. No afecta el patrimonio.',
                 'Eliminar',
               ))
             )
@@ -183,7 +180,7 @@ export function AsignacionDetalleScreen() {
                 { asignacionId, motivo: motivo.trim() },
                 token,
               );
-              toast.mostrar('Asignación eliminada');
+              toast.mostrar('Apartado eliminado');
             }, true);
           }}
         />

@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U4 | **G32** | Evaluación heurística ✅ (`Docs/diseño/EVALUACION_USABILIDAD.md`, 14 hallazgos). Falta aplicar la propuesta: vocabulario, detalles conectados, onboarding y pulido (chicos); "apartar en un paso" y "Mi patrimonio" necesitan decisión. | 🟡 accionable |
+| U4 | **G32** | Evaluación heurística ✅ y los 7 puntos de la propuesta aplicados ✅ (`Docs/diseño/EVALUACION_USABILIDAD.md` §5). Falta validar con una persona nueva. | 🟡 validación |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
@@ -159,16 +159,21 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
-#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ 2026-09-29; ajustes ⬜)
+#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ y ajustes ✅ 2026-09-29; validación con persona nueva ⬜)
 - ✅ (2026-09-29) **Revisión heurística** en
   [`Docs/diseño/EVALUACION_USABILIDAD.md`](Docs/diseño/EVALUACION_USABILIDAD.md):
   mapa de navegación real, flujos 1–6 con pasos, 14 hallazgos (4 de severidad
   alta: "Reserva" con dos significados, apartar para una meta en 7 pasos, sin
   lista de cuentas y bienes, onboarding que deja solo al usuario) y propuesta
   de ajustes en 7 puntos.
-- **Pendiente**: aplicar los puntos 1, 3, 6 y 7 de la propuesta (chicos);
-  📋 decidir el 2 (apartar en un paso) y el 4 (pantalla "Mi patrimonio");
-  validar después con una persona nueva.
+- ✅ (2026-09-29) **Los 7 puntos de la propuesta aplicados** en la app (detalle
+  en `EVALUACION_USABILIDAD.md` §5): vocabulario "Apartado" + glosario,
+  "Apartar dinero" en un paso desde el objetivo, detalles conectados, "Mi
+  patrimonio", programados y plantillas en Planificar, onboarding que lleva a
+  la primera cuenta, y pulido (categoría resuelta, "+" de Planificar,
+  engranaje en todas las tabs, icono de Movimientos, fuente de los tipos de
+  cambio). Sin cambios de modelo ni migraciones.
+- **Pendiente**: validar con una persona nueva.
 - **Qué faltaba**: una evaluación de **todo el flujo gráfico** de la app desde
   el punto de vista de un usuario **nuevo y sin experiencia**: qué tan fácil
   le resulta entender para qué sirve cada sección, cómo se relacionan entre
@@ -275,6 +280,18 @@ mindicador.cl + `@nestjs/schedule`; captcha (G4) y push remoto (G20) pospuestos.
 | 4 | **G20** push | Pospuesto (EAS + teléfono físico). | 🔒 |
 
 **Siguiente tanda**: aplicar G32 puntos 1, 3, 6 y 7; decidir G32 puntos 2 y 4.
+
+### Tanda GAPS Parte 1 (c) — 2026-09-29
+
+Decisiones del usuario: G32 punto 2 sí ("Apartar dinero" en un paso), punto 4
+como pantalla "Mi patrimonio" (no una 5.ª tab), punto 5 sí (programados a
+Planificar).
+
+| # | Gap | Qué se hizo | Estado |
+|---|-----|-------------|--------|
+| 1 | **G32** | Los 7 puntos de la propuesta, solo en la app (+ el texto de la notificación `RESERVA_CONSUMIDA`). Ver `EVALUACION_USABILIDAD.md` §5. | ✅ (falta validar con una persona) |
+
+**Siguiente**: probar el flujo con una persona nueva; captcha G4 y push G20 siguen pospuestos.
 
 ### Pulido de UI — Fase 53
 

@@ -99,7 +99,7 @@ function Tabs() {
       <Tab.Screen
         name="Movimientos"
         component={MovimientosScreen}
-        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('stats-chart-outline') }}
+        options={{ tabBarLabel: 'Movimientos', tabBarIcon: icono('swap-vertical-outline') }}
       />
       <Tab.Screen
         name="Planificar"
@@ -134,8 +134,8 @@ const TITULOS: Record<string, string> = {
   Perfil: 'Mi perfil',
   Objetivos: 'Objetivos financieros',
   ObjetivoDetalle: 'Objetivo',
-  Asignaciones: 'Asignaciones',
-  AsignacionDetalle: 'Asignación',
+  Asignaciones: 'Apartados',
+  AsignacionDetalle: 'Apartado',
   Presupuestos: 'Presupuestos',
   PresupuestoDetalle: 'Presupuesto',
   PresupuestoRubros: 'Presupuesto por rubro',
@@ -150,7 +150,7 @@ const TITULOS: Record<string, string> = {
   Ajustes: 'Ajustes',
   AjustesNotificaciones: 'Notificaciones',
   AjustesVisualizacion: 'Visualización',
-  PatrimonioSeccion: 'Patrimonio',
+  PatrimonioSeccion: 'Mi patrimonio',
   Categorias: 'Categorías de movimiento',
   TiposElemento: 'Tipos de elemento patrimonial',
   Etiquetas: 'Etiquetas',

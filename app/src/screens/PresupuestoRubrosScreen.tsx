@@ -146,8 +146,8 @@ export function PresupuestoRubrosScreen() {
             </Text>
           </View>
           <Text style={styles.muted}>
-            Cuánto esperas reservar hacia cada objetivo en el período. El real usa las
-            reservas creadas dentro del período.
+            Cuánto esperas apartar para cada objetivo en el período. El real usa lo
+            apartado dentro del período.
           </Text>
           {objetivos.map((o) => (
             <MoneyField

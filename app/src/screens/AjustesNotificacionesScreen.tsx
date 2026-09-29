@@ -7,7 +7,7 @@ import { Ayuda, Button, ErrorText, Screen, Segmented, Skeleton, Title } from '..
 
 const NOTIF_TIPOS = [
   ['OBJETIVO_COMPLETADO', 'Objetivo completado'],
-  ['RESERVA_CONSUMIDA', 'Reservas consumidas'],
+  ['RESERVA_CONSUMIDA', 'Dinero apartado que se usó'],
   ['INVITACION_RECIBIDA', 'Invitación a un hogar'],
 ] as const;
 

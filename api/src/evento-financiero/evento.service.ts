@@ -122,8 +122,8 @@ export class EventoFinancieroService {
         await this.notificaciones.emitir(tx, {
           usuarioId: actorId,
           tipo: 'RESERVA_CONSUMIDA',
-          titulo: 'Reservas consumidas',
-          cuerpo: `Se consumieron ${total} ${moneda} de las reservas de "${asignacion.nombre}" al asociarle un movimiento.`,
+          titulo: 'Se usó dinero apartado',
+          cuerpo: `Se consumieron ${total} ${moneda} apartados en "${asignacion.nombre}" al asociarle un movimiento.`,
           entidadTipo: 'ASIGNACION',
           entidadId: asignacion.id,
         });

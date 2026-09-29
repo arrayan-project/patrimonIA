@@ -199,21 +199,38 @@ export function ElementoDetalleScreen() {
         {el.fechaBaja ? <Row left="Salió del patrimonio" right={fechaLegible(el.fechaBaja)} /> : null}
       </Panel>
 
+      {/* G32 H-07 — registrar con esta cuenta ya elegida (pagar una deuda = transferir hacia ella). */}
+      {esPropietario && el.estado !== 'INACTIVO' && (
+        <Button
+          title={esDeuda ? 'Registrar pago' : esCredito ? 'Registrar cobro' : 'Registrar movimiento'}
+          onPress={() =>
+            nav.go(
+              'RegistrarMovimiento',
+              esDeuda
+                ? { tipo: 'TRANSFERENCIA', destinoId: elementoId }
+                : esCredito
+                  ? { tipo: 'TRANSFERENCIA', origenId: elementoId }
+                  : { cuentaId: elementoId },
+            )
+          }
+        />
+      )}
+
       {reservas.length > 0 && (
         <Panel>
           <SectionTitle>Disponibilidad</SectionTitle>
           <Row left="Valor vigente" right={money(el.valorVigente, el.moneda)} />
-          <Row left="Reservado para metas" right={`− ${money(reservado, el.moneda)}`} />
+          <Row left="Apartado para metas" right={`− ${money(reservado, el.moneda)}`} />
           <Row left="Disponible (libre)" right={money(libre, el.moneda)} />
           <Nota>
-            Lo reservado no salió de la cuenta: sigue ahí, pero está comprometido
+            Lo apartado no salió de la cuenta: sigue ahí, pero está comprometido
             para tus objetivos. "Disponible" es lo que puedes usar sin tocar una meta.
           </Nota>
           {reservas.map((r) => (
             <ListItem
               key={r.id}
               title={r.objetivoNombre ? `${r.objetivoNombre} · ${r.asignacionNombre}` : r.asignacionNombre}
-              subtitle={r.objetivoNombre ? 'Objetivo' : 'Asignación sin objetivo'}
+              subtitle={r.objetivoNombre ? 'Objetivo' : 'Apartado sin objetivo'}
               right={money(r.monto, el.moneda)}
               onPress={() =>
                 nav.go('AsignacionDetalle', { asignacionId: r.asignacionId, contexto: el.nombre })

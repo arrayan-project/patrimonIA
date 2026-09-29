@@ -126,8 +126,15 @@ export function MovimientoProgramadoDetalleScreen() {
   }
 
   const pendiente = m.estado === 'PENDIENTE';
-  const nombreEl = (id: string | null) =>
-    id ? (elementos.find((e) => e.id === id)?.nombre ?? id.slice(0, 8)) : '—';
+  /** G32 H-05 — la cuenta es tocable si es visible para el usuario. */
+  const enlaceEl = (id: string) => {
+    const el = elementos.find((e) => e.id === id);
+    return el ? (
+      <LinkButton title={`${el.nombre} ›`} onPress={() => nav.go('ElementoDetalle', { elementoId: id })} />
+    ) : (
+      'otra cuenta'
+    );
+  };
 
   return (
     <Screen onRefresh={cargar}>
@@ -138,10 +145,20 @@ export function MovimientoProgramadoDetalleScreen() {
         <Row left="Tipo" right={etiqueta(m.tipo)} />
         <Row left="Estado" right={etiqueta(m.estado)} />
         <Row left="Fecha programada" right={fechaLegible(m.fechaProgramada)} />
-        {m.elementoOrigenId ? <Row left="Desde" right={nombreEl(m.elementoOrigenId)} /> : null}
-        {m.elementoDestinoId ? <Row left="Hacia" right={nombreEl(m.elementoDestinoId)} /> : null}
+        {m.elementoOrigenId ? <Row left="Desde" right={enlaceEl(m.elementoOrigenId)} /> : null}
+        {m.elementoDestinoId ? <Row left="Hacia" right={enlaceEl(m.elementoDestinoId)} /> : null}
         {m.observaciones ? <Row left="Observaciones" right={m.observaciones} /> : null}
-        {m.eventoFinancieroId ? <Row left="Evento generado" right={m.eventoFinancieroId.slice(0, 8)} /> : null}
+        {m.eventoFinancieroId ? (
+          <Row
+            left="Movimiento generado"
+            right={
+              <LinkButton
+                title="Ver ›"
+                onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoFinancieroId })}
+              />
+            }
+          />
+        ) : null}
       </Panel>
 
       {pendiente && modo === null && (
