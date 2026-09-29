@@ -40,7 +40,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26 |
-| **G** · Monedas, proyecciones y reportes | G21 | G7, G27 |
+| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G25 (densidad), G32 | — |
 
@@ -54,12 +54,11 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U4 | **G32** | Evaluación de usabilidad del flujo completo para un usuario nuevo: onboarding, mapa de navegación, conexión entre secciones. Hoy ni el autor siente que todo esté "conectado" y sea facilísimo de usar. | ⬜ accionable |
+| U4 | **G32** | Evaluación heurística ✅ (`Docs/diseño/EVALUACION_USABILIDAD.md`, 14 hallazgos). Falta aplicar la propuesta: vocabulario, detalles conectados, onboarding y pulido (chicos); "apartar en un paso" y "Mi patrimonio" necesitan decisión. | 🟡 accionable |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
-| P16 | **G21** | Importación automática de tipos de cambio desde una fuente de tasas (hoy se cargan a mano). | 🔒 externo |
 
 > U3 se refiere al hallazgo G1 del backlog de UI (`Docs/retirado/UI_UX_BACKLOG.md`),
 > no al gap G1 de Deuda/Crédito.
@@ -87,19 +86,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-### Tema G · Monedas, proyecciones y reportes
-
-#### G21 — Conversión monetaria (Fase 13 + 14c)  🟡 PARCIAL (conversión + triangulación ✅; importación de tasas 🔒)
-- `ConversionService` (Fase 13): tasa directa más reciente con
-  `fecha_vigencia <= fecha`; si no hay, el inverso B→A (`1/tasa`).
-- **Triangulación (Fase 14c)**: si tampoco hay inverso, se busca una moneda
-  pivote C con A↔C y C↔B disponibles (máx. 2 saltos). Con varias pivotes se
-  elige la primera alfabéticamente — determinista. Si no hay ninguna, la
-  conversión falla (y el total consolidado queda `null`).
-- `RegistrarTipoCambio` (comando nº 53) es dato global, inmutable; para
-  "corregir" una tasa se registra otra con fecha de vigencia posterior.
-- **Pendiente**: importación automática desde una fuente de tasas.
 
 ### Tema H · Notificaciones
 
@@ -173,8 +159,17 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
-#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  ⬜ PENDIENTE
-- **Qué falta**: una evaluación de **todo el flujo gráfico** de la app desde
+#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ 2026-09-29; ajustes ⬜)
+- ✅ (2026-09-29) **Revisión heurística** en
+  [`Docs/diseño/EVALUACION_USABILIDAD.md`](Docs/diseño/EVALUACION_USABILIDAD.md):
+  mapa de navegación real, flujos 1–6 con pasos, 14 hallazgos (4 de severidad
+  alta: "Reserva" con dos significados, apartar para una meta en 7 pasos, sin
+  lista de cuentas y bienes, onboarding que deja solo al usuario) y propuesta
+  de ajustes en 7 puntos.
+- **Pendiente**: aplicar los puntos 1, 3, 6 y 7 de la propuesta (chicos);
+  📋 decidir el 2 (apartar en un paso) y el 4 (pantalla "Mi patrimonio");
+  validar después con una persona nueva.
+- **Qué faltaba**: una evaluación de **todo el flujo gráfico** de la app desde
   el punto de vista de un usuario **nuevo y sin experiencia**: qué tan fácil
   le resulta entender para qué sirve cada sección, cómo se relacionan entre
   sí y cómo sacarle el máximo provecho a la app.
@@ -266,6 +261,20 @@ desplegado en Render después de aplicar la migración 026 en Neon (2026-09-29).
 propia o prueba con alguien nuevo?) → G21 (¿mindicador.cl? ¿cron de Render o
 `@nestjs/schedule`?) → captcha G4 (¿Turnstile o hCaptcha? + claves) → push G20
 (cuenta EAS + `projectId` + teléfono físico).
+
+### Tanda GAPS Parte 1 (b) — 2026-09-29
+
+Decisiones del usuario: G32 por revisión heurística propia; G21 con
+mindicador.cl + `@nestjs/schedule`; captcha (G4) y push remoto (G20) pospuestos.
+
+| # | Gap | Decisión y qué se hizo | Estado |
+|---|-----|------------------------|--------|
+| 1 | **G32** | Revisión heurística: `Docs/diseño/EVALUACION_USABILIDAD.md` (mapa, flujos, 14 hallazgos, propuesta). | 🟡 (ajustes pendientes) |
+| 2 | **G21** | Importación de USD/EUR/UF→CLP desde mindicador.cl al arrancar y cada hora; env `TIPOS_CAMBIO_IMPORTACION`. Sin migración. | ✅ |
+| 3 | **G4** captcha | Pospuesto. | 🔒 |
+| 4 | **G20** push | Pospuesto (EAS + teléfono físico). | 🔒 |
+
+**Siguiente tanda**: aplicar G32 puntos 1, 3, 6 y 7; decidir G32 puntos 2 y 4.
 
 ### Pulido de UI — Fase 53
 
@@ -921,6 +930,25 @@ ya cerrados en Fases 50–51).
   (cierra del todo G15)?
 
 ### Tema G · Monedas, proyecciones y reportes
+
+#### G21 — Conversión monetaria (Fase 13 + 14c)  ✅ RESUELTO (conversión + triangulación ✅; importación desde mindicador.cl ✅ 2026-09-29)
+- `ConversionService` (Fase 13): tasa directa más reciente con
+  `fecha_vigencia <= fecha`; si no hay, el inverso B→A (`1/tasa`).
+- **Triangulación (Fase 14c)**: si tampoco hay inverso, se busca una moneda
+  pivote C con A↔C y C↔B disponibles (máx. 2 saltos). Con varias pivotes se
+  elige la primera alfabéticamente — determinista. Si no hay ninguna, la
+  conversión falla (y el total consolidado queda `null`).
+- `RegistrarTipoCambio` (comando nº 53) es dato global, inmutable; para
+  "corregir" una tasa se registra otra con fecha de vigencia posterior.
+- ✅ (2026-09-29) **Importación automática** desde mindicador.cl (gratis, sin
+  API key): `ImportacionTasasService` inserta USD→CLP, EUR→CLP y CLF→CLP (UF)
+  con la fecha calendario de Chile y `fuente = 'mindicador.cl'`. Corre **al
+  arrancar y cada hora** (`@nestjs/schedule`) — Render free duerme el servicio,
+  así que no se confía en una hora fija. Idempotente por la UNIQUE
+  (origen, destino, fecha): no pisa una tasa cargada a mano. Sin auditoría (no
+  hay usuario actor; la fila queda trazada por `fuente`). Solo corre con
+  `TIPOS_CAMBIO_IMPORTACION=true` (en `render.yaml`). Tests:
+  `src/tipo-cambio/importacion-tasas.service.spec.ts`.
 
 #### G7 — Proyecciones: en vivo vs. materializada  ✅ DECISIÓN CERRADA (P13: todas en vivo; revisar solo si aparece un problema de performance)
 - **Qué falta**: DATABASE_DESIGN §12 y el comentario de `schema.sql` dejan

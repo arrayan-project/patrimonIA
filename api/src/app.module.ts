@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { IdempotencyInterceptor } from './common/idempotency.interceptor.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -29,6 +30,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuditoriaModule,
     AuthModule,

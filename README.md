@@ -32,14 +32,15 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 El detalle y la prioridad de todo lo abierto viven en **`GAPS.md` → Parte 1**.
 En resumen:
 
-- [ ] **Usabilidad del flujo completo** para un usuario nuevo — onboarding, mapa
-  de navegación, conexión entre secciones (G32).
+- [ ] **Usabilidad del flujo completo** (G32) — evaluación hecha
+  (`Docs/diseño/EVALUACION_USABILIDAD.md`); falta aplicar los ajustes.
 - [ ] **Densidad** en las preferencias de visualización (resto de G25).
-- [ ] **Bloqueado por proveedor externo**: importación de tipos de cambio (G21,
-  candidato mindicador.cl), captcha (G4), push remoto real (G20).
+- [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
 
 ### Implementado
 
+- [x] **Tanda GAPS Parte 1 (b) (2026-09-29)** — importación automática de tipos
+  de cambio desde mindicador.cl (G21) y evaluación heurística de usabilidad (G32).
 - [x] **Tanda GAPS Parte 1 (2026-09-29)** — detalle en `GAPS.md` §2.1:
   código de 6 dígitos para reset y registro (G31/G4, migración 026),
   preferencias de visualización v1 (G25), consumo parcial de reservas (G14),

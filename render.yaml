@@ -20,3 +20,5 @@ services:
         sync: false # sin ella los emails solo van al log (GAPS G31)
       - key: EMAIL_REMITENTE
         sync: false # email verificado como sender en Brevo
+      - key: TIPOS_CAMBIO_IMPORTACION
+        value: "true" # importa USD/EUR/UF desde mindicador.cl (GAPS G21)

@@ -57,6 +57,7 @@ Variables de entorno del backend (`api/src` las lee vía `@nestjs/config`):
 | `BREVO_API_KEY` | no, pero sin ella **no se envían emails** (reset de contraseña, token de registro) — solo van al log | API key de Brevo (SMTP & API → API Keys) |
 | `EMAIL_REMITENTE` | sí, si hay `BREVO_API_KEY` (sin ella el proceso no arranca) | el email verificado en Brevo → Senders |
 | `EMAIL_REMITENTE_NOMBRE` | no | nombre visible del remitente; por defecto `PatrimonIA` |
+| `TIPOS_CAMBIO_IMPORTACION` | no; sin ella las tasas se cargan solo a mano | `true`: importa USD/EUR/UF→CLP desde mindicador.cl al arrancar y cada hora (GAPS G21) |
 
 ---
 
@@ -125,6 +126,7 @@ valores de `DATABASE_URL` y `JWT_SECRET` (marcados `sync: false`).
    | `AUTH_REGISTRO_TOKEN_REQUERIDO` | `false` |
    | `BREVO_API_KEY` | API key de Brevo (ver "Email" abajo) |
    | `EMAIL_REMITENTE` | el email verificado como sender en Brevo |
+   | `TIPOS_CAMBIO_IMPORTACION` | `true` |
 
    `PORT` la inyecta Render sola — no la agregues. Si el arranque falla con un
    error de `channel_binding`, quita `&channel_binding=require` de la URL.
