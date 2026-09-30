@@ -34,7 +34,8 @@
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node --test src/**/*.test.ts"
   },
   "engines": {
     "node": ">=22.12"
