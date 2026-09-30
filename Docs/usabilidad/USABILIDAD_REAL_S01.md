@@ -159,6 +159,8 @@ de pasos · `DOMINIO` = requiere decisión de dominio (se registra en GAPS) ·
 | HZ-6 | Hogar / Inicio | BUG | En la vista del hogar, las cuentas compartidas aparecen pero **el total del hogar queda en cero**. Ver §7 (vía paralela BUG-HOG). |
 | HZ-7 | Transversal | FLUJO | Las operaciones pierden coherencia entre pasos. Reserva, apartado y objetivo no se entienden (HIP-3). |
 | HZ-8 | Metas | FLUJO | Ahorrar solo existe como "apartar" (reserva virtual). La transferencia real a una cuenta de inversión con meta, que es el caso más frecuente, no tiene una entrada de ahorro (§3.1). |
+| HZ-9 | Cuentas | FLUJO | Agregar una cuenta (C1) también resultó confuso: la usuaria avanzó bastante en el asistente, pero no lo terminó. No quedó ninguna cuenta a su nombre (confirmado en la base, §7). La Fase B debe recorrer C1 con prioridad, aunque sea T2, porque sin cuentas no se puede probar nada más. |
+| HZ-10 | Cuentas / Hogar | UI | Visibilidad y "Cuenta en el patrimonio del hogar" no se entienden ni siquiera para el autor (Juan, 2026-09-29). (1) "Que existe", "El monto" y "Familiar" son lenguaje de sistema: no dicen para qué sirven (en la práctica, "Que existe" permite que el otro miembro te transfiera a esa cuenta). (2) La visibilidad solo afecta lo que ven *otros*, así que el dueño nunca ve su efecto. (3) `HogarScreen` filtra las cuentas visibles del hogar por `participaConsolidacion`: una cuenta visible con saldo, pero que no suma, no aparece en la pestaña Hogar, y parece que la visibilidad no hace nada. La pantalla mezcla dos ideas que el dominio separa (§M). Ver D-2. |
 
 ## 5. Catálogo de escenarios de prueba
 
@@ -296,6 +298,22 @@ la Fase D esté aprobada. La única excepción es BUG-HOG.
 3. **Moneda equivocada:** `total` es `null` (falta un tipo de cambio) y
    `porMoneda[0]` toma una moneda con saldo 0.
 
+### Diagnóstico (Tarea 2, 2026-09-29) — causa 1 confirmada
+
+Consulta de solo lectura en Neon, hogar "Flores Carrero" (`6d6be0e2-…`, CLP,
+2 miembros ACTIVA):
+
+- Las 7 cuentas del hogar son de Juan, todas CLP y ACTIVO, con
+  `participa_consolidacion = false`. Seis tienen `VALOR=FAMILIAR` (el hogar ve
+  el saldo) y Cuenta Rut solo `EXISTENCIA=FAMILIAR`. Suma manual:
+  13.805.559 CLP. El total del hogar es 0 porque no hay nada que consolidar.
+- Zoily no tiene ninguna cuenta (HZ-9). Las cuentas "compartidas" que vio
+  eran las de Juan.
+- Causa 3 descartada: todo está en CLP y hay tasas USD/EUR/CLF→CLP al día.
+- Causa 2 descartada en la práctica: al activar "Cuenta en el patrimonio del
+  hogar" desde la app (paso 2), el total del hogar muestra el monto, así que
+  los endpoints responden bien.
+
 ### Pasos
 
 1. **Confirmar la causa con datos reales.** Consultar en la base del entorno
@@ -357,7 +375,13 @@ conteo. De esa tabla salen los 3 flujos peores para el mockup de la Fase D.
   si se pregunta explícitamente ("¿Suma al patrimonio del hogar?") o si se
   deriva de "el hogar puede ver el saldo". El dominio exige que sean
   independientes (§M), pero la UI puede proponer un valor por defecto
-  coherente.
+  coherente. Ampliada con HZ-10: no se trata solo del asistente de alta. Hay
+  que decidir cómo se presentan las dos ideas en lenguaje de usuario (por
+  ejemplo, una sola pregunta "¿Qué compartes con el hogar?" con niveles del
+  tipo "Nada", "Que puedan transferirme", "Que vean el saldo", "Que sume al
+  total del hogar", con el detalle avanzado aparte), y qué muestra la pestaña
+  Hogar de las cuentas visibles que no suman. Evidencia: Juan dejó 6 cuentas
+  con el saldo visible y ninguna sumaba (§7).
 - **D-3 — Entrada única para "plata de otro" (HIP-2):** M8, M9 y M10 con una
   sola puerta y lenguaje cotidiano.
 - **D-4 — Palabra única para ahorrar (HIP-3):** qué término ve el usuario y

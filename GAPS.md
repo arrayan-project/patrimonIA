@@ -230,6 +230,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     `AgregarElementoScreen` solo pregunta visibilidad y `participa_consolidacion`
     nace en `false` (ver G6, G19). ¿Se pregunta explícitamente o se deriva un
     default de "el hogar ve el saldo"? §M exige que sean independientes.
+    Ampliada con HZ-10: los rótulos ("Que existe", "Familiar") no se entienden
+    ni para el autor, y `HogarScreen` solo lista las cuentas que suman, así que
+    la visibilidad parece no tener efecto. Hay que decidir cómo se presentan
+    las dos ideas en lenguaje de usuario.
   - 📋 **D-3 — Entrada única para "plata de otro"** (HIP-2): M8, M9 y M10 con
     una sola puerta y lenguaje cotidiano (hoy: G28 custodia informal, G30-F8
     transferencia del miembro, Crédito G17). M9 roza la decisión que G30-F8 dejó
