@@ -32,8 +32,9 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 El detalle y la prioridad de todo lo abierto viven en **`GAPS.md` → Parte 1**.
 En resumen:
 
-- [ ] **Usabilidad del flujo completo** (G32) — evaluación hecha
-  (`Docs/diseño/EVALUACION_USABILIDAD.md`); falta aplicar los ajustes.
+- [ ] **Rediseño de usabilidad** (G33) — la validación de G32 con una usuaria
+  real falló; plan y escenarios en `Docs/usabilidad/USABILIDAD_REAL_S01.md`.
+  Siguiente: BUG-HOG (total del hogar en cero) y recorrido de escenarios.
 - [ ] **Densidad** en las preferencias de visualización (resto de G25).
 - [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
 

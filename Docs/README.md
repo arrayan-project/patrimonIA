@@ -8,6 +8,8 @@ está vigente. Si no sabes dónde buscar algo, empieza acá.
 
 - **[diseño/](diseño/)** — los 6 documentos "fuente de verdad" (intocables,
   no se reorganizan ni se mezclan con lo demás).
+- **[usabilidad/](usabilidad/)** — registros de pruebas de uso con personas
+  reales y sus planes de rediseño (no canónicos; el porqué va en `GAPS.md`).
 - **[retirado/](retirado/)** — documentos de análisis ya superados, cuyo
   contenido se integró a otro lado. Se conservan como registro histórico.
 - **[_baseline/](_baseline/)** — los `.docx` originales de Fase 0, congelados.
@@ -32,9 +34,14 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 ## Registro de decisiones y estado
 
-- **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G32), por qué, qué se decidió, y a qué documento se integró. Ordenado en **Pendiente** (Parte 1, con resumen priorizado) e **Implementado / decisión cerrada** (Parte 2), y dentro de cada parte por tema.
+- **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G33), por qué, qué se decidió, y a qué documento se integró. Ordenado en **Pendiente** (Parte 1, con resumen priorizado) e **Implementado / decisión cerrada** (Parte 2), y dentro de cada parte por tema.
 - **[retirado/DOMINIO_PENDIENTE.md](retirado/DOMINIO_PENDIENTE.md)** — *retirado*. Análisis de Fase 28; sus conclusiones están en `diseño/DDD.md` §X y `diseño/UX_FLOWS.md` Parte 3.
 - **[retirado/UI_UX_BACKLOG.md](retirado/UI_UX_BACKLOG.md)** — *journal* de la implementación de UI/UX. El estado vigente está en `diseño/UX_FLOWS.md` Parte 3; de sus pulidos sueltos solo queda `ListItem` en dos listas, diferido a propósito (U3 en `GAPS.md`).
+
+## Usabilidad
+
+- **[diseño/EVALUACION_USABILIDAD.md](diseño/EVALUACION_USABILIDAD.md)** — evaluación heurística G32 (sin personas) y sus 7 ajustes aplicados.
+- **[usabilidad/USABILIDAD_REAL_S01.md](usabilidad/USABILIDAD_REAL_S01.md)** — prueba con usuaria real (G32 falló → G33): hallazgos, catálogo de escenarios, plan por fases y BUG-HOG. **Fuente de verdad del frente G33.**
 
 ## Operación
 

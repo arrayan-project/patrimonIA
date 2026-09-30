@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G25 (densidad), G32 | — |
+| **I** · App: preferencias y usabilidad | G25 (densidad), G32, G33 | — |
 
 ---
 
@@ -54,7 +54,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U4 | **G32** | Evaluación heurística ✅ y los 7 puntos de la propuesta aplicados ✅ (`Docs/diseño/EVALUACION_USABILIDAD.md` §5). Falta validar con una persona nueva. | 🟡 validación |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Siguiente: BUG-HOG y Fase B (recorrido de escenarios). Decisiones D-1 a D-5 abiertas hasta la Fase D. | 📋 decisión + ⬜ |
+| U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
@@ -159,7 +160,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
-#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ y ajustes ✅ 2026-09-29; validación con persona nueva ⬜)
+#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ y ajustes ✅ 2026-09-29; validación con persona nueva ✅ 2026-09-29, resultado negativo → G33)
 - ✅ (2026-09-29) **Revisión heurística** en
   [`Docs/diseño/EVALUACION_USABILIDAD.md`](Docs/diseño/EVALUACION_USABILIDAD.md):
   mapa de navegación real, flujos 1–6 con pasos, 14 hallazgos (4 de severidad
@@ -173,7 +174,12 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   la primera cuenta, y pulido (categoría resuelta, "+" de Planificar,
   engranaje en todas las tabs, icono de Movimientos, fuente de los tipos de
   cambio). Sin cambios de modelo ni migraciones.
-- **Pendiente**: validar con una persona nueva.
+- ✅ (2026-09-29) **Validación con persona nueva: falló.** La usuaria no
+  completó ningún flujo sola. La navegación (tabs, Ajustes, hogar) se entiende;
+  lo que se rompe es la operación (registrar, ahorrar, transferir). Además, el
+  punto 2 ("Apartar en un paso") resolvió el caso menos frecuente (ahorro
+  virtual): el usuario piensa ahorrar como transferir a la meta. Se continúa en
+  **G33**.
 - **Qué faltaba**: una evaluación de **todo el flujo gráfico** de la app desde
   el punto de vista de un usuario **nuevo y sin experiencia**: qué tan fácil
   le resulta entender para qué sirve cada sección, cómo se relacionan entre
@@ -206,6 +212,37 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   actual y un chequeo contra heurísticas de usabilidad. Resultado: una lista
   priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
   una propuesta de ajustes al flujo, antes de tocar pantallas.
+
+#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  📋 DECISIÓN + ⬜ PENDIENTE (abierto 2026-09-29)
+- **Fuente de verdad**: [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md)
+  (hallazgos HZ-1 a HZ-8, catálogo de 33 escenarios T1/T2/T3, plan por fases
+  A–E + BUG-HOG). Continúa G32.
+- **Principio**: el dominio no cambia; se rediseña cómo se presentan y encadenan
+  las operaciones. Lo que requiera dominio se decide acá.
+- **Estado**: Fase A (catálogo) ✅. Siguiente: BUG-HOG (HZ-6, total del hogar en
+  cero) y Fase B (recorrido de escenarios en el código). C, D y E esperan.
+- **Decisiones abiertas** (se resuelven en la Fase D, no antes):
+  - 📋 **D-1 — Orquestación de "Ahorrar para una meta"** (HIP-4): (a) la app
+    encadena TRANSFERENCIA + reserva, o (b) un caso de uso de aplicación que
+    ejecuta ambos en una transacción con auditoría encadenada. Recomendación:
+    (b); se registraría en `APPLICATION_SERVICES.md`.
+  - 📋 **D-2 — Visibilidad frente a consolidación en el alta de cuentas**: hoy
+    `AgregarElementoScreen` solo pregunta visibilidad y `participa_consolidacion`
+    nace en `false` (ver G6, G19). ¿Se pregunta explícitamente o se deriva un
+    default de "el hogar ve el saldo"? §M exige que sean independientes.
+  - 📋 **D-3 — Entrada única para "plata de otro"** (HIP-2): M8, M9 y M10 con
+    una sola puerta y lenguaje cotidiano (hoy: G28 custodia informal, G30-F8
+    transferencia del miembro, Crédito G17). M9 roza la decisión que G30-F8 dejó
+    abierta (GASTO con aportes de varias personas).
+  - 📋 **D-4 — Palabra única para ahorrar** (HIP-3): qué término ve el usuario
+    y cuáles salen de la superficie (objetivo, apartado, reserva, "Ahorro /
+    fondo de emergencia").
+  - 📋 **D-5 — Destino de transferencias a cuentas de otros miembros en
+    plantillas y programados** (HZ-5, escenario H3). No es solo UI: G24 exige
+    que los elementos de la plantilla sean propios y G2 exige que el actor sea
+    propietario de **cada** elemento del programado. `RegistrarEventoFinanciero`
+    TRANSFERENCIA sí acepta destino de un co-miembro (G6). Decidir si plantillas
+    y programados siguen esa misma regla, con las cuentas agrupadas por dueño.
 
 ---
 
