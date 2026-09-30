@@ -425,7 +425,7 @@ export function AgregarElementoScreen() {
                 value={valorizable}
                 onChange={setValorizable}
               />
-              <Paragraph>No se puede cambiar después de crear el elemento.</Paragraph>
+              <Paragraph>Puedes cambiarlo después desde Editar.</Paragraph>
             </>
           )}
         </>
