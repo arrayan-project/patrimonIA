@@ -491,7 +491,9 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 - [x] **Claude (chat):** Fase C con el resultado de B (`BENCHMARK_S01.md`,
       2026-09-29). Juan aceptó la opción (b) de HZ-11 y el resto de su §5.
 - [x] **Claude Code:** Tarea 5 de `BENCHMARK_S01.md` §8 (registro de la Fase C).
-- [ ] **Claude Code:** corregir HZ-14 en la rama `fix/valoriza-advertencia`
-      (solo el texto del asistente).
+- [x] **Claude Code:** corregir HZ-14 en la rama `fix/valoriza-advertencia`
+      (solo el texto del asistente; commit `9b0a1d8`, `tsc` en verde).
+- [ ] **Juan:** revisar y mergear `fix/valoriza-advertencia` a `main`.
+      *Rollback:* borrar la rama.
 - [ ] **Claude (chat):** Fase D (rediseño y mockup) con `BENCHMARK_S01.md` §6.
 - [ ] **Juan y Zoily:** prueba del mockup en la Fase D.
