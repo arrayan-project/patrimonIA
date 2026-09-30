@@ -39,7 +39,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | Fase | Estado |
 |------|--------|
 | A — Catálogo | ✅ Cerrada (2026-09-29) |
-| BUG-HOG | ▶ Siguiente (Claude Code, §10 Tarea 2–3) |
+| BUG-HOG | ✅ Cerrada (2026-09-29): causa 1 confirmada y activada desde la app; corrección defensiva en `63005d1` |
 | B — Recorrido | ▶ Siguiente (Claude Code, §10 Tarea 4) |
 | C — Benchmark | ⏳ Espera el resultado de B |
 | D — Rediseño y mockup | ⏳ Espera C |
@@ -466,10 +466,10 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 ## 11. Pendientes y compromisos
 
 - [x] **Juan:** catálogo validado (2026-09-29). Fase A cerrada.
-- [ ] **Claude Code:** Tareas 1 a 4 de §10.2.
-- [ ] **Juan:** si el diagnóstico confirma la causa 1, activar en la app
-      "Cuenta en el patrimonio del hogar" en las cuentas que deban sumar (§7,
-      paso 2).
+- [x] **Claude Code:** Tareas 1 a 3 de §10.2 (2026-09-29).
+- [ ] **Claude Code:** Tarea 4 de §10.2 (Fase B).
+- [x] **Juan:** activar en la app "Cuenta en el patrimonio del hogar" en las
+      cuentas que deban sumar (§7, paso 2).
 - [ ] **Juan:** llevar `RECORRIDO_ESCENARIOS_S01.md` al chat para iniciar la
       Fase C.
 - [ ] **Claude (chat):** Fase C con el resultado de B.
