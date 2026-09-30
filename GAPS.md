@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Siguiente: Fase D (rediseño y mockup). Decisiones D-1 a D-7 abiertas hasta la Fase D. | 📋 decisión + ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D: bloque 1 (decisiones D-1 a D-7) ✅; siguiente: bloque 2 (prototipo). Implementación en la Fase E. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -213,7 +213,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
   una propuesta de ajustes al flujo, antes de tocar pantallas.
 
-#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  📋 DECISIÓN + ⬜ PENDIENTE (abierto 2026-09-29)
+#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  ⬜ PENDIENTE (abierto 2026-09-29; decisiones D-1 a D-7 cerradas 2026-09-29)
 - **Fuente de verdad**: [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md)
   (hallazgos HZ-1 a HZ-17, catálogo de 33 escenarios T1/T2/T3, plan por fases
   A–E + BUG-HOG). Continúa G32.
@@ -221,51 +221,53 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   las operaciones. Lo que requiera dominio se decide acá.
 - **Estado**: Fase A (catálogo) ✅, BUG-HOG ✅, Fase B (recorrido) ✅, Fase C
   (benchmark, [`Docs/usabilidad/BENCHMARK_S01.md`](Docs/usabilidad/BENCHMARK_S01.md)) ✅
-  (2026-09-29). Siguiente: Fase D (rediseño y mockup). E espera.
-- **Hallazgos de dominio** (se implementan en la Fase E, no antes):
-  - **HZ-11 — `DOMINIO`: la contrapartida de "plata de otra persona" no tiene
-    asiento sin INGRESO/GASTO.** `RegistrarElementoPatrimonial` exige
-    `valorPendiente > 0` en DEUDA/CREDITO y no mueve plata (M8, M10).
-    Decisión de Juan (2026-09-29): servicio de aplicación "Registrar plata de
-    otra persona" que da de alta la deuda/crédito con pendiente 0 y registra la
-    TRANSFERENCIA que la origina en una sola transacción, con auditoría
-    encadenada; la invariante admite 0 solo dentro de esa orquestación y se
-    reutiliza el saldo existente con la misma contraparte. Parte de D-3; se
-    registraría en `APPLICATION_SERVICES.md`.
-  - **HZ-16 — `DOMINIO`: los movimientos programados no tienen recurrencia ni
-    categoría** (M5, H3). Se resuelve con D-6.
-- **Decisiones abiertas** (se resuelven en la Fase D, no antes):
-  - 📋 **D-1 — Orquestación de "Ahorrar para una meta"** (HIP-4): (a) la app
-    encadena TRANSFERENCIA + reserva, o (b) un caso de uso de aplicación que
-    ejecuta ambos en una transacción con auditoría encadenada. Recomendación:
-    (b); se registraría en `APPLICATION_SERVICES.md`.
-  - 📋 **D-2 — Visibilidad frente a consolidación en el alta de cuentas**: hoy
-    `AgregarElementoScreen` solo pregunta visibilidad y `participa_consolidacion`
-    nace en `false` (ver G6, G19). ¿Se pregunta explícitamente o se deriva un
-    default de "el hogar ve el saldo"? §M exige que sean independientes.
-    Ampliada con HZ-10: los rótulos ("Que existe", "Familiar") no se entienden
-    ni para el autor, y `HogarScreen` solo lista las cuentas que suman, así que
-    la visibilidad parece no tener efecto. Hay que decidir cómo se presentan
-    las dos ideas en lenguaje de usuario.
-  - 📋 **D-3 — Entrada única para "plata de otro"** (HIP-2): M8, M9 y M10 con
-    una sola puerta y lenguaje cotidiano (hoy: G28 custodia informal, G30-F8
-    transferencia del miembro, Crédito G17). M9 roza la decisión que G30-F8 dejó
-    abierta (GASTO con aportes de varias personas).
-  - 📋 **D-4 — Palabra única para ahorrar** (HIP-3): qué término ve el usuario
-    y cuáles salen de la superficie (objetivo, apartado, reserva, "Ahorro /
-    fondo de emergencia").
-  - 📋 **D-5 — Destino de transferencias a cuentas de otros miembros en
-    plantillas y programados** (HZ-5, escenario H3). No es solo UI: G24 exige
-    que los elementos de la plantilla sean propios y G2 exige que el actor sea
-    propietario de **cada** elemento del programado. `RegistrarEventoFinanciero`
-    TRANSFERENCIA sí acepta destino de un co-miembro (G6). Decidir si plantillas
-    y programados siguen esa misma regla, con las cuentas agrupadas por dueño.
-  - 📋 **D-6 — Recurrencia de movimientos programados** (HZ-16): periodicidad y
-    categoría en `CrearMovimientoProgramado`, con materialización por
-    confirmación ("¿Se pagó?"), no automática. Recomendación: sí.
-  - 📋 **D-7 — Solicitud de aporte entre miembros** (M7): cómo se representa
-    "tu parte: 25.000 → Transferir". Recomendación: notificación con acción
-    (reusa el Principio 4) antes que un agregado nuevo.
+  (2026-09-29). Fase D, bloque 1 (decisiones,
+  [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md)) ✅ (2026-09-29).
+  Siguiente: Fase D, bloque 2 (prototipo). E espera, en el orden de su §4.
+- **`DOMINIO` pendiente de implementar en la Fase E** (no antes; detalle en
+  [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §1):
+  - **HZ-11 / D-3 — invariante en la orquestación "Registrar plata de otra
+    persona".** `RegistrarElementoPatrimonial` exige `valorPendiente > 0` en
+    DEUDA/CREDITO y no mueve plata (M8, M10). Se implementa el servicio de
+    aplicación `RegistrarPlataDeOtraPersona`: da de alta la deuda/crédito con
+    pendiente 0 y registra la TRANSFERENCIA que la origina en una sola
+    transacción, con auditoría encadenada. La invariante admite 0 **solo**
+    dentro de esa orquestación; se reutiliza el saldo existente con la misma
+    contraparte. Si un movimiento supera el saldo, se salda a 0 y se abre o
+    aumenta el opuesto en la misma transacción. Se registra en
+    `APPLICATION_SERVICES.md`.
+  - **D-5 — relajar G24 (plantillas) y G2 (programados).** Aceptan como destino
+    una cuenta de otro miembro con la misma regla de TRANSFERENCIA (G6): nivel
+    ≥ "Que puedan transferirme". El origen sigue siendo propio.
+  - **HZ-16 / D-6 — campos nuevos en `MovimientoProgramado`:** periodicidad
+    (mensual / anual), día y categoría. No se materializa solo: aviso
+    "¿Se pagó?", monto ajustable al confirmar, pendiente sin respuesta.
+- **Decisiones cerradas** (Fase D, bloque 1, 2026-09-29; ver
+  [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §1). Ninguna implementada:
+  - ✅ **D-1 — Ahorrar para una meta** (HIP-4): servicio de aplicación
+    `AhorrarParaObjetivo`, una transacción y auditoría encadenada, N orígenes;
+    si origen = destino, solo reserva. Se registra en `APPLICATION_SERVICES.md`.
+  - ✅ **D-2 — Qué compartes con el hogar**: una pregunta con 4 niveles (Nada ·
+    Que puedan transferirme · Que vean el saldo y sume al hogar · Todo);
+    combinaciones raras en "Avanzado"; por defecto "Que puedan transferirme";
+    las cuentas que no calzan se muestran como "Personalizado". Sin cambio de
+    dominio (§M se mantiene).
+  - ✅ **D-3 — Plata de otra persona** (HIP-2): ver HZ-11 arriba. Puertas: menú
+    `+` y "¿Era plata de otra persona?" en Gasto e Ingreso; la persona se elige
+    de la lista, nunca por texto libre; un solo saldo con signo en la UI.
+  - ✅ **D-4 — Palabras** (HIP-3): diccionario de superficie ("Meta",
+    "Ahorrar", "Libre para gastar", "Eliminar"…); se retira "Apartados sin
+    objetivo". Los comandos mantienen su nombre.
+  - ✅ **D-5 — Destino de otro miembro** en plantillas y programados: ver arriba.
+  - ✅ **D-6 — Recurrencia** (HZ-16): ver arriba. Las plantillas se muestran
+    como "Frecuentes".
+  - ✅ **D-7 — Solicitud de aporte** (M7): notificación con acción, tipo nuevo
+    `SOLICITUD_APORTE`; comandos intactos.
+- **Fuera de alcance: M9/M7 — atribución del gasto por persona.** El modelo ya
+  hace cuadrar los saldos individuales y el total del hogar; en "Míos" el gasto
+  completo aparece en quien pagó. **Reapertura:** solo si en la Fase E Zoily o
+  Juan reportan que sus números personales no calzan (camino barato: etiqueta
+  informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
 ---
 

@@ -32,7 +32,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | 5 | Plan por fases A–E más la vía paralela BUG-HOG (§6). | ✅ Aprobado |
 | 6 | La Fase B la ejecuta Claude Code en solo lectura. La Fase C (benchmark) la hace Claude en el chat, con el resultado de B. | ✅ Cerrada |
 | 7 | BUG-HOG no espera las fases. Si la causa es la 1 (consolidación nunca activada), no se corrige en código ni en datos hasta resolver D-2. | ✅ Cerrada |
-| 8 | Las decisiones D-1 a D-7 (§9) quedan **abiertas** hasta la Fase D. No implementarlas. | ⏸ Abiertas a propósito |
+| 8 | Las decisiones D-1 a D-7 (§9) quedan **abiertas** hasta la Fase D. No implementarlas. | ✅ Cerradas en la Fase D, bloque 1 ([`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §1); se implementan en la Fase E |
 | 9 | HZ-11 (plata de otra persona): opción (b) de `BENCHMARK_S01.md` §4, orquestación "Registrar plata de otra persona". Resto de recomendaciones de su §5 aprobadas. | ✅ Cerrada (Juan, 2026-09-29) |
 
 ### Estado de las fases
@@ -43,8 +43,8 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | BUG-HOG | ✅ Cerrada (2026-09-29): causa 1 confirmada y activada desde la app; corrección defensiva en `63005d1` |
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
-| D — Rediseño y mockup | ▶ Siguiente (flujos del mockup: Ahorrar, Compartido con la pareja, Plata de otra persona; `BENCHMARK_S01.md` §6) |
-| E — Implementación | ⏳ Espera D |
+| D — Rediseño y mockup | ▶ Bloque 1 (decisiones) cerrado; bloque 2 (prototipo) siguiente ([`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §5) |
+| E — Implementación | ⏳ Espera D (orden en [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §4) |
 
 ---
 
@@ -368,45 +368,30 @@ Cierre de la Fase B: una tabla resumen con todos los escenarios, ordenados
 primero por frecuencia (T1 antes que T2) y después de peor a mejor según el
 conteo. De esa tabla salen los 3 flujos peores para el mockup de la Fase D.
 
-## 9. Decisiones abiertas (se resuelven en la Fase D, no antes)
+## 9. Decisiones de la Fase D (cerradas)
 
-- **D-1 — Cómo se orquesta "Ahorrar para una meta" (HIP-4).**
-  (a) La app llama a dos comandos seguidos (transferencia y reserva).
-  (b) Un caso de uso de aplicación en el backend que ejecuta ambos en **una
-  sola transacción**, con una auditoría encadenada.
-  **Recomendación: (b).** Con (a), si la transferencia pasa y la reserva
-  falla, la plata se movió pero la meta no avanzó: la misma incoherencia que
-  confundió a Zoily. Los comandos de dominio no cambian; solo se agrega una
-  orquestación, que se registra en `APPLICATION_SERVICES.md` y en `GAPS.md`.
-- **D-2 — Visibilidad frente a consolidación en el asistente de cuentas.**
-  Hoy se pregunta solo lo primero y lo segundo nace en falso. Hay que decidir
-  si se pregunta explícitamente ("¿Suma al patrimonio del hogar?") o si se
-  deriva de "el hogar puede ver el saldo". El dominio exige que sean
-  independientes (§M), pero la UI puede proponer un valor por defecto
-  coherente. Ampliada con HZ-10: no se trata solo del asistente de alta. Hay
-  que decidir cómo se presentan las dos ideas en lenguaje de usuario (por
-  ejemplo, una sola pregunta "¿Qué compartes con el hogar?" con niveles del
-  tipo "Nada", "Que puedan transferirme", "Que vean el saldo", "Que sume al
-  total del hogar", con el detalle avanzado aparte), y qué muestra la pestaña
-  Hogar de las cuentas visibles que no suman. Evidencia: Juan dejó 6 cuentas
-  con el saldo visible y ninguna sumaba (§7).
-- **D-3 — Entrada única para "plata de otro" (HIP-2):** M8, M9 y M10 con una
-  sola puerta y lenguaje cotidiano.
-- **D-4 — Palabra única para ahorrar (HIP-3):** qué término ve el usuario y
-  cuáles se retiran de la superficie.
-- **D-5 — Destino de transferencia en plantillas y programados (HZ-5, H3):**
-  cuentas de otros miembros agrupadas por dueño; confirmar la regla de
-  visibilidad aplicable. No es solo UI: el backend exige propiedad de los
-  elementos en plantillas (`GAPS.md` G24) y en programados (G2), mientras que
-  `RegistrarEventoFinanciero` TRANSFERENCIA ya acepta destino de un co-miembro
-  (G6).
-- **D-6 — Recurrencia de movimientos programados (HZ-16).** Agregar
-  periodicidad y categoría a `CrearMovimientoProgramado`, con materialización
-  por confirmación ("¿Se pagó?"), no automática. **Recomendación: sí**; la
-  confirmación mantiene el principio de que el usuario registra hechos.
-- **D-7 — Solicitud de aporte entre miembros (M7).** Cómo se representa "tu
-  parte: 25.000 → Transferir". **Recomendación:** notificación con acción
-  (reusa el Principio 4) antes que un agregado nuevo.
+Cerradas en el bloque 1 de la Fase D (2026-09-29). El detalle está en
+[`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §1. **Ninguna está implementada:** se implementan en la Fase E,
+en el orden de su §4.
+
+- ✅ **D-1 — Ahorrar para una meta (HIP-4):** servicio `AhorrarParaObjetivo`,
+  una transacción, N orígenes. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-2 — Qué compartes con el hogar:** una pregunta con 4 niveles; por
+  defecto "Que puedan transferirme". [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-3 — Plata de otra persona (HIP-2):** servicio
+  `RegistrarPlataDeOtraPersona` (HZ-11, opción b), saldo único con signo.
+  [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-4 — Palabras (HIP-3):** diccionario de superficie; "Meta" y
+  "Ahorrar". [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas) y [§2](DECISIONES_FASE_D_S01.md#2-diccionario-de-superficie-d-4)
+- ✅ **D-5 — Destino de otro miembro:** plantillas y programados siguen la regla
+  de TRANSFERENCIA (G6); relaja G24 y G2. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-6 — Recurrencia (HZ-16):** periodicidad, día y categoría; aviso
+  "¿Se pagó?", sin registro automático. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-7 — Solicitud de aporte (M7):** notificación con acción, tipo
+  `SOLICITUD_APORTE`. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+
+M9/M7 (atribución del gasto por persona) queda **fuera de alcance**; condición
+de reapertura en [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §3.
 
 ## 10. Instrucciones de ejecución para Claude Code
 
@@ -495,5 +480,9 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
       (solo el texto del asistente; commit `9b0a1d8`, `tsc` en verde).
 - [x] **Juan:** revisar `fix/valoriza-advertencia`; mergeada a `main`
       (2026-09-29). *Rollback:* `git revert -m 1` del merge.
-- [ ] **Claude (chat):** Fase D (rediseño y mockup) con `BENCHMARK_S01.md` §6.
-- [ ] **Juan y Zoily:** prueba del mockup en la Fase D.
+- [x] **Claude (chat) y Juan:** Fase D, bloque 1 (decisiones D-1 a D-7,
+      `DECISIONES_FASE_D_S01.md`, 2026-09-29).
+- [x] **Claude Code:** Tarea 6 de `DECISIONES_FASE_D_S01.md` §6 (registro del bloque 1).
+- [ ] **Claude (chat):** Fase D, bloque 2 (prototipo interactivo, `DECISIONES_FASE_D_S01.md` §5).
+- [ ] **Zoily:** completar M1, M8, A1 y M7 sola en el prototipo (señal del
+      bloque 2).
