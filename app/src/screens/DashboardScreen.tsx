@@ -20,6 +20,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
+import { heroHogar } from '../heroHogar';
 import { useAlcance } from '../ui/alcance';
 import { usePreferencias } from '../preferencias';
 import {
@@ -74,6 +75,7 @@ export function DashboardScreen() {
   const [patrimonio, setPatrimonio] = useState<PatrimonioIndividualDTO | null>(null);
   const [metricas, setMetricas] = useState<MetricasHogarDTO | null>(null);
   const [consolidado, setConsolidado] = useState<PatrimonioConsolidadoDTO | null>(null);
+  const [errorHogar, setErrorHogar] = useState<string | null>(null);
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
@@ -120,17 +122,21 @@ export function DashboardScreen() {
       setElementos(els);
 
       if (alcance === 'hogar') {
-        try {
-          const [m, cons] = await Promise.all([
-            api.get<MetricasHogarDTO>(`/hogares/${activo}/metricas`, token),
-            api.get<PatrimonioConsolidadoDTO>(`/hogares/${activo}/patrimonio-consolidado`, token),
-          ]);
-          setMetricas(m);
-          setConsolidado(cons);
-        } catch {
-          setMetricas(null);
-          setConsolidado(null);
-        }
+        // G33 BUG-HOG: un fallo se informa (no se muestra un 0 falso) y no
+        // arrastra a la otra consulta.
+        const [m, cons] = await Promise.allSettled([
+          api.get<MetricasHogarDTO>(`/hogares/${activo}/metricas`, token),
+          api.get<PatrimonioConsolidadoDTO>(`/hogares/${activo}/patrimonio-consolidado`, token),
+        ]);
+        setMetricas(m.status === 'fulfilled' ? m.value : null);
+        setConsolidado(cons.status === 'fulfilled' ? cons.value : null);
+        setErrorHogar(
+          cons.status === 'rejected'
+            ? cons.reason instanceof ApiError
+              ? cons.reason.message
+              : 'Error inesperado'
+            : null,
+        );
       }
 
       try {
@@ -217,19 +223,16 @@ export function DashboardScreen() {
   const principal =
     patrimonio.porMoneda.find((m) => m.moneda === preferencias.monedaPreferida) ?? patrimonio.porMoneda[0] ?? null;
   const ver = preferencias.dashboard;
-  const monedaPrin = alcance === 'hogar'
-    ? (consolidado?.monedaConsolidacion ?? metricas?.porMoneda[0]?.moneda ?? hogar.monedaConsolidacion)
-    : (principal?.moneda ?? 'CLP');
+  const monedaPrin = alcance === 'hogar' ? hogar.monedaConsolidacion : (principal?.moneda ?? 'CLP');
 
   // ── Hero ───────────────────────────────────────────────────────────────
-  const heroValor =
-    alcance === 'hogar'
-      ? (consolidado?.total != null
-          ? money(consolidado.total, consolidado.monedaConsolidacion)
-          : metricas?.porMoneda[0]
-            ? money(metricas.porMoneda[0].patrimonioNeto, metricas.porMoneda[0].moneda)
-            : money(0, monedaPrin))
-      : money(principal?.patrimonio ?? 0, monedaPrin);
+  const hh = alcance === 'hogar' ? heroHogar(consolidado, errorHogar, monedaPrin) : null;
+  const heroValor = hh
+    ? hh.tipo === 'error'
+      ? '—'
+      : money(hh.monto, hh.moneda)
+    : money(principal?.patrimonio ?? 0, monedaPrin);
+  const metricasHogar = metricas?.porMoneda.find((m) => m.moneda === monedaPrin);
   const v = principal ? variacion?.porMoneda.find((x) => x.moneda === principal.moneda) : undefined;
   const puntos = principal
     ? (serie?.puntos ?? []).map((pt) => pt.porMoneda.find((m) => m.moneda === principal.moneda)?.patrimonio ?? 0)
@@ -237,8 +240,8 @@ export function DashboardScreen() {
 
   // ── Composición ────────────────────────────────────────────────────────
   const composicion: { cat: string; valor: number; sub: string }[] = [];
-  if (alcance === 'hogar' && metricas?.porMoneda[0]) {
-    const m = metricas.porMoneda[0];
+  if (alcance === 'hogar' && metricasHogar) {
+    const m = metricasHogar;
     const act = new Map(m.distribucionPorActivo.map((d) => [d.categoria, d]));
     const pas = new Map(m.distribucionPorPasivo.map((d) => [d.categoria, d]));
     for (const cat of CATS) {
@@ -351,8 +354,9 @@ export function DashboardScreen() {
         </Hero>
       </Pressable>
 
-      {alcance === 'hogar' && consolidado?.total == null && (consolidado?.conversionesFaltantes.length ?? 0) > 0 && (
-        <ErrorText>{`Falta tipo de cambio para: ${consolidado!.conversionesFaltantes.join(', ')}.`}</ErrorText>
+      {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
+      {hh?.tipo === 'parcial' && (
+        <ErrorText>{`Total parcial en ${hh.moneda}: falta tipo de cambio para ${hh.faltantes.join(', ')}.`}</ErrorText>
       )}
 
       {alertas.length > 0 && (
