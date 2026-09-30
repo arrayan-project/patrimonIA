@@ -493,7 +493,7 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 - [x] **Claude Code:** Tarea 5 de `BENCHMARK_S01.md` §8 (registro de la Fase C).
 - [x] **Claude Code:** corregir HZ-14 en la rama `fix/valoriza-advertencia`
       (solo el texto del asistente; commit `9b0a1d8`, `tsc` en verde).
-- [ ] **Juan:** revisar y mergear `fix/valoriza-advertencia` a `main`.
-      *Rollback:* borrar la rama.
+- [x] **Juan:** revisar `fix/valoriza-advertencia`; mergeada a `main`
+      (2026-09-29). *Rollback:* `git revert -m 1` del merge.
 - [ ] **Claude (chat):** Fase D (rediseño y mockup) con `BENCHMARK_S01.md` §6.
 - [ ] **Juan y Zoily:** prueba del mockup en la Fase D.
