@@ -32,7 +32,8 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | 5 | Plan por fases A–E más la vía paralela BUG-HOG (§6). | ✅ Aprobado |
 | 6 | La Fase B la ejecuta Claude Code en solo lectura. La Fase C (benchmark) la hace Claude en el chat, con el resultado de B. | ✅ Cerrada |
 | 7 | BUG-HOG no espera las fases. Si la causa es la 1 (consolidación nunca activada), no se corrige en código ni en datos hasta resolver D-2. | ✅ Cerrada |
-| 8 | Las decisiones D-1 a D-5 (§9) quedan **abiertas** hasta la Fase D. No implementarlas. | ⏸ Abiertas a propósito |
+| 8 | Las decisiones D-1 a D-7 (§9) quedan **abiertas** hasta la Fase D. No implementarlas. | ⏸ Abiertas a propósito |
+| 9 | HZ-11 (plata de otra persona): opción (b) de `BENCHMARK_S01.md` §4, orquestación "Registrar plata de otra persona". Resto de recomendaciones de su §5 aprobadas. | ✅ Cerrada (Juan, 2026-09-29) |
 
 ### Estado de las fases
 
@@ -41,8 +42,8 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | A — Catálogo | ✅ Cerrada (2026-09-29) |
 | BUG-HOG | ✅ Cerrada (2026-09-29): causa 1 confirmada y activada desde la app; corrección defensiva en `63005d1` |
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
-| C — Benchmark | ▶ Siguiente (Claude en el chat, con el resultado de B) |
-| D — Rediseño y mockup | ⏳ Espera C |
+| C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
+| D — Rediseño y mockup | ▶ Siguiente (flujos del mockup: Ahorrar, Compartido con la pareja, Plata de otra persona; `BENCHMARK_S01.md` §6) |
 | E — Implementación | ⏳ Espera D |
 
 ---
@@ -161,6 +162,13 @@ de pasos · `DOMINIO` = requiere decisión de dominio (se registra en GAPS) ·
 | HZ-8 | Metas | FLUJO | Ahorrar solo existe como "apartar" (reserva virtual). La transferencia real a una cuenta de inversión con meta, que es el caso más frecuente, no tiene una entrada de ahorro (§3.1). |
 | HZ-9 | Cuentas | FLUJO | Agregar una cuenta (C1) también resultó confuso: la usuaria avanzó bastante en el asistente, pero no lo terminó. No quedó ninguna cuenta a su nombre (confirmado en la base, §7). La Fase B debe recorrer C1 con prioridad, aunque sea T2, porque sin cuentas no se puede probar nada más. |
 | HZ-10 | Cuentas / Hogar | UI | Visibilidad y "Cuenta en el patrimonio del hogar" no se entienden ni siquiera para el autor (Juan, 2026-09-29). (1) "Que existe", "El monto" y "Familiar" son lenguaje de sistema: no dicen para qué sirven (en la práctica, "Que existe" permite que el otro miembro te transfiera a esa cuenta). (2) La visibilidad solo afecta lo que ven *otros*, así que el dueño nunca ve su efecto. (3) `HogarScreen` filtra las cuentas visibles del hogar por `participaConsolidacion`: una cuenta visible con saldo, pero que no suma, no aparece en la pestaña Hogar, y parece que la visibilidad no hace nada. La pantalla mezcla dos ideas que el dominio separa (§M). Ver D-2. |
+| HZ-11 | Movimientos | DOMINIO | El alta de una Deuda o un Crédito exige `valorPendiente > 0` y no mueve plata, así que la contrapartida de M8 y M10 solo puede ser INGRESO o GASTO (infla el mes). **Decisión de Juan (2026-09-29):** opción (b) de `BENCHMARK_S01.md` §4, un servicio de aplicación "Registrar plata de otra persona" (alta con pendiente 0 + la TRANSFERENCIA que la origina, en una transacción; un solo saldo por persona). Se implementa dentro de D-3. |
+| HZ-12 | Movimientos | UI | El enlace del aviso de Ingreso abre el asistente con "Crédito por cobrar", aunque el caso típico (M8) es una Deuda; ningún tipo sembrado sirve para un encargo. **Decisión:** incorporar; queda absorbido por D-3 (el enlace desaparece con la entrada única). |
+| HZ-13 | Metas | FLUJO | El backend soporta gastar la plata de una meta (`asignacionId`, política "Consumir reserva"), pero la app nunca lo ofrece; A5 no tiene entrada. **Decisión:** incorporar; primer candidato de la Fase E. |
+| HZ-14 | Cuentas | BUG | El asistente de alta dice que "¿Se valoriza en el tiempo?" no se puede cambiar después, pero Editar lo permite (`CambiarAdmiteValorizacion`). **Decisión:** reclasificado de UI a BUG (texto falso); se corrige por la vía paralela en la rama `fix/valoriza-advertencia`, como BUG-HOG. |
+| HZ-15 | Movimientos | UI | Los avisos de Gasto y de Ingreso para casos T2 aparecen en el 100% de los registros T1. **Decisión:** incorporar; se resuelve con divulgación contextual (P-C). |
+| HZ-16 | Planificación / Hogar | DOMINIO | Los movimientos programados no tienen recurrencia ni categoría; "todos los meses" (M5, H3) obliga a crear uno por mes. **Decisión:** incorporar a `GAPS.md` y abrir D-6 (§9). |
+| HZ-17 | Movimientos | UI | En Registrar movimiento, "Desde" y "Hacia" mezclan todos los elementos, en Transferencia la lista sale dos veces y la cuenta queda bajo todas las categorías. **Decisión:** incorporar; amplía HZ-3 (agrupar por tipo, destino = persona). |
 
 ## 5. Catálogo de escenarios de prueba
 
@@ -392,6 +400,13 @@ conteo. De esa tabla salen los 3 flujos peores para el mockup de la Fase D.
   elementos en plantillas (`GAPS.md` G24) y en programados (G2), mientras que
   `RegistrarEventoFinanciero` TRANSFERENCIA ya acepta destino de un co-miembro
   (G6).
+- **D-6 — Recurrencia de movimientos programados (HZ-16).** Agregar
+  periodicidad y categoría a `CrearMovimientoProgramado`, con materialización
+  por confirmación ("¿Se pagó?"), no automática. **Recomendación: sí**; la
+  confirmación mantiene el principio de que el usuario registra hechos.
+- **D-7 — Solicitud de aporte entre miembros (M7).** Cómo se representa "tu
+  parte: 25.000 → Transferir". **Recomendación:** notificación con acción
+  (reusa el Principio 4) antes que un agregado nuevo.
 
 ## 10. Instrucciones de ejecución para Claude Code
 
@@ -471,7 +486,12 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
       tiene 28 escenarios T1/T2, no 29.
 - [x] **Juan:** activar en la app "Cuenta en el patrimonio del hogar" en las
       cuentas que deban sumar (§7, paso 2).
-- [ ] **Juan:** llevar `RECORRIDO_ESCENARIOS_S01.md` al chat para iniciar la
+- [x] **Juan:** llevar `RECORRIDO_ESCENARIOS_S01.md` al chat para iniciar la
       Fase C.
-- [ ] **Claude (chat):** Fase C con el resultado de B.
+- [x] **Claude (chat):** Fase C con el resultado de B (`BENCHMARK_S01.md`,
+      2026-09-29). Juan aceptó la opción (b) de HZ-11 y el resto de su §5.
+- [x] **Claude Code:** Tarea 5 de `BENCHMARK_S01.md` §8 (registro de la Fase C).
+- [ ] **Claude Code:** corregir HZ-14 en la rama `fix/valoriza-advertencia`
+      (solo el texto del asistente).
+- [ ] **Claude (chat):** Fase D (rediseño y mockup) con `BENCHMARK_S01.md` §6.
 - [ ] **Juan y Zoily:** prueba del mockup en la Fase D.

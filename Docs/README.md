@@ -42,6 +42,8 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 - **[diseño/EVALUACION_USABILIDAD.md](diseño/EVALUACION_USABILIDAD.md)** — evaluación heurística G32 (sin personas) y sus 7 ajustes aplicados.
 - **[usabilidad/USABILIDAD_REAL_S01.md](usabilidad/USABILIDAD_REAL_S01.md)** — prueba con usuaria real (G32 falló → G33): hallazgos, catálogo de escenarios, plan por fases y BUG-HOG. **Fuente de verdad del frente G33.**
+- **[usabilidad/RECORRIDO_ESCENARIOS_S01.md](usabilidad/RECORRIDO_ESCENARIOS_S01.md)** — Fase B de G33: recorrido de los escenarios T1/T2 en el código, con conteo y veredicto.
+- **[usabilidad/BENCHMARK_S01.md](usabilidad/BENCHMARK_S01.md)** — Fase C de G33: benchmark de patrones (P-A a P-E) para cada brecha de B, hallazgos HZ-11 a HZ-17 y decisiones D-6 y D-7.
 
 ## Operación
 

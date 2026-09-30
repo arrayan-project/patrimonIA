@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Siguiente: BUG-HOG y Fase B (recorrido de escenarios). Decisiones D-1 a D-5 abiertas hasta la Fase D. | 📋 decisión + ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Siguiente: Fase D (rediseño y mockup). Decisiones D-1 a D-7 abiertas hasta la Fase D. | 📋 decisión + ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -215,12 +215,25 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 #### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  📋 DECISIÓN + ⬜ PENDIENTE (abierto 2026-09-29)
 - **Fuente de verdad**: [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md)
-  (hallazgos HZ-1 a HZ-8, catálogo de 33 escenarios T1/T2/T3, plan por fases
+  (hallazgos HZ-1 a HZ-17, catálogo de 33 escenarios T1/T2/T3, plan por fases
   A–E + BUG-HOG). Continúa G32.
 - **Principio**: el dominio no cambia; se rediseña cómo se presentan y encadenan
   las operaciones. Lo que requiera dominio se decide acá.
-- **Estado**: Fase A (catálogo) ✅. Siguiente: BUG-HOG (HZ-6, total del hogar en
-  cero) y Fase B (recorrido de escenarios en el código). C, D y E esperan.
+- **Estado**: Fase A (catálogo) ✅, BUG-HOG ✅, Fase B (recorrido) ✅, Fase C
+  (benchmark, [`Docs/usabilidad/BENCHMARK_S01.md`](Docs/usabilidad/BENCHMARK_S01.md)) ✅
+  (2026-09-29). Siguiente: Fase D (rediseño y mockup). E espera.
+- **Hallazgos de dominio** (se implementan en la Fase E, no antes):
+  - **HZ-11 — `DOMINIO`: la contrapartida de "plata de otra persona" no tiene
+    asiento sin INGRESO/GASTO.** `RegistrarElementoPatrimonial` exige
+    `valorPendiente > 0` en DEUDA/CREDITO y no mueve plata (M8, M10).
+    Decisión de Juan (2026-09-29): servicio de aplicación "Registrar plata de
+    otra persona" que da de alta la deuda/crédito con pendiente 0 y registra la
+    TRANSFERENCIA que la origina en una sola transacción, con auditoría
+    encadenada; la invariante admite 0 solo dentro de esa orquestación y se
+    reutiliza el saldo existente con la misma contraparte. Parte de D-3; se
+    registraría en `APPLICATION_SERVICES.md`.
+  - **HZ-16 — `DOMINIO`: los movimientos programados no tienen recurrencia ni
+    categoría** (M5, H3). Se resuelve con D-6.
 - **Decisiones abiertas** (se resuelven en la Fase D, no antes):
   - 📋 **D-1 — Orquestación de "Ahorrar para una meta"** (HIP-4): (a) la app
     encadena TRANSFERENCIA + reserva, o (b) un caso de uso de aplicación que
@@ -247,6 +260,12 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     propietario de **cada** elemento del programado. `RegistrarEventoFinanciero`
     TRANSFERENCIA sí acepta destino de un co-miembro (G6). Decidir si plantillas
     y programados siguen esa misma regla, con las cuentas agrupadas por dueño.
+  - 📋 **D-6 — Recurrencia de movimientos programados** (HZ-16): periodicidad y
+    categoría en `CrearMovimientoProgramado`, con materialización por
+    confirmación ("¿Se pagó?"), no automática. Recomendación: sí.
+  - 📋 **D-7 — Solicitud de aporte entre miembros** (M7): cómo se representa
+    "tu parte: 25.000 → Transferir". Recomendación: notificación con acción
+    (reusa el Principio 4) antes que un agregado nuevo.
 
 ---
 
