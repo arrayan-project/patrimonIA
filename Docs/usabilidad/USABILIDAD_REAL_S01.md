@@ -40,8 +40,8 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 |------|--------|
 | A — Catálogo | ✅ Cerrada (2026-09-29) |
 | BUG-HOG | ✅ Cerrada (2026-09-29): causa 1 confirmada y activada desde la app; corrección defensiva en `63005d1` |
-| B — Recorrido | ▶ Siguiente (Claude Code, §10 Tarea 4) |
-| C — Benchmark | ⏳ Espera el resultado de B |
+| B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
+| C — Benchmark | ▶ Siguiente (Claude en el chat, con el resultado de B) |
 | D — Rediseño y mockup | ⏳ Espera C |
 | E — Implementación | ⏳ Espera D |
 
@@ -467,7 +467,8 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 
 - [x] **Juan:** catálogo validado (2026-09-29). Fase A cerrada.
 - [x] **Claude Code:** Tareas 1 a 3 de §10.2 (2026-09-29).
-- [ ] **Claude Code:** Tarea 4 de §10.2 (Fase B).
+- [x] **Claude Code:** Tarea 4 de §10.2 (Fase B, 2026-09-29). Nota: el catálogo
+      tiene 28 escenarios T1/T2, no 29.
 - [x] **Juan:** activar en la app "Cuenta en el patrimonio del hogar" en las
       cuentas que deban sumar (§7, paso 2).
 - [ ] **Juan:** llevar `RECORRIDO_ESCENARIOS_S01.md` al chat para iniciar la
