@@ -1,5 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type ObjetivoFinancieroDTO } from '../api/client';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
@@ -16,23 +15,19 @@ import {
   EmptyState,
   ErrorText,
   etiqueta,
+  AmountInput,
   Field,
   GoalCard,
-  MoneyField,
+  Nota,
+  Section,
   Segmented,
   Select,
   Skeleton,
   Screen,
-  Title,
   Panel,
-  useC,
-  type Paleta,
-  tipoDe,
 } from '../ui';
 
 export function ObjetivosScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -100,50 +95,47 @@ export function ObjetivosScreen() {
   // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   const formulario = (
-    <Panel>
-      <Text style={styles.nombre}>Nueva meta</Text>
-      <Field
-        label="Nombre"
-        paso={paso({ hecho: !errNombre })}
-        value={nombre}
-        onChangeText={setNombre}
-        autoCapitalize="sentences"
-        placeholder="Pie vivienda"
-        error={intento ? errNombre : undefined}
-      />
-      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
-      {hogarId && (
-        <Segmented
-          label="¿Compartir con el hogar?"
-          paso={paso({ hecho: true })}
-          options={['No', 'Sí'] as const}
-          value={compartir}
-          onChange={setCompartir}
-          formatearOpcion={(v) => v}
+    <Section title="Nueva meta">
+      <Panel gap={14}>
+        <Field
+          label="¿Cómo se llama la meta?"
+          paso={paso({ hecho: !errNombre })}
+          value={nombre}
+          onChangeText={setNombre}
+          autoCapitalize="sentences"
+          placeholder="Pie vivienda"
+          error={intento ? errNombre : undefined}
         />
-      )}
-      {compartir === 'Sí' && (
-        <Text style={styles.muted}>
-          Todos los miembros la verán. Podrás designar quiénes pueden modificarla.
-        </Text>
-      )}
-      <MoneyField
-        label="¿Cuánto quieres juntar?"
-        paso={paso({ hecho: !errMonto })}
-        value={monto}
-        onChange={setMonto}
-        moneda={moneda}
-        error={intento ? errMonto : undefined}
-      />
-      <Select label="Moneda" paso={paso({ hecho: !!moneda })} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
-      <Button title="Crear meta" onPress={crear} loading={busy} />
-    </Panel>
+        {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+        {hogarId && (
+          <Segmented
+            label="¿Compartir con el hogar?"
+            paso={paso({ hecho: true })}
+            options={['No', 'Sí'] as const}
+            value={compartir}
+            onChange={setCompartir}
+            formatearOpcion={(v) => v}
+          />
+        )}
+        {compartir === 'Sí' && (
+          <Nota>Todos los miembros la verán. Podrás designar quiénes pueden modificarla.</Nota>
+        )}
+        <AmountInput
+          label="¿Cuánto quieres juntar?"
+          paso={paso({ hecho: !errMonto })}
+          value={monto}
+          onChange={setMonto}
+          moneda={moneda}
+          error={intento ? errMonto : undefined}
+        />
+        <Select label="¿En qué moneda?" paso={paso({ hecho: !!moneda })} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+        <Button title="Crear meta" onPress={crear} loading={busy} />
+      </Panel>
+    </Section>
   );
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Metas</Title>
-
       <Ayuda>
         Una meta es algo para lo que juntas plata (el pie de una vivienda, un viaje).
         Adentro ahorras desde tus cuentas para ir viendo el avance.
@@ -171,7 +163,7 @@ export function ObjetivosScreen() {
               name={`Avance total · ${enProgreso.length} metas activas`}
               hint={`${pct}%`}
               pct={pct}
-              footLeft={`${money(avance, [...monedas][0])} / ${money(meta, [...monedas][0])}`}
+              footLeft={`${money(avance, [...monedas][0])} de ${money(meta, [...monedas][0])}`}
             />
           ) : null;
         })()
@@ -183,11 +175,11 @@ export function ObjetivosScreen() {
           <GoalCard
             key={o.id}
             name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
-            hint={etiqueta(o.estado)}
+            hint={`${o.progresoPorcentaje}%`}
             pct={o.progresoPorcentaje}
             ok={o.estado === 'COMPLETADO' || o.progresoPorcentaje >= 100}
-            footLeft={`${money(o.progreso, o.moneda)} / ${money(o.montoObjetivo, o.moneda)}`}
-            footRight={`${o.progresoPorcentaje}%`}
+            footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
+            footRight={etiqueta(o.estado)}
             onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
           />
         ))}
@@ -198,8 +190,3 @@ export function ObjetivosScreen() {
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  nombre: { fontSize: 16, fontWeight: '700', color: c.text },
-  muted: tipoDe(c).nota,
-});
