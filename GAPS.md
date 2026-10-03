@@ -240,6 +240,18 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   - `UI` **HZ-17**: en Registrar movimiento, "Desde qué cuenta" y "A qué
     cuenta" agrupadas por tipo, sin la lista repetida en Transferencia y con la
     cuenta fuera de las categorías; amplía HZ-3.
+- **Verificación: transferencia entre miembros registrada por ambos**
+  (2026-10-03, `api/test/transferencia-entre-miembros.e2e-spec.ts`). El bug de
+  una versión anterior (gastos del hogar inflados) **no existe**: una
+  TRANSFERENCIA es un solo evento (REQUISITES §8 y §13) y no suma a ingresos
+  ni a gastos en `reporte.service.ts` (`#totalesPorMoneda`, DDD §X.3) ni en
+  `presupuesto.service.ts` (`desviacion`); B no puede registrar la misma
+  transferencia porque el origen debe ser propio (`evento.service.ts`,
+  `exigirPropietario` → 403). **Defecto relacionado que sí existe:** si B
+  además anota la plata como INGRESO en su cuenta, los ingresos (y el
+  patrimonio) de B y del hogar quedan duplicados en 50.000. El test lo deja
+  como `it.fails`. Se corrige con D-8 (bloque 6): en Recibí, "De alguien del
+  hogar" no crea evento. Al corregirlo, pasar ese `it.fails` a `it`.
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
   - `PROYECCIÓN` **HZ-18**: "Libre para gastar" resta el total de deudas por
@@ -766,7 +778,7 @@ ya cerrados en Fases 50–51).
   representarse como un Crédito/Deuda (para que el neto patrimonial cuadre), pero
   no había forma de distinguirlo de una deuda financiera real — quedaba mezclado
   con el hipotecario y las tarjetas. F3 de `Docs/mockup/casos-dominio-probados.html`
-  (escenario de REQUISITES, "Caso de uso tipico").
+  (escenario de REQUISITES, "Caso de uso típico").
 - **Por qué no se resolvió antes**: el DDD modela Deuda/Crédito como una sola
   especialización de Elemento Patrimonial; UX_FLOWS pedía "sugerir crear un
   Crédito/Deuda" pero sin sub-tipos.

@@ -495,7 +495,7 @@ Parte 1):
 2. ~~Diseño de APIs y casos de uso.~~ → `API_DESIGN.md` + `APPLICATION_SERVICES.md`.
 3. ~~Diseño UX/flujos de usuario.~~ → `UX_FLOWS.md`.
 
-### Caso de uso tipico
+### Caso de uso típico
 
 - Recibo mi sueldo en mi cuenta corriente.
 - Transfiero parte del dinero a mi cuenta rut
