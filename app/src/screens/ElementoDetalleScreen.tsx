@@ -14,6 +14,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { etiquetaNivel } from '../compartirHogar';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
@@ -193,7 +194,7 @@ export function ElementoDetalleScreen() {
         <Row left="Categoría" right={etiqueta(el.categoriaFuncional)} />
         <Row left="Tipo" right={etiqueta(el.tipo)} />
         <Row left="Ámbito" right={etiqueta(el.ambito)} />
-        <Row left="Visibilidad" right={etiqueta(el.visibilidad)} />
+        {esPropietario ? <Row left="Con el hogar" right={etiquetaNivel(el)} /> : null}
         <Row left="Estado" right={etiqueta(el.estado)} />
         {el.fechaAlta ? <Row left="En el patrimonio desde" right={fechaLegible(el.fechaAlta)} /> : null}
         {el.fechaBaja ? <Row left="Salió del patrimonio" right={fechaLegible(el.fechaBaja)} /> : null}

@@ -16,8 +16,10 @@ import {
   Ayuda,
   Button,
   DateField,
+  Elegir,
   ErrorText,
   Field,
+  LinkButton,
   MoneyField,
   Nota,
   Paragraph,
@@ -34,6 +36,7 @@ import {
   type Paleta,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
+import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
 
 const OPC_TIPO_FALLBACK = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({
   value: etiqueta(t),
@@ -77,6 +80,9 @@ export function EditarElementoScreen() {
   });
   const [compartidoCon, setCompartidoCon] = useState<string[]>([]);
   const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
+  // D-2: una pregunta con 4 niveles; el detalle por tipo queda en "Avanzado".
+  const [nivelHogar, setNivelHogar] = useState<NivelHogar | 'personalizado'>('personalizado');
+  const [avanzado, setAvanzado] = useState(false);
   const [valoriza, setValoriza] = useState<'No' | 'Sí'>('No');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
@@ -142,6 +148,7 @@ export function EditarElementoScreen() {
     !!el &&
     (nombre.trim() !== el.nombre ||
       tipo.trim() !== el.tipo ||
+      nivelHogar !== nivelDe(el) ||
       visibilidadCambiada ||
       (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
       (valoriza === 'Sí') !== el.admiteValorizacion ||
@@ -168,6 +175,7 @@ export function EditarElementoScreen() {
         });
         setCompartidoCon(e.compartidoCon ?? []);
         setEnConsolidacion(e.participaConsolidacion ? 'Sí' : 'No');
+        setNivelHogar(nivelDe(e));
         setValoriza(e.admiteValorizacion ? 'Sí' : 'No');
         setPcts(
           Object.fromEntries(
@@ -247,6 +255,7 @@ export function EditarElementoScreen() {
   })();
   const puedeEditarPropietarios = personas.length > 1;
   const coMiembros = miembros.filter((m) => m.usuarioId !== usuario.id);
+  const pareja = coMiembros.length === 1 ? coMiembros[0].nombre : undefined;
   const totalPct = propsEditados.reduce((s, p) => s + p.porcentaje, 0);
   const errReparto =
     Math.abs(totalPct - 100) > 0.001
@@ -316,6 +325,44 @@ export function EditarElementoScreen() {
 
       {activo && (
         <Panel>
+          <SectionTitle>Compartir con el hogar</SectionTitle>
+          <Elegir
+            label={`¿Qué compartes de ${el.nombre} con ${pareja ?? 'el hogar'}?`}
+            value={nivelHogar}
+            options={[
+              ...opcionesNivel(pareja),
+              ...(nivelDe(el) === 'personalizado'
+                ? [
+                    {
+                      value: 'personalizado',
+                      label: 'Personalizado',
+                      sub: 'Una combinación hecha en Avanzado.',
+                      deshabilitada: true,
+                    },
+                  ]
+                : []),
+            ]}
+            onChange={(v) => v && setNivelHogar(v as NivelHogar)}
+          />
+          <Button
+            title="Guardar"
+            variant="secondary"
+            loading={busy}
+            disabled={nivelHogar === 'personalizado' || nivelHogar === nivelDe(el)}
+            onPress={() =>
+              nivelHogar !== 'personalizado' &&
+              run(() => aplicarNivel(token, elementoId, nivelHogar, el.participaConsolidacion), 'Guardado')
+            }
+          />
+          <LinkButton
+            title={avanzado ? 'Ocultar avanzado' : 'Avanzado (cada dato por separado)'}
+            onPress={() => setAvanzado((x) => !x)}
+          />
+        </Panel>
+      )}
+
+      {activo && avanzado && (
+        <Panel>
           <SectionTitle>Visibilidad</SectionTitle>
           <Ayuda>
             Elige, para cada dato, quién puede verlo. Privada: solo tú. Familiar:
@@ -369,7 +416,7 @@ export function EditarElementoScreen() {
         </Panel>
       )}
 
-      {activo && (
+      {activo && avanzado && (
         <Panel>
           <Segmented
             label="¿Cuenta en el patrimonio del hogar?"
