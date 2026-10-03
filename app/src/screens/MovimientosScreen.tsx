@@ -25,7 +25,9 @@ import {
   fechaLegible,
   Hero,
   IconButton,
+  ListCard,
   PillToggle,
+  Section,
   Skeleton,
   Screen,
   Segmented,
@@ -310,27 +312,29 @@ export function MovimientosScreen() {
           )}
 
           {periodo === 'Año' && anual && !anual.meses.every((m) => m.porMoneda.length === 0) && (
-            <Panel>
-              <Text style={styles.sectionTitle}>Ingresos vs. gastos por mes</Text>
-              <GraficoBarras
-                barras={anual.meses.map((m) => ({
-                  etiqueta: MESES[m.mes - 1],
-                  ingresos: m.porMoneda.reduce((s, x) => s + x.ingresos, 0),
-                  gastos: m.porMoneda.reduce((s, x) => s + x.gastos, 0),
-                }))}
-              />
-            </Panel>
+            <Section title="Ingresos vs. gastos por mes">
+              <Panel>
+                <GraficoBarras
+                  barras={anual.meses.map((m) => ({
+                    etiqueta: MESES[m.mes - 1],
+                    ingresos: m.porMoneda.reduce((s, x) => s + x.ingresos, 0),
+                    gastos: m.porMoneda.reduce((s, x) => s + x.gastos, 0),
+                  }))}
+                />
+              </Panel>
+            </Section>
           )}
 
           {gastosRubro.length > 0 && (
-            <Panel>
-              <Text style={styles.sectionTitle}>Gastos por rubro</Text>
-              <Dona
-                segmentos={gastosRubro.map((r, i) => ({ label: r.nombre, valor: r.total, color: colorCategoria(r.color, i) }))}
-                centro={money(totales?.gastos ?? 0, monedaPrincipal).replace(` ${monedaPrincipal}`, '')}
-                formatoValor={(n) => money(n, monedaPrincipal)}
-              />
-            </Panel>
+            <Section title="Gastos por rubro">
+              <Panel>
+                <Dona
+                  segmentos={gastosRubro.map((r, i) => ({ label: r.nombre, valor: r.total, color: colorCategoria(r.color, i) }))}
+                  centro={money(totales?.gastos ?? 0, monedaPrincipal).replace(` ${monedaPrincipal}`, '')}
+                  formatoValor={(n) => money(n, monedaPrincipal)}
+                />
+              </Panel>
+            </Section>
           )}
 
           <Field label="" value={busca} onChangeText={setBusca} placeholder="Buscar en el detalle…" />
@@ -356,11 +360,11 @@ export function MovimientosScreen() {
               descripcion={movimientos.length === 0 ? 'Registra un ingreso o gasto para verlo acá.' : undefined}
             />
           ) : (
-            <Panel gap={0}>
+            <ListCard>
               {movsFiltrados.map((m) => (
                 <FilaMovimiento key={m.eventoId} m={m} onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoId })} />
               ))}
-            </Panel>
+            </ListCard>
           )}
 
           {periodo === 'Recientes' && (
@@ -408,7 +412,6 @@ const crearEstilos = (c: Paleta) =>
     flecha: { fontSize: 30, color: c.primary, paddingHorizontal: 8 },
     flechaOff: { opacity: 0.25 },
     periodo: { fontSize: 18, fontWeight: '700', color: c.text, minWidth: 170, textAlign: 'center', textTransform: 'capitalize' },
-    sectionTitle: tipoDe(c).seccion,
     muted: tipoDe(c).nota,
     disp: { fontSize: 13, color: c.muted, marginTop: -4 },
     dispB: { color: c.text, fontWeight: '700' },
