@@ -190,6 +190,8 @@ export function AgregarElementoScreen() {
   const totalPct = propietarios.reduce((s, p) => s + p.porcentaje, 0);
 
   const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';
+  // C2: una tarjeta de crédito siempre es financiera; no se pregunta.
+  const esTarjeta = categoria === 'DEUDA' && tipo.trim().toLowerCase() === 'tarjeta de crédito';
   const sucio =
     !creado &&
     (nombre.trim().length > 0 ||
@@ -261,7 +263,7 @@ export function AgregarElementoScreen() {
             ? {
                 valorPendiente: Number(monto) || 0,
                 naturaleza:
-                  naturaleza === 'Encargo o custodia' ? 'CUSTODIA_INFORMAL' : 'FINANCIERA',
+                  naturaleza === 'Encargo o custodia' && !esTarjeta ? 'CUSTODIA_INFORMAL' : 'FINANCIERA',
                 ...(contraparte.trim() ? { contraparte: contraparte.trim() } : {}),
                 ...(fechaTermino.trim() ? { fechaTermino: fechaTermino.trim() } : {}),
                 ...(Number(cuota) > 0 ? { cuotaMonto: Number(cuota) } : {}),
@@ -433,7 +435,7 @@ export function AgregarElementoScreen() {
               : 'El saldo que ves hoy en la app de tu banco.'}
       </Nota>
 
-      {esDeudaOCredito && (
+      {esDeudaOCredito && !esTarjeta && (
         <>
           <Segmented
             label="¿Qué tipo es?"
