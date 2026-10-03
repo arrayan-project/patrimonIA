@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, EmptyState, ErrorText, fechaRelativa, Screen, Skeleton, Title, panel, useC, type Paleta } from '../ui';
+import { EmptyState, ErrorText, fechaRelativa, radio, Screen, Section, Skeleton, useC, type Paleta } from '../ui';
 import type { RouteName } from '../navigation/navigator';
 
 /** entidadTipo de una notificación → a qué pantalla lleva. */
@@ -63,17 +63,16 @@ export function NotificacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Notificaciones</Title>
-
       {lista === null ? (
         <Skeleton />
       ) : lista.length === 0 ? (
         <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes una meta, se use plata de una meta o te inviten a un hogar." />
       ) : (
-        <>
-          {lista.some((n) => !n.leida) && (
-            <Button title="Marcar todas como leídas" variant="secondary" onPress={leerTodas} />
-          )}
+        <Section
+          title="Avisos"
+          accion="Marcar todas como leídas"
+          onAccion={lista.some((n) => !n.leida) ? leerTodas : undefined}
+        >
           {lista.map((n) => {
             const d = destino(n);
             return (
@@ -87,7 +86,10 @@ export function NotificacionesScreen() {
                   if (d) nav.go(d.name, d.params);
                 }}
               >
-                <Text style={styles.titulo}>{n.titulo}</Text>
+                <View style={styles.cabeza}>
+                  {!n.leida ? <View style={styles.punto} /> : null}
+                  <Text style={styles.titulo}>{n.titulo}</Text>
+                </View>
                 <Text style={styles.cuerpo}>{n.cuerpo}</Text>
                 <Text style={styles.muted}>
                   {fechaRelativa(n.createdAt)}
@@ -97,7 +99,7 @@ export function NotificacionesScreen() {
               </Pressable>
             );
           })}
-        </>
+        </Section>
       )}
 
       <ErrorText>{error}</ErrorText>
@@ -106,9 +108,18 @@ export function NotificacionesScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  card: { ...panel, gap: 4 },
-  noLeida: { borderColor: c.primary, backgroundColor: c.info },
-  titulo: { fontSize: 15, fontWeight: '700', color: c.text },
-  cuerpo: { fontSize: 14, color: c.text },
+  card: {
+    backgroundColor: c.bg,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: radio.tarjeta,
+    padding: 14,
+    gap: 3,
+  },
+  noLeida: { borderColor: c.mutedDim },
+  cabeza: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  punto: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.danger },
+  titulo: { flex: 1, fontSize: 15, fontWeight: '600', color: c.text },
+  cuerpo: { fontSize: 13, color: c.muted },
   muted: { fontSize: 12, color: c.muted },
 });
