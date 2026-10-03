@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; siguiente: bloque 3 (HZ-24). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅ en rama, falta la prueba y el merge. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -236,7 +236,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
   Fase E, en el orden de su §5: bloque 1 (D-4 + HZ-19 + HZ-22, solo frontend)
   ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅: rama `feat/G33-E2-listas`,
-  probada por Juan y mergeada a `main` (2026-10-03). Siguiente: bloque 3 (HZ-24).
+  probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅ en la
+  rama `feat/G33-E3-paso-actual`; falta la prueba de Juan y el merge.
 - **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
     `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por
@@ -252,11 +253,13 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   - ✅ `UI` **HZ-17**: "Desde qué cuenta" y "A qué cuenta" agrupadas por tipo
     (`app/src/opciones.ts`), en Transferencia también por miembro; "A qué
     cuenta" no repite la de "Desde"; amplía HZ-3.
-- **Bloque 3 de la Fase E — `UI` HZ-24 (propuesta, pendiente)**: paso actual
+- **Bloque 3 de la Fase E — `UI` HZ-24 (✅ en rama `feat/G33-E3-paso-actual`, 2026-10-03)**: paso actual
   resaltado y pasos siguientes bloqueados hasta completar el actual; lo hecho
   sigue editable. Reglas: los opcionales nunca bloquean; un paso que ya trae
   valor cuenta como hecho; bloqueado se ve atenuado, no como error. Incluye el
-  contraste de los campos editables. No se probó con Zoily: validarlo con ella.
+  contraste de los campos editables. Implementado en `contadorPasos` y
+  `BloquePaso` (`app/src/ui/index.tsx`); los opcionales posteriores al paso
+  actual también se bloquean. No se probó con Zoily: validarlo con ella.
   Detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4.
 - **Verificación: transferencia entre miembros registrada por ambos**
   (2026-10-03, `api/test/transferencia-entre-miembros.e2e-spec.ts`). El bug de

@@ -152,7 +152,8 @@ export function ObjetivoDetalleScreen() {
     );
   }
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
+  // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
@@ -177,7 +178,7 @@ export function ObjetivoDetalleScreen() {
             <>
               <Elegir
                 label="Desde qué cuenta"
-                paso={paso()}
+                paso={paso({ hecho: !!origenId })}
                 placeholder="Elegir cuenta"
                 value={origenId}
                 options={opcionesDeElementos(cuentas)}
@@ -186,13 +187,13 @@ export function ObjetivoDetalleScreen() {
               {asignaciones.length > 1 && (
                 <Elegir
                   label="¿Para qué parte de la meta?"
-                  paso={paso()}
+                  paso={paso({ hecho: true })}
                   value={parteId ?? asignaciones[0].id}
                   options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
                   onChange={(v) => v && setParteId(v)}
                 />
               )}
-              <MoneyField label="¿Cuánto?" paso={paso()} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
+              <MoneyField label="¿Cuánto?" paso={paso({ hecho: Number(montoApartar) > 0 })} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
               <Button
                 title="Ahorrar"
                 loading={busy}
