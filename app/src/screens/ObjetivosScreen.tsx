@@ -106,14 +106,7 @@ export function ObjetivosScreen() {
         placeholder="Pie vivienda"
         error={intento ? errNombre : undefined}
       />
-      <MoneyField
-        label="¿Cuánto quieres juntar?"
-        value={monto}
-        onChange={setMonto}
-        moneda={moneda}
-        error={intento ? errMonto : undefined}
-      />
-      <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
       {hogarId && (
         <Segmented
           label="¿Compartir con el hogar?"
@@ -128,6 +121,14 @@ export function ObjetivosScreen() {
           Todos los miembros la verán. Podrás designar quiénes pueden modificarla.
         </Text>
       )}
+      <MoneyField
+        label="¿Cuánto quieres juntar?"
+        value={monto}
+        onChange={setMonto}
+        moneda={moneda}
+        error={intento ? errMonto : undefined}
+      />
+      <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
       <Button title="Crear meta" onPress={crear} loading={busy} />
     </Panel>
   );

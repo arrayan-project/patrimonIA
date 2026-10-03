@@ -86,18 +86,19 @@ export function RegistrarAjusteScreen() {
           : GLOSARIO.ajuste}
       </Ayuda>
 
-      <Segmented
-        label="El valor real es…"
-        options={['Menor', 'Mayor'] as const}
-        value={direccion}
-        onChange={setDireccion}
-      />
       <MoneyField
         label={`Diferencia (${moneda})`}
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
         error={intento ? errMagnitud : undefined}
+      />
+      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+      <Segmented
+        label="El valor real es…"
+        options={['Menor', 'Mayor'] as const}
+        value={direccion}
+        onChange={setDireccion}
       />
       {valorActual !== undefined && Number(magnitud) > 0 && (
         <Paragraph>
