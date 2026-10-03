@@ -20,6 +20,7 @@ import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
   Elegir,
+  BloquePaso,
   Etiqueta,
   aISO,
   Button,
@@ -245,8 +246,17 @@ export function RegistrarMovimientoScreen() {
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId;
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca
+  // el paso actual. Tipo y Fecha ya traen valor, así que cuentan como hechos.
   const paso = contadorPasos();
+  const pTipo = paso({ hecho: true });
+  const pMonto = paso({ hecho: Number(monto) > 0 });
+  const pFecha = paso({ hecho: !!fecha });
+  const pDetalle = paso({ opcional: true });
+  const pCategoria = puedeCategorizar ? paso({ opcional: true }) : undefined;
+  const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
+  const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
+  const pEtiquetas = etiquetas.length > 0 ? paso({ opcional: true }) : undefined;
   return (
     <Screen>
       <Title>Registrar movimiento</Title>
@@ -275,7 +285,7 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={paso()} />
+      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={pTipo} />
       {tipo === 'CONVERSION' && (
         <Paragraph>
           Cambio de moneda: el monto va en la moneda de la cuenta de salida; la de llegada
@@ -303,16 +313,16 @@ export function RegistrarMovimientoScreen() {
       )}
       <MoneyField
         label="Monto"
-        paso={paso()}
+        paso={pMonto}
         value={monto}
         onChange={setMonto}
         moneda={monedaEvento}
         error={intento ? errMonto : undefined}
       />
-      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso()} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={pFecha} />
       <Field
         label="Detalle (opcional)"
-        paso={paso()}
+        paso={pDetalle}
         value={glosa}
         onChangeText={setGlosa}
         placeholder="p. ej. pago internet marzo"
@@ -321,10 +331,10 @@ export function RegistrarMovimientoScreen() {
       />
 
       {puedeCategorizar && (
-        <View style={styles.group}>
+        <BloquePaso paso={pCategoria} style={styles.group}>
           <Elegir
             label="Categoría (opcional)"
-            paso={paso()}
+            paso={pCategoria}
             opcionNula="Sin categoría"
             value={categoriaId}
             options={categoriasAplicables.map((c) => ({
@@ -353,13 +363,13 @@ export function RegistrarMovimientoScreen() {
               onPress={() => setCrearCat(true)}
             />
           )}
-        </View>
+        </BloquePaso>
       )}
 
       {necesitaOrigen && (
         <Elegir
           label="Desde qué cuenta"
-          paso={paso()}
+          paso={pDesde}
           placeholder="Elegir cuenta"
           value={origenId}
           options={opcionesDesde}
@@ -373,7 +383,7 @@ export function RegistrarMovimientoScreen() {
       {necesitaDestino && (
         <Elegir
           label="A qué cuenta"
-          paso={paso()}
+          paso={pA}
           placeholder="Elegir cuenta"
           value={destinoId}
           options={opcionesA}
@@ -382,8 +392,8 @@ export function RegistrarMovimientoScreen() {
       )}
 
       {etiquetas.length > 0 && (
-        <View style={styles.group}>
-          <Etiqueta paso={paso()}>Etiquetas (opcional)</Etiqueta>
+        <BloquePaso paso={pEtiquetas} style={styles.group}>
+          <Etiqueta paso={pEtiquetas}>Etiquetas (opcional)</Etiqueta>
           <View style={styles.chips}>
             {etiquetas.map((e) => (
               <Chip
@@ -395,7 +405,7 @@ export function RegistrarMovimientoScreen() {
               />
             ))}
           </View>
-        </View>
+        </BloquePaso>
       )}
 
       {intento && errMismo ? <ErrorText>{errMismo}</ErrorText> : null}

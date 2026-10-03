@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -810,6 +810,9 @@ export function contadorPasos(): (p?: { hecho?: boolean; opcional?: boolean }) =
 const estadoDe = (paso?: Paso): EstadoPaso | undefined =>
   paso != null && typeof paso === 'object' ? paso.estado : undefined;
 
+// Un BloquePaso dentro de otro (p. ej. un grupo con su campo) no repite el efecto.
+const DentroDePaso = createContext(false);
+
 /**
  * Envuelve lo que pertenece a una pregunta numerada (HZ-24): el paso actual
  * lleva una barra a la izquierda; uno bloqueado se atenúa y no responde al
@@ -825,19 +828,22 @@ export function BloquePaso({
   children: ReactNode;
 }) {
   const styles = useEstilos();
-  const estado = estadoDe(paso);
+  const dentro = useContext(DentroDePaso);
+  const estado = dentro ? undefined : estadoDe(paso);
   return (
-    <View
-      style={[
-        style,
-        estado && styles.bloquePaso,
-        estado === 'actual' && styles.bloquePasoActual,
-        estado === 'bloqueado' && styles.bloquePasoBloqueado,
-      ]}
-      accessibilityState={estado === 'bloqueado' ? { disabled: true } : undefined}
-    >
-      {children}
-    </View>
+    <DentroDePaso.Provider value={dentro || estado != null}>
+      <View
+        style={[
+          style,
+          estado && styles.bloquePaso,
+          estado === 'actual' && styles.bloquePasoActual,
+          estado === 'bloqueado' && styles.bloquePasoBloqueado,
+        ]}
+        accessibilityState={estado === 'bloqueado' ? { disabled: true } : undefined}
+      >
+        {children}
+      </View>
+    </DentroDePaso.Provider>
   );
 }
 
