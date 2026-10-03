@@ -3,6 +3,7 @@ import { Prisma, type tipo_cambio as TipoCambioRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { RegistrarTipoCambioDto } from './dto/tipo-cambio.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 export interface TipoCambioDTO {
   id: string;
@@ -37,7 +38,7 @@ export class TipoCambioService {
   async registrar(actorId: string, dto: RegistrarTipoCambioDto): Promise<TipoCambioDTO> {
     const origen = dto.monedaOrigen.toUpperCase();
     const destino = dto.monedaDestino.toUpperCase();
-    if (origen === destino) throw new BadRequestException('Origen y destino son la misma moneda');
+    if (origen === destino) throw errorConCodigo(BadRequestException, 'MONEDAS_IGUALES', 'Origen y destino son la misma moneda');
     const fechaVigencia = dto.fechaVigencia
       ? new Date(`${dto.fechaVigencia.slice(0, 10)}T00:00:00.000Z`)
       : new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');

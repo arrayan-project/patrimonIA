@@ -26,6 +26,7 @@ import type {
   DefinirLineasPresupuestoDto,
   EliminarPresupuestoDto,
 } from './dto/presupuesto.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 const MESES_POR_INTERVALO: Record<string, number> = {
   MENSUAL: 1,
@@ -373,7 +374,7 @@ export class PresupuestoService {
     const nuevas = dto.lineas.filter((l) => l.montoEsperado > 0);
     const ids = nuevas.map((l) => l.objetivoId);
     if (new Set(ids).size !== ids.length) {
-      throw new BadRequestException('Hay un objetivo repetido en las líneas');
+      throw errorConCodigo(BadRequestException, 'PRESUPUESTO_META_REPETIDA', 'Hay un objetivo repetido en las líneas');
     }
 
     if (ids.length > 0) {
@@ -384,7 +385,7 @@ export class PresupuestoService {
       });
       const okIds = new Set(validos.map((o) => o.id));
       if (ids.some((id) => !okIds.has(id))) {
-        throw new BadRequestException('Un objetivo no existe o no está en el alcance del presupuesto');
+        throw errorConCodigo(BadRequestException, 'PRESUPUESTO_META_INVALIDA', 'Un objetivo no existe o no está en el alcance del presupuesto');
       }
     }
 

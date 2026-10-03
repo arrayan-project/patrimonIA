@@ -18,6 +18,7 @@ import { toEventoDTO, type EventoFinancieroDTO } from './evento.dto.js';
 import type { RegistrarEventoDto } from './dto/registrar-evento.dto.js';
 import type { AnularEventoDto } from './dto/anular-evento.dto.js';
 import type { CorregirEventoDto } from './dto/corregir-evento.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 interface ImpactoPlan {
   elemento: ElementoRow;
@@ -163,7 +164,7 @@ export class EventoFinancieroService {
    */
   async anularEvento(actorId: string, dto: AnularEventoDto): Promise<EventoFinancieroDTO> {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
-    if (evento.anulado) throw new ConflictException('El evento ya está anulado');
+    if (evento.anulado) throw errorConCodigo(ConflictException, 'YA_ANULADO', 'El evento ya está anulado');
     if (evento.tipo === 'SALDO_INICIAL') {
       throw new BadRequestException(
         'El saldo inicial no se anula: ajústalo con un ajuste patrimonial o desactiva la cuenta',
@@ -237,7 +238,7 @@ export class EventoFinancieroService {
    */
   async corregirEvento(actorId: string, dto: CorregirEventoDto): Promise<EventoFinancieroDTO> {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
-    if (evento.anulado) throw new ConflictException('No se puede corregir un evento anulado');
+    if (evento.anulado) throw errorConCodigo(ConflictException, 'CORREGIR_ANULADO', 'No se puede corregir un evento anulado');
     if (evento.tipo === 'SALDO_INICIAL') {
       throw new BadRequestException(
         'El saldo inicial no se corrige: usa un ajuste patrimonial sobre la cuenta',
@@ -508,17 +509,21 @@ export class EventoFinancieroService {
 
     // TRANSFERENCIA y CONVERSION comparten estructura (origen + destino).
     if (!dto.elementoOrigenId || !dto.elementoDestinoId) {
-      throw new BadRequestException(`${dto.tipo} requiere elementoOrigenId y elementoDestinoId`);
+      throw errorConCodigo(
+        BadRequestException,
+        'FALTA_CUENTA',
+        `${dto.tipo} requiere elementoOrigenId y elementoDestinoId`,
+      );
     }
     if (dto.elementoOrigenId === dto.elementoDestinoId) {
-      throw new BadRequestException('Origen y destino no pueden ser el mismo elemento');
+      throw errorConCodigo(BadRequestException, 'ORIGEN_IGUAL_DESTINO', 'Origen y destino no pueden ser el mismo elemento');
     }
     const origen = await cargar(dto.elementoOrigenId);
     const destino = await cargar(dto.elementoDestinoId);
     await this.exigirPropietario(origen.id, actorId); // solo mueves plata de lo tuyo
     this.exigirMoneda(origen, moneda); // el monto del evento va en la moneda del origen
     if (!(await this.actorPuedeRecibirEn(destino, actorId))) {
-      throw new ForbiddenException('No puedes mover fondos a ese elemento destino');
+      throw errorConCodigo(ForbiddenException, 'DESTINO_NO_PERMITIDO', 'No puedes mover fondos a ese elemento destino');
     }
 
     if (dto.tipo === 'CONVERSION') {
@@ -636,7 +641,7 @@ export class EventoFinancieroService {
    */
   async #asignacionPropia(asignacionId: string, actorId: string) {
     const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
-    if (!a) throw new NotFoundException('Asignación no encontrada');
+    if (!a) throw errorConCodigo(NotFoundException, 'ASIGNACION_NO_ENCONTRADA', 'Asignación no encontrada');
     if (a.usuario_id === actorId) return a;
     if (a.objetivo_financiero_id) {
       const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: a.objetivo_financiero_id } });
@@ -648,7 +653,7 @@ export class EventoFinancieroService {
         if (d) return a;
       }
     }
-    throw new ForbiddenException('La asignación no es tuya');
+    throw errorConCodigo(ForbiddenException, 'ASIGNACION_AJENA', 'La asignación no es tuya');
   }
 
   /** ¿Hay una corrección no-anulada apuntando a este evento? */

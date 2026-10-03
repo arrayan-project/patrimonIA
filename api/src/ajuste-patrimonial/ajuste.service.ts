@@ -13,6 +13,7 @@ import { toAjusteDTO, type AjustePatrimonialDTO } from './ajuste.dto.js';
 import type { RegistrarAjusteDto } from './dto/registrar-ajuste.dto.js';
 import type { AnularAjusteDto } from './dto/anular-ajuste.dto.js';
 import type { CorregirAjusteDto } from './dto/corregir-ajuste.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 /**
  * Ajuste Patrimonial: mecanismo de EXCEPCIÓN para conciliar el patrimonio
@@ -70,7 +71,7 @@ export class AjustePatrimonialService {
   /** AS #21 — AnularAjustePatrimonial. Revierte el efecto y elimina el impacto. */
   async anularAjuste(actorId: string, dto: AnularAjusteDto): Promise<AjustePatrimonialDTO> {
     const ajuste = await this.cargarAjuste(dto.ajusteId, actorId);
-    if (ajuste.anulado) throw new ConflictException('El ajuste ya está anulado');
+    if (ajuste.anulado) throw errorConCodigo(ConflictException, 'YA_ANULADO', 'El ajuste ya está anulado');
     if (await this.tieneCorreccionViva(ajuste.id)) {
       throw new ConflictException('El ajuste tiene una corrección vigente — anúlala primero');
     }
@@ -116,7 +117,7 @@ export class AjustePatrimonialService {
    */
   async corregirAjuste(actorId: string, dto: CorregirAjusteDto): Promise<AjustePatrimonialDTO> {
     const original = await this.cargarAjuste(dto.ajusteId, actorId);
-    if (original.anulado) throw new ConflictException('No se puede corregir un ajuste anulado');
+    if (original.anulado) throw errorConCodigo(ConflictException, 'CORREGIR_ANULADO', 'No se puede corregir un ajuste anulado');
     if (await this.tieneCorreccionViva(original.id)) {
       throw new ConflictException('El ajuste ya tiene una corrección — corrige esa última');
     }

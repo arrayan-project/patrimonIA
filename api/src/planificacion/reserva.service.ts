@@ -19,6 +19,7 @@ import type {
   CrearReservaDto,
   LiberarReservaDto,
 } from './dto/reserva.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 @Injectable()
 export class ReservaService {
@@ -39,8 +40,11 @@ export class ReservaService {
 
     const libre = await this.progreso.disponibilidad(dto.elementoOrigenId);
     if (dto.monto > libre + 1e-9) {
-      throw new ConflictException(
+      throw errorConCodigo(
+        ConflictException,
+        'DISPONIBLE_INSUFICIENTE',
         `El elemento solo tiene ${libre} disponible para reservar (pediste ${dto.monto})`,
+        { disponible: libre, pedido: dto.monto },
       );
     }
 
@@ -82,7 +86,7 @@ export class ReservaService {
   /** AS #28 — AjustarMontoReserva. Re-valida disponibilidad. */
   async ajustarMonto(actorId: string, dto: AjustarMontoReservaDto): Promise<ReservaDTO> {
     const reserva = await this.#cargar(dto.reservaId, actorId);
-    if (reserva.estado !== 'ACTIVA') throw new ConflictException('La reserva no está activa');
+    if (reserva.estado !== 'ACTIVA') throw errorConCodigo(ConflictException, 'RESERVA_NO_ACTIVA', 'La reserva no está activa');
     if (dto.nuevoMonto === Number(reserva.monto)) throw new BadRequestException('Sin cambios');
 
     const libre = await this.progreso.disponibilidad(
@@ -91,7 +95,12 @@ export class ReservaService {
       reserva.id,
     );
     if (dto.nuevoMonto > libre + 1e-9) {
-      throw new ConflictException(`El elemento solo tiene ${libre} disponible (pediste ${dto.nuevoMonto})`);
+      throw errorConCodigo(
+        ConflictException,
+        'DISPONIBLE_INSUFICIENTE',
+        `El elemento solo tiene ${libre} disponible (pediste ${dto.nuevoMonto})`,
+        { disponible: libre, pedido: dto.nuevoMonto },
+      );
     }
 
     const asignacion = await this.prisma.asignacion.findUniqueOrThrow({
@@ -127,7 +136,7 @@ export class ReservaService {
   /** AS #29 — LiberarReserva. Devuelve el monto al valor libre del elemento. */
   async liberar(actorId: string, dto: LiberarReservaDto): Promise<ReservaDTO> {
     const reserva = await this.#cargar(dto.reservaId, actorId);
-    if (reserva.estado !== 'ACTIVA') throw new ConflictException('La reserva no está activa');
+    if (reserva.estado !== 'ACTIVA') throw errorConCodigo(ConflictException, 'RESERVA_NO_ACTIVA', 'La reserva no está activa');
     const asignacion = await this.prisma.asignacion.findUniqueOrThrow({
       where: { id: reserva.asignacion_id },
     });
@@ -195,14 +204,14 @@ export class ReservaService {
 
   async #cargar(reservaId: string, actorId: string): Promise<ReservaRow> {
     const r = await this.prisma.reserva.findUnique({ where: { id: reservaId } });
-    if (!r) throw new NotFoundException('Reserva no encontrada');
+    if (!r) throw errorConCodigo(NotFoundException, 'RESERVA_NO_ENCONTRADA', 'Reserva no encontrada');
     await this.#asignacionPropia(r.asignacion_id, actorId);
     return r;
   }
 
   async #asignacionPropia(asignacionId: string, actorId: string) {
     const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
-    if (!a) throw new NotFoundException('Asignación no encontrada');
+    if (!a) throw errorConCodigo(NotFoundException, 'ASIGNACION_NO_ENCONTRADA', 'Asignación no encontrada');
     if (a.usuario_id === actorId) return a;
     // P9 — asignación de un objetivo compartido: dueño/designados reservan su
     // propio dinero hacia ella.
@@ -220,13 +229,13 @@ export class ReservaService {
         if (d) return a;
       }
     }
-    throw new ForbiddenException('La asignación no es tuya');
+    throw errorConCodigo(ForbiddenException, 'ASIGNACION_AJENA', 'La asignación no es tuya');
   }
 
   async #exigirPropietarioElemento(elementoId: string, actorId: string): Promise<void> {
     const prop = await this.prisma.elemento_propietario.findFirst({
       where: { elemento_id: elementoId, usuario_id: actorId },
     });
-    if (!prop) throw new ForbiddenException('No eres propietario del elemento origen');
+    if (!prop) throw errorConCodigo(ForbiddenException, 'ORIGEN_AJENO', 'No eres propietario del elemento origen');
   }
 }

@@ -12,6 +12,7 @@ import { toValorizacionDTO, type ValorizacionDTO } from './valorizacion.dto.js';
 import type { RegistrarValorizacionDto } from './dto/registrar-valorizacion.dto.js';
 import type { AnularValorizacionDto } from './dto/anular-valorizacion.dto.js';
 import type { CorregirValorizacionDto } from './dto/corregir-valorizacion.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 @Injectable()
 export class ValorizacionService {
@@ -94,7 +95,7 @@ export class ValorizacionService {
    */
   async anularValorizacion(actorId: string, dto: AnularValorizacionDto): Promise<ValorizacionDTO> {
     const valorizacion = await this.cargarValorizacion(dto.valorizacionId, actorId);
-    if (valorizacion.anulada) throw new ConflictException('La valorización ya está anulada');
+    if (valorizacion.anulada) throw errorConCodigo(ConflictException, 'YA_ANULADO', 'La valorización ya está anulada');
     if (await this.tieneCorreccionViva(valorizacion.id)) {
       throw new ConflictException('La valorización tiene una corrección vigente — anúlala primero');
     }
@@ -149,7 +150,7 @@ export class ValorizacionService {
     dto: CorregirValorizacionDto,
   ): Promise<ValorizacionDTO> {
     const original = await this.cargarValorizacion(dto.valorizacionId, actorId);
-    if (original.anulada) throw new ConflictException('No se puede corregir una valorización anulada');
+    if (original.anulada) throw errorConCodigo(ConflictException, 'CORREGIR_ANULADO', 'No se puede corregir una valorización anulada');
     if (await this.tieneCorreccionViva(original.id)) {
       throw new ConflictException('La valorización ya tiene una corrección — corrige esa última');
     }

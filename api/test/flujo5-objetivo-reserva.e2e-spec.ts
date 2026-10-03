@@ -71,9 +71,15 @@ describe('Flujo 5 — objetivo + asignación + reserva (e2e)', () => {
       .send({ asignacionId, elementoOrigenId: fintualId, monto: 2_000_000 })
       .expect(201);
     // Fintual = 3M, ya reservado 2M → solo 1M disponible
-    await auth(request(http).post('/comandos/CrearReserva'))
+    const err = await auth(request(http).post('/comandos/CrearReserva'))
       .send({ asignacionId, elementoOrigenId: fintualId, monto: 2_000_000 })
       .expect(409);
+    // G33: el error trae un código estable y los datos para que la app lo traduzca.
+    expect(err.body).toMatchObject({
+      codigo: 'DISPONIBLE_INSUFICIENTE',
+      datos: { disponible: 1_000_000, pedido: 2_000_000 },
+      statusCode: 409,
+    });
 
     const obj = await auth(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200);
     expect(obj.body.progreso).toBe(2_000_000);
