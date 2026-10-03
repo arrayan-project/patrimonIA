@@ -28,7 +28,6 @@ import {
   MoneyField,
   Screen,
   Segmented,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -197,7 +196,6 @@ export function PlantillasScreen() {
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
-      <Title>Plantillas de movimiento</Title>
       <Ayuda>
         Moldes para registrar el gasto o ingreso de siempre en dos toques.
         Aparecen arriba en "Registrar movimiento". A diferencia de un movimiento

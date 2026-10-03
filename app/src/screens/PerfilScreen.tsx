@@ -5,7 +5,7 @@ import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { Button, ErrorText, Field, MenuLink, Paragraph, Row, Screen, Panel, SectionTitle, Title } from '../ui';
+import { Button, ErrorText, Field, MenuLink, Paragraph, Row, Screen, Panel, SectionTitle } from '../ui';
 
 export function PerfilScreen() {
   const { token } = useSession();
@@ -74,7 +74,6 @@ export function PerfilScreen() {
 
   return (
     <Screen>
-      <Title>Mi perfil</Title>
       {me && (
         <Panel>
           <Row left="Email" right={me.email} />

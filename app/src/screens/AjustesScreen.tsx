@@ -1,7 +1,7 @@
 import { useAuth } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
-import { Button, GroupLabel, MenuList, Screen, Segmented, Title, useTema, type ModoTema } from '../ui';
+import { Button, GroupLabel, MenuList, Screen, Segmented, useTema, type ModoTema } from '../ui';
 
 const OPC_TEMA: ModoTema[] = ['sistema', 'claro', 'oscuro'];
 const ETIQUETA_TEMA: Record<ModoTema, string> = {
@@ -27,8 +27,6 @@ export function AjustesScreen() {
 
   return (
     <Screen>
-      <Title>Ajustes</Title>
-
       <GroupLabel>Cuenta</GroupLabel>
       <MenuList
         items={[

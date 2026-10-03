@@ -23,7 +23,6 @@ import {
   MoneyField,
   Row,
   Screen,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -138,7 +137,6 @@ export function MovimientoProgramadoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Movimiento programado</Title>
       <Text style={styles.monto}>{money(m.montoPlanificado, m.moneda)}</Text>
 
       <Panel>

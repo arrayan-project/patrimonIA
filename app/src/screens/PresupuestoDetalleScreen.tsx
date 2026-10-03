@@ -8,7 +8,7 @@ import {
   type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
@@ -23,7 +23,6 @@ import {
   MoneyField,
   Row,
   Screen,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -106,6 +105,8 @@ export function PresupuestoDetalleScreen() {
     }
   };
 
+  useTitulo(p ? `Presupuesto ${etiqueta(p.tipo).toLowerCase()}` : undefined);
+
   if (!p || !desv) {
     return (
       <Screen>
@@ -131,8 +132,6 @@ export function PresupuestoDetalleScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Presupuesto {etiqueta(p.tipo).toLowerCase()}</Title>
-
       <Panel>
         <Row left="Periodicidad" right={etiqueta(p.periodicidad)} />
         {p.intervalo && <Row left="Intervalo" right={etiqueta(p.intervalo)} />}

@@ -29,7 +29,6 @@ import {
   Segmented,
   Skeleton,
   Screen,
-  Title,
   Panel,
   useC,
   type Paleta,
@@ -128,8 +127,6 @@ export function MovimientosProgramadosScreen() {
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
-      <Title>Movimientos programados</Title>
-
       <Ayuda>
         Un movimiento futuro con fecha: un ingreso (sueldo), un gasto (arriendo) o
         una transferencia. Cuando llega la fecha, confirmas el pago y recién ahí

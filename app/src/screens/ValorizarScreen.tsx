@@ -6,7 +6,7 @@ import { money } from '../format';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import { GLOSARIO } from '../labels';
-import { Ayuda, Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen, Title } from '../ui';
+import { Ayuda, Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
@@ -56,7 +56,6 @@ export function ValorizarScreen() {
   return (
     <Screen>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>Registrar valorización</Title>
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
       )}

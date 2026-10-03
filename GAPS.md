@@ -246,7 +246,24 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   probada por Juan y mergeada (2026-10-03). Bloque 6 (C1 + D-2) ✅: rama
   `feat/G33-E6-alta-cuenta`, probada por Juan y mergeada (2026-10-03).
   Bloque 7 (D-1 + errores con código) ✅: rama `feat/G33-E7-ahorrar`, mergeada
-  (2026-10-03). Siguiente: aplicar las reglas de diseño antes del bloque 8.
+  (2026-10-03). Reglas de diseño
+  ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
+  antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
+  + piezas comunes) en rama `feat/G33-R1-piezas`; siguen R2 Listas, R3
+  Detalles, R4 Formularios, R5 Ajustes y R6 Resúmenes.
+- **Reglas de diseño, R1 — piezas comunes (en rama, 2026-10-03)**: la
+  plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
+  con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
+  acción principal fijos abajo), `Buscador` + `filtrar` (más de 6 elementos;
+  la hoja de `Select` usa los mismos), `Datos`/`Dato` (pares de un Detalle) y
+  `AccionDestructiva` (texto rojo al final). Un solo título: las pantallas
+  con header nativo ya no repiten `<Title>`; las que lo arman con datos
+  usan `useTitulo` (`navigation/navigator.ts`). Decisiones para R2 y R5: los
+  catálogos simples (Categorías, Etiquetas, Tipos de cambio, Tipos de
+  elemento, Agrupaciones) comparten un Formulario de creación; Metas,
+  Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
+  textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
+  revierten con aviso si falla.
 - **Bloque 7 de la Fase E — `FLUJO` D-1, Ahorrar para una meta (A1, A2, A6),
   y errores con código (✅ mergeado, 2026-10-03)**: comando `AhorrarParaObjetivo` (`api/src/ahorro/`, #79 en
   `APPLICATION_SERVICES.md`): N orígenes en una transacción, cada origen

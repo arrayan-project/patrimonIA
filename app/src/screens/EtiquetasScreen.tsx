@@ -16,7 +16,6 @@ import {
   LinkButton,
   PALETA_CATEGORIA,
   Screen,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -103,7 +102,6 @@ export function EtiquetasScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Etiquetas</Title>
       <Ayuda>
         Marcas personales y transversales para tus movimientos (#reembolsable,
         #viaje-2026). Un movimiento puede llevar varias. A diferencia de la

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PatrimonIA · Plantillas de pantalla</title>
+<style>
+:root{
+  --bg:#000000; --panel:#0c0c0d; --panel2:#151517; --text:#f5f5f5; --muted:#8a8a8e; --dim:#5a5a5e;
+  --line:#1f1f22; --ok:#34d399; --okbg:rgba(52,211,153,.14); --neg:#ff5c5c; --negbg:rgba(255,92,92,.14);
+  --btn:#f5f5f5; --btnText:#000; --sel:#f5f5f5; --selText:#000; --shadow:0 10px 30px rgba(0,0,0,.6);
+  --r:16px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#ffffff; --panel:#f4f4f5; --panel2:#e9e9ec; --text:#111113; --muted:#6b6b70; --dim:#9a9a9f;
+    --line:#e4e4e7; --ok:#059669; --okbg:rgba(5,150,105,.1); --neg:#dc2626; --negbg:rgba(220,38,38,.08);
+    --btn:#111113; --btnText:#fff; --sel:#111113; --selText:#fff; --shadow:0 10px 30px rgba(0,0,0,.15);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#ffffff; --panel:#f4f4f5; --panel2:#e9e9ec; --text:#111113; --muted:#6b6b70; --dim:#9a9a9f;
+  --line:#e4e4e7; --ok:#059669; --okbg:rgba(5,150,105,.1); --neg:#dc2626; --negbg:rgba(220,38,38,.08);
+  --btn:#111113; --btnText:#fff; --sel:#111113; --selText:#fff; --shadow:0 10px 30px rgba(0,0,0,.15);
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+
+#app{max-width:480px;margin:0 auto;height:100%;position:relative;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;padding:14px 16px 110px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg);border-top:1px solid var(--line);z-index:20}
+.tabbar-in{max-width:480px;margin:0 auto;display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;font-size:11px;color:var(--dim)}
+.tab .e{font-size:18px;filter:grayscale(1);opacity:.6}
+.tab.on{color:var(--text)}
+.tab.on .e{filter:none;opacity:1}
+.fab{position:fixed;bottom:calc(74px + env(safe-area-inset-bottom,0px));right:max(18px,calc(50% - 222px));width:58px;height:58px;border-radius:29px;background:var(--btn);color:var(--btnText);font-size:30px;line-height:58px;text-align:center;box-shadow:var(--shadow);z-index:21}
+
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{font-weight:800;font-size:17px;letter-spacing:-.3px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:19px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px}
+.badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--neg);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+.lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:22px 0 8px}
+.sec .lk{font-size:13px;color:var(--muted);font-weight:600}
+.hero .val{font-size:36px;font-weight:700;letter-spacing:-.8px;margin-top:6px}
+.hero .subs{display:flex;gap:18px;margin-top:8px;font-size:13px;color:var(--muted)}
+.hero .subs b{color:var(--text);font-weight:600}
+.chart{margin-top:10px;height:60px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row .ic{width:36px;height:36px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.row .mn{flex:1;min-width:0}
+.row .t{font-size:15px;font-weight:600}
+.row .s{font-size:12px;color:var(--muted);margin-top:2px}
+.row .am{font-size:15px;font-weight:700;white-space:nowrap}
+.pos{color:var(--ok)} .neg{color:var(--neg)}
+.row .chev{color:var(--dim)}
+
+.req{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.req .t{font-size:15px;font-weight:600}
+.req .s{font-size:13px;color:var(--muted);margin-top:3px}
+.req .acts{display:flex;gap:8px;margin-top:12px}
+
+.bar{height:4px;background:var(--panel2);border-radius:2px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--text)}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.ov-in{max-width:480px;width:100%;margin:0 auto;height:100%;display:flex;flex-direction:column}
+.ovh{display:flex;align-items:center;gap:10px;padding:10px 12px 6px}
+.ovh .back{width:38px;height:38px;border-radius:19px;font-size:20px;display:flex;align-items:center;justify-content:center}
+.ovh h1{font-size:18px;margin:0;font-weight:700}
+.ovb{flex:1;overflow-y:auto;padding:6px 16px 24px}
+.ovf{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
+
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--bg);border-top-left-radius:22px;border-top-right-radius:22px;border:1px solid var(--line);padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;max-height:85%;overflow-y:auto}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--panel2);margin:0 auto 10px}
+.sheet h2{font-size:17px;margin:4px 6px 10px}
+.opt{display:flex;align-items:center;gap:14px;padding:13px 10px;border-radius:14px;width:100%;text-align:left}
+.opt:active{background:var(--panel)}
+.opt .ic{width:42px;height:42px;border-radius:21px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.opt .t{font-size:16px;font-weight:600}
+.opt .s{font-size:13px;color:var(--muted);margin-top:2px}
+.sep{height:1px;background:var(--line);margin:6px 10px}
+
+.q{font-size:14px;font-weight:600;margin:20px 0 8px}
+.q small{font-weight:400;color:var(--muted)}
+.ovb{counter-reset:paso}
+.ovb > .q:not(.nonum){counter-increment:paso;display:flex;align-items:center;gap:10px;margin-top:26px}
+.ovb > .q:not(.nonum)::before{content:counter(paso);width:22px;height:22px;border-radius:11px;border:1px solid var(--dim);color:var(--muted);font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ovb > .q:not(.nonum):first-child{margin-top:12px}
+.amount{width:100%;background:transparent;border:0;border-bottom:2px solid var(--line);font-size:38px;font-weight:700;padding:6px 0;outline:none;letter-spacing:-.5px}
+.amount:focus{border-bottom-color:var(--text)}
+.inp{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
+.inp:focus{border-color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{white-space:nowrap;padding:9px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:14px;font-weight:500}
+.chip.on{background:var(--sel);color:var(--selText);border-color:var(--sel)}
+.pick{max-height:260px;overflow-y:auto}
+.acc{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.acc:last-child{border-bottom:0}
+.acc .rad{width:20px;height:20px;border-radius:10px;border:2px solid var(--dim);flex:none}
+.acc.on .rad{border:6px solid var(--text)}
+.acc .mn{flex:1}
+.acc .t{font-size:15px;font-weight:600}
+.acc .s{font-size:12px;color:var(--muted);margin-top:2px}
+.acc.off{opacity:.45}
+.grp{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:10px 14px 4px}
+
+.tog{display:flex;align-items:center;gap:12px;padding:14px;width:100%;text-align:left}
+.tog .mn{flex:1}
+.tog .t{font-size:15px;font-weight:600}
+.tog .s{font-size:12px;color:var(--muted);margin-top:2px}
+.sw{width:46px;height:28px;border-radius:14px;background:var(--panel2);position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:var(--muted);transition:left .15s}
+.tog.on .sw{background:var(--ok)}
+.tog.on .sw::after{left:21px;background:#fff}
+.sub{padding:0 14px 14px}
+
+.more{font-size:14px;color:var(--muted);font-weight:600;padding:14px 2px}
+.note{font-size:13px;color:var(--muted);line-height:1.45;margin-top:10px}
+.sum{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45;margin-top:18px}
+.err{color:var(--neg);font-size:13px;margin-top:10px}
+.primary{width:100%;height:52px;border-radius:14px;background:var(--btn);color:var(--btnText);font-size:16px;font-weight:700}
+.primary:disabled{opacity:.35}
+.ghost{width:100%;height:46px;border-radius:14px;border:1px solid var(--line);font-size:15px;font-weight:600;margin-top:8px}
+.small{height:38px;padding:0 14px;border-radius:12px;font-size:14px;font-weight:600}
+.small.p{background:var(--btn);color:var(--btnText)}
+.small.g{border:1px solid var(--line)}
+.linkbtn{font-size:13px;font-weight:600;color:var(--muted);text-decoration:underline}
+
+.done{text-align:center;padding:40px 10px 10px}
+.done .big{width:72px;height:72px;border-radius:36px;background:var(--okbg);color:var(--ok);font-size:34px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.done h2{font-size:22px;margin:0 0 10px}
+.done p{font-size:15px;color:var(--muted);line-height:1.5;margin:6px 0}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));background:var(--text);color:var(--bg);padding:12px 16px;border-radius:14px;font-size:14px;font-weight:600;z-index:60;max-width:92%;box-shadow:var(--shadow)}
+.empty{font-size:14px;color:var(--muted);padding:14px}
+
+/* ===== anexo: plantillas ===== */
+.tplbar{flex:none;border-bottom:1px solid var(--line);background:var(--bg);padding:10px 12px 10px}
+.tplbar .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tplbar .chips::-webkit-scrollbar{display:none}
+.tplbar .chip{white-space:nowrap;font-size:13px;padding:7px 12px}
+.modes{display:flex;gap:6px;margin-top:8px;align-items:center}
+.modes .small{height:30px;font-size:12px;padding:0 10px;border-radius:9px}
+.modes .demo{margin-left:auto;font-size:12px;color:var(--muted)}
+.screen{flex:1;min-height:0;display:flex;flex-direction:column}
+.ovh .grow{flex:1}
+.ovh .act{font-size:14px;font-weight:600;color:var(--muted);padding:6px 4px}
+.hero{padding:8px 2px 4px}
+.pct{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{text-align:right;font-weight:600}
+.pickrow{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.pickrow .ic{width:36px;height:36px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.pickrow .mn{flex:1;min-width:0}
+.pickrow .t{font-size:15px;font-weight:600}
+.pickrow .s{font-size:12px;color:var(--muted);margin-top:2px}
+.pickrow.ph .t{color:var(--muted);font-weight:500}
+.pickrow .chev,.row .chev{color:var(--dim);font-size:18px}
+.addlink{font-size:14px;font-weight:600;color:var(--muted);padding:16px 0 4px;display:block}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.hint button{font-size:13px;font-weight:600;text-decoration:underline;color:var(--muted)}
+.state{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--muted);margin-left:6px;vertical-align:1px}
+.blank{text-align:center;padding:48px 20px 20px}
+.blank .ic{font-size:34px;margin-bottom:12px}
+.blank h3{font-size:17px;margin:0 0 6px}
+.blank p{font-size:14px;color:var(--muted);margin:0 0 18px;line-height:1.45}
+.danger{display:block;width:100%;text-align:center;color:var(--neg);font-size:15px;font-weight:600;padding:22px 0 6px}
+.pill{font-size:12px;font-weight:700;color:var(--neg);background:var(--negbg);padding:3px 9px;border-radius:999px}
+.spark{display:block;width:100%;height:64px;margin-top:12px}
+.thm{display:flex;gap:8px;padding:0 14px 14px}
+/* vista reglas */
+.rules h2{font-size:22px;letter-spacing:-.4px;margin:8px 0 4px}
+.rules .lead{font-size:15px;color:var(--muted);line-height:1.5;margin:0 0 6px}
+.rules .rl{padding:13px 14px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.5}
+.rules .rl:last-child{border-bottom:0}
+.rules .rl b{display:block;font-size:15px;margin-bottom:2px}
+.scr{display:flex;flex-wrap:wrap;gap:6px}
+.scr span{font-size:13px;padding:5px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}
+.hz{font-size:13px;line-height:1.5;color:var(--muted)}
+.hz b{color:var(--text)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+const $=(s,el=document)=>el.querySelector(s);
+const fmt=n=>(n<0?"−":"")+"$"+Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const num=s=>parseInt(String(s||"").replace(/\D/g,""),10)||0;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const ACC=[
+ {id:"bch",e:"🏦",n:"Banco de Chile",b:1331408,g:"Cuentas"},
+ {id:"rut",e:"💳",n:"Cuenta Rut",b:50000,g:"Cuentas"},
+ {id:"bci",e:"🏦",n:"BCI",b:1255712,g:"Cuentas"},
+ {id:"sco",e:"🏦",n:"Scotiabank",b:0,g:"Cuentas"},
+ {id:"fc",e:"🏠",n:"Fintual Casa Flores Carrero",b:10444243,g:"Inversiones",meta:"Meta Pie vivienda"},
+ {id:"fu",e:"🎓",n:"Fintual Universidad hijos",b:633186,g:"Inversiones"},
+ {id:"fv",e:"🚗",n:"Fintual mantención vehículo",b:91010,g:"Inversiones"}
+];
+const acc=id=>ACC.find(a=>a.id===id);
+const CATS={ingreso:["Sueldo","Otros ingresos"],gasto:["Supermercado","Casa","Transporte","Salud","Otros gastos"]};
+
+const S={tpl:"formulario",view:"pantalla",empty:false,sheet:null,q:"",period:"6M",
+  f:{type:"transferencia",amount:50000,from:"bch",to:null,cat:null,when:"hoy",date:"",det:false,detail:""},
+  toggles:{prog:true,sem:false}};
+
+const TPL=[["resumen","Resumen"],["lista","Lista"],["detalle","Detalle"],["formulario","Formulario"],["ajustes","Ajustes"],["mapa","Mapa de pantallas"]];
+
+/* ---------- reglas por plantilla ---------- */
+const RULES={
+resumen:{name:"Resumen",lead:"Responde una sola pregunta con una cifra: ¿cuánto hay? Todo lo demás explica esa cifra.",
+ screens:["Dashboard","Hogar","HogarConsolidado","PatrimonioSeccion","EvolucionPatrimonio","Planificar"],
+ rules:[["Una cifra protagonista","Arriba, grande, con una etiqueta corta que diga qué es («Tienes», «Plata del hogar»). Nunca dos cifras del mismo tamaño."],
+ ["Máximo dos subcifras","Desglosan la cifra principal y deben sumar exactamente lo mismo. Si no suman, no van."],
+ ["Secciones con «Ver todos»","Cada sección muestra hasta 4 filas. El resto vive en su pantalla de Lista."],
+ ["Color solo en montos","Verde para positivo y rojo para negativo, solo en el número; las filas y los íconos no se colorean."],
+ ["Sin formularios","Un Resumen nunca registra nada. Las acciones llevan a un Formulario."]],
+ hz:"Mantiene el criterio de Inicio y Hogar del prototipo de la Fase D."},
+lista:{name:"Lista",lead:"Muestra elementos del mismo tipo para encontrar uno y abrirlo. No es lugar para crear ni editar.",
+ screens:["Movimientos","MovimientosHogar","MovimientosProgramados","Historial","Objetivos","Presupuestos","Categorias","Etiquetas","Plantillas","Agrupaciones","Asignaciones","Invitaciones","Notificaciones","TiposCambio","TiposElemento"],
+ rules:[["El formulario no vive debajo de la lista","Hoy Metas y Movimientos programados muestran la lista y el formulario de creación en la misma pantalla. El botón «Nuevo» abre un Formulario aparte."],
+ ["Agrupar por tiempo o por tipo","Movimientos por fecha («Esta semana», «Este mes», «Más adelante»); catálogos (Categorías, Etiquetas) por tipo."],
+ ["Buscador solo con más de 6 elementos","Con 6 o menos estorba más de lo que ayuda."],
+ ["Filas iguales en toda la app","Ícono, título, una línea de contexto y monto a la derecha. La fila completa abre el Detalle."],
+ ["Estado vacío con acción","Explica en una línea qué es esto y ofrece el botón para crear el primero. Sin párrafos de ayuda."],
+ ["La ayuda de pantalla ocupa una línea","Si necesita más, la explicación va dentro del Formulario, donde se usa."]],
+ hz:"Aplica <b>HZ-3</b>: la pantalla no crece por un formulario incrustado."},
+detalle:{name:"Detalle",lead:"Muestra todo de un solo elemento y lo que se puede hacer con él.",
+ screens:["MovimientoDetalle","MovimientoProgramadoDetalle","ElementoDetalle","ObjetivoDetalle","PresupuestoDetalle","ValorizacionDetalle","AjusteDetalle","AsignacionDetalle"],
+ rules:[["Arriba, el estado","La cifra o el avance que importa, con el mismo tratamiento que un Resumen."],
+ ["Datos en pares","Etiqueta a la izquierda y valor a la derecha, en una sola tarjeta. Sin campos editables aquí."],
+ ["Una acción principal","Fija abajo. Puede haber una secundaria; nunca tres botones del mismo peso."],
+ ["Editar arriba a la derecha","Abre el Formulario con los datos cargados."],
+ ["Eliminar al final, en rojo","Como texto, después de todo el contenido, y siempre con confirmación."]],
+ hz:"Deja el lugar para <b>HZ-13</b> (usar plata de la meta) como acción secundaria."},
+formulario:{name:"Formulario",lead:"Registra o edita una cosa. Se lee de arriba abajo como una conversación.",
+ screens:["RegistrarMovimiento","Ahorrar","RegistrarAjuste","Valorizar","AgregarElemento","EditarElemento","CrearHogar","PresupuestoRubros","Login","Registro","RecuperarPassword"],
+ rules:[["Preguntas, no etiquetas","«¿Cuánto?», «¿Desde qué cuenta?». Numeradas en orden (HZ-19), y el número corresponde a la pregunta visible, no a un campo oculto."],
+ ["Primero el monto","Grande, sin caja, con formato de pesos mientras se escribe."],
+ ["Cuenta antes que categoría","Y las cuentas se eligen en una fila compacta que abre una hoja con buscador, nunca en una lista completa."],
+ ["En transferencias, origen fuera del destino","La cuenta de origen aparece deshabilitada al elegir el destino, con la razón."],
+ ["La fecha una vez","Hoy por defecto, con Ayer y Otra fecha como alternativas."],
+ ["Lo opcional, cerrado","«+ Agregar detalle» abre el campo solo si se usa."],
+ ["Resumen y botón fijos abajo","Una frase dice qué va a pasar; el botón dice la acción completa («Registrar transferencia»). Deshabilitado hasta que esté completo."],
+ ["Conversión de moneda solo si aplica","El tipo aparece cuando existen cuentas en más de una moneda."],
+ ["Acceso es una variante","Login, Registro y Recuperar contraseña usan las mismas piezas, sin numeración."]],
+ hz:"Aplica <b>HZ-3</b> (hoja con buscador), <b>HZ-17</b> (cuentas agrupadas por tipo, lista una sola vez, cuenta antes que categoría) y <b>HZ-19</b> (numeración)."},
+ajustes:{name:"Ajustes",lead:"Cambia cómo funciona la app. Todo se guarda al tocarlo.",
+ screens:["Ajustes","AjustesNotificaciones","AjustesVisualizacion","Perfil","GestionHogar"],
+ rules:[["Sin botón Guardar","Interruptores y opciones se aplican al instante. Si algo falla, se revierte y avisa."],
+ ["Grupos con nombre","Tu cuenta, Hogar, Cómo se ve, Avisos, Tus datos. Cada fila con flecha abre otra pantalla."],
+ ["Opciones cortas en línea","Hasta 3 opciones (como el tema) van como chips dentro de la fila."],
+ ["Pendientes visibles","Si hay algo que atender (una invitación), se marca en la fila, no en un aviso aparte."],
+ ["Cerrar sesión al final","En rojo, separado del resto."]],
+ hz:"Los catálogos (Categorías, Etiquetas, Plantillas, Tipos de cambio) se entran desde aquí y usan la plantilla Lista."}
+};
+
+/* ---------- piezas ---------- */
+const header=(title,right="")=>`<div class="ovh"><button class="back" aria-label="Volver">‹</button><h1>${title}</h1><span class="grow"></span>${right}</div>`;
+const pickrow=(field,label)=>{const a=acc(S.f[field]);
+ return a?`<button class="pickrow" data-a="open" data-v="${field}"><span class="ic">${a.e}</span><span class="mn"><div class="t">${esc(a.n)}</div><div class="s">${fmt(a.b)}${a.meta?" · "+a.meta:""}</div></span><span class="chev">›</span></button>`
+ :`<button class="pickrow ph" data-a="open" data-v="${field}"><span class="ic">＋</span><span class="mn"><div class="t">${label}</div></span><span class="chev">›</span></button>`;};
+
+/* ---------- plantillas ---------- */
+function vResumen(){
+ const disp=ACC.filter(a=>a.g==="Cuentas"), aho=ACC.filter(a=>a.g==="Inversiones");
+ const sd=disp.reduce((s,a)=>s+a.b,0), sa=aho.reduce((s,a)=>s+a.b,0);
+ const pts={"3M":[60,58,55,50,46,40,36,30],"6M":[72,66,68,58,54,50,44,40,34,28],"1A":[86,80,82,74,70,66,62,54,50,44,38,30]}[S.period];
+ const w=300, step=w/(pts.length-1), d=pts.map((y,i)=>(i?"L":"M")+(i*step).toFixed(1)+" "+y).join(" ");
+ const rows=l=>l.map(a=>`<div class="row"><span class="ic">${a.e}</span><span class="mn"><div class="t">${esc(a.n)}</div>${a.meta?`<div class="s">${a.meta} · 13,1%</div>`:""}</span><span class="am">${fmt(a.b)}</span><span class="chev">›</span></div>`).join("");
+ return `${header("Cuentas e inversiones")}
+ <div class="ovb">
+  <div class="hero"><div class="lbl">Tienes</div><div class="val">${fmt(sd+sa)}</div>
+   <div class="subs"><span>Disponible <b>${fmt(sd)}</b></span><span>Ahorrado <b>${fmt(sa)}</b></span></div>
+   <svg class="spark" viewBox="0 0 300 96" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--text)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+   <div class="chips" style="margin-top:10px">${["3M","6M","1A"].map(p=>`<button class="chip ${S.period===p?"on":""}" data-a="period" data-v="${p}">${p}</button>`).join("")}</div>
+  </div>
+  <div class="sec"><span class="lbl">Disponible</span><button class="lk">Ver todo</button></div><div class="card">${rows(disp)}</div>
+  <div class="sec"><span class="lbl">Ahorrado</span><button class="lk">Ver todo</button></div><div class="card">${rows(aho)}</div>
+ </div>`;
+}
+function vLista(){
+ const g=[["Esta semana",[["🏠","Dividendo","Gasto · 5 oct · BCI",-480000],["🎯","Ahorro pie vivienda","Transferencia · 5 oct · a Fintual Casa",300000,"t"]]],
+  ["Este mes",[["💼","Sueldo","Ingreso · 30 oct · Banco de Chile",1800000]]],
+  ["Más adelante",[["🚗","Mantención auto","Gasto · 15 nov · Fintual vehículo",-90000],["🎓","Ahorro universidad","Transferencia · 20 nov · a Fintual Universidad",100000,"t"]]]];
+ const body=S.empty?`<div class="blank"><div class="ic">🗓️</div><h3>Nada programado todavía</h3><p>Anota un sueldo o un gasto que se repite y te avisamos cuando toque confirmarlo.</p><button class="primary">Programar el primero</button></div>`
+ :`<div class="hint" style="margin:0 2px">Se confirman cuando llega la fecha.</div>
+  <div class="chips" style="margin-top:12px;flex-wrap:nowrap;overflow-x:auto">${["Todos","Ingresos","Gastos","Transferencias"].map((c,i)=>`<button class="chip ${i?"":"on"}">${c}</button>`).join("")}</div>
+  ${g.map(([t,rs])=>`<div class="sec"><span class="lbl">${t}</span></div><div class="card">${rs.map(r=>`<button class="row"><span class="ic">${r[0]}</span><span class="mn"><div class="t">${r[1]}</div><div class="s">${r[2]}</div></span><span class="am ${r[4]?"":(r[3]<0?"neg":"pos")}">${r[4]?fmt(r[3]):(r[3]>0?"+":"")+fmt(r[3])}</span></button>`).join("")}</div>`).join("")}`;
+ return `${header("Movimientos programados")}<div class="ovb">${body}</div>${S.empty?"":`<div class="ovf"><button class="primary">Programar movimiento</button></div>`}`;
+}
+function vDetalle(){
+ const llev=10444243, meta=80000000, p=llev/meta*100;
+ return `${header("Pie vivienda",'<button class="act">Editar</button>')}
+ <div class="ovb">
+  <div class="hero"><div class="lbl">Llevas</div><div class="val">${fmt(llev)}</div>
+   <div class="bar"><i style="width:${p.toFixed(1)}%"></i></div>
+   <div class="pct"><span>${p.toFixed(1).replace(".",",")}% de ${fmt(meta)}</span><span>Faltan ${fmt(meta-llev)}</span></div></div>
+  <div class="sec"><span class="lbl">Datos</span></div>
+  <div class="card"><div class="kv"><span>Dónde está la plata</span><span>Fintual Casa Flores Carrero</span></div>
+   <div class="kv"><span>Compartida</span><span>Con el hogar</span></div>
+   <div class="kv"><span>Fecha objetivo</span><span>Sin fecha</span></div></div>
+  <div class="sec"><span class="lbl">Últimos aportes</span><button class="lk">Ver todos</button></div>
+  <div class="card">${[["5 sep","Banco de Chile",300000],["5 ago","Banco de Chile",300000],["12 jul","BCI",500000]].map(r=>`<div class="row"><span class="ic">🎯</span><span class="mn"><div class="t">Aporte</div><div class="s">${r[0]} · desde ${r[1]}</div></span><span class="am">${fmt(r[2])}</span></div>`).join("")}</div>
+  <button class="danger">Eliminar meta</button>
+ </div>
+ <div class="ovf"><button class="primary">Aportar a esta meta</button><button class="ghost">Usar plata de la meta</button></div>`;
+}
+function vFormulario(){
+ const f=S.f, t=f.type;
+ const types=[["ingreso","Ingreso"],["gasto","Gasto"],["transferencia","Transferencia"]];
+ let h=`<div class="chips" style="margin-top:6px">${types.map(([k,v])=>`<button class="chip ${t===k?"on":""}" data-a="type" data-v="${k}">${v}</button>`).join("")}</div>`;
+ h+=`<div class="q">¿Cuánto?</div><input class="amount" id="amt" inputmode="numeric" placeholder="$0" value="${f.amount?fmt(f.amount):""}">`;
+ if(t==="ingreso") h+=`<div class="hint">¿Te la van a devolver? <button data-a="noop">Anótala como crédito</button></div>`;
+ if(t==="transferencia"){ h+=`<div class="q">¿Desde qué cuenta?</div>${pickrow("from","Elegir cuenta")}<div class="q">¿Hacia qué cuenta?</div>${pickrow("to","Elegir cuenta")}`; }
+ else { h+=`<div class="q">${t==="ingreso"?"¿A qué cuenta llegó?":"¿Desde qué cuenta salió?"}</div>${pickrow("from","Elegir cuenta")}`;
+   h+=`<div class="q">¿De qué tipo? <small>opcional</small></div><div class="chips">${CATS[t].map(c=>`<button class="chip ${f.cat===c?"on":""}" data-a="cat" data-v="${c}">${c}</button>`).join("")}<button class="chip" data-a="noop">＋ Nueva</button></div>`; }
+ h+=`<div class="q">¿Cuándo?</div><div class="chips">${[["hoy","Hoy"],["ayer","Ayer"],["otra","Otra fecha"]].map(([k,v])=>`<button class="chip ${f.when===k?"on":""}" data-a="when" data-v="${k}">${v}</button>`).join("")}</div>${f.when==="otra"?`<input class="inp" type="date" style="margin-top:10px" value="${f.date}" id="dt">`:""}`;
+ h+=f.det?`<div class="q nonum">Detalle <small>opcional</small></div><input class="inp" id="det" placeholder="Ej: arriendo octubre" value="${esc(f.detail)}">`:`<button class="addlink" data-a="det">＋ Agregar detalle</button>`;
+ return `${header("Registrar movimiento")}<div class="ovb">${h}</div><div class="ovf" id="ft">${footer()}</div>`;
+}
+function footer(){
+ const f=S.f, a=acc(f.from), b=acc(f.to), m=f.amount?fmt(f.amount):"$0";
+ let ok=f.amount>0&&a&&(f.type!=="transferencia"||b), s;
+ if(f.type==="transferencia") s=ok?`Pasas <b>${m}</b> de ${esc(a.n)} a ${esc(b.n)}. No cuenta como gasto.`:"Completa monto, origen y destino.";
+ else if(f.type==="ingreso") s=ok?`Entran <b>${m}</b> a ${esc(a.n)}.`:"Completa monto y cuenta.";
+ else s=ok?`Salen <b>${m}</b> de ${esc(a.n)}.`:"Completa monto y cuenta.";
+ const lbl={ingreso:"Registrar ingreso",gasto:"Registrar gasto",transferencia:"Registrar transferencia"}[f.type];
+ return `<div class="note" style="margin:0 0 10px">${s}</div><button class="primary" ${ok?"":"disabled"}>${lbl}</button>`;
+}
+function vAjustes(){
+ const th=document.documentElement.dataset.theme||"sistema";
+ const row=(e,t,s,right="")=>`<button class="row"><span class="ic">${e}</span><span class="mn"><div class="t">${t}</div>${s?`<div class="s">${s}</div>`:""}</span>${right}<span class="chev">›</span></button>`;
+ const tog=(k,t,s)=>`<button class="tog ${S.toggles[k]?"on":""}" data-a="tog" data-v="${k}" role="switch" aria-checked="${S.toggles[k]}"><span class="mn"><div class="t">${t}</div><div class="s">${s}</div></span><span class="sw"></span></button>`;
+ return `${header("Ajustes")}<div class="ovb">
+ <div class="sec" style="margin-top:6px"><span class="lbl">Tu cuenta</span></div><div class="card">${row("👤","Perfil","Nombre y correo")}${row("🔑","Contraseña","")}</div>
+ <div class="sec"><span class="lbl">Hogar</span></div><div class="card">${row("🏡","Gestionar hogar","2 personas")}${row("✉️","Invitaciones","",'<span class="pill">1 pendiente</span>')}</div>
+ <div class="sec"><span class="lbl">Cómo se ve</span></div><div class="card"><div class="tog" style="padding-bottom:10px"><span class="mn"><div class="t">Tema</div></span></div>
+  <div class="thm">${[["sistema","Sistema"],["light","Claro"],["dark","Oscuro"]].map(([k,v])=>`<button class="chip ${th===k?"on":""}" data-a="theme" data-v="${k}">${v}</button>`).join("")}</div>
+  <div style="border-top:1px solid var(--line)">${row("💱","Moneda principal","",'<span class="am">CLP</span>')}</div></div>
+ <div class="sec"><span class="lbl">Avisos</span></div><div class="card">${tog("prog","Movimientos programados","Avisa el día que toca confirmar")}<div style="border-top:1px solid var(--line)">${tog("sem","Resumen semanal","Los lunes, cómo terminó la semana")}</div></div>
+ <div class="sec"><span class="lbl">Tus datos</span></div><div class="card">${row("🏷️","Categorías","")}${row("🔖","Etiquetas","")}${row("📋","Plantillas","")}${row("💵","Tipos de cambio","")}</div>
+ <div class="hint" style="text-align:center;margin-top:18px">Los cambios se guardan solos.</div>
+ <button class="danger">Cerrar sesión</button></div>`;
+}
+function vRules(k){
+ const r=RULES[k];
+ return `<div class="ovb rules"><h2>${r.name}</h2><p class="lead">${r.lead}</p>
+ <div class="sec"><span class="lbl">Úsala en</span></div><div class="scr">${r.screens.map(s=>`<span>${s}</span>`).join("")}</div>
+ <div class="sec"><span class="lbl">Reglas</span></div><div class="card">${r.rules.map(([t,d])=>`<div class="rl"><b>${t}</b>${d}</div>`).join("")}</div>
+ <p class="hz" style="margin-top:14px">${r.hz}</p></div>`;
+}
+function vMapa(){
+ const all=Object.values(RULES).reduce((n,r)=>n+r.screens.length,0)+1;
+ return `<div class="ovb rules"><h2>Mapa de pantallas</h2><p class="lead">Las ${all} pantallas de la app, cada una con su plantilla. Mapeado por nombre de archivo: Claude Code lo confirma en el paso 0.</p>
+ ${Object.entries(RULES).map(([k,r])=>`<div class="sec"><span class="lbl">${r.name} · ${r.screens.length}</span><button class="lk" data-a="tpl" data-v="${k}">Ver</button></div><div class="scr">${r.screens.map(s=>`<span>${s}</span>`).join("")}</div>`).join("")}
+ <div class="sec"><span class="lbl">Sin plantilla · 1</span></div><div class="scr"><span>Bienvenida</span></div>
+ <p class="hz" style="margin-top:8px">Pantalla única de entrada; se diseña aparte.</p>
+ <div class="sec"><span class="lbl">Reglas comunes</span></div><div class="card">
+ ${[["La pantalla nunca crece por una lista","Más de 6 opciones para elegir: fila compacta que abre una hoja con buscador (HZ-3)."],
+ ["Una acción principal por pantalla","Botón lleno; las secundarias, con borde; las destructivas, en texto rojo al final."],
+ ["Un solo título","El de la barra superior. No se repite dentro del contenido."],
+ ["Ayuda de una línea","Si una explicación necesita más, el diseño está mal o va dentro del Formulario."],
+ ["Montos siempre con formato","Signo peso y punto de miles. Verde y rojo solo en montos con signo."],
+ ["Prototipo y hallazgos","Si una plantilla contradice un hallazgo HZ decidido, gana el hallazgo y se reporta."]].map(([t,d])=>`<div class="rl"><b>${t}</b>${d}</div>`).join("")}</div></div>`;
+}
+
+/* ---------- hoja de cuentas ---------- */
+function sheetList(){
+ const field=S.sheet, other=field==="to"?S.f.from:(S.f.type==="transferencia"?S.f.to:null), q=S.q.trim().toLowerCase();
+ let h="";
+ ["Cuentas","Inversiones"].forEach(g=>{const l=ACC.filter(a=>a.g===g&&(!q||a.n.toLowerCase().includes(q)));
+  if(!l.length)return; h+=`<div class="grp">${g}</div>`;
+  h+=l.map(a=>{const off=a.id===other;return `<button class="acc ${S.f[field]===a.id?"on":""} ${off?"off":""}" data-a="pick" data-v="${a.id}" ${off?"disabled":""}><span class="rad"></span><span class="mn"><div class="t">${a.e} ${esc(a.n)}</div><div class="s">${off?(field==="to"?"Es la cuenta de origen":"Es la cuenta de destino"):fmt(a.b)+(a.meta?" · "+a.meta:"")}</div></span></button>`;}).join("");});
+ return h||`<div class="empty">Ninguna cuenta se llama así.</div>`;
+}
+function sheet(){
+ if(!S.sheet)return "";
+ const t=S.sheet==="to"?"¿Hacia qué cuenta?":(S.f.type==="ingreso"?"¿A qué cuenta llegó?":"¿Desde qué cuenta?");
+ return `<div class="sheetbg" data-a="close"></div><div class="sheet" role="dialog" aria-label="${t}"><div class="grab"></div><h2>${t}</h2>
+ <input class="inp" id="sq" placeholder="Buscar cuenta" value="${esc(S.q)}" style="margin-bottom:6px"><div class="card" id="sl">${sheetList()}</div></div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+ const k=S.tpl, isMap=k==="mapa";
+ const bar=`<div class="tplbar"><div class="chips">${TPL.map(([v,n])=>`<button class="chip ${k===v?"on":""}" data-a="tpl" data-v="${v}">${n}</button>`).join("")}</div>
+ ${isMap?"":`<div class="modes"><button class="small ${S.view==="pantalla"?"p":"g"}" data-a="view" data-v="pantalla">Pantalla</button><button class="small ${S.view==="reglas"?"p":"g"}" data-a="view" data-v="reglas">Reglas</button>${k==="lista"&&S.view==="pantalla"?`<button class="demo" data-a="empty">${S.empty?"Ver con datos":"Ver vacía"}</button>`:""}</div>`}</div>`;
+ let scr;
+ if(isMap) scr=vMapa();
+ else if(S.view==="reglas") scr=vRules(k);
+ else scr={resumen:vResumen,lista:vLista,detalle:vDetalle,formulario:vFormulario,ajustes:vAjustes}[k]();
+ $("#app").innerHTML=bar+`<div class="screen">${scr}</div>`+sheet();
+}
+
+document.addEventListener("click",e=>{
+ const b=e.target.closest("[data-a]"); if(!b)return;
+ const a=b.dataset.a, v=b.dataset.v;
+ if(a==="tpl"){S.tpl=v;S.view="pantalla";S.sheet=null;}
+ else if(a==="view")S.view=v;
+ else if(a==="empty")S.empty=!S.empty;
+ else if(a==="period")S.period=v;
+ else if(a==="type"){S.f.type=v;S.f.cat=null;if(v!=="transferencia")S.f.to=null;}
+ else if(a==="cat")S.f.cat=S.f.cat===v?null:v;
+ else if(a==="when")S.f.when=v;
+ else if(a==="det")S.f.det=true;
+ else if(a==="open"){S.sheet=v;S.q="";}
+ else if(a==="close")S.sheet=null;
+ else if(a==="pick"){S.f[S.sheet]=v;S.sheet=null;}
+ else if(a==="tog")S.toggles[v]=!S.toggles[v];
+ else if(a==="theme"){if(v==="sistema")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=v;}
+ else return;
+ render();
+ if(a==="det"){const d=$("#det");d&&d.focus();}
+});
+document.addEventListener("input",e=>{
+ if(e.target.id==="amt"){const n=num(e.target.value);S.f.amount=n;e.target.value=n?fmt(n):"";$("#ft").innerHTML=footer();}
+ else if(e.target.id==="sq"){S.q=e.target.value;$("#sl").innerHTML=sheetList();}
+ else if(e.target.id==="det")S.f.detail=e.target.value;
+ else if(e.target.id==="dt")S.f.date=e.target.value;
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet){S.sheet=null;render();}});
+render();
+})();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
-import { Ayuda, Button, ErrorText, Field, Paragraph, Screen, Select, Title } from '../ui';
+import { Ayuda, Button, ErrorText, Field, Paragraph, Screen, Select } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
@@ -60,7 +60,6 @@ export function CrearHogarScreen() {
 
   return (
     <Screen>
-      <Title>Crear hogar</Title>
       <Paragraph>Al crear el hogar quedas como su administrador.</Paragraph>
 
       <Field

@@ -12,7 +12,7 @@ import {
   type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
@@ -33,7 +33,6 @@ import {
   Row,
   Screen,
   Stat,
-  Title,
   Skeleton,
   useC,
   type Paleta,
@@ -155,6 +154,8 @@ export function MovimientoDetalleScreen() {
     }
   };
 
+  useTitulo(evento ? evento.glosa || etiqueta(evento.tipo) : undefined);
+
   if (!evento) {
     return (
       <Screen>
@@ -233,7 +234,6 @@ export function MovimientoDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>{evento.glosa || etiqueta(evento.tipo)}</Title>
       <Stat label={etiqueta(evento.tipo)} value={money(evento.monto, evento.moneda)} />
 
 

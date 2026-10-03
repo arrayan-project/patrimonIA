@@ -4,7 +4,7 @@ import { MONEDAS_FRECUENTES } from '../labels';
 import { useNav } from '../navigation/navigator';
 import { PREFERENCIAS_DEFAULT, SECCIONES_DASHBOARD, usePreferencias } from '../preferencias';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, ErrorText, GroupLabel, Screen, Segmented, Select, Title, type FormatoFecha } from '../ui';
+import { Ayuda, Button, ErrorText, GroupLabel, Screen, Segmented, Select, type FormatoFecha } from '../ui';
 
 const OPC_FECHA: FormatoFecha[] = ['legible', 'numerico'];
 const ETIQUETA_FECHA: Record<FormatoFecha, string> = { legible: '15 mar 2026', numerico: '15-03-2026' };
@@ -41,7 +41,6 @@ export function AjustesVisualizacionScreen() {
 
   return (
     <Screen>
-      <Title>Visualización</Title>
       <Ayuda>Cómo ves la app. Se guarda en tu cuenta: aplica en todos tus dispositivos.</Ayuda>
 
       <Segmented

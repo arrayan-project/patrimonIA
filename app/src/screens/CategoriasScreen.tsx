@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Select, Skeleton, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Ayuda, Button, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Select, Skeleton, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
@@ -120,7 +120,6 @@ export function CategoriasScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Categorías de movimiento</Title>
       <Ayuda>
         Vocabulario del hogar para clasificar ingresos y gastos (Mercado,
         Servicios, Sueldo…). Puedes anidarlas en dos niveles ("Servicios ›
