@@ -62,7 +62,7 @@ export function AsignacionesScreen() {
           titulo="No tienes ahorro sin meta"
           descripcion="Para ahorrar algo nuevo, crea una meta."
           accion="Crear una meta"
-          onAccion={() => nav.go('NuevaMeta')}
+          onAccion={() => nav.go('MetaForm')}
         />
       )}
 

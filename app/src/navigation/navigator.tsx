@@ -56,7 +56,7 @@ export type RouteName =
   | 'Etiquetas'
   | 'Agrupaciones'
   | 'CatalogoForm'
-  | 'NuevaMeta'
+  | 'MetaForm'
   | 'PresupuestoForm'
   | 'NuevoProgramado'
   | 'PlantillaForm'

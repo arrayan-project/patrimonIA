@@ -23,7 +23,7 @@ export function ObjetivosScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const nueva = () => nav.go('NuevaMeta');
+  const nueva = () => nav.go('MetaForm');
   const hay = (objetivos?.length ?? 0) > 0;
 
   return (

@@ -56,7 +56,7 @@ import { AjustesVisualizacionScreen } from '../screens/AjustesVisualizacionScree
 import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 import { CatalogoFormScreen } from '../screens/CatalogoFormScreen';
-import { NuevaMetaScreen } from '../screens/NuevaMetaScreen';
+import { MetaFormScreen } from '../screens/MetaFormScreen';
 import { PresupuestoFormScreen } from '../screens/PresupuestoFormScreen';
 import { NuevoProgramadoScreen } from '../screens/NuevoProgramadoScreen';
 import { PlantillaFormScreen } from '../screens/PlantillaFormScreen';
@@ -65,6 +65,7 @@ import { CorreccionFormScreen } from '../screens/CorreccionFormScreen';
 import { CorregirMovimientoScreen } from '../screens/CorregirMovimientoScreen';
 import { ProgramadoFormScreen } from '../screens/ProgramadoFormScreen';
 import { SacarPlataScreen } from '../screens/SacarPlataScreen';
+import { ValorEnFechaScreen } from '../screens/ValorEnFechaScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 import { AgrupacionesScreen } from '../screens/AgrupacionesScreen';
@@ -169,7 +170,7 @@ const TITULOS: Record<string, string> = {
   Agrupaciones: 'Agrupaciones',
   // CatalogoForm y PlantillaForm ponen su título con useTitulo (crear o editar).
   CatalogoForm: 'Nuevo',
-  NuevaMeta: 'Nueva meta',
+  MetaForm: 'Nueva meta',
   PresupuestoForm: 'Nuevo presupuesto',
   NuevoProgramado: 'Programar movimiento',
   PlantillaForm: 'Nueva plantilla',
@@ -179,6 +180,7 @@ const TITULOS: Record<string, string> = {
   CorregirMovimiento: 'Editar movimiento',
   ProgramadoForm: 'Editar programado',
   SacarPlata: 'Sacar',
+  ValorEnFecha: 'Valor en otra fecha',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -222,7 +224,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Etiquetas', EtiquetasScreen],
   ['Agrupaciones', AgrupacionesScreen],
   ['CatalogoForm', CatalogoFormScreen],
-  ['NuevaMeta', NuevaMetaScreen],
+  ['MetaForm', MetaFormScreen],
   ['PresupuestoForm', PresupuestoFormScreen],
   ['NuevoProgramado', NuevoProgramadoScreen],
   ['PlantillaForm', PlantillaFormScreen],
@@ -231,6 +233,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['CorregirMovimiento', CorregirMovimientoScreen],
   ['ProgramadoForm', ProgramadoFormScreen],
   ['SacarPlata', SacarPlataScreen],
+  ['ValorEnFecha', ValorEnFechaScreen],
 ];
 
 export function RootNavigator() {

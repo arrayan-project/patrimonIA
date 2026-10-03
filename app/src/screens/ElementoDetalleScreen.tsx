@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -8,31 +8,29 @@ import {
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type ReservaDeElementoDTO,
-  type ValorHistoricoElementoDTO,
   type ValorizacionDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useAccionHeader, useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { etiquetaNivel } from '../compartirHogar';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
+import { irAAccion } from './AccionFormScreen';
 import {
+  AccionDestructiva,
   Button,
-  DateField,
+  Dato,
+  Datos,
   ErrorText,
   etiqueta,
-  Field,
   fechaLegible,
   Hero,
-  ListItem,
+  ListCard,
+  MenuList,
   MoneyText,
   Nota,
-  Panel,
   ProgressBar,
-  Row,
   Screen,
-  SectionTitle,
+  Section,
   Skeleton,
   TxRow,
   useC,
@@ -48,10 +46,9 @@ function colorEstadoDeuda(estado: string, c: Paleta): string {
 
 export function ElementoDetalleScreen() {
   const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
+  const styles = useMemo(() => crearEstilos(), []);
   const { token, usuario } = useSession();
   const nav = useNav();
-  const toast = useToast();
   const elementoId = nav.route.params?.elementoId as string | undefined;
 
   const [elemento, setElemento] = useState<ElementoPatrimonialDTO | null>(null);
@@ -60,11 +57,6 @@ export function ElementoDetalleScreen() {
   const [ajustes, setAjustes] = useState<AjustePatrimonialDTO[]>([]);
   const [reservas, setReservas] = useState<ReservaDeElementoDTO[]>([]);
   const [error, setError] = useState('');
-  const [saldarMotivo, setSaldarMotivo] = useState('');
-  const [saldando, setSaldando] = useState(false);
-  const [fechaHist, setFechaHist] = useState('');
-  const [valorHist, setValorHist] = useState<ValorHistoricoElementoDTO | null>(null);
-  const [histBusy, setHistBusy] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!elementoId) return;
@@ -107,33 +99,15 @@ export function ElementoDetalleScreen() {
 
   const esDeuda = elemento?.categoriaFuncional === 'DEUDA';
   const esCredito = elemento?.categoriaFuncional === 'CREDITO';
+  const esPropietario = !!elemento?.propietarios.some((p) => p.usuarioId === usuario.id);
 
-  const saldar = async () => {
-    const ok = await confirmar(
-      esDeuda ? 'Condonar deuda' : 'Declarar incobrable',
-      esDeuda
-        ? 'El saldo pendiente se lleva a cero y tu patrimonio sube. No se puede deshacer.'
-        : 'El saldo pendiente se lleva a cero y tu patrimonio baja. No se puede deshacer.',
-      esDeuda ? 'Condonar' : 'Declarar incobrable',
-    );
-    if (!ok) return;
-    setSaldando(true);
-    setError('');
-    try {
-      await api.post(
-        esDeuda ? '/comandos/CondonarDeuda' : '/comandos/DeclararIncobrable',
-        { elementoId, motivo: saldarMotivo.trim() },
-        token,
-      );
-      toast.mostrar(esDeuda ? 'Deuda condonada' : 'Crédito incobrable');
-      setSaldarMotivo('');
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setSaldando(false);
-    }
-  };
+  useTitulo(elemento?.nombre);
+  useAccionHeader(
+    'Editar',
+    elemento && esPropietario
+      ? () => nav.go('EditarElemento', { elementoId, contexto: elemento.nombre })
+      : undefined,
+  );
 
   if (!elemento) {
     return (
@@ -144,218 +118,167 @@ export function ElementoDetalleScreen() {
     );
   }
 
-  const consultarHistorico = async () => {
-    setHistBusy(true);
-    setError('');
-    try {
-      setValorHist(
-        await api.get<ValorHistoricoElementoDTO>(
-          `/elementos-patrimoniales/${elementoId}/valor-historico?fecha=${fechaHist.trim()}`,
-          token,
-        ),
-      );
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setHistBusy(false);
-    }
-  };
-
   const el = elemento;
-  const esPropietario = el.propietarios.some((p) => p.usuarioId === usuario.id);
   const reservado = reservas.reduce((acc, r) => acc + r.monto, 0);
   const libre = el.valorVigente - reservado;
-  const montoMov = (monto: number, moneda: string, anulado: boolean) => (
-    <Text
-      style={[
-        styles.movMonto,
-        anulado ? styles.tachado : { color: monto < 0 ? c.danger : c.primary },
-      ]}
-    >
-      {money(monto, moneda)}
-    </Text>
-  );
+  const pendiente = el.valorPendiente ?? 0;
+  const activo = esPropietario && el.estado !== 'INACTIVO';
+  const conInteres = esPropietario && (esDeuda || esCredito) && pendiente > 0;
+
+  const registrarInteres = () =>
+    nav.go('RegistrarAjuste', {
+      elementoId,
+      valorActual: el.valorVigente,
+      moneda: el.moneda,
+      contexto: el.nombre,
+      modoInteres: true,
+      sentidoInicial: esDeuda ? 'Menor' : 'Mayor',
+      motivoInicial: 'Interés del período',
+      magnitudInicial: el.tasaInteres != null ? (pendiente * el.tasaInteres) / 100 / 12 : undefined,
+    });
+  const registrarValorizacion = () =>
+    nav.go('Valorizar', { elementoId, valorActual: el.valorVigente, moneda: el.moneda, contexto: el.nombre });
+  const registrarAjuste = () =>
+    nav.go('RegistrarAjuste', { elementoId, valorActual: el.valorVigente, moneda: el.moneda, contexto: el.nombre });
+  // Secundaria fija: el interés en una deuda o crédito; si no, la valorización.
+  const secundaria = conInteres
+    ? { title: 'Registrar interés', onPress: registrarInteres }
+    : activo && el.admiteValorizacion
+      ? { title: 'Registrar valorización', onPress: registrarValorizacion }
+      : null;
+
+  // A9 — colapsar el par corrección + original en una sola fila con el monto
+  // final; el evento de corrección no se lista aparte.
+  const correccionDe = new Map<string, EventoFinancieroDTO>();
+  for (const ev of eventos) {
+    if (ev.correccionDeId) correccionDe.set(ev.correccionDeId, ev);
+  }
 
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      pie={
+        activo ? (
+          <>
+            {/* G32 H-07 — registrar con esta cuenta ya elegida (pagar una deuda = transferir hacia ella). */}
+            <Button
+              title={esDeuda ? 'Registrar pago' : esCredito ? 'Registrar cobro' : 'Registrar movimiento'}
+              onPress={() =>
+                nav.go(
+                  'RegistrarMovimiento',
+                  esDeuda
+                    ? { tipo: 'TRANSFERENCIA', destinoId: elementoId }
+                    : esCredito
+                      ? { tipo: 'TRANSFERENCIA', origenId: elementoId }
+                      : { cuentaId: elementoId },
+                )
+              }
+            />
+            {secundaria && <Button title={secundaria.title} variant="secondary" onPress={secundaria.onPress} />}
+          </>
+        ) : undefined
+      }
+    >
       {el.valorOculto ? (
-        <Hero label={el.nombre} value="—" />
+        <Hero label="Valor vigente" value="—" />
       ) : (
         <Hero
-          label={`${el.nombre} · valor vigente`}
+          label="Valor vigente"
           value={<MoneyText monto={el.valorVigente} moneda={el.moneda} style={styles.valor} />}
-        />
-      )}
-      {el.valorOculto ? (
-        <Nota>El propietario no comparte el monto de este elemento.</Nota>
-      ) : null}
-
-      <Panel>
-        <Row left="Categoría" right={etiqueta(el.categoriaFuncional)} />
-        <Row left="Tipo" right={etiqueta(el.tipo)} />
-        <Row left="Ámbito" right={etiqueta(el.ambito)} />
-        {esPropietario ? <Row left="Con el hogar" right={etiquetaNivel(el)} /> : null}
-        <Row left="Estado" right={etiqueta(el.estado)} />
-        {el.fechaAlta ? <Row left="En el patrimonio desde" right={fechaLegible(el.fechaAlta)} /> : null}
-        {el.fechaBaja ? <Row left="Salió del patrimonio" right={fechaLegible(el.fechaBaja)} /> : null}
-      </Panel>
-
-      {/* G32 H-07 — registrar con esta cuenta ya elegida (pagar una deuda = transferir hacia ella). */}
-      {esPropietario && el.estado !== 'INACTIVO' && (
-        <Button
-          title={esDeuda ? 'Registrar pago' : esCredito ? 'Registrar cobro' : 'Registrar movimiento'}
-          onPress={() =>
-            nav.go(
-              'RegistrarMovimiento',
-              esDeuda
-                ? { tipo: 'TRANSFERENCIA', destinoId: elementoId }
-                : esCredito
-                  ? { tipo: 'TRANSFERENCIA', origenId: elementoId }
-                  : { cuentaId: elementoId },
-            )
+          substats={
+            reservado > 0
+              ? [
+                  { label: 'Libre para gastar', value: money(libre, el.moneda) },
+                  { label: 'En metas', value: money(reservado, el.moneda) },
+                ]
+              : undefined
           }
         />
       )}
+      {el.valorOculto ? <Nota>El propietario no comparte el monto de este elemento.</Nota> : null}
+
+      <Datos>
+        <Dato etiqueta="Categoría" valor={etiqueta(el.categoriaFuncional)} />
+        <Dato etiqueta="Tipo" valor={etiqueta(el.tipo)} />
+        <Dato etiqueta="Ámbito" valor={etiqueta(el.ambito)} />
+        {esPropietario ? <Dato etiqueta="Con el hogar" valor={etiquetaNivel(el)} /> : null}
+        <Dato etiqueta="Estado" valor={etiqueta(el.estado)} />
+        {el.fechaAlta ? <Dato etiqueta="En el patrimonio desde" valor={fechaLegible(el.fechaAlta)} /> : null}
+        {el.fechaBaja ? <Dato etiqueta="Salió del patrimonio" valor={fechaLegible(el.fechaBaja)} /> : null}
+        <Dato
+          etiqueta={el.propietarios.length > 1 ? 'Propietarios' : 'Propietario'}
+          valor={el.propietarios.map((p) => `${p.nombre ?? p.usuarioId} ${p.porcentaje}%`).join(', ')}
+        />
+      </Datos>
 
       {reservas.length > 0 && (
-        <Panel>
-          <SectionTitle>Libre para gastar</SectionTitle>
-          <Row left="Valor vigente" right={money(el.valorVigente, el.moneda)} />
-          <Row left="En metas" right={`− ${money(reservado, el.moneda)}`} />
-          <Row left="Libre para gastar" right={money(libre, el.moneda)} />
+        <Section title="En metas">
           <Nota>
-            Lo que está en metas no salió de la cuenta: sigue ahí, pero lo ahorraste
-            para tus metas. "Libre para gastar" es lo que puedes usar sin tocar una meta.
+            Sigue en la cuenta, pero lo ahorraste para tus metas. "Libre para gastar" es lo que puedes usar
+            sin tocar una meta.
           </Nota>
-          {reservas.map((r) => (
-            <ListItem
-              key={r.id}
-              title={r.objetivoNombre ? `${r.objetivoNombre} · ${r.asignacionNombre}` : r.asignacionNombre}
-              subtitle={r.objetivoNombre ? 'Meta' : 'Ahorro sin meta'}
-              right={money(r.monto, el.moneda)}
-              onPress={() =>
-                nav.go('AsignacionDetalle', { asignacionId: r.asignacionId, contexto: el.nombre })
-              }
-            />
-          ))}
-        </Panel>
+          <ListCard>
+            {reservas.map((r) => (
+              <TxRow
+                key={r.id}
+                title={r.objetivoNombre ? `${r.objetivoNombre} · ${r.asignacionNombre}` : r.asignacionNombre}
+                subtitle={r.objetivoNombre ? 'Meta' : 'Ahorro sin meta'}
+                amount={money(r.monto, el.moneda)}
+                logo={{ icon: 'flag-outline' }}
+                onPress={() => nav.go('AsignacionDetalle', { asignacionId: r.asignacionId, contexto: el.nombre })}
+              />
+            ))}
+          </ListCard>
+        </Section>
       )}
 
       {(esDeuda || esCredito) && (
-        <Panel>
-          <SectionTitle>{esDeuda ? 'Deuda' : 'Crédito'}</SectionTitle>
-          {el.naturaleza === 'CUSTODIA_INFORMAL' && (
-            <Row
-              left="Tipo"
-              right={
-                <Text style={[styles.movMonto, { color: c.muted }]}>Encargo o custodia</Text>
-              }
-            />
-          )}
-          {el.estadoOperativo && (
-            <Row
-              left="Estado"
-              right={
-                <Text style={[styles.movMonto, { color: colorEstadoDeuda(el.estadoOperativo, c) }]}>
-                  {etiqueta(el.estadoOperativo)}
-                </Text>
-              }
-            />
-          )}
-          <Row left="Saldo pendiente" right={money(el.valorPendiente ?? 0, el.moneda)} />
-          {el.valorPendienteInicial != null && el.valorPendienteInicial > 0 && (
-            <View style={{ gap: 4 }}>
-              <ProgressBar
-                pct={
-                  ((el.valorPendienteInicial - (el.valorPendiente ?? 0)) / el.valorPendienteInicial) *
-                  100
+        <Section title={esDeuda ? 'Deuda' : 'Crédito'}>
+          <Datos>
+            {el.naturaleza === 'CUSTODIA_INFORMAL' && <Dato etiqueta="Tipo" valor="Encargo o custodia" />}
+            {el.estadoOperativo && (
+              <Dato
+                etiqueta="Estado"
+                valor={
+                  <Text style={[styles.movMonto, { color: colorEstadoDeuda(el.estadoOperativo, c) }]}>
+                    {etiqueta(el.estadoOperativo)}
+                  </Text>
                 }
               />
+            )}
+            <Dato etiqueta="Saldo pendiente" valor={money(pendiente, el.moneda)} />
+            {el.contraparte ? <Dato etiqueta={esDeuda ? 'Acreedor' : 'Deudor'} valor={el.contraparte} /> : null}
+            {el.fechaInicio ? <Dato etiqueta="Desde" valor={fechaLegible(el.fechaInicio)} /> : null}
+            {el.fechaTermino ? <Dato etiqueta="Vence" valor={fechaLegible(el.fechaTermino)} /> : null}
+            {el.cuotaMonto != null ? <Dato etiqueta="Cuota" valor={money(el.cuotaMonto, el.moneda)} /> : null}
+            {el.tasaInteres != null ? <Dato etiqueta="Tasa anual" valor={`${el.tasaInteres}%`} /> : null}
+          </Datos>
+          {el.valorPendienteInicial != null && el.valorPendienteInicial > 0 && (
+            <>
+              <ProgressBar pct={((el.valorPendienteInicial - pendiente) / el.valorPendienteInicial) * 100} />
               <Nota>
-                Pagado {money(el.valorPendienteInicial - (el.valorPendiente ?? 0), el.moneda)} de{' '}
+                Pagado {money(el.valorPendienteInicial - pendiente, el.moneda)} de{' '}
                 {money(el.valorPendienteInicial, el.moneda)}
               </Nota>
-            </View>
+            </>
           )}
-          {el.contraparte ? (
-            <Row left={esDeuda ? 'Acreedor' : 'Deudor'} right={el.contraparte} />
-          ) : null}
-          {el.fechaInicio ? <Row left="Desde" right={fechaLegible(el.fechaInicio)} /> : null}
-          {el.fechaTermino ? <Row left="Vence" right={fechaLegible(el.fechaTermino)} /> : null}
-          {el.cuotaMonto != null ? (
-            <Row left="Cuota" right={money(el.cuotaMonto, el.moneda)} />
-          ) : null}
-          {el.tasaInteres != null ? <Row left="Tasa anual" right={`${el.tasaInteres}%`} /> : null}
           {el.observaciones ? <Nota>{el.observaciones}</Nota> : null}
-          {esPropietario && (el.valorPendiente ?? 0) > 0 && (
-            <View style={{ gap: 8, marginTop: 8 }}>
-              <Nota>
-                El interés del período se registra como un ajuste que aumenta el saldo.
-              </Nota>
-              <Button
-                title="Registrar interés"
-                variant="secondary"
-                onPress={() =>
-                  nav.go('RegistrarAjuste', {
-                    elementoId,
-                    valorActual: el.valorVigente,
-                    moneda: el.moneda,
-                    contexto: el.nombre,
-                    modoInteres: true,
-                    sentidoInicial: esDeuda ? 'Menor' : 'Mayor',
-                    motivoInicial: 'Interés del período',
-                    magnitudInicial:
-                      el.tasaInteres != null
-                        ? ((el.valorPendiente ?? 0) * el.tasaInteres) / 100 / 12
-                        : undefined,
-                  })
-                }
-              />
-              <Nota>
-                {esDeuda
-                  ? 'Condonar: el acreedor perdona el saldo (tu patrimonio sube).'
-                  : 'Declarar incobrable: reconoces que no se recuperará (tu patrimonio baja).'}
-              </Nota>
-              <Field label="Motivo" value={saldarMotivo} onChangeText={setSaldarMotivo} autoCapitalize="sentences" />
-              <Button
-                title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}
-                variant="danger"
-                onPress={saldar}
-                loading={saldando}
-                disabled={saldarMotivo.trim().length < 3}
-              />
-            </View>
-          )}
-        </Panel>
+          {conInteres && <Nota>El interés del período se registra como un ajuste que aumenta el saldo.</Nota>}
+        </Section>
       )}
 
-      <Panel>
-        <SectionTitle>Propietarios</SectionTitle>
-        {el.propietarios.map((p) => (
-          <Row key={p.usuarioId} left={p.nombre ?? p.usuarioId} right={`${p.porcentaje}%`} />
-        ))}
-      </Panel>
-
-      <Panel>
-        <SectionTitle>Movimientos</SectionTitle>
+      <Section title="Movimientos">
         {eventos.length === 0 ? (
           <Nota>Sin movimientos.</Nota>
         ) : (
-          (() => {
-            // A9 — colapsar el par corrección + original en una sola fila con el
-            // monto final; el evento de corrección no se lista aparte.
-            const correccionDe = new Map<string, EventoFinancieroDTO>();
-            for (const ev of eventos) {
-              if (ev.correccionDeId) correccionDe.set(ev.correccionDeId, ev);
-            }
-            return eventos
+          <ListCard>
+            {eventos
               .filter((ev) => !ev.correccionDeId)
               .map((ev) => {
                 const impacto = ev.impactos.find((i) => i.elementoId === elementoId);
                 const corr = correccionDe.get(ev.id);
                 const corrImpacto = corr?.impactos.find((i) => i.elementoId === elementoId);
-                const monto =
-                  (impacto?.monto ?? ev.monto) + (corr ? (corrImpacto?.monto ?? 0) : 0);
+                const monto = (impacto?.monto ?? ev.monto) + (corr ? (corrImpacto?.monto ?? 0) : 0);
                 const sufijo = ev.anulado
                   ? 'eliminado'
                   : corr
@@ -377,158 +300,112 @@ export function ElementoDetalleScreen() {
                             : 'swap-horizontal-outline',
                     }}
                     onPress={() =>
-                      nav.go('MovimientoDetalle', {
-                        eventoId: ev.id,
-                        elementoId,
-                        contexto: el.nombre,
-                      })
+                      nav.go('MovimientoDetalle', { eventoId: ev.id, elementoId, contexto: el.nombre })
                     }
                   />
                 );
-              });
-          })()
+              })}
+          </ListCard>
         )}
-      </Panel>
+      </Section>
 
       {el.admiteValorizacion && (
-        <Panel>
-          <SectionTitle>Valorizaciones</SectionTitle>
+        <Section
+          title="Valorizaciones"
+          accion="Registrar"
+          onAccion={activo && secundaria?.title !== 'Registrar valorización' ? registrarValorizacion : undefined}
+        >
           {valorizaciones.length === 0 ? (
             <Nota>Sin valorizaciones.</Nota>
           ) : (
-            valorizaciones.map((v) => (
-              <ListItem
-                key={v.id}
-                title={v.anulada ? 'eliminada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
-                tachado={v.anulada}
-                right={
-                  <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
-                    {money(v.valorNuevo, el.moneda)}
-                  </Text>
-                }
-                onPress={() =>
-                  nav.go('ValorizacionDetalle', {
-                    valorizacionId: v.id,
-                    elementoId,
-                    moneda: el.moneda,
-                    contexto: el.nombre,
-                  })
-                }
-              />
-            ))
+            <ListCard>
+              {valorizaciones.map((v) => (
+                <TxRow
+                  key={v.id}
+                  title={fechaLegible(v.fecha)}
+                  subtitle={v.anulada ? 'eliminada' : v.correccionDeId ? 'corrección' : undefined}
+                  amount={money(v.valorNuevo, el.moneda)}
+                  logo={{ icon: 'trending-up-outline' }}
+                  onPress={() =>
+                    nav.go('ValorizacionDetalle', {
+                      valorizacionId: v.id,
+                      elementoId,
+                      moneda: el.moneda,
+                      contexto: el.nombre,
+                    })
+                  }
+                />
+              ))}
+            </ListCard>
           )}
-          <View style={{ marginTop: 8 }}>
-            <Button
-              title="Registrar valorización"
-              variant="secondary"
-              onPress={() =>
-                nav.go('Valorizar', {
-                  elementoId,
-                  valorActual: el.valorVigente,
-                  moneda: el.moneda,
-                  contexto: el.nombre,
-                })
-              }
-            />
-          </View>
-        </Panel>
+        </Section>
       )}
 
-      <Panel>
-        <SectionTitle>Ajustes patrimoniales</SectionTitle>
+      <Section title="Ajustes patrimoniales" accion="Registrar" onAccion={activo ? registrarAjuste : undefined}>
         {ajustes.length === 0 ? (
           <Nota>Sin ajustes.</Nota>
         ) : (
-          ajustes.map((a) => (
-            <ListItem
-              key={a.id}
-              title={a.anulado ? 'eliminado' : a.correccionDeId ? 'corrección' : a.motivo}
-              tachado={a.anulado}
-              right={
-                a.anulado ? (
-                  <Text style={[styles.movMonto, styles.tachado]}>{money(a.monto, el.moneda)}</Text>
-                ) : (
-                  <MoneyText monto={a.monto} moneda={el.moneda} style={styles.movMonto} />
-                )
-              }
-              onPress={() =>
-                nav.go('AjusteDetalle', {
-                  ajusteId: a.id,
-                  elementoId,
-                  moneda: el.moneda,
-                  contexto: el.nombre,
-                })
-              }
-            />
-          ))
+          <ListCard>
+            {ajustes.map((a) => (
+              <TxRow
+                key={a.id}
+                title={a.motivo}
+                subtitle={`${fechaLegible(a.fecha)}${a.anulado ? ' · eliminado' : a.correccionDeId ? ' · corrección' : ''}`}
+                amount={`${a.monto > 0 ? '+' : a.monto < 0 ? '−' : ''}${money(Math.abs(a.monto), el.moneda)}`}
+                positivo={!a.anulado && a.monto > 0}
+                logo={{ icon: 'construct-outline' }}
+                onPress={() =>
+                  nav.go('AjusteDetalle', { ajusteId: a.id, elementoId, moneda: el.moneda, contexto: el.nombre })
+                }
+              />
+            ))}
+          </ListCard>
         )}
-        <View style={{ marginTop: 8 }}>
-          <Button
-            title="Registrar ajuste"
-            variant="secondary"
-            onPress={() =>
-              nav.go('RegistrarAjuste', {
-                elementoId,
-                valorActual: el.valorVigente,
-                moneda: el.moneda,
-                contexto: el.nombre,
-              })
-            }
-          />
-        </View>
-      </Panel>
+      </Section>
 
       {esPropietario && (
-        <Panel>
-          <SectionTitle>Valor a una fecha</SectionTitle>
-          <Nota>Reconstruye cuánto valía este elemento en una fecha pasada.</Nota>
-          <DateField label="Fecha" value={fechaHist} onChange={setFechaHist} />
-          <Button
-            title="Consultar"
-            variant="secondary"
-            loading={histBusy}
-            disabled={!/^\d{4}-\d{2}-\d{2}$/.test(fechaHist.trim())}
-            onPress={consultarHistorico}
-          />
-          {valorHist &&
-            (valorHist.existia ? (
-              <Row
-                left={`Al ${fechaLegible(valorHist.fecha)}`}
-                right={money(valorHist.valor, valorHist.moneda)}
-              />
-            ) : (
-              <Nota>En esa fecha el elemento aún no existía o ya había salido del patrimonio.</Nota>
-            ))}
-        </Panel>
+        <MenuList
+          items={[
+            {
+              title: '¿Cuánto valía en otra fecha?',
+              icon: 'calendar-outline',
+              onPress: () => nav.go('ValorEnFecha', { elementoId }),
+            },
+            {
+              title: 'Historial de cambios',
+              icon: 'time-outline',
+              onPress: () =>
+                nav.go('Historial', { entidadTipo: 'ELEMENTO_PATRIMONIAL', entidadId: elementoId, contexto: el.nombre }),
+            },
+          ]}
+        />
       )}
 
       <ErrorText>{error}</ErrorText>
-      {esPropietario && (
-        <>
-          <Button
-            title="Editar / estado"
-            variant="secondary"
-            onPress={() => nav.go('EditarElemento', { elementoId, contexto: el.nombre })}
-          />
-          <Button
-            title="Historial de cambios"
-            variant="secondary"
-            onPress={() =>
-              nav.go('Historial', {
-                entidadTipo: 'ELEMENTO_PATRIMONIAL',
-                entidadId: elementoId,
-                contexto: el.nombre,
-              })
-            }
-          />
-        </>
+      {esPropietario && (esDeuda || esCredito) && pendiente > 0 && (
+        <AccionDestructiva
+          title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: esDeuda ? 'Condonar deuda' : 'Declarar incobrable',
+              explicacion: esDeuda
+                ? 'El acreedor perdona el saldo: queda en cero y tu patrimonio sube. No se puede deshacer.'
+                : 'Reconoces que no se recuperará: el saldo queda en cero y tu patrimonio baja. No se puede deshacer.',
+              pregunta: '¿Por qué?',
+              boton: esDeuda ? 'Condonar deuda' : 'Declarar incobrable',
+              comando: esDeuda ? 'CondonarDeuda' : 'DeclararIncobrable',
+              body: { elementoId },
+              aviso: esDeuda ? 'Deuda condonada' : 'Crédito incobrable',
+              peligro: true,
+            })
+          }
+        />
       )}
     </Screen>
   );
 }
 
-const crearEstilos = (c: Paleta) => StyleSheet.create({
+const crearEstilos = () => StyleSheet.create({
   valor: { fontSize: 34, fontWeight: '700', letterSpacing: -0.5 },
   movMonto: { fontSize: 15, fontWeight: '700' },
-  tachado: { textDecorationLine: 'line-through', color: c.muted },
 });

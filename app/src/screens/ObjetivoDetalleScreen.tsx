@@ -1,74 +1,52 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
   type AsignacionDTO,
   type ElementoPatrimonialDTO,
-  type HogarDTO,
-  type MiembroDTO,
   type ObjetivoFinancieroDTO,
   type ReservaDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useAccionHeader, useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
-import { useToast } from '../ui/Toast';
+import { irAAccion } from './AccionFormScreen';
 import {
+  AccionDestructiva,
   Ayuda,
   Button,
+  Dato,
+  Datos,
   ErrorText,
   etiqueta,
-  Field,
   Hero,
-  LinkButton,
   ListCard,
+  MenuList,
   Nota,
   ProgressBar,
   Screen,
   Section,
-  Segmented,
-  SelectRow,
-  TxRow,
   Skeleton,
-  Panel,
-  useC,
-  type Paleta,
-  tipoDe,
+  TxRow,
 } from '../ui';
 
-const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
-
 export function ObjetivoDetalleScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
-  const { token, usuario } = useSession();
+  const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
   const objetivoId = nav.route.params?.objetivoId as string;
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
-  const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
-  const [hogarId, setHogarId] = useState<string | null>(null);
-  const [designados, setDesignados] = useState<string[]>([]);
-  const [nombreAsg, setNombreAsg] = useState('');
-  const [verPartes, setVerPartes] = useState(false);
   const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[]>([]);
   const [reservas, setReservas] = useState<ReservaDTO[]>([]);
-  const [nuevoEstado, setNuevoEstado] = useState<(typeof ESTADOS)[number]>('EN_PROGRESO');
-  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
     try {
       const o = await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${objetivoId}`, token);
       setObj(o);
-      setNuevoEstado(o.estado as (typeof ESTADOS)[number]);
-      setDesignados(o.designados);
       const asgs = await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token);
       setAsignaciones(asgs);
       if (o.puedoModificar) {
@@ -81,12 +59,6 @@ export function ObjetivoDetalleScreen() {
         );
         setReservas(rs.flat());
       }
-      const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []);
-      setHogarId(hs[0]?.id ?? null);
-      if (o.esMio && hs[0]) {
-        const h = await api.get<HogarDTO>(`/hogares/${hs[0].id}`, token).catch(() => null);
-        setMiembros(h?.miembros ?? []);
-      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }
@@ -94,19 +66,11 @@ export function ObjetivoDetalleScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const run = async (fn: () => Promise<unknown>, salir = false) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (salir) nav.back();
-      else await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
+  useTitulo(obj?.nombre);
+  useAccionHeader(
+    'Editar',
+    obj && (obj.puedoModificar || obj.esMio) ? () => nav.go('MetaForm', { objetivoId }) : undefined,
+  );
 
   if (!obj) {
     return (
@@ -126,47 +90,79 @@ export function ObjetivoDetalleScreen() {
         .map((r) => r.elementoOrigenId),
     ),
   ];
+  const nombresCuentas = cuentasConPlata.map((id) => cuentas.find((c) => c.id === id)?.nombre).filter(Boolean);
+  const puedeAhorrar = obj.puedoModificar && obj.estado === 'EN_PROGRESO';
+  const puedeUsar = obj.puedoModificar && cuentasConPlata.length > 0;
+  const faltan = Math.max(obj.montoObjetivo - obj.progreso, 0);
+
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      pie={
+        puedeAhorrar || puedeUsar ? (
+          <>
+            {/* D-1: ahorrar es una pantalla propia (varias cuentas, la cuenta de la meta). */}
+            {puedeAhorrar && <Button title="Aportar a esta meta" onPress={() => nav.go('Ahorrar', { objetivoId })} />}
+            {puedeUsar && (
+              <Button
+                title="Usar plata de la meta"
+                variant={puedeAhorrar ? 'secondary' : undefined}
+                onPress={() =>
+                  nav.go('RegistrarMovimiento', {
+                    tipo: 'GASTO',
+                    objetivoId,
+                    ...(cuentasConPlata.length === 1 ? { origenId: cuentasConPlata[0] } : {}),
+                  })
+                }
+              />
+            )}
+          </>
+        ) : undefined
+      }
+    >
       <Hero
-        label={obj.nombre}
+        label="Llevas"
         value={money(obj.progreso, obj.moneda)}
         substats={[
-          { label: 'de', value: money(obj.montoObjetivo, obj.moneda) },
-          { label: 'Avance', value: `${obj.progresoPorcentaje}%` },
+          { label: `${obj.progresoPorcentaje}% de`, value: money(obj.montoObjetivo, obj.moneda) },
+          { label: 'Faltan', value: money(faltan, obj.moneda) },
         ]}
       >
         <ProgressBar pct={obj.progresoPorcentaje} />
       </Hero>
-      <Nota>
-        {etiqueta(obj.estado)}
-        {obj.hogarId ? ' · meta del hogar' : ''}
-      </Nota>
       {obj.hogarId && !obj.puedoModificar && (
-        <Ayuda>Meta del hogar. Puedes verla pero no modificarla (no eres designado).</Ayuda>
-      )}
-      {/* D-1: ahorrar es una pantalla propia (varias cuentas, la cuenta de la meta). */}
-      {obj.puedoModificar && obj.estado === 'EN_PROGRESO' && (
-        <Button title="Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId })} />
-      )}
-      {obj.puedoModificar && cuentasConPlata.length > 0 && (
-        <Button
-          title="Usar esta plata"
-          variant="secondary"
-          onPress={() =>
-            nav.go('RegistrarMovimiento', {
-              tipo: 'GASTO',
-              objetivoId,
-              ...(cuentasConPlata.length === 1 ? { origenId: cuentasConPlata[0] } : {}),
-            })
-          }
-        />
+        <Ayuda>Meta del hogar. Puedes verla, pero no modificarla.</Ayuda>
       )}
 
+      <Datos>
+        <Dato etiqueta="Estado" valor={etiqueta(obj.estado)} />
+        <Dato etiqueta="Compartida" valor={obj.hogarId ? 'Con el hogar' : 'Solo tú'} />
+        {nombresCuentas.length > 0 && <Dato etiqueta="Dónde está la plata" valor={nombresCuentas.join(', ')} />}
+      </Datos>
+
       {(asignaciones.length > 0 || obj.puedoModificar) && (
-        <Section title="En la meta">
+        <Section
+          title="En la meta"
+          accion="Agregar parte"
+          onAccion={
+            obj.puedoModificar
+              ? () =>
+                  irAAccion(nav, {
+                    titulo: 'Agregar parte',
+                    explicacion: 'Divide la meta en partes (p. ej. "Pie" y "Gastos notariales") para seguir cada una por separado.',
+                    pregunta: '¿Cómo se llama la parte?',
+                    boton: 'Agregar parte',
+                    comando: 'CrearAsignacion',
+                    body: { objetivoId },
+                    campo: 'nombre',
+                    minimo: 1,
+                    aviso: 'Parte agregada',
+                  })
+              : undefined
+          }
+        >
           {asignaciones.length === 0 ? (
-            <Text style={styles.muted}>Aún no ahorras para esta meta.</Text>
+            <Nota>Aún no ahorras para esta meta.</Nota>
           ) : (
             <ListCard>
               {asignaciones.map((a) => (
@@ -180,160 +176,39 @@ export function ObjetivoDetalleScreen() {
               ))}
             </ListCard>
           )}
-          {obj.puedoModificar &&
-            (verPartes ? (
-              <>
-                <Ayuda>
-                  Opcional: divide la meta en partes (p. ej. "Pie" y "Gastos notariales") para
-                  seguir cada una por separado.
-                </Ayuda>
-                <Field label="Nombre de la parte" value={nombreAsg} onChangeText={setNombreAsg} autoCapitalize="sentences" />
-                <Button
-                  title="Agregar parte"
-                  variant="secondary"
-                  loading={busy}
-                  disabled={!nombreAsg.trim()}
-                  onPress={() =>
-                    run(async () => {
-                      await api.post(
-                        '/comandos/CrearAsignacion',
-                        { nombre: nombreAsg.trim(), objetivoId },
-                        token,
-                      );
-                      setNombreAsg('');
-                      setVerPartes(false);
-                    })
-                  }
-                />
-              </>
-            ) : (
-              <LinkButton title="Dividir la meta en partes (opcional)" onPress={() => setVerPartes(true)} />
-            ))}
         </Section>
       )}
 
-      {obj.esMio && hogarId && (
-        <Section title="Compartir con el hogar">
-          <Panel>
-            <Segmented
-              label="¿La compartes con el hogar?"
-              options={['No', 'Sí'] as const}
-              value={obj.hogarId ? 'Sí' : 'No'}
-              formatearOpcion={(v) => v}
-              onChange={(v) =>
-                run(() =>
-                  api.post(
-                    '/comandos/CompartirObjetivoConHogar',
-                    { objetivoId, hogarId: v === 'Sí' ? hogarId : null },
-                    token,
-                  ),
-                )
-              }
-            />
-            {obj.hogarId && (
-              <>
-                <Ayuda>Elige quién más puede modificar esta meta (ahorrar, editar).</Ayuda>
-                {miembros
-                  .filter((m) => m.usuarioId !== usuario.id)
-                  .map((m) => (
-                    <SelectRow
-                      key={m.usuarioId}
-                      label={m.nombre}
-                      selected={designados.includes(m.usuarioId)}
-                      onPress={() =>
-                        setDesignados((d) =>
-                          d.includes(m.usuarioId)
-                            ? d.filter((x) => x !== m.usuarioId)
-                            : [...d, m.usuarioId],
-                        )
-                      }
-                    />
-                  ))}
-                <Button
-                  title="Guardar designados"
-                  variant="secondary"
-                  loading={busy}
-                  disabled={
-                    [...designados].sort().join() === [...obj.designados].sort().join()
-                  }
-                  onPress={() =>
-                    run(() =>
-                      api.post(
-                        '/comandos/DefinirDesignadosObjetivo',
-                        { objetivoId, usuarioIds: designados },
-                        token,
-                      ),
-                    )
-                  }
-                />
-              </>
-            )}
-          </Panel>
-        </Section>
-      )}
-
-      {obj.puedoModificar && (
-      <Section title="Estado">
-        <Panel>
-          <Segmented label="¿En qué estado está?" options={ESTADOS} value={nuevoEstado} onChange={setNuevoEstado} />
-          <Button
-            title="Cambiar estado"
-            variant="secondary"
-            loading={busy}
-            disabled={nuevoEstado === obj.estado}
-            onPress={() =>
-              run(() =>
-                api.post(
-                  '/comandos/CambiarEstadoObjetivoFinanciero',
-                  { objetivoId, estado: nuevoEstado },
-                  token,
-                ),
-              )
-            }
-          />
-          {obj.esMio && (
-            <>
-              <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-              <Button
-                title="Eliminar meta"
-                variant="secondary"
-                loading={busy}
-                disabled={motivo.trim().length < 3}
-                onPress={() =>
-                  run(
-                    () =>
-                      api.post(
-                        '/comandos/EliminarObjetivoFinanciero',
-                        { objetivoId, motivo: motivo.trim() },
-                        token,
-                      ),
-                    true,
-                  )
-                }
-              />
-            </>
-          )}
-        </Panel>
-      </Section>
-      )}
-
-      <Button
-        title="Historial de cambios"
-        variant="secondary"
-        onPress={() =>
-          nav.go('Historial', {
-            entidadTipo: 'OBJETIVO_FINANCIERO',
-            entidadId: objetivoId,
-            contexto: obj.nombre,
-          })
-        }
+      <MenuList
+        items={[
+          {
+            title: 'Historial de cambios',
+            icon: 'time-outline',
+            onPress: () =>
+              nav.go('Historial', { entidadTipo: 'OBJETIVO_FINANCIERO', entidadId: objetivoId, contexto: obj.nombre }),
+          },
+        ]}
       />
 
       <ErrorText>{error}</ErrorText>
+      {obj.esMio && (
+        <AccionDestructiva
+          title="Eliminar meta"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Eliminar meta',
+              explicacion: 'Lo ahorrado no se pierde: queda como ahorro sin meta (Planificar › Ahorro sin meta), y desde ahí lo puedes sacar.',
+              pregunta: '¿Por qué la eliminas?',
+              boton: 'Eliminar meta',
+              comando: 'EliminarObjetivoFinanciero',
+              body: { objetivoId },
+              aviso: 'Meta eliminada',
+              peligro: true,
+              volver: 2,
+            })
+          }
+        />
+      )}
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  muted: tipoDe(c).nota,
-});
