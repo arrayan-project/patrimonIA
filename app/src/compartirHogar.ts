@@ -30,19 +30,20 @@ export const altaPorDefecto = () => ({
 
 /** Las 4 opciones; `pareja` personaliza el texto si el hogar tiene un solo otro miembro. */
 export function opcionesNivel(pareja?: string): OpcionSelect[] {
+  const ven = pareja ? 'Ve' : 'Ven';
   return [
     { value: 'nada', label: 'Nada', sub: 'Solo tú la ves.' },
     {
       value: 'transferir',
       label: pareja ? `Que ${pareja} pueda transferirte` : 'Que puedan transferirte',
-      sub: 'Ven el nombre de la cuenta, no cuánto tiene.',
+      sub: `${ven} el nombre de la cuenta, no cuánto tiene.`,
     },
     {
       value: 'saldo',
-      label: 'Que vean el saldo y sume al hogar',
+      label: pareja ? `Que ${pareja} vea el saldo y sume al hogar` : 'Que vean el saldo y sume al hogar',
       sub: 'Cuenta en el total de la plata del hogar.',
     },
-    { value: 'todo', label: 'Todo, también los movimientos', sub: 'Ven el saldo y lo que entra y sale.' },
+    { value: 'todo', label: 'Todo, también los movimientos', sub: `${ven} el saldo y lo que entra y sale.` },
   ];
 }
 
