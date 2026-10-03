@@ -532,7 +532,9 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      borde de los campos editables pasa a `mutedDim`. El botón final no se
      bloquea (sigue mostrando los errores al tocarlo). Validar con Zoily.
   4. Rediseño visual con el prototipo como referencia única (insertado el
-     2026-10-03; ver `GAPS.md`, G33).
+     2026-10-03; ver `GAPS.md`, G33). Implementado en la rama
+     `feat/G33-E4-rediseno`, falta la prueba de Juan en el teléfono (tema
+     oscuro y claro). Capturas en `capturas-e4/`.
   5. HZ-13: gastar desde la meta (A5).
   6. C1 + D-2: alta de cuenta y compartir con el hogar.
   7. D-1: Ahorrar (A1/A2).

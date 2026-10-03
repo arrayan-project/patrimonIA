@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; siguiente: bloque 4 (rediseño visual); HZ-13 pasa al bloque 5. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) en rama, por probar; HZ-13 pasa al bloque 5. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -238,7 +238,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅: rama `feat/G33-E2-listas`,
   probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅: rama
   `feat/G33-E3-paso-actual`, probada por Juan y mergeada (2026-10-03).
-  Siguiente: bloque 4 (rediseño visual).
+  Bloque 4 (rediseño visual): en rama, por probar en el teléfono.
 - **Bloque 4 de la Fase E — `UI` rediseño visual** (insertado el 2026-10-03;
   HZ-13 pasa al bloque 5 y los siguientes se corren uno): la referencia única
   es el prototipo [`Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`](Docs/usabilidad/prototipo/prototipo-fase-d-s01.html).
@@ -250,6 +250,19 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   → [`Docs/retirado/propuesta-rediseno-C-rimu.html`](Docs/retirado/propuesta-rediseno-C-rimu.html)):
   era clara visualmente pero poco comprensible; manda el prototipo, que Zoily
   sí completó (6 de 6).
+  **Implementado en la rama `feat/G33-E4-rediseno` (2026-10-03), falta la
+  prueba de Juan en el teléfono:** tokens y componentes (`AmountInput`,
+  `AccountList`, `Question`, `Section`, `ListCard`) y una pantalla por commit
+  (Registrar movimiento, Inicio, Movimientos, Planificar, Hogar, Agregar
+  cuenta o bien, Notificaciones, Metas, Meta, Patrimonio del hogar,
+  Movimientos del hogar, Mi patrimonio). Capturas antes/después en
+  `Docs/usabilidad/capturas-e4/`. Contradicciones prototipo vs. HZ, resueltas
+  a favor del HZ: (1) `Question` conserva el número y el paso actual
+  (HZ-19, HZ-24); (2) las cuentas se eligen en la hoja, no en línea (HZ-3);
+  (3) se mantienen los términos de D-4 ("¿Desde qué cuenta?", "Saldo
+  actual", "Lo que debes hoy") en vez de "¿De dónde sale la plata?" o
+  "¿Cuánto tiene hoy?". No se adelantan HZ-21 (hero "Plata del hogar" y
+  "Entre [pareja] y tú") ni las puertas por caso del menú (D-8).
 - **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
     `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por
