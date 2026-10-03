@@ -249,8 +249,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (2026-10-03). Reglas de diseño
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
-  + piezas comunes) ✅ y R2 Listas ✅, mergeadas (2026-10-03); siguen R3 Detalles, R4 Formularios, R5
-  Ajustes y R6 Resúmenes.
+  + piezas comunes) ✅ y R2 Listas ✅, mergeadas (2026-10-03); R3 Detalles en rama
+  `feat/G33-R3-detalles`; siguen R4 Formularios, R5 Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -264,6 +264,22 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
+- **Reglas de diseño, R3 — Detalles (en rama, 2026-10-03)**: los 8 Detalles
+  quedan sin campos editables: estado arriba (`Hero`), datos en pares
+  (`Datos`/`Dato`), una acción principal fija abajo (`pie`, a lo más una
+  secundaria), Editar arriba a la derecha (`useAccionHeader`) y la acción
+  destructiva al final en rojo. Decisión de Juan: lo que el backend pide con
+  motivo (eliminar, anular, cancelar, cerrar, condonar) abre `AccionForm`
+  (una pregunta y el botón; el formulario es la confirmación, sin diálogo
+  extra); tras borrar algo que ya no existe se vuelve dos pantallas
+  (`back(2)`). Formularios nuevos: `CorreccionForm` (ajuste y valorización),
+  `CorregirMovimiento` (monto, fecha, detalle y etiquetas), `ProgramadoForm`
+  (editar y confirmar pago), `SacarPlata` y `ValorEnFecha`; `NuevaMeta` pasa
+  a `MetaForm` y `NuevoPresupuesto` a `PresupuestoForm` (crean y editan);
+  `PlantillaForm` acepta los datos de un movimiento (Guardar como
+  plantilla). En Meta, los designados pasan de `SelectRow` apilados a
+  `ElegirVarios` dentro de `MetaForm`, y HZ-13 queda como acción secundaria
+  ("Usar plata de la meta"). El mapa de la plantilla queda en 57 pantallas.
 - **Reglas de diseño, R2 — Listas (✅ mergeado, 2026-10-03)**: ninguna Lista
   lleva el formulario debajo (HZ-3). Los catálogos simples comparten
   `CatalogoForm` (`{ catalogo, id? }`: sin `id` crea; con `id` edita y deja
