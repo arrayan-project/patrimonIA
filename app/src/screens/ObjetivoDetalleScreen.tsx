@@ -15,9 +15,10 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { useToast } from '../ui/Toast';
+import { opcionesDeElementos } from '../opciones';
 import {
+  Elegir,
   contadorPasos,
-  Etiqueta,
   Ayuda,
   Button,
   ErrorText,
@@ -174,27 +175,22 @@ export function ObjetivoDetalleScreen() {
             <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
           ) : (
             <>
-              <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
-              {cuentas.map((el) => (
-                <SelectRow
-                  key={el.id}
-                  label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
-                  selected={origenId === el.id}
-                  onPress={() => setOrigenId(el.id)}
-                />
-              ))}
+              <Elegir
+                label="Desde qué cuenta"
+                paso={paso()}
+                placeholder="Elegir cuenta"
+                value={origenId}
+                options={opcionesDeElementos(cuentas)}
+                onChange={setOrigenId}
+              />
               {asignaciones.length > 1 && (
-                <>
-                  <Etiqueta paso={paso()}>¿Para qué parte de la meta?</Etiqueta>
-                  {asignaciones.map((a) => (
-                    <SelectRow
-                      key={a.id}
-                      label={a.nombre}
-                      selected={(parteId ?? asignaciones[0].id) === a.id}
-                      onPress={() => setParteId(a.id)}
-                    />
-                  ))}
-                </>
+                <Elegir
+                  label="¿Para qué parte de la meta?"
+                  paso={paso()}
+                  value={parteId ?? asignaciones[0].id}
+                  options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
+                  onChange={(v) => v && setParteId(v)}
+                />
               )}
               <MoneyField label="¿Cuánto?" paso={paso()} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
               <Button

@@ -13,7 +13,9 @@ import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
+import { opcionesDeElementos } from '../opciones';
 import {
+  Elegir,
   Ayuda,
   Button,
   ErrorText,
@@ -23,7 +25,6 @@ import {
   MoneyField,
   Row,
   Screen,
-  SelectRow,
   Title,
   Skeleton,
   Panel,
@@ -133,14 +134,13 @@ export function AsignacionDetalleScreen() {
       {deUnaMeta && (
       <Panel>
         <Text style={styles.sectionTitle}>Ahorrar más</Text>
-        {elementos.map((el) => (
-          <SelectRow
-            key={el.id}
-            label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
-            selected={origenId === el.id}
-            onPress={() => setOrigenId(el.id)}
-          />
-        ))}
+        <Elegir
+          label="Desde qué cuenta"
+          placeholder="Elegir cuenta"
+          value={origenId}
+          options={opcionesDeElementos(elementos)}
+          onChange={setOrigenId}
+        />
         <MoneyField label="¿Cuánto?" value={monto} onChange={setMonto} />
         <Button
           title="Ahorrar"

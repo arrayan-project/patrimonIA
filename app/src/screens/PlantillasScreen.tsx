@@ -14,9 +14,10 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
+import { opcionesDeElementos } from '../opciones';
 import {
+  Elegir,
   contadorPasos,
-  Etiqueta,
   Ayuda,
   Button,
   EmptyState,
@@ -27,7 +28,6 @@ import {
   MoneyField,
   Screen,
   Segmented,
-  SelectRow,
   Title,
   Skeleton,
   Panel,
@@ -266,60 +266,38 @@ export function PlantillasScreen() {
           />
 
           {necesitaOrigen && (
-            <View style={styles.group}>
-              <Etiqueta paso={paso()}>Desde qué cuenta (opcional)</Etiqueta>
-              <SelectRow
-                label="Sin definir"
-                selected={b.origenId === null}
-                onPress={() => setB((x) => ({ ...x, origenId: null }))}
-              />
-              {elementos.map((el) => (
-                <SelectRow
-                  key={el.id}
-                  label={el.nombre}
-                  selected={b.origenId === el.id}
-                  onPress={() => setB((x) => ({ ...x, origenId: el.id }))}
-                />
-              ))}
-            </View>
+            <Elegir
+              label="Desde qué cuenta (opcional)"
+              paso={paso()}
+              opcionNula="Sin definir"
+              value={b.origenId}
+              options={opcionesDeElementos(elementos, { saldo: false })}
+              onChange={(origenId) =>
+                setB((x) => ({ ...x, origenId, destinoId: x.destinoId === origenId ? null : x.destinoId }))
+              }
+            />
           )}
 
           {necesitaDestino && (
-            <View style={styles.group}>
-              <Etiqueta paso={paso()}>A qué cuenta (opcional)</Etiqueta>
-              <SelectRow
-                label="Sin definir"
-                selected={b.destinoId === null}
-                onPress={() => setB((x) => ({ ...x, destinoId: null }))}
-              />
-              {elementos.map((el) => (
-                <SelectRow
-                  key={el.id}
-                  label={el.nombre}
-                  selected={b.destinoId === el.id}
-                  onPress={() => setB((x) => ({ ...x, destinoId: el.id }))}
-                />
-              ))}
-            </View>
+            <Elegir
+              label="A qué cuenta (opcional)"
+              paso={paso()}
+              opcionNula="Sin definir"
+              value={b.destinoId}
+              options={opcionesDeElementos(elementos, { saldo: false, excluir: b.origenId })}
+              onChange={(destinoId) => setB((x) => ({ ...x, destinoId }))}
+            />
           )}
 
           {b.tipo !== 'TRANSFERENCIA' && catAplicables.length > 0 && (
-            <View style={styles.group}>
-              <Etiqueta paso={paso()}>Categoría (opcional)</Etiqueta>
-              <SelectRow
-                label="Sin categoría"
-                selected={b.categoriaId === null}
-                onPress={() => setB((x) => ({ ...x, categoriaId: null }))}
-              />
-              {catAplicables.map((c) => (
-                <SelectRow
-                  key={c.id}
-                  label={c.nombre}
-                  selected={b.categoriaId === c.id}
-                  onPress={() => setB((x) => ({ ...x, categoriaId: c.id }))}
-                />
-              ))}
-            </View>
+            <Elegir
+              label="Categoría (opcional)"
+              paso={paso()}
+              opcionNula="Sin categoría"
+              value={b.categoriaId}
+              options={catAplicables.map((c) => ({ value: c.id, label: c.nombre }))}
+              onChange={(categoriaId) => setB((x) => ({ ...x, categoriaId }))}
+            />
           )}
 
           <Field

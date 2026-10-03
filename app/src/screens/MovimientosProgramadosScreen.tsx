@@ -11,9 +11,10 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
+import { opcionesDeElementos } from '../opciones';
 import {
+  Elegir,
   contadorPasos,
-  Etiqueta,
   Ayuda,
   Button,
   Card,
@@ -28,7 +29,6 @@ import {
   Segmented,
   Skeleton,
   Screen,
-  SelectRow,
   Title,
   Panel,
   useC,
@@ -174,30 +174,27 @@ export function MovimientosProgramadosScreen() {
         />
         <DateField label="Fecha" paso={paso()} value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
         {usaOrigen && (
-          <>
-            <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
-            {elementos.map((el) => (
-              <SelectRow
-                key={el.id}
-                label={`${el.nombre} · ${el.moneda}`}
-                selected={origenId === el.id}
-                onPress={() => setOrigenId(el.id)}
-              />
-            ))}
-          </>
+          <Elegir
+            label="Desde qué cuenta"
+            paso={paso()}
+            placeholder="Elegir cuenta"
+            value={origenId}
+            options={opcionesDeElementos(elementos, { saldo: false })}
+            onChange={(v) => {
+              setOrigenId(v);
+              if (v === destinoId) setDestinoId(null);
+            }}
+          />
         )}
         {usaDestino && (
-          <>
-            <Etiqueta paso={paso()}>A qué cuenta</Etiqueta>
-            {elementos.map((el) => (
-              <SelectRow
-                key={el.id}
-                label={`${el.nombre} · ${el.moneda}`}
-                selected={destinoId === el.id}
-                onPress={() => setDestinoId(el.id)}
-              />
-            ))}
-          </>
+          <Elegir
+            label="A qué cuenta"
+            paso={paso()}
+            placeholder="Elegir cuenta"
+            value={destinoId}
+            options={opcionesDeElementos(elementos, { saldo: false, excluir: usaOrigen ? origenId : null })}
+            onChange={setDestinoId}
+          />
         )}
         <Field label="Observaciones (opcional)" paso={paso()} value={obs} onChangeText={setObs} autoCapitalize="sentences" />
         <Button title="Programar" onPress={crear} loading={busy} />

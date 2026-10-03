@@ -24,6 +24,7 @@ import { heroHogar } from '../heroHogar';
 import { useAlcance } from '../ui/alcance';
 import { usePreferencias } from '../preferencias';
 import {
+  Elegir,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -41,7 +42,6 @@ import {
   QuickActions,
   Row,
   Screen,
-  SelectRow,
   Skeleton,
   TopRow,
   useC,
@@ -402,10 +402,12 @@ export function DashboardScreen() {
 
       {hogares.length > 1 && (
         <Panel>
-          <Text style={styles.section}>Hogar activo</Text>
-          {hogares.map((h) => (
-            <SelectRow key={h.id} label={h.nombre} selected={h.id === hogarId} onPress={() => elegirHogar(h.id)} />
-          ))}
+          <Elegir
+            label="Hogar activo"
+            value={hogarId}
+            options={hogares.map((h) => ({ value: h.id, label: h.nombre }))}
+            onChange={(id) => id && elegirHogar(id)}
+          />
         </Panel>
       )}
 
