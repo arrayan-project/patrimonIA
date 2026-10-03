@@ -31,6 +31,7 @@ export type RouteName =
   | 'Perfil'
   | 'Objetivos'
   | 'ObjetivoDetalle'
+  | 'Ahorrar'
   | 'Asignaciones'
   | 'AsignacionDetalle'
   | 'Presupuestos'

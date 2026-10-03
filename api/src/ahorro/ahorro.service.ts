@@ -25,7 +25,8 @@ export interface ResultadoAhorroDTO {
   progreso: number;
 }
 
-const NO_AHORRABLES = new Set(['DEUDA', 'CREDITO']);
+/** Se ahorra desde y en cuentas: no deudas, créditos ni bienes (ACTIVO). */
+const NO_AHORRABLES = new Set(['DEUDA', 'CREDITO', 'ACTIVO']);
 
 /**
  * D-1 — Ahorrar para una meta (A1, A2, A6). Un solo comando con N orígenes:

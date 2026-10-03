@@ -180,6 +180,11 @@ export function ObjetivosScreen() {
             ok={o.estado === 'COMPLETADO' || o.progresoPorcentaje >= 100}
             footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
             footRight={etiqueta(o.estado)}
+            accion={
+              o.estado === 'EN_PROGRESO' && o.puedoModificar
+                ? { label: 'Ahorrar', onPress: () => nav.go('Ahorrar', { objetivoId: o.id }) }
+                : undefined
+            }
             onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
           />
         ))}

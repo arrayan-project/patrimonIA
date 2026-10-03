@@ -14,13 +14,8 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { GLOSARIO } from '../labels';
 import { useToast } from '../ui/Toast';
-import { opcionesDeElementos } from '../opciones';
 import {
-  AmountInput,
-  Elegir,
-  contadorPasos,
   Ayuda,
   Button,
   ErrorText,
@@ -62,9 +57,6 @@ export function ObjetivoDetalleScreen() {
   const [verPartes, setVerPartes] = useState(false);
   const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[]>([]);
   const [reservas, setReservas] = useState<ReservaDTO[]>([]);
-  const [origenId, setOrigenId] = useState<string | null>(null);
-  const [parteId, setParteId] = useState<string | null>(null);
-  const [montoApartar, setMontoApartar] = useState('');
   const [nuevoEstado, setNuevoEstado] = useState<(typeof ESTADOS)[number]>('EN_PROGRESO');
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
@@ -116,43 +108,6 @@ export function ObjetivoDetalleScreen() {
     }
   };
 
-  /**
-   * G32 H-02 — "apartar para esta meta" en un paso: la asignación es un detalle
-   * del modelo. Si el objetivo no tiene una, se crea con su nombre; si tiene
-   * una sola, se reutiliza; si tiene varias, el usuario elige la parte.
-   */
-  const apartar = async () => {
-    if (!obj || !origenId) return;
-    setBusy(true);
-    setError('');
-    try {
-      let asignacionId = parteId ?? asignaciones[0]?.id;
-      if (!asignacionId) {
-        const nueva = await api.post<AsignacionDTO>(
-          '/comandos/CrearAsignacion',
-          { nombre: obj.nombre, objetivoId },
-          token,
-        );
-        // Si la reserva falla, el reintento reutiliza esta asignación.
-        setAsignaciones([nueva]);
-        asignacionId = nueva.id;
-      }
-      await api.post(
-        '/comandos/CrearReserva',
-        { asignacionId, elementoOrigenId: origenId, monto: Number(montoApartar) },
-        token,
-      );
-      toast.mostrar('Ahorro registrado');
-      setMontoApartar('');
-      setOrigenId(null);
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   if (!obj) {
     return (
       <Screen>
@@ -162,9 +117,6 @@ export function ObjetivoDetalleScreen() {
     );
   }
 
-  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
-  // paso actual (el primer obligatorio sin completar).
-  const paso = contadorPasos();
   // HZ-13: las cuentas propias donde la meta tiene plata; si es una sola, el
   // gasto llega con ella elegida.
   const cuentasConPlata = [
@@ -193,6 +145,10 @@ export function ObjetivoDetalleScreen() {
       {obj.hogarId && !obj.puedoModificar && (
         <Ayuda>Meta del hogar. Puedes verla pero no modificarla (no eres designado).</Ayuda>
       )}
+      {/* D-1: ahorrar es una pantalla propia (varias cuentas, la cuenta de la meta). */}
+      {obj.puedoModificar && obj.estado === 'EN_PROGRESO' && (
+        <Button title="Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId })} />
+      )}
       {obj.puedoModificar && cuentasConPlata.length > 0 && (
         <Button
           title="Usar esta plata"
@@ -205,44 +161,6 @@ export function ObjetivoDetalleScreen() {
             })
           }
         />
-      )}
-
-      {obj.puedoModificar && (
-        <Section title="Ahorrar">
-          <Panel gap={14}>
-            <Ayuda>{GLOSARIO.apartado}</Ayuda>
-            {cuentas.length === 0 ? (
-              <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
-            ) : (
-              <>
-                <Elegir
-                  label="¿Desde qué cuenta?"
-                  paso={paso({ hecho: !!origenId })}
-                  placeholder="Elegir cuenta"
-                  value={origenId}
-                  options={opcionesDeElementos(cuentas)}
-                  onChange={setOrigenId}
-                />
-                {asignaciones.length > 1 && (
-                  <Elegir
-                    label="¿Para qué parte de la meta?"
-                    paso={paso({ hecho: true })}
-                    value={parteId ?? asignaciones[0].id}
-                    options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
-                    onChange={(v) => v && setParteId(v)}
-                  />
-                )}
-                <AmountInput label="¿Cuánto?" paso={paso({ hecho: Number(montoApartar) > 0 })} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
-                <Button
-                  title="Ahorrar"
-                  loading={busy}
-                  disabled={!origenId || !(Number(montoApartar) > 0)}
-                  onPress={apartar}
-                />
-              </>
-            )}
-          </Panel>
-        </Section>
       )}
 
       {(asignaciones.length > 0 || obj.puedoModificar) && (

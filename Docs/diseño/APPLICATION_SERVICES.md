@@ -550,7 +550,7 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 ### 79. AhorrarParaObjetivo
 
 - Input: objetivoId, asignacionId (opcional), destinoId (opcional: la cuenta de la meta), origenes[] (elementoId, monto; 1 a 10, sin repetir), fecha (opcional).
-- Validaciones: el actor puede modificar la meta (dueño o designado) · origen(es) y destino son cuentas propias, activas, no DEUDA/CREDITO y en la moneda de la meta · cada origen distinto del destino tiene valor libre ≥ su monto · el destino tiene libre ≥ el total después de las transferencias.
+- Validaciones: el actor puede modificar la meta (dueño o designado) · origen(es) y destino son cuentas propias, activas, no DEUDA/CREDITO/ACTIVO (bienes) y en la moneda de la meta · cada origen distinto del destino tiene valor libre ≥ su monto · el destino tiene libre ≥ el total después de las transferencias.
 - Orquestación (una transacción): la cuenta de la meta **no se persiste**: si falta `destinoId` se deriva de la cuenta propia con más reserva activa en la meta; si no hay ninguna y hay un solo origen, es ese origen; si no, error `META_SIN_CUENTA` · la parte es la indicada, la más antigua de la meta o una nueva con el nombre de la meta · cada origen ≠ destino genera una TRANSFERENCIA (#10) hacia el destino · se crea una reserva (#27) en el destino por el total (si origen = destino, solo reserva: A6) · recalcula el progreso y puede completar la meta (W).
 - Output: objetivoId, asignacionId, destinoId, reservaId, transferenciaIds[], total, progreso.
 - Auditoría: entrada raíz `AhorrarParaObjetivo` (destino, total, orígenes); las de la parte creada, las transferencias y la reserva quedan encadenadas a ella (`encadenada_de_id`).

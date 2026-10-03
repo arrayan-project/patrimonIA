@@ -484,7 +484,7 @@ export function DashboardScreen() {
               onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
               accion={
                 o.puedoModificar
-                  ? { label: 'Ahorrar', onPress: () => nav.go('ObjetivoDetalle', { objetivoId: o.id }) }
+                  ? { label: 'Ahorrar', onPress: () => nav.go('Ahorrar', { objetivoId: o.id }) }
                   : undefined
               }
             />

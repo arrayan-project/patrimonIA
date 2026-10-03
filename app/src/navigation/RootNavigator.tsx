@@ -36,6 +36,7 @@ import { GestionHogarScreen } from '../screens/GestionHogarScreen';
 import { PerfilScreen } from '../screens/PerfilScreen';
 import { ObjetivosScreen } from '../screens/ObjetivosScreen';
 import { ObjetivoDetalleScreen } from '../screens/ObjetivoDetalleScreen';
+import { AhorrarScreen } from '../screens/AhorrarScreen';
 import { AsignacionesScreen } from '../screens/AsignacionesScreen';
 import { AsignacionDetalleScreen } from '../screens/AsignacionDetalleScreen';
 import { PresupuestosScreen } from '../screens/PresupuestosScreen';
@@ -134,6 +135,7 @@ const TITULOS: Record<string, string> = {
   Perfil: 'Mi perfil',
   Objetivos: 'Metas',
   ObjetivoDetalle: 'Meta',
+  Ahorrar: 'Ahorrar para una meta',
   Asignaciones: 'Ahorro sin meta',
   AsignacionDetalle: 'Ahorro',
   Presupuestos: 'Presupuestos',
@@ -175,6 +177,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Perfil', PerfilScreen],
   ['Objetivos', ObjetivosScreen],
   ['ObjetivoDetalle', ObjetivoDetalleScreen],
+  ['Ahorrar', AhorrarScreen],
   ['Asignaciones', AsignacionesScreen],
   ['AsignacionDetalle', AsignacionDetalleScreen],
   ['Presupuestos', PresupuestosScreen],
