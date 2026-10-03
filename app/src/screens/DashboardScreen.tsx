@@ -482,6 +482,11 @@ export function DashboardScreen() {
               pct={o.progresoPorcentaje}
               footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
               onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+              accion={
+                o.puedoModificar
+                  ? { label: 'Ahorrar', onPress: () => nav.go('ObjetivoDetalle', { objetivoId: o.id }) }
+                  : undefined
+              }
             />
           ))}
         </Section>

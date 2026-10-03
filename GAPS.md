@@ -263,6 +263,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   actual", "Lo que debes hoy") en vez de "¿De dónde sale la plata?" o
   "¿Cuánto tiene hoy?". No se adelantan HZ-21 (hero "Plata del hogar" y
   "Entre [pareja] y tú") ni las puertas por caso del menú (D-8).
+  **Ajustes de la primera prueba de Juan (2026-10-03):** botón "Ahorrar" en
+  las metas de Inicio (abre la meta; la pantalla de D-1 llega en el bloque 7)
+  y montos en negrita (`GoalCard`, `Hero`, `Row`). El menú `+` nuevo sigue
+  siendo D-8 (bloque 8).
 - **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
     `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por

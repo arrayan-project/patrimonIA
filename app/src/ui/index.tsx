@@ -14,6 +14,7 @@ import {
   View,
   type StyleProp,
   type TextInputProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import DateTimePicker, {
@@ -569,6 +570,7 @@ export function GoalCard({
   footLeft,
   footRight,
   ok,
+  accion,
   onPress,
 }: {
   name: string;
@@ -577,6 +579,8 @@ export function GoalCard({
   footLeft?: string;
   footRight?: string;
   ok?: boolean;
+  /** Botón chico al pie, a la derecha (p. ej. "Ahorrar"); reemplaza a `footRight`. */
+  accion?: { label: string; onPress: () => void };
   onPress?: () => void;
 }) {
   const c = useC();
@@ -593,10 +597,22 @@ export function GoalCard({
       <View style={styles.goalBar}>
         <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.text }]} />
       </View>
-      {footLeft || footRight ? (
+      {footLeft || footRight || accion ? (
         <View style={styles.goalFoot}>
-          <Text style={styles.goalFootTxt}>{footLeft}</Text>
-          <Text style={[styles.goalFootTxt, ok && { color: c.ok }]}>{footRight}</Text>
+          <Text style={styles.goalFootTxt}>{conMontos(footLeft, styles.goalFootMonto)}</Text>
+          {accion ? (
+            <Pressable
+              onPress={accion.onPress}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={`${accion.label} en ${name}`}
+              style={({ pressed }) => [styles.goalBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.goalBtnTxt}>{accion.label}</Text>
+            </Pressable>
+          ) : (
+            <Text style={[styles.goalFootTxt, ok && { color: c.ok }]}>{conMontos(footRight, styles.goalFootMonto)}</Text>
+          )}
         </View>
       ) : null}
     </>
@@ -613,6 +629,20 @@ export function GoalCard({
     );
   }
   return <View style={styles.goalCard}>{cuerpo}</View>;
+}
+
+/** Pone en negrita los montos (`money()`: "150.000 CLP") dentro de un texto. */
+function conMontos(texto: string | undefined, estilo: TextStyle): ReactNode {
+  if (!texto) return texto;
+  return texto.split(/(-?[\d.,]+ [A-Z]{3})/).map((t, i) =>
+    i % 2 === 1 ? (
+      <Text key={i} style={estilo}>
+        {t}
+      </Text>
+    ) : (
+      t
+    ),
+  );
 }
 
 /**
@@ -2088,7 +2118,7 @@ const crearEstilos = (c: Paleta) => {
     heroChg: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
     heroSubs: { flexDirection: 'row', gap: 18, flexWrap: 'wrap' },
     heroSub: { fontSize: 13, color: c.muted },
-    heroSubB: { color: c.text, fontWeight: '600' },
+    heroSubB: { color: c.text, fontWeight: '700' },
     heroChart: { marginTop: 10 },
 
     quickRow: { flexDirection: 'row', gap: 10 },
@@ -2139,8 +2169,19 @@ const crearEstilos = (c: Paleta) => {
     goalHint: { fontSize: 13, color: c.muted },
     goalBar: { height: 4, backgroundColor: c.panelAlt, borderRadius: 2, marginTop: 10, overflow: 'hidden' },
     goalBarFill: { height: 4 },
-    goalFoot: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-    goalFootTxt: { fontSize: 13, color: c.muted },
+    goalFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 10 },
+    goalFootTxt: { fontSize: 13, color: c.muted, flexShrink: 1 },
+    goalFootMonto: { color: c.text, fontWeight: '700' },
+    goalBtn: {
+      height: 34,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.panelAlt,
+      justifyContent: 'center',
+    },
+    goalBtnTxt: { fontSize: 14, fontWeight: '600', color: c.text },
 
     miniGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     miniPanel: {
@@ -2286,7 +2327,7 @@ const crearEstilos = (c: Paleta) => {
     selectRowTextActive: { color: c.text, fontWeight: '600' },
     dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },
     dataLeft: { fontSize: 14, color: c.muted },
-    dataRight: { fontSize: 14, color: c.text, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
+    dataRight: { fontSize: 14, color: c.text, fontWeight: '700', textAlign: 'right', flexShrink: 1 },
     progressTrack: { height: 4, borderRadius: 2, backgroundColor: c.panelAlt, overflow: 'hidden' },
     progressFill: { height: 4, borderRadius: 2, backgroundColor: c.text },
     distTrack: {
