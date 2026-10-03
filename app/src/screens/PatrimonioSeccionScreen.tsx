@@ -14,9 +14,11 @@ import {
   GroupLabel,
   Hero,
   LinkButton,
+  ListCard,
   Nota,
   Panel,
   Screen,
+  Section,
   Skeleton,
   TxRow,
   useC,
@@ -39,10 +41,6 @@ function icono(categoria: string): NombreIcono {
     default: return 'ellipse-outline';
   }
 }
-const COLOR: Record<string, string> = {
-  LIQUIDEZ: '#3b82f6', RESERVA: '#0d9488', INVERSION: '#16a34a',
-  ACTIVO: '#ca8a04', DEUDA: '#dc2626', CREDITO: '#9333ea',
-};
 
 /**
  * Sin `categoria`: "Mi patrimonio" — todas las cuentas y bienes agrupados por
@@ -105,7 +103,8 @@ export function PatrimonioSeccionScreen() {
       title={el.nombre}
       subtitle={etiqueta(el.tipo) + (el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : '')}
       amount={el.valorOculto ? '—' : money(el.valorVigente, el.moneda)}
-      logo={{ icon: icono(el.categoriaFuncional), color: COLOR[el.categoriaFuncional] }}
+      negativo={!el.valorOculto && el.valorVigente < 0}
+      logo={{ icon: icono(el.categoriaFuncional) }}
       onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
     />
   );
@@ -121,10 +120,11 @@ export function PatrimonioSeccionScreen() {
         {otrasMonedas.length > 0 && <Nota>También hay elementos en {otrasMonedas.join(', ')}.</Nota>}
 
         {puntos.length >= 2 && (
-          <Panel>
-            <GroupLabel>Último año</GroupLabel>
-            <GraficoLinea puntos={puntos} formatoValor={(n) => money(n, monedaPrin)} />
-          </Panel>
+          <Section title="Último año">
+            <Panel>
+              <GraficoLinea puntos={puntos} formatoValor={(n) => money(n, monedaPrin)} />
+            </Panel>
+          </Section>
         )}
         {alcance === 'mios' && (
           <LinkButton
@@ -153,7 +153,7 @@ export function PatrimonioSeccionScreen() {
                 <GroupLabel right={<Text style={{ color: c.muted, fontWeight: '600' }}>{money(sub, monedaPrin)}</Text>}>
                   {etiqueta(cat)}
                 </GroupLabel>
-                <Panel gap={0}>{delCat.map(fila)}</Panel>
+                <ListCard>{delCat.map(fila)}</ListCard>
               </View>
             );
           })
@@ -195,14 +195,14 @@ export function PatrimonioSeccionScreen() {
           {financieras.length > 0 && (
             <>
               <GroupLabel>Financieras</GroupLabel>
-              <Panel gap={0}>{financieras.map(fila)}</Panel>
+              <ListCard>{financieras.map(fila)}</ListCard>
             </>
           )}
           <GroupLabel>Encargos y custodia</GroupLabel>
-          <Panel gap={0}>{custodia.map(fila)}</Panel>
+          <ListCard>{custodia.map(fila)}</ListCard>
         </>
       ) : (
-        <Panel gap={0}>{financieras.map(fila)}</Panel>
+        <ListCard>{financieras.map(fila)}</ListCard>
       )}
 
       {alcance === 'mios' && elementos.length > 0 && (
