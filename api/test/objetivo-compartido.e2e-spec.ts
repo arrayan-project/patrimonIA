@@ -116,6 +116,25 @@ describe('Objetivo compartido por hogar (e2e)', () => {
     expect((await M(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.puedoModificar).toBe(true);
   });
 
+  it('el designado puede gastar desde la parte que creó el dueño (G33)', async () => {
+    const asignacionId = (
+      await A(request(http).post('/comandos/CrearAsignacion'))
+        .send({ nombre: 'Parte del admin', objetivoId })
+        .expect(201)
+    ).body.id;
+    await M(request(http).post('/comandos/CrearReserva'))
+      .send({ asignacionId, elementoOrigenId: cuentaMiembro, monto: 200_000 })
+      .expect(201);
+    const antes = (await A(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.progreso;
+
+    await M(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 50_000, moneda: 'CLP', elementoOrigenId: cuentaMiembro, asignacionId })
+      .expect(201);
+
+    const despues = (await A(request(http).get(`/objetivos-financieros/${objetivoId}`)).expect(200)).body.progreso;
+    expect(antes - despues).toBe(50_000);
+  });
+
   it('solo el admin (o el dueño) asigna designados', async () => {
     await M(request(http).post('/comandos/DefinirDesignadosObjetivo'))
       .send({ objetivoId, usuarioIds: [] })
