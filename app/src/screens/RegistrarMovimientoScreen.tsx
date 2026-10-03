@@ -8,7 +8,9 @@ import {
   type EtiquetaDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
+  type ObjetivoFinancieroDTO,
   type PlantillaMovimientoDTO,
+  type ReservaDeElementoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -40,6 +42,32 @@ import {
 
 const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
 type Tipo = (typeof TIPOS)[number];
+
+/** Plata de una meta (asignación) ahorrada en la cuenta de origen (HZ-13). */
+type MetaEnCuenta = { asignacionId: string; objetivoId: string | null; nombre: string; monto: number };
+
+/** Agrupa las reservas activas de una cuenta por asignación. */
+function metasDeReservas(reservas: ReservaDeElementoDTO[]): MetaEnCuenta[] {
+  const porAsg = new Map<string, MetaEnCuenta>();
+  for (const r of reservas) {
+    const m = porAsg.get(r.asignacionId);
+    if (m) m.monto += r.monto;
+    else
+      porAsg.set(r.asignacionId, {
+        asignacionId: r.asignacionId,
+        objetivoId: r.objetivoId,
+        nombre: r.objetivoNombre ?? r.asignacionNombre,
+        monto: r.monto,
+      });
+  }
+  const metas = [...porAsg.values()];
+  // Si una meta tiene varias partes en la cuenta, se nombra también la parte.
+  return metas.map((m) => {
+    const asg = reservas.find((r) => r.asignacionId === m.asignacionId)!;
+    const repetida = metas.filter((x) => x.objetivoId && x.objetivoId === m.objetivoId).length > 1;
+    return repetida ? { ...m, nombre: `${m.nombre} · ${asg.asignacionNombre}` } : m;
+  });
+}
 
 export function RegistrarMovimientoScreen() {
   const c = useC();
@@ -73,6 +101,10 @@ export function RegistrarMovimientoScreen() {
   const [catNombre, setCatNombre] = useState('');
   const [catBusy, setCatBusy] = useState(false);
   const [glosa, setGlosa] = useState('');
+  // HZ-13: gastar la plata de una meta. Se puede llegar con la meta ya elegida.
+  const objetivoInicial = (params.objetivoId as string | undefined) ?? null;
+  const [metasCuenta, setMetasCuenta] = useState<MetaEnCuenta[]>([]);
+  const [asignacionId, setAsignacionId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
@@ -117,6 +149,33 @@ export function RegistrarMovimientoScreen() {
       .then(setEtiquetas)
       .catch(() => setEtiquetas([]));
   }, [token]);
+
+  // HZ-13: las metas con plata en la cuenta de un gasto. Sin plata en metas, la
+  // pregunta no aparece.
+  useEffect(() => {
+    if (tipo !== 'GASTO' || !origenId) {
+      setMetasCuenta([]);
+      setAsignacionId(null);
+      return;
+    }
+    let vigente = true;
+    api
+      .get<ReservaDeElementoDTO[]>(`/elementos-patrimoniales/${origenId}/reservas`, token)
+      .then((rs) => {
+        if (!vigente) return;
+        const metas = metasDeReservas(rs);
+        setMetasCuenta(metas);
+        setAsignacionId((actual) =>
+          metas.some((m) => m.asignacionId === actual)
+            ? actual
+            : (metas.find((m) => objetivoInicial && m.objetivoId === objetivoInicial)?.asignacionId ?? null),
+        );
+      })
+      .catch(() => vigente && (setMetasCuenta([]), setAsignacionId(null)));
+    return () => {
+      vigente = false;
+    };
+  }, [tipo, origenId, token, objetivoInicial]);
 
   // Si la cuenta vino preelegida y el usuario cambia a Ingreso, la plata entra a esa cuenta.
   useEffect(() => {
@@ -188,6 +247,9 @@ export function RegistrarMovimientoScreen() {
       ? 'La cuenta de salida y la de llegada no pueden ser la misma.'
       : '';
 
+  const meta = tipo === 'GASTO' ? metasCuenta.find((m) => m.asignacionId === asignacionId) : undefined;
+  const cuentaOrigen = elementos?.find((e) => e.id === origenId);
+
   const onSubmit = async () => {
     setIntento(true);
     if (errMonto || errMismo || !puedeEnviar) return;
@@ -206,11 +268,22 @@ export function RegistrarMovimientoScreen() {
           ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
           ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
           ...(etiquetaIds.length ? { etiquetaIds } : {}),
+          ...(meta ? { asignacionId: meta.asignacionId } : {}),
         },
         token,
         key,
       );
-      toast.mostrar('Movimiento registrado');
+      if (meta) {
+        const resto = meta.objetivoId
+          ? await api
+              .get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${meta.objetivoId}`, token)
+              .then((o) => `: ahora tiene ${money(o.progreso, o.moneda)}`)
+              .catch(() => '')
+          : '';
+        toast.mostrar(`Salió de tu meta ${meta.nombre}${resto}`);
+      } else {
+        toast.mostrar('Movimiento registrado');
+      }
       permitirSalida();
       nav.back();
     } catch (e) {
@@ -254,6 +327,7 @@ export function RegistrarMovimientoScreen() {
   const pDetalle = paso({ opcional: true });
   const pCategoria = puedeCategorizar ? paso({ opcional: true }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
+  const pMeta = tipo === 'GASTO' && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
   const pEtiquetas = etiquetas.length > 0 ? paso({ opcional: true }) : undefined;
   return (
@@ -375,6 +449,27 @@ export function RegistrarMovimientoScreen() {
             if (v === destinoId) setDestinoId(null);
           }}
         />
+      )}
+
+      {pMeta && (
+        <BloquePaso paso={pMeta} style={styles.group}>
+          <Elegir
+            label="¿Esta compra sale de una meta? (opcional)"
+            paso={pMeta}
+            opcionNula="No, de la plata libre"
+            value={asignacionId}
+            options={metasCuenta.map((m) => ({
+              value: m.asignacionId,
+              label: `${m.nombre} · ${money(m.monto, monedaEvento)}`,
+            }))}
+            onChange={setAsignacionId}
+          />
+          {meta && Number(monto) > meta.monto ? (
+            <Nota>
+              {`La meta ${meta.nombre} no cubre todo: en ${cuentaOrigen?.nombre ?? 'esta cuenta'} tiene ${money(meta.monto, monedaEvento)}. Se descontarán ${money(meta.monto, monedaEvento)} de la meta y ${money(Number(monto) - meta.monto, monedaEvento)} saldrán de lo libre de la cuenta. Si prefieres otra cosa, cambia la cuenta o el monto.`}
+            </Nota>
+          ) : null}
+        </BloquePaso>
       )}
 
       {necesitaDestino && (
