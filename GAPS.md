@@ -230,7 +230,13 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendientes del bloque 2 de la Fase E** (insertado el 2026-10-03, antes de
   HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - `UI` **HZ-3**: listas de selección de más de 6 opciones en `Select` (hoja
-    modal), nunca `SelectRow` apilados. Aplica a toda la app.
+    modal con buscador y scroll propio), nunca `SelectRow` apilados; 6 o menos,
+    opciones visibles en línea. La pantalla nunca crece por una lista. Aplica a
+    toda la app. **Cambio de solución (2026-10-03):** la original era "scroll
+    interno con altura acotada"; se descarta por el scroll anidado en móvil (una
+    lista con scroll dentro de una pantalla con scroll). Motivo adicional:
+    `Select` ya existe en `app/src/ui`. Al implementar, a `Select` le faltan
+    buscador y grupos (HZ-17).
   - `UI` **HZ-17**: en Registrar movimiento, "Desde qué cuenta" y "A qué
     cuenta" agrupadas por tipo, sin la lista repetida en Transferencia y con la
     cuenta fuera de las categorías; amplía HZ-3.
