@@ -249,10 +249,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (2026-10-03). Reglas de diseño
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
-  + piezas comunes) en rama `feat/G33-R1-piezas`; R2 Listas en rama
-  `feat/G33-R2-listas` (sobre R1); siguen R3 Detalles, R4 Formularios, R5
+  + piezas comunes) ✅ y R2 Listas ✅, mergeadas (2026-10-03); siguen R3 Detalles, R4 Formularios, R5
   Ajustes y R6 Resúmenes.
-- **Reglas de diseño, R1 — piezas comunes (en rama, 2026-10-03)**: la
+- **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
   acción principal fijos abajo), `Buscador` + `filtrar` (más de 6 elementos;
@@ -265,7 +264,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
-- **Reglas de diseño, R2 — Listas (en rama, 2026-10-03)**: ninguna Lista
+- **Reglas de diseño, R2 — Listas (✅ mergeado, 2026-10-03)**: ninguna Lista
   lleva el formulario debajo (HZ-3). Los catálogos simples comparten
   `CatalogoForm` (`{ catalogo, id? }`: sin `id` crea; con `id` edita y deja
   Archivar/Eliminar al final); como no tienen Detalle, la fila abre ese
