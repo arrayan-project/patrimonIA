@@ -107,4 +107,8 @@ describe('Reset de contraseña (e2e)', () => {
     await reset('abc', 'otra12345').expect(400);
     await reset('123456', 'corta').expect(400);
   });
+
+  it('G34: el login no distingue mayúsculas en el email', async () => {
+    await request(http).post('/auth/login').send({ email: 'Reset@E2E.cl', password: 'nueva1234' }).expect(200);
+  });
 });
