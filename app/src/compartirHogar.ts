@@ -87,3 +87,14 @@ export async function aplicarNivel(
     );
   }
 }
+
+/** Texto corto del nivel actual, para el detalle de la cuenta. */
+export function etiquetaNivel(el: ElementoPatrimonialDTO): string {
+  return {
+    nada: 'Nada',
+    transferir: 'Pueden transferirte',
+    saldo: 'Ven el saldo y suma al hogar',
+    todo: 'Todo, también los movimientos',
+    personalizado: 'Personalizado',
+  }[nivelDe(el)];
+}
