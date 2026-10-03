@@ -1,5 +1,7 @@
-import { useLayoutEffect, useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
+import { Pressable, Text } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useC } from '../ui/tema';
 
 /**
  * Fachada estable sobre `@react-navigation/native`. Las pantallas usan `useNav()`
@@ -55,9 +57,15 @@ export type RouteName =
   | 'Agrupaciones'
   | 'CatalogoForm'
   | 'NuevaMeta'
-  | 'NuevoPresupuesto'
+  | 'PresupuestoForm'
   | 'NuevoProgramado'
-  | 'PlantillaForm';
+  | 'PlantillaForm'
+  | 'AccionForm'
+  | 'CorreccionForm'
+  | 'CorregirMovimiento'
+  | 'ProgramadoForm'
+  | 'SacarPlata'
+  | 'ValorEnFecha';
 
 export interface Route {
   name: string;
@@ -73,7 +81,8 @@ export interface NavHandle {
     params?: Record<string, unknown>,
     encima?: { name: RouteName; params?: Record<string, unknown> }[],
   ) => void;
-  back: () => void;
+  /** Vuelve una pantalla, o `n` (p. ej. 2 tras borrar desde un Formulario abierto por un Detalle). */
+  back: (n?: number) => void;
   /** Vuelve a los Tabs (sin apilar otra copia) y abre `tab` con `params`. */
   irATab: (tab: RouteName, params?: Record<string, unknown>) => void;
   canGoBack: boolean;
@@ -82,11 +91,12 @@ export interface NavHandle {
 interface NavApi {
   navigate: (name: string, params?: Record<string, unknown>) => void;
   goBack: () => void;
+  pop: (n?: number) => void;
   popTo: (name: string, params?: Record<string, unknown>) => void;
   canGoBack: () => boolean;
   getParent: () => NavApi | undefined;
   reset: (state: { index: number; routes: { name: string; params?: unknown }[] }) => void;
-  setOptions: (opciones: { title?: string }) => void;
+  setOptions: (opciones: { title?: string; headerRight?: () => React.ReactNode }) => void;
 }
 
 export function useNav(): NavHandle {
@@ -100,7 +110,7 @@ export function useNav(): NavHandle {
     () => ({
       route: { name: route.name, params: route.params as Record<string, unknown> | undefined },
       go: (name, params) => navigation.navigate(name, params),
-      back: () => navigation.goBack(),
+      back: (n = 1) => (n > 1 ? navigation.pop(n) : navigation.goBack()),
       irATab: (tab, params) => navigation.popTo('Tabs', { screen: tab, params }),
       reset: (name, params, encima = []) => {
         // reset siempre sobre el navegador raíz (el stack que contiene los Tabs),
@@ -125,4 +135,28 @@ export function useTitulo(titulo: string | undefined): void {
   useLayoutEffect(() => {
     if (titulo) navigation.setOptions({ title: titulo });
   }, [navigation, titulo]);
+}
+
+/**
+ * Acción arriba a la derecha de un Detalle (plantilla Detalle: "Editar abre el
+ * Formulario con los datos cargados"). Sin `onPress`, no se muestra.
+ */
+export function useAccionHeader(titulo: string, onPress: (() => void) | undefined): void {
+  const navigation = useNavigation<NavApi>();
+  const c = useC();
+  // El handler cambia en cada render; se lee desde un ref para no reconfigurar el header siempre.
+  const ref = useRef(onPress);
+  ref.current = onPress;
+  const visible = !!onPress;
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: visible
+        ? () => (
+            <Pressable onPress={() => ref.current?.()} hitSlop={10} accessibilityRole="button" accessibilityLabel={titulo}>
+              <Text style={{ color: c.primary, fontSize: 16, fontWeight: '600' }}>{titulo}</Text>
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, titulo, visible, c]);
 }
