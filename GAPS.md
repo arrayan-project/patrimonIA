@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; siguiente: bloque 7 (D-1). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) en rama, por probar. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -245,7 +245,24 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   y mergeada (2026-10-03). Bloque 5 (HZ-13) ✅: rama `feat/G33-E5-gastar-meta`,
   probada por Juan y mergeada (2026-10-03). Bloque 6 (C1 + D-2) ✅: rama
   `feat/G33-E6-alta-cuenta`, probada por Juan y mergeada (2026-10-03).
-  Siguiente: bloque 7 (D-1).
+  Bloque 7 (D-1 + errores con código): en rama, por probar en el teléfono.
+- **Bloque 7 de la Fase E — `FLUJO` D-1, Ahorrar para una meta (A1, A2, A6),
+  y errores con código** (rama `feat/G33-E7-ahorrar`, 2026-10-03; falta la
+  prueba de Juan): comando `AhorrarParaObjetivo` (`api/src/ahorro/`, #79 en
+  `APPLICATION_SERVICES.md`): N orígenes en una transacción, cada origen
+  distinto de la cuenta de la meta se transfiere a ella y el total queda
+  reservado ahí (origen = cuenta de la meta → solo reserva); auditoría raíz
+  con las transferencias, la reserva y la parte creada encadenadas. La cuenta
+  de la meta no se persiste: se deriva de la cuenta propia con más ahorro en
+  la meta y se pregunta solo la primera vez. No se ahorra desde deudas,
+  créditos ni bienes. `GET /usuarios/me/disponibilidad` da lo libre por
+  cuenta. Para eso, `registrarEvento` y `CrearReserva` tienen variante dentro
+  de una transacción ajena y el valor vigente se actualiza con `increment`.
+  App: pantalla "Ahorrar para una meta" (como el prototipo; la meta y las
+  cuentas se eligen en la hoja, HZ-3); reemplaza el formulario de ahorro del
+  detalle de la meta; "Ahorrar" en Inicio y en Metas abre esta pantalla.
+  Tests en `api/test/ahorrar-meta.e2e-spec.ts`. Capturas en
+  `Docs/usabilidad/capturas-e7/`.
 - **Bloque 6 de la Fase E — `UI` C1 + D-2, alta de cuenta y qué compartes con
   el hogar (✅ mergeado, 2026-10-03)**: "Agregar cuenta o bien" pasa de asistente de 2–3 pasos a una
   pantalla con tres preguntas (nombre, tipo, saldo de hoy obligatorio y sin 0
@@ -389,8 +406,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     "Ahorrar", "Libre para gastar", "Eliminar"…); se retira "Apartados sin
     objetivo". Los comandos mantienen su nombre. **Implementada** en la Fase E,
     bloque 1 (2026-10-03); los sueltos existentes se ven como "Ahorro sin meta".
-  - **Residuo de D-4: errores del backend sin código** (solo texto; la app no
-    los puede traducir). Pendientes para los bloques 7 u 8 de la Fase E:
+  - ✅ **Residuo de D-4: errores del backend sin código** (resuelto en el
+    bloque 7, 2026-10-03: `errorConCodigo` en `api/src/common/errores.ts`
+    agrega `codigo` y `datos` sin cambiar `message`; la app traduce en
+    `app/src/api/errores.ts`, con test). Eran:
     "Objetivo no encontrado", "El objetivo no es tuyo", "No puedes modificar
     este objetivo", "El objetivo no está compartido con un hogar", "El objetivo
     ya tiene ese estado", "Solo el dueño puede compartir/eliminar el objetivo",
@@ -404,7 +423,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     destino", "El evento/ajuste/movimiento ya está anulado", "La valorización ya
     está anulada", "No se puede corregir un evento/ajuste/valorización
     anulado(a)" y las validaciones técnicas "… requiere elementoOrigenId…".
-    Camino propuesto: que el backend devuelva un código y la app lo traduzca.
+    Errores nuevos con código desde ahí: `META_SIN_CUENTA`, `MONEDA_DISTINTA`,
+    `ORIGEN_REPETIDO`.
   - ✅ **D-5 — Destino de otro miembro** en plantillas y programados: ver arriba.
   - ✅ **D-6 — Recurrencia** (HZ-16): ver arriba. Las plantillas se muestran
     como "Frecuentes".
