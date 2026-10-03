@@ -1050,10 +1050,11 @@ export interface OpcionSelect {
 }
 
 /**
- * HZ-3: una lista de selección de más de `UMBRAL_LISTA` opciones va en una hoja
- * modal (`Select`); con menos, en línea. La pantalla nunca crece por una lista.
+ * HZ-3: toda lista de selección va en una hoja modal (`Select`), sin importar
+ * cuántas opciones tenga (homogeneidad). La pantalla nunca crece por una lista.
+ * Con más de `UMBRAL_BUSCADOR` opciones, la hoja muestra un buscador.
  */
-export const UMBRAL_LISTA = 6;
+export const UMBRAL_BUSCADOR = 6;
 
 /** Minúsculas y sin tildes, para el buscador. */
 const normalizar = (s: string) =>
@@ -1071,7 +1072,7 @@ function agrupar(options: OpcionSelect[]): { grupo: string | null; items: Opcion
   return grupos.length > 1 ? grupos : [{ grupo: null, items: options }];
 }
 
-/** Lista de la hoja modal: buscador (si hay más de UMBRAL_LISTA) y encabezados de grupo. */
+/** Lista de la hoja modal: buscador (si hay más de UMBRAL_BUSCADOR) y encabezados de grupo. */
 function ListaOpciones({
   options,
   elegida,
@@ -1092,7 +1093,7 @@ function ListaOpciones({
 
   return (
     <>
-      {options.length > UMBRAL_LISTA && (
+      {options.length > UMBRAL_BUSCADOR && (
         <TextInput
           style={styles.input}
           value={filtro}
@@ -1247,40 +1248,7 @@ export function Select({
   );
 }
 
-/** Opciones en línea (≤ UMBRAL_LISTA), con encabezados si hay más de un grupo. */
-function OpcionesEnLinea({
-  options,
-  elegida,
-  onElegir,
-}: {
-  options: OpcionSelect[];
-  elegida: (v: string) => boolean;
-  onElegir: (v: string) => void;
-}) {
-  const styles = useEstilos();
-  return (
-    <>
-      {agrupar(options).map(({ grupo, items }) => (
-        <View key={grupo ?? '∅'} style={{ gap: 8 }}>
-          {grupo ? <Text style={styles.grupoOpciones}>{grupo}</Text> : null}
-          {items.map((o) => (
-            <SelectRow
-              key={o.value}
-              label={o.label}
-              selected={elegida(o.value)}
-              onPress={() => onElegir(o.value)}
-            />
-          ))}
-        </View>
-      ))}
-    </>
-  );
-}
-
-/**
- * Elegir una opción (HZ-3). Aplica el umbral solo: hasta UMBRAL_LISTA opciones
- * (contando `opcionNula`) van en línea; con más, en `Select`. `null` = ninguna.
- */
+/** Elegir una opción (HZ-3): siempre `Select` en hoja modal. `null` = ninguna. */
 export function Elegir({
   label,
   value,
@@ -1298,34 +1266,20 @@ export function Elegir({
   placeholder?: string;
   paso?: number;
 }) {
-  const total = options.length + (opcionNula ? 1 : 0);
-  if (total > UMBRAL_LISTA) {
-    return (
-      <Select
-        label={label}
-        paso={paso}
-        value={value ?? ''}
-        options={options}
-        opcionNula={opcionNula}
-        placeholder={placeholder}
-        onChange={(v) => onChange(v === '' ? null : v)}
-      />
-    );
-  }
-  const todas = opcionNula ? [{ value: '', label: opcionNula }, ...options] : options;
   return (
-    <View style={{ gap: 8 }}>
-      <Etiqueta paso={paso}>{label}</Etiqueta>
-      <OpcionesEnLinea
-        options={todas}
-        elegida={(v) => v === (value ?? '')}
-        onElegir={(v) => onChange(v === '' ? null : v)}
-      />
-    </View>
+    <Select
+      label={label}
+      paso={paso}
+      value={value ?? ''}
+      options={options}
+      opcionNula={opcionNula}
+      placeholder={placeholder}
+      onChange={(v) => onChange(v === '' ? null : v)}
+    />
   );
 }
 
-/** Elegir varias opciones (HZ-3): en línea hasta UMBRAL_LISTA; con más, hoja con "Listo". */
+/** Elegir varias opciones (HZ-3): siempre en hoja modal, con botón "Listo". */
 export function ElegirVarios({
   label,
   values,
@@ -1346,15 +1300,6 @@ export function ElegirVarios({
   const [abierto, setAbierto] = useState(false);
   const alternar = (v: string) =>
     onChange(values.includes(v) ? values.filter((x) => x !== v) : [...values, v]);
-
-  if (options.length <= UMBRAL_LISTA) {
-    return (
-      <View style={{ gap: 8 }}>
-        <Etiqueta paso={paso}>{label}</Etiqueta>
-        <OpcionesEnLinea options={options} elegida={(v) => values.includes(v)} onElegir={alternar} />
-      </View>
-    );
-  }
 
   const elegidas = options.filter((o) => values.includes(o.value));
   const texto =
