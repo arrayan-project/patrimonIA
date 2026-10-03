@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, ErrorText, Panel, Paragraph, Screen, Skeleton, useC, type Paleta } from '../ui';
+import { Button, EmptyState, ErrorText, Panel, Screen, Skeleton, useC, type Paleta } from '../ui';
 
 export function InvitacionesScreen() {
   const c = useC();
@@ -60,7 +60,11 @@ export function InvitacionesScreen() {
       {invitaciones === null ? (
         <Skeleton />
       ) : invitaciones.length === 0 ? (
-        <Paragraph>No tienes invitaciones pendientes por ahora.</Paragraph>
+        <EmptyState
+          icon="mail-open-outline"
+          titulo="No tienes invitaciones pendientes"
+          descripcion="Cuando alguien te invite a su hogar, aparece aquí."
+        />
       ) : (
         invitaciones.map((inv) => (
           <Panel key={inv.id} gap={12}>

@@ -249,8 +249,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (2026-10-03). Reglas de diseño
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
-  + piezas comunes) en rama `feat/G33-R1-piezas`; siguen R2 Listas, R3
-  Detalles, R4 Formularios, R5 Ajustes y R6 Resúmenes.
+  + piezas comunes) en rama `feat/G33-R1-piezas`; R2 Listas en rama
+  `feat/G33-R2-listas` (sobre R1); siguen R3 Detalles, R4 Formularios, R5
+  Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (en rama, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -264,6 +265,22 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
+- **Reglas de diseño, R2 — Listas (en rama, 2026-10-03)**: ninguna Lista
+  lleva el formulario debajo (HZ-3). Los catálogos simples comparten
+  `CatalogoForm` (`{ catalogo, id? }`: sin `id` crea; con `id` edita y deja
+  Archivar/Eliminar al final); como no tienen Detalle, la fila abre ese
+  formulario en modo edición y desaparece la edición dentro de la fila.
+  Formularios propios: `NuevaMeta` (el "+" de Planificar, Inicio y Ahorrar
+  llega directo; se va el `nuevo` de Metas), `NuevoPresupuesto`,
+  `NuevoProgramado` y `PlantillaForm` (crea y edita). Las 5 entran al mapa de
+  la plantilla en Formulario (51 pantallas). En las Listas: acción principal
+  fija abajo (`pie`), ayuda de una línea, estado vacío con botón, buscador con
+  más de 6, filas `TxRow` (ícono, título, contexto, monto) y grupos:
+  Categorías y Plantillas por tipo, Tipos de elemento por categoría sugerida,
+  Presupuestos por vigencia, Programados por fecha (Por confirmar, Esta
+  semana, Este mes, Más adelante, Ya resueltos). Decisión de Juan: las
+  flechas para reordenar (Categorías, Tipos de elemento) se quedan en la
+  Lista (`Ordenar` en `TxRow accesorio`), y mueven dentro del grupo.
 - **Bloque 7 de la Fase E — `FLUJO` D-1, Ahorrar para una meta (A1, A2, A6),
   y errores con código (✅ mergeado, 2026-10-03)**: comando `AhorrarParaObjetivo` (`api/src/ahorro/`, #79 en
   `APPLICATION_SERVICES.md`): N orígenes en una transacción, cada origen

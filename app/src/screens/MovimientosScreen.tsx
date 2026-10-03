@@ -358,6 +358,8 @@ export function MovimientosScreen() {
               icon="receipt-outline"
               titulo={movimientos.length === 0 ? `Sin movimientos en ${etiquetaPeriodo}` : 'Nada coincide con el filtro'}
               descripcion={movimientos.length === 0 ? 'Registra un ingreso o gasto para verlo acá.' : undefined}
+              accion={movimientos.length === 0 ? 'Registrar movimiento' : undefined}
+              onAccion={() => nav.go('RegistrarMovimiento')}
             />
           ) : (
             <ListCard>
