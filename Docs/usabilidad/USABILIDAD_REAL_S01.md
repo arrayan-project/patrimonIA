@@ -44,7 +44,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
 | D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
-| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado (2026-10-03); siguiente: bloque 3, HZ-24 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
+| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado y bloque 3 (HZ-24) ✅ en rama, falta la prueba de Juan y el merge (2026-10-03) (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -520,8 +520,17 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      miembro; "A qué cuenta" no repite la de "Desde". Ajuste "hoja siempre"
      (sin umbral) revisado por Juan y mergeada a `main` (2026-10-03).
      *Rollback:* `git revert -m 1` del merge.
-  3. HZ-24: paso actual resaltado y pasos siguientes bloqueados (con las
-     reglas de §4). Validar con Zoily.
+  3. ✅ HZ-24: paso actual resaltado y pasos siguientes bloqueados (con las
+     reglas de §4). Rama `feat/G33-E3-paso-actual` (2026-10-03), `tsc` en
+     verde; falta la prueba de Juan en el teléfono y el merge. El paso actual
+     lleva el número invertido y una barra a la izquierda; lo bloqueado se ve
+     al 40 % y no responde al toque. Los opcionales que vienen después del
+     paso actual también se bloquean (Juan, 2026-10-03): la regla (1) solo dice
+     que un opcional nunca es el paso actual. Aplicado a Registrar movimiento,
+     Ajuste, Nueva meta, Apartar en la meta, Plantillas y Programados;
+     Presupuestos no cambia (todo trae valor o es opcional). Contraste: el
+     borde de los campos editables pasa a `mutedDim`. El botón final no se
+     bloquea (sigue mostrando los errores al tocarlo). Validar con Zoily.
   4. HZ-13: gastar desde la meta (A5).
   5. C1 + D-2: alta de cuenta y compartir con el hogar.
   6. D-1: Ahorrar (A1/A2).
