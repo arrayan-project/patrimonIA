@@ -510,16 +510,19 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Rama `feat/G33-E1-palabras-y-pasos`, probada por Juan en el teléfono
      (tema oscuro y claro) y mergeada (2026-10-03). HZ-22 se aplicó solo a
      Ajuste y Nueva meta: el Tipo de Registrar movimiento y Programados pasa
-     a ser la puerta del menú con D-8 (bloque 5). Residuo: errores del backend
-     sin código (lista en `GAPS.md`, G33), para los bloques 4 o 5.
-  2. HZ-13: gastar desde la meta (A5).
-  3. C1 + D-2: alta de cuenta y compartir con el hogar.
-  4. D-1: Ahorrar (A1/A2).
-  5. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+     a ser la puerta del menú con D-8 (bloque 6). Residuo: errores del backend
+     sin código (lista en `GAPS.md`, G33), para los bloques 5 o 6.
+  2. HZ-3 + HZ-17: listas de selección (más de 6 opciones en `Select`, hoja
+     modal) y "Desde qué cuenta" / "A qué cuenta" agrupadas por tipo, sin
+     listas repetidas.
+  3. HZ-13: gastar desde la meta (A5).
+  4. C1 + D-2: alta de cuenta y compartir con el hogar.
+  5. D-1: Ahorrar (A1/A2).
+  6. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
      Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
      y recuperación.
-  6. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
+  7. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
      "Entre [miembro] y tú".
-  7. D-5 + D-6: recurrencia y destino de otro miembro.
+  8. D-5 + D-6: recurrencia y destino de otro miembro.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.

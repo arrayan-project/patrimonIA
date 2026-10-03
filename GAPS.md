@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; siguiente: bloque 2 (HZ-13). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; siguiente: bloque 2 (HZ-3 + HZ-17). | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -226,7 +226,14 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Fase D, bloque 2 (prototipo v5; Zoily completó 6 de 6) ✅ y Fase D cerrada
   (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
   Fase E, en el orden de su §5: bloque 1 (D-4 + HZ-19 + HZ-22, solo frontend)
-  ✅ (2026-10-03). Siguiente: bloque 2 (HZ-13, gastar desde la meta).
+  ✅ (2026-10-03). Siguiente: bloque 2 (HZ-3 + HZ-17, listas de selección).
+- **Pendientes del bloque 2 de la Fase E** (insertado el 2026-10-03, antes de
+  HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
+  - `UI` **HZ-3**: listas de selección de más de 6 opciones en `Select` (hoja
+    modal), nunca `SelectRow` apilados. Aplica a toda la app.
+  - `UI` **HZ-17**: en Registrar movimiento, "Desde qué cuenta" y "A qué
+    cuenta" agrupadas por tipo, sin la lista repetida en Transferencia y con la
+    cuenta fuera de las categorías; amplía HZ-3.
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
   - `PROYECCIÓN` **HZ-18**: "Libre para gastar" resta el total de deudas por
@@ -275,7 +282,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     objetivo". Los comandos mantienen su nombre. **Implementada** en la Fase E,
     bloque 1 (2026-10-03); los sueltos existentes se ven como "Ahorro sin meta".
   - **Residuo de D-4: errores del backend sin código** (solo texto; la app no
-    los puede traducir). Pendientes para los bloques 4 o 5 de la Fase E:
+    los puede traducir). Pendientes para los bloques 5 o 6 de la Fase E:
     "Objetivo no encontrado", "El objetivo no es tuyo", "No puedes modificar
     este objetivo", "El objetivo no está compartido con un hogar", "El objetivo
     ya tiene ese estado", "Solo el dueño puede compartir/eliminar el objetivo",

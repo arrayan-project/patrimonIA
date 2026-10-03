@@ -126,15 +126,18 @@ suma un usuario nuevo, se repiten con él las pruebas 4 y 6.
 ## 5. Orden de la Fase E (actualizado)
 
 1. D-4 (diccionario) + HZ-19 (numeración) + HZ-22 (regla del paso 2).
-2. HZ-13: gastar desde la meta (A5).
-3. C1 + D-2: alta de cuenta y compartir con el hogar.
-4. D-1: Ahorrar (A1/A2).
-5. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+2. HZ-3 + HZ-17: listas de selección (más de 6 opciones en `Select`, hoja
+   modal) y "Desde qué cuenta" / "A qué cuenta" agrupadas por tipo, sin
+   listas repetidas.
+3. HZ-13: gastar desde la meta (A5).
+4. C1 + D-2: alta de cuenta y compartir con el hogar.
+5. D-1: Ahorrar (A1/A2).
+6. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
    Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena y
    recuperación.
-6. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
+7. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
    "Entre [miembro] y tú".
-7. D-5 + D-6: recurrencia y destino de otro miembro.
+8. D-5 + D-6: recurrencia y destino de otro miembro.
 
 **Señal de la Fase E:** Zoily usa la app real durante un mes y completa sola
 los mismos seis escenarios.
