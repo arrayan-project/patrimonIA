@@ -16,17 +16,16 @@ import {
   EmptyState,
   ErrorText,
   GoalCard,
-  GroupLabel,
   IconButton,
-  LinkButton,
+  ListCard,
   MenuList,
-  MiniGrid,
-  MiniPanel,
   PillDate,
   Screen,
+  Section,
   Skeleton,
   Title,
   TopRow,
+  TxRow,
 } from '../ui';
 
 const MESES = [
@@ -129,76 +128,67 @@ export function PlanificarScreen() {
       />
       <PillDate icon="flag-outline">
         {`${enProgreso.length} ${enProgreso.length === 1 ? 'meta activa' : 'metas activas'}`}
+        {completados > 0 ? ` · ${completados} ${completados === 1 ? 'cumplida' : 'cumplidas'}` : ''}
       </PillDate>
 
       {objetivos === null ? (
         <Skeleton filas={2} />
       ) : (
         <>
-          <MiniGrid>
-            <MiniPanel label="En progreso" value={String(enProgreso.length)} tone="ok" />
-            <MiniPanel label="Completados" value={String(completados)} />
-          </MiniGrid>
-
-          <GroupLabel right={<LinkButton title="Ver todas ›" onPress={() => nav.go('Objetivos')} />}>
-            Metas
-          </GroupLabel>
-          {enProgreso.length === 0 ? (
-            <EmptyState
-              icon="flag-outline"
-              titulo="Sin metas activas"
-              descripcion="Crea una meta para seguir su avance acá."
-              accion="Crear meta"
-              onAccion={() => nav.go('Objetivos', { nuevo: true })}
-            />
-          ) : (
-            <>
-              {monedasUnicas.size === 1 && enProgreso.length > 1 && (
-                <GoalCard
-                  name={`Avance total · ${enProgreso.length} metas`}
-                  hint={`${pctTotal}%`}
-                  pct={pctTotal}
-                  footLeft={`${money(avance, [...monedasUnicas][0])} / ${money(meta, [...monedasUnicas][0])}`}
-                />
-              )}
-              {enProgreso.map((o) => (
-                <GoalCard
-                  key={o.id}
-                  name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
-                  hint={diasRestantes(o.fechaObjetivo) ?? `${o.progresoPorcentaje}%`}
-                  pct={o.progresoPorcentaje}
-                  ok={o.progresoPorcentaje >= 100}
-                  footLeft={`${money(o.progreso, o.moneda)} / ${money(o.montoObjetivo, o.moneda)}`}
-                  footRight={`${o.progresoPorcentaje}%`}
-                  onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-                />
-              ))}
-            </>
-          )}
+          <Section title="Metas" accion="Ver todas" onAccion={() => nav.go('Objetivos')}>
+            {enProgreso.length === 0 ? (
+              <EmptyState
+                icon="flag-outline"
+                titulo="Sin metas activas"
+                descripcion="Crea una meta para seguir su avance acá."
+                accion="Crear meta"
+                onAccion={() => nav.go('Objetivos', { nuevo: true })}
+              />
+            ) : (
+              <>
+                {monedasUnicas.size === 1 && enProgreso.length > 1 && (
+                  <GoalCard
+                    name={`Avance total · ${enProgreso.length} metas`}
+                    hint={`${pctTotal}%`}
+                    pct={pctTotal}
+                    footLeft={`${money(avance, [...monedasUnicas][0])} de ${money(meta, [...monedasUnicas][0])}`}
+                  />
+                )}
+                {enProgreso.map((o) => (
+                  <GoalCard
+                    key={o.id}
+                    name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
+                    hint={`${o.progresoPorcentaje}%`}
+                    pct={o.progresoPorcentaje}
+                    ok={o.progresoPorcentaje >= 100}
+                    footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
+                    footRight={diasRestantes(o.fechaObjetivo)}
+                    onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+                  />
+                ))}
+              </>
+            )}
+          </Section>
 
           {sinMeta.length > 0 && (
-            <>
-              <GroupLabel right={<LinkButton title="Detalle ›" onPress={() => nav.go('Asignaciones')} />}>
-                Ahorro sin meta
-              </GroupLabel>
-              <MiniGrid>
-                <MiniPanel
-                  label="Ahorro sin meta"
-                  value={money(totalSinMeta, monedaSinMeta)}
-                  sub={`${sinMeta.length} ${sinMeta.length === 1 ? 'ahorro' : 'ahorros'}`}
+            <Section title="Ahorro sin meta" accion="Ver detalle" onAccion={() => nav.go('Asignaciones')}>
+              <ListCard>
+                <TxRow
+                  title="Ahorro sin meta"
+                  subtitle={`${sinMeta.length} ${sinMeta.length === 1 ? 'ahorro' : 'ahorros'}`}
+                  amount={money(totalSinMeta, monedaSinMeta)}
+                  logo={{ icon: 'umbrella-outline' }}
                   onPress={() => nav.go('Asignaciones')}
                 />
-              </MiniGrid>
-            </>
+              </ListCard>
+            </Section>
           )}
 
           {desv && presupuesto ? (
-            <>
-              <GroupLabel
-                right={<LinkButton title="Todos ›" onPress={() => nav.go('Presupuestos')} />}
-              >
-                {`Presupuesto de ${MESES[hoy.getMonth()]}`}
-              </GroupLabel>
+            <Section
+              title={`Presupuesto de ${MESES[hoy.getMonth()]}`}
+              onAccion={() => nav.go('Presupuestos')}
+            >
               <GoalCard
                 name="Gasto total"
                 hint={`${gastoPct}%`}
@@ -208,41 +198,47 @@ export function PlanificarScreen() {
                 footRight={`de ${money(desv.esperado.gastos, presupuesto.moneda)}`}
                 onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
               />
-            </>
+            </Section>
           ) : (
-            <>
-              <GroupLabel>Presupuesto</GroupLabel>
-              <MiniGrid>
-                <MiniPanel label="Sin presupuesto vigente" value="—" sub="Crea uno" onPress={() => nav.go('Presupuestos')} />
-              </MiniGrid>
-            </>
+            <Section title="Presupuesto">
+              <ListCard>
+                <TxRow
+                  title="Sin presupuesto vigente"
+                  subtitle="Crea uno para comparar lo que gastas"
+                  amount="›"
+                  logo={{ icon: 'pie-chart-outline' }}
+                  onPress={() => nav.go('Presupuestos')}
+                />
+              </ListCard>
+            </Section>
           )}
         </>
       )}
 
       {/* G32 H-06 — lo programado es planificación: vive acá, no en Movimientos. */}
-      <GroupLabel>Pagos y cobros futuros</GroupLabel>
-      <MenuList
-        items={[
-          {
-            title: 'Movimientos programados',
-            subtitle: (() => {
-              const n = programados.filter((p) => p.estado === 'PENDIENTE').length;
-              return n > 0
-                ? `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
-                : 'Ingresos y gastos futuros con fecha';
-            })(),
-            icon: 'calendar-outline',
-            onPress: () => nav.go('MovimientosProgramados'),
-          },
-          {
-            title: 'Plantillas de movimiento',
-            subtitle: 'Moldes para el gasto o ingreso de siempre',
-            icon: 'copy-outline',
-            onPress: () => nav.go('Plantillas'),
-          },
-        ]}
-      />
+      <Section title="Pagos y cobros futuros">
+        <MenuList
+          items={[
+            {
+              title: 'Movimientos programados',
+              subtitle: (() => {
+                const n = programados.filter((p) => p.estado === 'PENDIENTE').length;
+                return n > 0
+                  ? `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
+                  : 'Ingresos y gastos futuros con fecha';
+              })(),
+              icon: 'calendar-outline',
+              onPress: () => nav.go('MovimientosProgramados'),
+            },
+            {
+              title: 'Plantillas de movimiento',
+              subtitle: 'Moldes para el gasto o ingreso de siempre',
+              icon: 'copy-outline',
+              onPress: () => nav.go('Plantillas'),
+            },
+          ]}
+        />
+      </Section>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
