@@ -123,7 +123,8 @@ export function MovimientosProgramadosScreen() {
   const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
   const errFecha = fechaValida ? '' : 'Elige una fecha.';
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
+  // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
@@ -163,20 +164,20 @@ export function MovimientosProgramadosScreen() {
 
       <Panel>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
-        <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={paso()} />
+        <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={paso({ hecho: true })} />
         <MoneyField
           label="Monto planificado"
-          paso={paso()}
+          paso={paso({ hecho: !errMonto })}
           value={monto}
           onChange={setMonto}
           moneda={monedaRef}
           error={intento ? errMonto : undefined}
         />
-        <DateField label="Fecha" paso={paso()} value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
+        <DateField label="Fecha" paso={paso({ hecho: !errFecha })} value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
         {usaOrigen && (
           <Elegir
             label="Desde qué cuenta"
-            paso={paso()}
+            paso={paso({ hecho: !!origenId })}
             placeholder="Elegir cuenta"
             value={origenId}
             options={opcionesDeElementos(elementos, { saldo: false })}
@@ -189,7 +190,7 @@ export function MovimientosProgramadosScreen() {
         {usaDestino && (
           <Elegir
             label="A qué cuenta"
-            paso={paso()}
+            paso={paso({ hecho: !!destinoId })}
             placeholder="Elegir cuenta"
             value={destinoId}
             options={opcionesDeElementos(elementos, { saldo: false, excluir: usaOrigen ? origenId : null })}

@@ -74,7 +74,8 @@ export function RegistrarAjusteScreen() {
     }
   };
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
+  // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   return (
     <Screen>
@@ -91,7 +92,7 @@ export function RegistrarAjusteScreen() {
 
       <MoneyField
         label={`Diferencia (${moneda})`}
-        paso={paso()}
+        paso={paso({ hecho: !errMagnitud })}
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
@@ -100,7 +101,7 @@ export function RegistrarAjusteScreen() {
       {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
       <Segmented
         label="El valor real es…"
-        paso={paso()}
+        paso={paso({ hecho: true })}
         options={['Menor', 'Mayor'] as const}
         value={direccion}
         onChange={setDireccion}
@@ -110,10 +111,10 @@ export function RegistrarAjusteScreen() {
           Nuevo valor: {money(valorActual + monto, moneda)}
         </Paragraph>
       )}
-      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso()} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso({ hecho: !!fecha })} />
       <Field
         label="Motivo (obligatorio)"
-        paso={paso()}
+        paso={paso({ hecho: !errMotivo })}
         value={motivo}
         onChangeText={setMotivo}
         placeholder="Por qué hay una diferencia"

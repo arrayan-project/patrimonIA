@@ -192,7 +192,8 @@ export function PlantillasScreen() {
     (c) => c.tipoAplicable === 'AMBOS' || c.tipoAplicable === b.tipo,
   );
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
+  // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
@@ -244,7 +245,7 @@ export function PlantillasScreen() {
           <Text style={styles.nombre}>{modo === 'nueva' ? 'Nueva plantilla' : 'Editar plantilla'}</Text>
           <Field
             label="Nombre"
-            paso={paso()}
+            paso={paso({ hecho: !errNombre })}
             value={b.nombre}
             onChangeText={(nombre) => setB((x) => ({ ...x, nombre }))}
             autoCapitalize="sentences"
@@ -253,7 +254,7 @@ export function PlantillasScreen() {
           />
           <Segmented
             label="Tipo"
-            paso={paso()}
+            paso={paso({ hecho: true })}
             options={TIPOS}
             value={b.tipo}
             onChange={(tipo) => setB((x) => ({ ...x, tipo }))}

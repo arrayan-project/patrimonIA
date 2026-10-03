@@ -96,14 +96,15 @@ export function ObjetivosScreen() {
 
   // G32 H-10 — el "+" de Planificar llega con `nuevo`: el formulario va primero.
   const nuevoArriba = nav.route.params?.nuevo === true;
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
+  // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
   const formulario = (
     <Panel>
       <Text style={styles.nombre}>Nueva meta</Text>
       <Field
         label="Nombre"
-        paso={paso()}
+        paso={paso({ hecho: !errNombre })}
         value={nombre}
         onChangeText={setNombre}
         autoCapitalize="sentences"
@@ -114,7 +115,7 @@ export function ObjetivosScreen() {
       {hogarId && (
         <Segmented
           label="¿Compartir con el hogar?"
-          paso={paso()}
+          paso={paso({ hecho: true })}
           options={['No', 'Sí'] as const}
           value={compartir}
           onChange={setCompartir}
@@ -128,13 +129,13 @@ export function ObjetivosScreen() {
       )}
       <MoneyField
         label="¿Cuánto quieres juntar?"
-        paso={paso()}
+        paso={paso({ hecho: !errMonto })}
         value={monto}
         onChange={setMonto}
         moneda={moneda}
         error={intento ? errMonto : undefined}
       />
-      <Select label="Moneda" paso={paso()} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      <Select label="Moneda" paso={paso({ hecho: !!moneda })} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
       <Button title="Crear meta" onPress={crear} loading={busy} />
     </Panel>
   );
