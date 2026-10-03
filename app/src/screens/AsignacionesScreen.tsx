@@ -1,85 +1,33 @@
 import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import {
-  api,
-  ApiError,
-  type AsignacionDTO,
-  type ObjetivoFinancieroDTO,
-} from '../api/client';
+import { api, ApiError, type AsignacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { useToast } from '../ui/Toast';
-import {
-  Ayuda,
-  Button,
-  ErrorText,
-  Field,
-  ListItem,
-  MoneyField,
-  Nota,
-  Panel,
-  Screen,
-  SectionTitle,
-  Title,
-  Skeleton,
-} from '../ui';
+import { Ayuda, ErrorText, ListItem, Nota, Panel, Screen, Title, Skeleton } from '../ui';
 
-/** A7 — todas las asignaciones: con objetivo y sueltas ("Fondo emergencia"…). */
+/**
+ * A7 — "Ahorro sin meta" (D-4 de G33): solo muestra las asignaciones sueltas que
+ * ya existen. Ya no se crean nuevas: para ahorrar se crea una meta. Las
+ * asignaciones de una meta se ven dentro de la meta.
+ */
 export function AsignacionesScreen() {
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
 
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[] | null>(null);
-  const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
-  const [nombre, setNombre] = useState('');
-  const [monto, setMonto] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [intento, setIntento] = useState(false);
-  const errNombre = nombre.trim() ? '' : 'Ponle un nombre al apartado.';
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [asg, obj] = await Promise.all([
-        api.get<AsignacionDTO[]>('/asignaciones', token),
-        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []),
-      ]);
-      setAsignaciones(asg);
-      setObjetivos(obj);
+      setAsignaciones(await api.get<AsignacionDTO[]>('/asignaciones', token));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
   }, [token]);
 
   useCargaAlEnfocar(cargar);
-
-  const crear = async () => {
-    setIntento(true);
-    if (errNombre) return;
-    setBusy(true);
-    setError('');
-    try {
-      await api.post(
-        '/comandos/CrearAsignacion',
-        {
-          nombre: nombre.trim(),
-          ...(Number(monto) > 0 ? { montoObjetivo: Number(monto) } : {}),
-        },
-        token,
-      );
-      toast.mostrar('Apartado creado');
-      setNombre('');
-      setMonto('');
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   if (!asignaciones) {
     return (
@@ -90,69 +38,32 @@ export function AsignacionesScreen() {
     );
   }
 
-  const nombreObjetivo = new Map(objetivos.map((o) => [o.id, o.nombre]));
-  const conObjetivo = asignaciones.filter((a) => a.objetivoId);
   const sueltas = asignaciones.filter((a) => !a.objetivoId);
-
-  const fila = (a: AsignacionDTO) => (
-    <ListItem
-      key={a.id}
-      title={a.nombre}
-      subtitle={
-        a.objetivoId
-          ? (nombreObjetivo.get(a.objetivoId) ?? 'Objetivo')
-          : a.montoObjetivo
-            ? `Meta ${money(a.montoObjetivo, 'CLP')}`
-            : 'Sin meta'
-      }
-      right={money(a.totalReservado, 'CLP')}
-      onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id })}
-    />
-  );
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Apartados</Title>
+      <Title>Ahorro sin meta</Title>
       <Ayuda>
-        Un apartado separa dinero de tus cuentas para un propósito. Puede ser
-        parte de un objetivo (ej. "Pie casa") o independiente, como los regalos de
-        Navidad. La plata no se mueve: solo queda comprometida.
+        Plata que separaste antes sin asociarla a una meta. Sigue en tus cuentas y
+        no cuenta como libre para gastar. Para ahorrar algo nuevo, crea una meta.
       </Ayuda>
 
-      {sueltas.length > 0 && (
+      {sueltas.length > 0 ? (
         <Panel gap={0}>
-          <SectionTitle>Independientes</SectionTitle>
-          {sueltas.map(fila)}
+          {sueltas.map((a) => (
+            <ListItem
+              key={a.id}
+              title={a.nombre}
+              right={money(a.totalReservado, 'CLP')}
+              onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id })}
+            />
+          ))}
         </Panel>
-      )}
-
-      {conObjetivo.length > 0 && (
-        <Panel gap={0}>
-          <SectionTitle>De un objetivo</SectionTitle>
-          {conObjetivo.map(fila)}
-        </Panel>
-      )}
-
-      {asignaciones.length === 0 && (
+      ) : (
         <Panel>
-          <Nota>Aún no tienes dinero apartado.</Nota>
+          <Nota>No tienes ahorro sin meta.</Nota>
         </Panel>
       )}
-
-      <Panel>
-        <SectionTitle>Nuevo apartado independiente</SectionTitle>
-        <Field
-          label="Nombre"
-          value={nombre}
-          onChangeText={setNombre}
-          autoCapitalize="sentences"
-          placeholder="Regalos de Navidad"
-          error={intento ? errNombre : undefined}
-        />
-        <MoneyField label="Meta (opcional)" value={monto} onChange={setMonto} />
-        <Nota>Para apartar dinero para un objetivo, entra al objetivo y usa "Apartar dinero".</Nota>
-        <Button title="Crear apartado" loading={busy} onPress={crear} />
-      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>

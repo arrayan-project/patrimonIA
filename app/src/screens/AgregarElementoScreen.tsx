@@ -334,7 +334,7 @@ export function AgregarElementoScreen() {
             {categoria === 'LIQUIDEZ'
               ? 'Liquidez: efectivo y cuentas de uso diario.'
               : categoria === 'RESERVA'
-                ? 'Ahorro / fondo de emergencia: plata que guardas pero no gastas. (Para juntar plata para una meta usa un objetivo.)'
+                ? 'Ahorro / fondo de emergencia: plata que guardas pero no gastas. (Para juntar plata para algo concreto, crea una meta.)'
                 : categoria === 'INVERSION'
                   ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
                   : categoria === 'ACTIVO'
@@ -373,7 +373,7 @@ export function AgregarElementoScreen() {
           {esDeudaOCredito ? (
             <>
               <MoneyField
-                label={categoria === 'DEUDA' ? 'Monto que debes' : 'Monto que te deben'}
+                label={categoria === 'DEUDA' ? 'Lo que debes hoy' : 'Lo que te deben hoy'}
                 value={valorPendiente}
                 onChange={setValorPendiente}
                 moneda={moneda.trim().toUpperCase() || undefined}
@@ -414,7 +414,7 @@ export function AgregarElementoScreen() {
           ) : (
             <>
               <MoneyField
-                label="Valor inicial"
+                label={categoria === 'ACTIVO' ? 'Valor actual' : 'Saldo actual'}
                 value={valorInicial}
                 onChange={setValorInicial}
                 moneda={moneda.trim().toUpperCase() || undefined}

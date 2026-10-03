@@ -44,7 +44,7 @@ export function TiposCambioScreen() {
     destino.trim().length !== 3
       ? 'Código de 3 letras (p. ej. CLP).'
       : destino.trim().toUpperCase() === origen.trim().toUpperCase()
-        ? 'La moneda destino no puede ser la misma.'
+        ? 'Las dos monedas no pueden ser la misma.'
         : '';
   const errTasa = Number(tasa) > 0 ? '' : 'Ingresa una tasa mayor a 0.';
 
@@ -113,7 +113,7 @@ export function TiposCambioScreen() {
       <Panel>
         <Text style={styles.sectionTitle}>Registrar tasa</Text>
         <Field
-          label="Moneda origen"
+          label="Desde qué moneda"
           value={origen}
           onChangeText={setOrigen}
           maxLength={3}
@@ -121,7 +121,7 @@ export function TiposCambioScreen() {
           error={intento ? errOrigen : undefined}
         />
         <Field
-          label="Moneda destino"
+          label="A qué moneda"
           value={destino}
           onChangeText={setDestino}
           maxLength={3}

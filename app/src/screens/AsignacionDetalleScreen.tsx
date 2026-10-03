@@ -88,19 +88,21 @@ export function AsignacionDetalleScreen() {
 
   const nombrePorId = new Map(elementos.map((e) => [e.id, e.nombre]));
   const reservasActivas = (asg.reservas ?? []).filter((r) => r.estado === 'ACTIVA');
+  // D-4: un ahorro sin meta ya no recibe plata nueva; solo se saca o se elimina.
+  const deUnaMeta = !!asg.objetivoId;
 
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Title>{asg.nombre}</Title>
-      <Text style={styles.muted}>Total apartado: {money(asg.totalReservado, asg.moneda)}</Text>
+      <Text style={styles.muted}>Ahorrado: {money(asg.totalReservado, asg.moneda)}</Text>
 
       <Ayuda>{GLOSARIO.apartado}</Ayuda>
 
       <Panel>
-        <Text style={styles.sectionTitle}>Apartado desde</Text>
+        <Text style={styles.sectionTitle}>En qué cuentas está</Text>
         {reservasActivas.length === 0 ? (
-          <Text style={styles.muted}>Aún no apartas dinero aquí.</Text>
+          <Text style={styles.muted}>Aún no ahorras aquí.</Text>
         ) : (
           reservasActivas.map((r) => (
             <View key={r.id} style={styles.reserva}>
@@ -109,7 +111,7 @@ export function AsignacionDetalleScreen() {
                 right={money(r.monto, asg.moneda)}
               />
               <Button
-                title="Liberar"
+                title={deUnaMeta ? 'Sacar de la meta' : 'Sacar'}
                 variant="secondary"
                 loading={busy}
                 disabled={motivo.trim().length < 3}
@@ -128,8 +130,9 @@ export function AsignacionDetalleScreen() {
         )}
       </Panel>
 
+      {deUnaMeta && (
       <Panel>
-        <Text style={styles.sectionTitle}>Apartar más dinero</Text>
+        <Text style={styles.sectionTitle}>Ahorrar más</Text>
         {elementos.map((el) => (
           <SelectRow
             key={el.id}
@@ -138,9 +141,9 @@ export function AsignacionDetalleScreen() {
             onPress={() => setOrigenId(el.id)}
           />
         ))}
-        <MoneyField label="Monto a apartar" value={monto} onChange={setMonto} />
+        <MoneyField label="¿Cuánto?" value={monto} onChange={setMonto} />
         <Button
-          title="Apartar dinero"
+          title="Ahorrar"
           loading={busy}
           disabled={!origenId || !(Number(monto) > 0)}
           onPress={() =>
@@ -150,26 +153,27 @@ export function AsignacionDetalleScreen() {
                 { asignacionId, elementoOrigenId: origenId, monto: Number(monto) },
                 token,
               );
-              toast.mostrar('Dinero apartado');
+              toast.mostrar('Ahorro registrado');
               setMonto('');
               setOrigenId(null);
             })
           }
         />
       </Panel>
+      )}
 
       <Panel>
-        <Field label="Motivo (para liberar o eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
+        <Field label="Motivo (para sacar o eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
         <Button
-          title="Eliminar apartado"
+          title={deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro'}
           variant="danger"
           loading={busy}
           disabled={motivo.trim().length < 3}
           onPress={async () => {
             if (
               !(await confirmar(
-                'Eliminar apartado',
-                'Se libera todo el dinero apartado aquí. No afecta el patrimonio.',
+                deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro',
+                'Toda la plata ahorrada aquí vuelve a quedar libre para gastar. No sale de tus cuentas.',
                 'Eliminar',
               ))
             )
@@ -180,7 +184,7 @@ export function AsignacionDetalleScreen() {
                 { asignacionId, motivo: motivo.trim() },
                 token,
               );
-              toast.mostrar('Apartado eliminado');
+              toast.mostrar('Ahorro eliminado');
             }, true);
           }}
         />

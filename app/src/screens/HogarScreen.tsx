@@ -144,11 +144,11 @@ export function HogarScreen() {
       </Panel>
       <Panel gap={0}>
         <ListItem
-          title="Objetivos del hogar"
+          title="Metas del hogar"
           subtitle={
             objetivosHogar.length === 0
-              ? 'Ninguno compartido'
-              : `${objetivosHogar.length} ${objetivosHogar.length === 1 ? 'objetivo compartido' : 'objetivos compartidos'}`
+              ? 'Ninguna compartida'
+              : `${objetivosHogar.length} ${objetivosHogar.length === 1 ? 'meta compartida' : 'metas compartidas'}`
           }
         />
         {objetivosHogar.slice(0, 4).map((o) => (

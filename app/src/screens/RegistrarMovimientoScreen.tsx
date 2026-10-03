@@ -183,7 +183,7 @@ export function RegistrarMovimientoScreen() {
   const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
   const errMismo =
     necesitaOrigen && necesitaDestino && origenId && origenId === destinoId
-      ? 'El origen y el destino no pueden ser el mismo.'
+      ? 'La cuenta de salida y la de llegada no pueden ser la misma.'
       : '';
 
   const onSubmit = async () => {
@@ -263,8 +263,8 @@ export function RegistrarMovimientoScreen() {
       <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
       {tipo === 'CONVERSION' && (
         <Paragraph>
-          Cambio de moneda: el monto va en la moneda del origen; el destino recibe el
-          equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
+          Cambio de moneda: el monto va en la moneda de la cuenta de salida; la de llegada
+          recibe el equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
         </Paragraph>
       )}
       {tipo === 'INGRESO' && (
@@ -353,7 +353,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaOrigen && (
         <View style={styles.group}>
-          <Text style={styles.label}>Desde (origen)</Text>
+          <Text style={styles.label}>Desde qué cuenta</Text>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
@@ -367,7 +367,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaDestino && (
         <View style={styles.group}>
-          <Text style={styles.label}>Hacia (destino)</Text>
+          <Text style={styles.label}>A qué cuenta</Text>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}

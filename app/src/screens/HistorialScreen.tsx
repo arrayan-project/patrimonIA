@@ -27,14 +27,14 @@ const CAMPO: Record<string, string> = {
   estado: 'Estado',
   participa_consolidacion: 'Cuenta en el patrimonio del hogar',
   categoria_funcional: 'Categoría',
-  valor_inicial: 'Valor inicial',
+  valor_inicial: 'Saldo al agregarlo',
   valor_pendiente: 'Saldo pendiente',
   valor_vigente: 'Valor vigente',
   moneda: 'Moneda',
   propietarios: 'Propietarios',
   monto: 'Monto',
-  monto_objetivo: 'Monto objetivo',
-  objetivo_financiero_id: 'Objetivo asociado',
+  monto_objetivo: 'Monto de la meta',
+  objetivo_financiero_id: 'Meta asociada',
   progreso: 'Progreso',
 };
 

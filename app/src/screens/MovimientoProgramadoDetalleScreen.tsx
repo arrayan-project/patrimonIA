@@ -93,11 +93,11 @@ export function MovimientoProgramadoDetalleScreen() {
           },
           token,
         );
-        toast.mostrar('Movimiento materializado');
+        toast.mostrar('Pago confirmado');
         setModo(null);
         await cargar();
       } else {
-        if (!(await confirmar('Cancelar movimiento', 'El movimiento programado se cancela y no podrá materializarse.', 'Cancelarlo'))) {
+        if (!(await confirmar('Cancelar movimiento', 'El movimiento programado se cancela y ya no podrás confirmar su pago.', 'Cancelarlo'))) {
           setBusy(false);
           return;
         }
@@ -163,7 +163,7 @@ export function MovimientoProgramadoDetalleScreen() {
 
       {pendiente && modo === null && (
         <View style={{ gap: 8 }}>
-          <Button title="Materializar ahora" onPress={() => setModo('materializar')} />
+          <Button title="Confirmar pago" onPress={() => setModo('materializar')} />
           <Button title="Editar" variant="secondary" onPress={() => setModo('editar')} />
           <Button title="Cancelar movimiento" variant="danger" onPress={() => setModo('cancelar')} />
         </View>
@@ -172,7 +172,7 @@ export function MovimientoProgramadoDetalleScreen() {
       {(modo === 'editar' || modo === 'materializar') && (
         <Panel>
           <Text style={styles.sectionTitle}>
-            {modo === 'editar' ? 'Editar movimiento' : 'Materializar'}
+            {modo === 'editar' ? 'Editar movimiento' : 'Confirmar pago'}
           </Text>
           <MoneyField
             label={modo === 'editar' ? 'Monto planificado' : 'Monto efectivo'}
@@ -187,7 +187,7 @@ export function MovimientoProgramadoDetalleScreen() {
           />
           <ErrorText>{error}</ErrorText>
           <Button
-            title={modo === 'editar' ? 'Guardar' : 'Materializar'}
+            title={modo === 'editar' ? 'Guardar' : 'Confirmar pago'}
             onPress={ejecutar}
             loading={busy}
           />

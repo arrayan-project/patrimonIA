@@ -299,9 +299,9 @@ export function MovimientosScreen() {
           />
           {alcance === 'mios' && dispLiquido && (
             <Text style={styles.disp}>
-              Disponible hoy · <Text style={styles.dispB}>{money(dispLiquido.valorLibre, dispLiquido.moneda)}</Text>
+              Libre para gastar · <Text style={styles.dispB}>{money(dispLiquido.valorLibre, dispLiquido.moneda)}</Text>
               {dispLiquido.valorReservado > 0
-                ? `  (${money(dispLiquido.valorLiquido, dispLiquido.moneda)} líquido − ${money(dispLiquido.valorReservado, dispLiquido.moneda)} apartado)`
+                ? `  (${money(dispLiquido.valorLiquido, dispLiquido.moneda)} líquido − ${money(dispLiquido.valorReservado, dispLiquido.moneda)} en metas)`
                 : ''}
             </Text>
           )}

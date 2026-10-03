@@ -12,9 +12,9 @@ import { setFormatoFecha, type FormatoFecha } from './ui';
  */
 export const SECCIONES_DASHBOARD = [
   ['composicion', 'Composición'],
-  ['disponibilidad', 'Disponibilidad'],
+  ['disponibilidad', 'Libre para gastar'],
   ['flujo', 'Flujo del mes'],
-  ['objetivos', 'Objetivos'],
+  ['objetivos', 'Metas'],
   ['accesos', 'Accesos rápidos'],
 ] as const;
 export type SeccionDashboard = (typeof SECCIONES_DASHBOARD)[number][0];

@@ -215,7 +215,7 @@ export function GestionHogarScreen() {
           variant="danger"
           loading={busy}
           onPress={async () => {
-            if (!(await confirmar('Salir del hogar', 'Dejarás de ver la consolidación y los objetivos del hogar. Tus elementos siguen siendo tuyos.', 'Salir')))
+            if (!(await confirmar('Salir del hogar', 'Dejarás de ver la consolidación y las metas del hogar. Tus elementos siguen siendo tuyos.', 'Salir')))
               return;
             await run(() => api.post('/comandos/SalirDeHogar', { hogarId }, token), true);
           }}

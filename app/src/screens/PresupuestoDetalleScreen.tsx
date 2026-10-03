@@ -218,7 +218,7 @@ export function PresupuestoDetalleScreen() {
 
       {desv.porObjetivo.length > 0 && (
         <Panel>
-          <Text style={styles.sectionTitle}>Ahorro por objetivo</Text>
+          <Text style={styles.sectionTitle}>Ahorro por meta</Text>
           {desv.porObjetivo.map((o) => (
             <View key={o.objetivoId} style={styles.rubro}>
               <Text style={styles.rubroTexto}>{o.nombre}</Text>

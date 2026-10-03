@@ -391,7 +391,7 @@ export function DashboardScreen() {
           </View>
           <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
           <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} c={c} styles={styles} />
-          <Paso hecho={pasos.objetivo} texto="Crea un objetivo de ahorro" onPress={() => nav.go('Objetivos', { nuevo: true })} c={c} styles={styles} />
+          <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('Objetivos', { nuevo: true })} c={c} styles={styles} />
           <Text style={styles.muted}>
             Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (ingresos y
             gastos), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
@@ -447,13 +447,13 @@ export function DashboardScreen() {
 
       {ver.disponibilidad && alcance === 'mios' && principal && (
         <Panel>
-          <Text style={styles.section}>Disponibilidad</Text>
+          <Text style={styles.section}>Libre para gastar</Text>
           <View style={styles.dispRow}>
             <Disp label="Líquido" valor={money(principal.valorLiquido, principal.moneda)} styles={styles} />
-            <Disp label="Apartado" valor={money(principal.valorReservado, principal.moneda)} styles={styles} onPress={() => nav.go('Planificar')} />
-            <Disp label="Disponible" valor={money(principal.valorLibre, principal.moneda)} styles={styles} strong />
+            <Disp label="En metas" valor={money(principal.valorReservado, principal.moneda)} styles={styles} onPress={() => nav.go('Planificar')} />
+            <Disp label="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} styles={styles} strong />
           </View>
-          <Text style={styles.muted}>“Apartado” es plata separada para tus metas: sigue en la cuenta, pero comprometida.</Text>
+          <Text style={styles.muted}>“En metas” es plata que ahorraste para tus metas: sigue en la cuenta, pero no es libre para gastar.</Text>
         </Panel>
       )}
 
@@ -483,7 +483,7 @@ export function DashboardScreen() {
       {ver.objetivos && enProgreso.length > 0 && monedasObj.size === 1 && (
         <Panel>
           <View style={styles.headRow}>
-            <Text style={styles.section}>Objetivos</Text>
+            <Text style={styles.section}>Metas</Text>
             <Pressable hitSlop={8} onPress={() => nav.go('Planificar')} accessibilityRole="button" accessibilityLabel="Ir a Planificar">
               <Text style={styles.link}>Planificar ›</Text>
             </Pressable>
@@ -491,7 +491,7 @@ export function DashboardScreen() {
           <ProgressBar pct={pctObj} />
           <Text style={styles.muted}>
             {money(avanceObj, [...monedasObj][0])} de {money(metaObj, [...monedasObj][0])} · {pctObj}% · {enProgreso.length}{' '}
-            {enProgreso.length === 1 ? 'objetivo' : 'objetivos'}
+            {enProgreso.length === 1 ? 'meta' : 'metas'}
           </Text>
         </Panel>
       )}
@@ -502,7 +502,7 @@ export function DashboardScreen() {
           <QuickActions
             items={[
               { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
-              { icon: 'flag-outline', label: 'Objetivos', onPress: () => nav.go('Objetivos') },
+              { icon: 'flag-outline', label: 'Metas', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
               { icon: 'wallet-outline', label: 'Mi patrimonio', onPress: verPatrimonio },
             ]}

@@ -127,7 +127,7 @@ export function MovimientosProgramadosScreen() {
 
       <Ayuda>
         Un movimiento futuro con fecha: un ingreso (sueldo), un gasto (arriendo) o
-        una transferencia. Cuando llega la fecha lo "materializas" y recién ahí
+        una transferencia. Cuando llega la fecha, confirmas el pago y recién ahí
         entra como un movimiento real.
       </Ayuda>
 
@@ -170,7 +170,7 @@ export function MovimientosProgramadosScreen() {
         <DateField label="Fecha" value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
         {usaOrigen && (
           <>
-            <Text style={styles.label}>Cuenta de origen (de dónde sale)</Text>
+            <Text style={styles.label}>Desde qué cuenta</Text>
             {elementos.map((el) => (
               <SelectRow
                 key={el.id}
@@ -183,7 +183,7 @@ export function MovimientosProgramadosScreen() {
         )}
         {usaDestino && (
           <>
-            <Text style={styles.label}>Cuenta de destino (a dónde entra)</Text>
+            <Text style={styles.label}>A qué cuenta</Text>
             {elementos.map((el) => (
               <SelectRow
                 key={el.id}

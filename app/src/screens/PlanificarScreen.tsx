@@ -103,8 +103,10 @@ export function PlanificarScreen() {
   const pctTotal = meta > 0 ? Math.round((avance / meta) * 100) : 0;
   const hoy = new Date();
 
-  const totalApartado = asignaciones.reduce((s, a) => s + a.totalReservado, 0);
-  const monedaApartado = asignaciones[0]?.moneda ?? 'CLP';
+  // D-4: lo ahorrado en metas ya se ve en cada meta; aquí solo el ahorro sin meta.
+  const sinMeta = asignaciones.filter((a) => !a.objetivoId);
+  const totalSinMeta = sinMeta.reduce((s, a) => s + a.totalReservado, 0);
+  const monedaSinMeta = sinMeta[0]?.moneda ?? 'CLP';
   const gastoPct =
     desv && desv.esperado.gastos > 0 ? Math.round((desv.real.gastos / desv.esperado.gastos) * 100) : 0;
 
@@ -121,12 +123,12 @@ export function PlanificarScreen() {
               onPress={() => nav.go('Notificaciones')}
             />
             <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
-            <IconButton icon="add" accessibilityLabel="Nuevo objetivo" onPress={() => nav.go('Objetivos', { nuevo: true })} />
+            <IconButton icon="add" accessibilityLabel="Nueva meta" onPress={() => nav.go('Objetivos', { nuevo: true })} />
           </>
         }
       />
       <PillDate icon="flag-outline">
-        {`${enProgreso.length} ${enProgreso.length === 1 ? 'objetivo activo' : 'objetivos activos'}`}
+        {`${enProgreso.length} ${enProgreso.length === 1 ? 'meta activa' : 'metas activas'}`}
       </PillDate>
 
       {objetivos === null ? (
@@ -138,22 +140,22 @@ export function PlanificarScreen() {
             <MiniPanel label="Completados" value={String(completados)} />
           </MiniGrid>
 
-          <GroupLabel right={<LinkButton title="Ver todos ›" onPress={() => nav.go('Objetivos')} />}>
-            Objetivos
+          <GroupLabel right={<LinkButton title="Ver todas ›" onPress={() => nav.go('Objetivos')} />}>
+            Metas
           </GroupLabel>
           {enProgreso.length === 0 ? (
             <EmptyState
               icon="flag-outline"
-              titulo="Sin objetivos activos"
-              descripcion="Crea una meta de ahorro para seguir su avance acá."
-              accion="Crear objetivo"
+              titulo="Sin metas activas"
+              descripcion="Crea una meta para seguir su avance acá."
+              accion="Crear meta"
               onAccion={() => nav.go('Objetivos', { nuevo: true })}
             />
           ) : (
             <>
               {monedasUnicas.size === 1 && enProgreso.length > 1 && (
                 <GoalCard
-                  name={`Avance total · ${enProgreso.length} objetivos`}
+                  name={`Avance total · ${enProgreso.length} metas`}
                   hint={`${pctTotal}%`}
                   pct={pctTotal}
                   footLeft={`${money(avance, [...monedasUnicas][0])} / ${money(meta, [...monedasUnicas][0])}`}
@@ -174,17 +176,21 @@ export function PlanificarScreen() {
             </>
           )}
 
-          <GroupLabel right={<LinkButton title="Detalle ›" onPress={() => nav.go('Asignaciones')} />}>
-            Apartado
-          </GroupLabel>
-          <MiniGrid>
-            <MiniPanel
-              label="Total apartado"
-              value={money(totalApartado, monedaApartado)}
-              sub={`${asignaciones.length} ${asignaciones.length === 1 ? 'apartado' : 'apartados'}`}
-              onPress={() => nav.go('Asignaciones')}
-            />
-          </MiniGrid>
+          {sinMeta.length > 0 && (
+            <>
+              <GroupLabel right={<LinkButton title="Detalle ›" onPress={() => nav.go('Asignaciones')} />}>
+                Ahorro sin meta
+              </GroupLabel>
+              <MiniGrid>
+                <MiniPanel
+                  label="Ahorro sin meta"
+                  value={money(totalSinMeta, monedaSinMeta)}
+                  sub={`${sinMeta.length} ${sinMeta.length === 1 ? 'ahorro' : 'ahorros'}`}
+                  onPress={() => nav.go('Asignaciones')}
+                />
+              </MiniGrid>
+            </>
+          )}
 
           {desv && presupuesto ? (
             <>
