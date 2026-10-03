@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅ en rama, falta el merge; siguiente: bloque 3 (HZ-24). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; siguiente: bloque 3 (HZ-24). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -235,9 +235,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Fase D, bloque 2 (prototipo v5; Zoily completó 6 de 6) ✅ y Fase D cerrada
   (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
   Fase E, en el orden de su §5: bloque 1 (D-4 + HZ-19 + HZ-22, solo frontend)
-  ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅ en la rama `feat/G33-E2-listas`,
-  probado por Juan (2026-10-03); falta revisar el ajuste "hoja siempre" y el
-  merge. Siguiente: bloque 3 (HZ-24).
+  ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅: rama `feat/G33-E2-listas`,
+  probada por Juan y mergeada a `main` (2026-10-03). Siguiente: bloque 3 (HZ-24).
 - **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
     `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por
