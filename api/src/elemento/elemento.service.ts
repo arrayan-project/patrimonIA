@@ -28,6 +28,7 @@ import type {
   LlevarPendienteACeroDto,
   ReactivarElementoDto,
 } from './dto/comandos-elemento.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 @Injectable()
 export class ElementoService {
@@ -558,7 +559,7 @@ export class ElementoService {
       );
     }
     const reservas = await this.prisma.reserva.count({ where: { elemento_origen_id: el.id } });
-    if (reservas > 0) throw new ConflictException('El elemento financia reservas activas');
+    if (reservas > 0) throw errorConCodigo(ConflictException, 'ELEMENTO_CON_RESERVAS', 'El elemento financia reservas activas');
 
     await this.prisma.$transaction(async (tx) => {
       await tx.elemento_propietario.deleteMany({ where: { elemento_id: el.id } });

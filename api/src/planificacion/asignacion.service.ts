@@ -15,6 +15,7 @@ import type {
   CrearAsignacionDto,
   EliminarAsignacionDto,
 } from './dto/asignacion.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 @Injectable()
 export class AsignacionService {
@@ -195,18 +196,18 @@ export class AsignacionService {
 
   async #cargar(asignacionId: string, actorId: string): Promise<AsignacionRow> {
     const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
-    if (!a) throw new NotFoundException('Asignación no encontrada');
+    if (!a) throw errorConCodigo(NotFoundException, 'ASIGNACION_NO_ENCONTRADA', 'Asignación no encontrada');
     if (a.usuario_id === actorId) return a;
     // P9 — asignación de un objetivo compartido: la modifican dueño/designados.
     if (a.objetivo_financiero_id && (await this.#puedeModificarObjetivo(a.objetivo_financiero_id, actorId))) {
       return a;
     }
-    throw new ForbiddenException('La asignación no es tuya');
+    throw errorConCodigo(ForbiddenException, 'ASIGNACION_AJENA', 'La asignación no es tuya');
   }
 
   async #exigirObjetivoModificable(objetivoId: string, actorId: string): Promise<void> {
     if (!(await this.#puedeModificarObjetivo(objetivoId, actorId))) {
-      throw new NotFoundException('Objetivo no encontrado');
+      throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
     }
   }
 

@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { errorConCodigo } from '../common/errores.js';
 
 export interface EntradaHistorialDTO {
   id: string;
@@ -64,13 +65,13 @@ export class HistorialService {
     }
     if (tipo === 'OBJETIVO_FINANCIERO') {
       const o = await this.prisma.objetivo_financiero.findUnique({ where: { id } });
-      if (!o) throw new NotFoundException('Objetivo no encontrado');
-      if (o.usuario_id !== actorId) throw new ForbiddenException('El objetivo no es tuyo');
+      if (!o) throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
+      if (o.usuario_id !== actorId) throw errorConCodigo(ForbiddenException, 'OBJETIVO_AJENO', 'El objetivo no es tuyo');
       return;
     }
     // ASIGNACION
     const a = await this.prisma.asignacion.findUnique({ where: { id } });
-    if (!a) throw new NotFoundException('Asignación no encontrada');
-    if (a.usuario_id !== actorId) throw new ForbiddenException('La asignación no es tuya');
+    if (!a) throw errorConCodigo(NotFoundException, 'ASIGNACION_NO_ENCONTRADA', 'Asignación no encontrada');
+    if (a.usuario_id !== actorId) throw errorConCodigo(ForbiddenException, 'ASIGNACION_AJENA', 'La asignación no es tuya');
   }
 }

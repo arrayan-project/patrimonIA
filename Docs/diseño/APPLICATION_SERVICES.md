@@ -545,6 +545,17 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 ### 77. CompartirObjetivoConHogar — objetivoId, hogarId. Todos los miembros lo ven.
 ### 78. DefinirDesignadosObjetivo — objetivoId, usuarioIds[]. Solo los designados y el admin lo modifican.
 
+## Ahorrar para una meta — G33 D-1
+
+### 79. AhorrarParaObjetivo
+
+- Input: objetivoId, asignacionId (opcional), destinoId (opcional: la cuenta de la meta), origenes[] (elementoId, monto; 1 a 10, sin repetir), fecha (opcional).
+- Validaciones: el actor puede modificar la meta (dueño o designado) · origen(es) y destino son cuentas propias, activas, no DEUDA/CREDITO/ACTIVO (bienes) y en la moneda de la meta · cada origen distinto del destino tiene valor libre ≥ su monto · el destino tiene libre ≥ el total después de las transferencias.
+- Orquestación (una transacción): la cuenta de la meta **no se persiste**: si falta `destinoId` se deriva de la cuenta propia con más reserva activa en la meta; si no hay ninguna y hay un solo origen, es ese origen; si no, error `META_SIN_CUENTA` · la parte es la indicada, la más antigua de la meta o una nueva con el nombre de la meta · cada origen ≠ destino genera una TRANSFERENCIA (#10) hacia el destino · se crea una reserva (#27) en el destino por el total (si origen = destino, solo reserva: A6) · recalcula el progreso y puede completar la meta (W).
+- Output: objetivoId, asignacionId, destinoId, reservaId, transferenciaIds[], total, progreso.
+- Auditoría: entrada raíz `AhorrarParaObjetivo` (destino, total, orígenes); las de la parte creada, las transferencias y la reserva quedan encadenadas a ella (`encadenada_de_id`).
+- Lectura asociada: `GET /usuarios/me/disponibilidad` → libre para ahorrar por cuenta propia.
+
 ## Cambios en comandos existentes
 
 - **#1 RegistrarElementoPatrimonial**: acepta `visibilidadExistencia` / `visibilidadValor` (dos controles independientes); `naturaleza` (obligatorio para DEUDA/CREDITO); `fechaAlta`. Si categoría ∈ {LIQUIDEZ, RESERVA} y `valorInicial > 0` → emite además un evento `SALDO_INICIAL` + impacto de apertura. Auditoría: + naturaleza (solo DEUDA/CREDITO), + saldo_inicial_evento_id.
@@ -553,9 +564,10 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 - **#11/#12 sobre `SALDO_INICIAL`**: rechazados (usar Ajuste Patrimonial).
 - **Movimiento Programado (#13–#16)**: `tipo` (INGRESO/GASTO/TRANSFERENCIA) + `elementoOrigenId`; el destino es opcional según el tipo.
 - **Todos los `Registrar*` / `Crear*`**: aceptan header `Idempotency-Key`.
+- **Errores con código (G33, residuo de D-4)**: los errores de metas, partes, reservas, cuentas, anulaciones y correcciones llevan además `codigo` (y `datos` si el texto los necesita, p. ej. `DISPONIBLE_INSUFICIENTE` → `{ disponible, pedido }`); `message` no cambia. La app traduce por `codigo` (`app/src/api/errores.ts`).
 
 # Resumen de cobertura
 
-Total: **52 casos de uso de Fase 0 + 26 añadidos (Fases 13–52) = 78** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
+Total: **52 casos de uso de Fase 0 + 27 añadidos (Fases 13–52 y G33) = 79** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
 
 *Nota de reconciliación: la cifra previa de “~44 comandos” mencionada al iniciar este bloque correspondía a un conteo aproximado. El conteo exacto contra la Sección T, comando por comando, da 52. La diferencia son comandos que existen en la tabla pero no se habían sumado en el estimado inicial (p. ej. ActualizarDatosUsuario, ActualizarDatosHogar, ActualizarDatosPresupuesto, ActualizarDatosAsignacion, ActualizarDatosObjetivoFinanciero, ActualizarMovimientoProgramado, RechazarInvitacion). Este documento es la fuente de verdad del conteo, no la cifra estimada al inicio.

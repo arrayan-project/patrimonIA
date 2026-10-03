@@ -17,6 +17,7 @@ import type {
   DefinirDesignadosObjetivoDto,
   EliminarObjetivoDto,
 } from './dto/objetivo.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 @Injectable()
 export class ObjetivoService {
@@ -108,7 +109,7 @@ export class ObjetivoService {
     dto: CambiarEstadoObjetivoDto,
   ): Promise<ObjetivoFinancieroDTO> {
     const o = await this.#cargarModificable(dto.objetivoId, actorId);
-    if (o.estado === dto.estado) throw new BadRequestException('El objetivo ya tiene ese estado');
+    if (o.estado === dto.estado) throw errorConCodigo(BadRequestException, 'OBJETIVO_MISMO_ESTADO', 'El objetivo ya tiene ese estado');
     await this.prisma.$transaction(async (tx) => {
       await tx.objetivo_financiero.update({ where: { id: o.id }, data: { estado: dto.estado } });
       await this.auditoria.registrar(tx, {
@@ -130,7 +131,7 @@ export class ObjetivoService {
   ): Promise<{ ok: true; asignacionesDesasociadas: string[] }> {
     const o = await this.#cargarModificable(dto.objetivoId, actorId);
     if (o.usuario_id !== actorId) {
-      throw new ForbiddenException('Solo el dueño puede eliminar el objetivo');
+      throw errorConCodigo(ForbiddenException, 'OBJETIVO_SOLO_DUENO', 'Solo el dueño puede eliminar el objetivo');
     }
     const asignaciones = await this.prisma.asignacion.findMany({
       where: { objetivo_financiero_id: o.id },
@@ -164,9 +165,9 @@ export class ObjetivoService {
     dto: CompartirObjetivoConHogarDto,
   ): Promise<ObjetivoFinancieroDTO> {
     const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: dto.objetivoId } });
-    if (!o) throw new NotFoundException('Objetivo no encontrado');
+    if (!o) throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
     if (o.usuario_id !== actorId) {
-      throw new ForbiddenException('Solo el dueño puede compartir el objetivo');
+      throw errorConCodigo(ForbiddenException, 'OBJETIVO_SOLO_DUENO', 'Solo el dueño puede compartir el objetivo');
     }
     const nuevoHogar = dto.hogarId ?? null;
     if (nuevoHogar === o.hogar_id) throw new BadRequestException('Sin cambios');
@@ -199,9 +200,9 @@ export class ObjetivoService {
     dto: DefinirDesignadosObjetivoDto,
   ): Promise<ObjetivoFinancieroDTO> {
     const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: dto.objetivoId } });
-    if (!o) throw new NotFoundException('Objetivo no encontrado');
+    if (!o) throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
     if (!o.hogar_id) {
-      throw new BadRequestException('El objetivo no está compartido con un hogar');
+      throw errorConCodigo(BadRequestException, 'OBJETIVO_NO_COMPARTIDO', 'El objetivo no está compartido con un hogar');
     }
     const esDueno = o.usuario_id === actorId;
     if (!esDueno && !(await this.#esAdmin(o.hogar_id, actorId))) {
@@ -282,16 +283,16 @@ export class ObjetivoService {
   /** Dueño o miembro activo del hogar con el que se comparte. */
   async #cargarVisible(objetivoId: string, actorId: string): Promise<ObjetivoRow> {
     const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: objetivoId } });
-    if (!o) throw new NotFoundException('Objetivo no encontrado');
+    if (!o) throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
     if (o.usuario_id === actorId) return o;
     if (o.hogar_id && (await this.#esMiembro(o.hogar_id, actorId))) return o;
-    throw new NotFoundException('Objetivo no encontrado');
+    throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
   }
 
   /** Dueño o designado (compartido). */
   async #cargarModificable(objetivoId: string, actorId: string): Promise<ObjetivoRow> {
     const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: objetivoId } });
-    if (!o) throw new NotFoundException('Objetivo no encontrado');
+    if (!o) throw errorConCodigo(NotFoundException, 'OBJETIVO_NO_ENCONTRADO', 'Objetivo no encontrado');
     if (o.usuario_id === actorId) return o;
     if (o.hogar_id) {
       const d = await this.prisma.objetivo_designado.findUnique({
@@ -299,7 +300,7 @@ export class ObjetivoService {
       });
       if (d) return o;
     }
-    throw new ForbiddenException('No puedes modificar este objetivo');
+    throw errorConCodigo(ForbiddenException, 'OBJETIVO_NO_MODIFICABLE', 'No puedes modificar este objetivo');
   }
 
   async #designadosDe(objetivoId: string): Promise<string[]> {

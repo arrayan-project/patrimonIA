@@ -23,6 +23,7 @@ import type {
   CrearMovimientoProgramadoDto,
   MaterializarMovimientoProgramadoDto,
 } from './dto/movimiento-programado.dto.js';
+import { errorConCodigo } from '../common/errores.js';
 
 /**
  * Movimiento Programado (agregado propio): planificación, NO un hecho económico
@@ -137,7 +138,7 @@ export class MovimientoProgramadoService {
     if (m.tipo === 'TRANSFERENCIA') {
       const origen = data.elemento_origen_id ?? m.elemento_origen_id;
       const destino = data.elemento_destino_id ?? m.elemento_destino_id;
-      if (origen === destino) throw new BadRequestException('El origen y el destino no pueden ser el mismo');
+      if (origen === destino) throw errorConCodigo(BadRequestException, 'ORIGEN_IGUAL_DESTINO', 'El origen y el destino no pueden ser el mismo');
     }
 
     const actualizado = await this.prisma.$transaction(async (tx) => {
@@ -312,21 +313,21 @@ export class MovimientoProgramadoService {
     destinoId?: string,
   ): { origenId: string | null; destinoId: string | null } {
     if (tipo === 'INGRESO') {
-      if (!destinoId) throw new BadRequestException('INGRESO requiere elementoDestinoId');
+      if (!destinoId) throw errorConCodigo(BadRequestException, 'FALTA_CUENTA', 'INGRESO requiere elementoDestinoId');
       if (origenId) throw new BadRequestException('INGRESO no lleva elementoOrigenId');
       return { origenId: null, destinoId };
     }
     if (tipo === 'GASTO') {
-      if (!origenId) throw new BadRequestException('GASTO requiere elementoOrigenId');
+      if (!origenId) throw errorConCodigo(BadRequestException, 'FALTA_CUENTA', 'GASTO requiere elementoOrigenId');
       if (destinoId) throw new BadRequestException('GASTO no lleva elementoDestinoId');
       return { origenId, destinoId: null };
     }
     // TRANSFERENCIA
     if (!origenId || !destinoId) {
-      throw new BadRequestException('TRANSFERENCIA requiere elementoOrigenId y elementoDestinoId');
+      throw errorConCodigo(BadRequestException, 'FALTA_CUENTA', 'TRANSFERENCIA requiere elementoOrigenId y elementoDestinoId');
     }
     if (origenId === destinoId) {
-      throw new BadRequestException('El origen y el destino no pueden ser el mismo');
+      throw errorConCodigo(BadRequestException, 'ORIGEN_IGUAL_DESTINO', 'El origen y el destino no pueden ser el mismo');
     }
     return { origenId, destinoId };
   }
