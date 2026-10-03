@@ -12,7 +12,9 @@ import {
   Text,
   TextInput,
   View,
+  type StyleProp,
   type TextInputProps,
+  type ViewStyle,
 } from 'react-native';
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -781,24 +783,78 @@ export function Paragraph({ children }: { children: ReactNode }) {
   return <Text style={styles.paragraph}>{children}</Text>;
 }
 
+/** Estado de una pregunta numerada (HZ-24). */
+export type EstadoPaso = 'hecho' | 'actual' | 'bloqueado';
+export type Paso = number | { n: number; estado: EstadoPaso };
+
 /**
- * Numera las preguntas de un formulario (HZ-19). Se crea en cada render y se
- * llama en el orden del JSX: un campo oculto no consume número, así que no
- * quedan saltos.
+ * Numera las preguntas de un formulario (HZ-19) y marca en cuál va el usuario
+ * (HZ-24). Se crea en cada render y se llama en el orden del JSX: un campo
+ * oculto no consume número, así que no quedan saltos. El paso actual es el
+ * primer obligatorio sin completar (un opcional nunca lo es, y un valor ya
+ * puesto cuenta como hecho); todo lo que viene después queda bloqueado. Sin
+ * argumentos, la pregunta se trata como opcional.
  */
-export function contadorPasos(): () => number {
+export function contadorPasos(): (p?: { hecho?: boolean; opcional?: boolean }) => Paso {
   let n = 0;
-  return () => ++n;
+  let hayActual = false;
+  return ({ hecho = false, opcional = false } = {}) => {
+    n += 1;
+    if (hayActual) return { n, estado: 'bloqueado' };
+    if (opcional || hecho) return { n, estado: 'hecho' };
+    hayActual = true;
+    return { n, estado: 'actual' };
+  };
 }
 
-/** Etiqueta de una pregunta; con `paso`, lleva delante un número sutil. */
-export function Etiqueta({ paso, children }: { paso?: number; children: ReactNode }) {
+const estadoDe = (paso?: Paso): EstadoPaso | undefined =>
+  paso != null && typeof paso === 'object' ? paso.estado : undefined;
+
+/**
+ * Envuelve lo que pertenece a una pregunta numerada (HZ-24): el paso actual
+ * lleva una barra a la izquierda; uno bloqueado se atenúa y no responde al
+ * toque (no es un error). Sin `paso`, no hace nada.
+ */
+export function BloquePaso({
+  paso,
+  style,
+  children,
+}: {
+  paso?: Paso;
+  style?: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
+  const styles = useEstilos();
+  const estado = estadoDe(paso);
+  return (
+    <View
+      style={[
+        style,
+        estado && styles.bloquePaso,
+        estado === 'actual' && styles.bloquePasoActual,
+        estado === 'bloqueado' && styles.bloquePasoBloqueado,
+      ]}
+      accessibilityState={estado === 'bloqueado' ? { disabled: true } : undefined}
+    >
+      {children}
+    </View>
+  );
+}
+
+/** Etiqueta de una pregunta; con `paso`, lleva delante su número (invertido si es el actual). */
+export function Etiqueta({ paso, children }: { paso?: Paso; children: ReactNode }) {
   const styles = useEstilos();
   if (paso == null) return <Text style={styles.label}>{children}</Text>;
+  const n = typeof paso === 'object' ? paso.n : paso;
+  const actual = estadoDe(paso) === 'actual';
   return (
     <View style={styles.etiquetaPaso}>
-      <View style={styles.numeroPaso} accessibilityElementsHidden importantForAccessibility="no">
-        <Text style={styles.numeroPasoTexto}>{paso}</Text>
+      <View
+        style={[styles.numeroPaso, actual && styles.numeroPasoActual]}
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+      >
+        <Text style={[styles.numeroPasoTexto, actual && styles.numeroPasoTextoActual]}>{n}</Text>
       </View>
       <Text style={[styles.label, { flexShrink: 1 }]}>{children}</Text>
     </View>
@@ -810,11 +866,11 @@ export function Field({
   error,
   paso,
   ...props
-}: TextInputProps & { label: string; error?: string; paso?: number }) {
+}: TextInputProps & { label: string; error?: string; paso?: Paso }) {
   const c = useC();
   const styles = useEstilos();
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
@@ -823,7 +879,7 @@ export function Field({
         {...props}
       />
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -846,7 +902,7 @@ export function DateField({
   optional?: boolean;
   error?: string;
   placeholder?: string;
-  paso?: number;
+  paso?: Paso;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -859,7 +915,7 @@ export function DateField({
   };
 
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       <Etiqueta paso={paso}>{label}</Etiqueta>
       {Platform.OS === 'web' ? (
         <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
@@ -882,7 +938,7 @@ export function DateField({
       )}
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
       {optional && value ? <LinkButton title="Quitar fecha" onPress={() => onChange('')} /> : null}
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -906,7 +962,7 @@ export function MoneyField({
   moneda?: string;
   placeholder?: string;
   error?: string;
-  paso?: number;
+  paso?: Paso;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -927,7 +983,7 @@ export function MoneyField({
   };
 
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       <Etiqueta paso={paso}>{moneda ? `${label} (${moneda})` : label}</Etiqueta>
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
@@ -938,7 +994,7 @@ export function MoneyField({
         placeholderTextColor={c.mutedDim}
       />
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -995,11 +1051,11 @@ export function Segmented<T extends string>({
   value: T;
   onChange: (v: T) => void;
   formatearOpcion?: (v: T) => string;
-  paso?: number;
+  paso?: Paso;
 }) {
   const styles = useEstilos();
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <View style={styles.segmented}>
         {options.map((opt) => (
@@ -1016,7 +1072,7 @@ export function Segmented<T extends string>({
           </Pressable>
         ))}
       </View>
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -1158,7 +1214,7 @@ export function Select({
   placeholder?: string;
   permiteOtro?: boolean;
   opcionNula?: string;
-  paso?: number;
+  paso?: Paso;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -1179,7 +1235,7 @@ export function Select({
   };
 
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <Pressable
         style={styles.selectBox}
@@ -1244,7 +1300,7 @@ export function Select({
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -1264,7 +1320,7 @@ export function Elegir({
   onChange: (v: string | null) => void;
   opcionNula?: string;
   placeholder?: string;
-  paso?: number;
+  paso?: Paso;
 }) {
   return (
     <Select
@@ -1293,7 +1349,7 @@ export function ElegirVarios({
   options: OpcionSelect[];
   onChange: (vs: string[]) => void;
   placeholder?: string;
-  paso?: number;
+  paso?: Paso;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -1310,7 +1366,7 @@ export function ElegirVarios({
         : `${elegidas.length} elegidos`;
 
   return (
-    <View style={styles.field}>
+    <BloquePaso paso={paso} style={styles.field}>
       <Etiqueta paso={paso}>{label}</Etiqueta>
       <Pressable
         style={styles.selectBox}
@@ -1337,7 +1393,7 @@ export function ElegirVarios({
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </BloquePaso>
   );
 }
 
@@ -1872,6 +1928,12 @@ const crearEstilos = (c: Paleta) => {
       justifyContent: 'center',
     },
     numeroPasoTexto: { fontSize: 11, fontWeight: '600', color: c.muted },
+    numeroPasoActual: { backgroundColor: c.primary, borderColor: c.primary },
+    numeroPasoTextoActual: { color: c.primaryText },
+    // La barra va en el margen para que el contenido no se mueva al avanzar.
+    bloquePaso: { borderLeftWidth: 2, borderLeftColor: 'transparent', paddingLeft: 8, marginLeft: -10 },
+    bloquePasoActual: { borderLeftColor: c.primary },
+    bloquePasoBloqueado: { opacity: 0.4, pointerEvents: 'none' },
     input: {
       borderWidth: 1,
       borderColor: c.border,
