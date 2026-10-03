@@ -1,5 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -10,25 +9,27 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, ElegirVarios, Panel, useC, type Paleta, tipoDe } from '../ui';
+import {
+  Ayuda,
+  Buscador,
+  Button,
+  EmptyState,
+  ErrorText,
+  filtrar,
+  ListCard,
+  Screen,
+  Skeleton,
+  TxRow,
+} from '../ui';
 
 export function AgrupacionesScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
 
   const [lista, setLista] = useState<AgrupacionDTO[] | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const [nombre, setNombre] = useState('');
-  const [editId, setEditId] = useState<string | null>(null); // gestión de elementos de esa agrupación
-  const [sel, setSel] = useState<string[]>([]);
+  const [busca, setBusca] = useState('');
 
   const cargar = useCallback(async () => {
     setError('');
@@ -46,129 +47,60 @@ export function AgrupacionesScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const run = async (fn: () => Promise<unknown>, aviso?: string) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (aviso) toast.mostrar(aviso);
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
+  const nueva = () => nav.go('CatalogoForm', { catalogo: 'agrupacion' });
+  const total = lista?.length ?? 0;
+  const visibles = filtrar(lista ?? [], (a) => a.nombre, busca);
+
+  // Contexto de la fila: qué hay dentro y, si es una sola moneda, cuánto suma.
+  const contexto = (a: AgrupacionDTO) => {
+    const els = elementos.filter((e) => a.elementoIds.includes(e.id));
+    const n = els.length;
+    const texto = n === 0 ? 'Vacía' : els.map((e) => e.nombre).join(', ');
+    const monedas = new Set(els.map((e) => e.moneda));
+    const suma = monedas.size === 1 ? money(els.reduce((s, e) => s + e.valorVigente, 0), [...monedas][0]) : '';
+    return { texto, suma };
   };
-
-  const crear = () =>
-    run(async () => {
-      await api.post('/comandos/CrearAgrupacion', { nombre: nombre.trim() }, token);
-      setNombre('');
-    }, 'Agrupación creada');
-
-  const borrar = async (a: AgrupacionDTO) => {
-    if (!(await confirmar('Eliminar agrupación', `"${a.nombre}" se borra. Sus elementos quedan sin agrupar (no se pierde nada).`, 'Eliminar')))
-      return;
-    await run(() => api.post('/comandos/EliminarAgrupacion', { agrupacionId: a.id }, token), 'Agrupación eliminada');
-  };
-
-  const guardarElementos = (id: string) =>
-    run(async () => {
-      await api.post(
-        '/comandos/DefinirElementosAgrupacion',
-        { agrupacionId: id, elementoIds: sel },
-        token,
-      );
-      setEditId(null);
-    }, 'Elementos actualizados');
-
-  if (lista === null) {
-    return (
-      <Screen>
-        <ErrorText>{error}</ErrorText>
-        {!error && <Skeleton />}
-      </Screen>
-    );
-  }
-
-  const agrupacionDe = (elementoId: string) =>
-    lista.find((a) => a.elementoIds.includes(elementoId));
 
   return (
-    <Screen onRefresh={cargar}>
-      <Ayuda>
-        Carpetas para ordenar tus cuentas y activos en el Inicio (p. ej.
-        "Inversiones" con tu APV y fondos). No afectan tu patrimonio ni la
-        consolidación — solo la vista.
-      </Ayuda>
+    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva agrupación" onPress={nueva} /> : undefined}>
+      <Ayuda>Ordenan el Inicio; no cambian tu patrimonio.</Ayuda>
 
-      {lista.map((a) => (
-        <Panel key={a.id}>
-          {editId === a.id ? (
-            <>
-              <ElegirVarios
-                label={`Elementos de "${a.nombre}"`}
-                values={sel}
-                onChange={setSel}
-                options={elementos.map((el) => {
-                  const otra = agrupacionDe(el.id);
-                  const enOtra = otra && otra.id !== a.id;
-                  return { value: el.id, label: `${el.nombre}${enOtra ? ` · en "${otra!.nombre}"` : ''}` };
-                })}
-              />
-              <Button title="Guardar" onPress={() => guardarElementos(a.id)} loading={busy} />
-              <LinkButton title="Cancelar" onPress={() => setEditId(null)} />
-            </>
-          ) : (
-            <>
-              <View style={styles.fila}>
-                <Text style={styles.nombre}>{a.nombre}</Text>
-                <Text style={styles.muted}>{a.elementoIds.length} elemento(s)</Text>
-              </View>
-              {a.elementoIds.map((id) => {
-                const el = elementos.find((e) => e.id === id);
-                return el ? (
-                  <Text key={id} style={styles.item}>
-                    · {el.nombre} — {money(el.valorVigente, el.moneda)}
-                  </Text>
-                ) : null;
-              })}
-              <View style={styles.fila}>
-                <LinkButton
-                  title="Elegir elementos"
-                  onPress={() => {
-                    setSel(a.elementoIds);
-                    setEditId(a.id);
-                  }}
-                />
-                <LinkButton title="Eliminar" onPress={() => borrar(a)} />
-              </View>
-            </>
-          )}
-        </Panel>
-      ))}
-
-      <Panel>
-        <Text style={styles.nombre}>Nueva agrupación</Text>
-        <Field label="Nombre" value={nombre} onChangeText={setNombre} placeholder="p. ej. Inversiones" />
-        <Button title="Crear agrupación" onPress={crear} loading={busy} disabled={!nombre.trim()} />
-      </Panel>
-
-      {lista.length === 0 && (
+      {lista === null ? (
+        <Skeleton />
+      ) : total === 0 ? (
         <EmptyState
           icon="folder-outline"
           titulo="Aún no tienes agrupaciones"
-          descripcion="Crea carpetas como “Inversiones” para ordenar tus cuentas y activos en el Inicio."
+          descripcion="Junta cuentas en carpetas como “Inversiones”."
+          accion="Crear la primera"
+          onAccion={nueva}
         />
+      ) : (
+        <>
+          <Buscador total={total} value={busca} onChange={setBusca} />
+          {visibles.length === 0 ? (
+            <EmptyState titulo="Nada coincide con la búsqueda" />
+          ) : (
+            <ListCard>
+              {visibles.map((a) => {
+                const { texto, suma } = contexto(a);
+                return (
+                  <TxRow
+                    key={a.id}
+                    title={a.nombre}
+                    subtitle={texto}
+                    amount={suma}
+                    logo={{ icon: 'folder-outline', color: a.color ?? undefined }}
+                    onPress={() => nav.go('CatalogoForm', { catalogo: 'agrupacion', id: a.id })}
+                  />
+                );
+              })}
+            </ListCard>
+          )}
+        </>
       )}
+
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
-  muted: tipoDe(c).nota,
-  item: { fontSize: 13, color: c.text },
-});

@@ -52,7 +52,12 @@ export type RouteName =
   | 'Categorias'
   | 'TiposElemento'
   | 'Etiquetas'
-  | 'Agrupaciones';
+  | 'Agrupaciones'
+  | 'CatalogoForm'
+  | 'NuevaMeta'
+  | 'NuevoPresupuesto'
+  | 'NuevoProgramado'
+  | 'PlantillaForm';
 
 export interface Route {
   name: string;

@@ -55,6 +55,11 @@ import { AjustesNotificacionesScreen } from '../screens/AjustesNotificacionesScr
 import { AjustesVisualizacionScreen } from '../screens/AjustesVisualizacionScreen';
 import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
+import { CatalogoFormScreen } from '../screens/CatalogoFormScreen';
+import { NuevaMetaScreen } from '../screens/NuevaMetaScreen';
+import { NuevoPresupuestoScreen } from '../screens/NuevoPresupuestoScreen';
+import { NuevoProgramadoScreen } from '../screens/NuevoProgramadoScreen';
+import { PlantillaFormScreen } from '../screens/PlantillaFormScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 import { AgrupacionesScreen } from '../screens/AgrupacionesScreen';
@@ -157,6 +162,12 @@ const TITULOS: Record<string, string> = {
   TiposElemento: 'Tipos de elemento patrimonial',
   Etiquetas: 'Etiquetas',
   Agrupaciones: 'Agrupaciones',
+  // CatalogoForm y PlantillaForm ponen su título con useTitulo (crear o editar).
+  CatalogoForm: 'Nuevo',
+  NuevaMeta: 'Nueva meta',
+  NuevoPresupuesto: 'Nuevo presupuesto',
+  NuevoProgramado: 'Programar movimiento',
+  PlantillaForm: 'Nueva plantilla',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -199,6 +210,11 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['TiposElemento', TiposElementoScreen],
   ['Etiquetas', EtiquetasScreen],
   ['Agrupaciones', AgrupacionesScreen],
+  ['CatalogoForm', CatalogoFormScreen],
+  ['NuevaMeta', NuevaMetaScreen],
+  ['NuevoPresupuesto', NuevoPresupuestoScreen],
+  ['NuevoProgramado', NuevoProgramadoScreen],
+  ['PlantillaForm', PlantillaFormScreen],
 ];
 
 export function RootNavigator() {

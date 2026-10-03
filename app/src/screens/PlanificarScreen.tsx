@@ -122,7 +122,7 @@ export function PlanificarScreen() {
               onPress={() => nav.go('Notificaciones')}
             />
             <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
-            <IconButton icon="add" accessibilityLabel="Nueva meta" onPress={() => nav.go('Objetivos', { nuevo: true })} />
+            <IconButton icon="add" accessibilityLabel="Nueva meta" onPress={() => nav.go('NuevaMeta')} />
           </>
         }
       />
@@ -142,7 +142,7 @@ export function PlanificarScreen() {
                 titulo="Sin metas activas"
                 descripcion="Crea una meta para seguir su avance acá."
                 accion="Crear meta"
-                onAccion={() => nav.go('Objetivos', { nuevo: true })}
+                onAccion={() => nav.go('NuevaMeta')}
               />
             ) : (
               <>

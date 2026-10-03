@@ -1,33 +1,38 @@
-import { useMemo, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type CategoriaMovimientoDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
-import { Ayuda, Button, ErrorText, etiqueta, Field, LinkButton, Screen, Segmented, Select, Skeleton, Panel, useC, type Paleta, tipoDe } from '../ui';
+import {
+  Ayuda,
+  Buscador,
+  Button,
+  EmptyState,
+  ErrorText,
+  filtrar,
+  ListCard,
+  Ordenar,
+  Screen,
+  Section,
+  Skeleton,
+  TxRow,
+} from '../ui';
 
-const TIPOS = ['GASTO', 'INGRESO', 'AMBOS'] as const;
+/** Catálogos por tipo (plantilla Lista): una sección por a qué movimientos aplica. */
+const GRUPOS = [
+  ['GASTO', 'Gastos'],
+  ['INGRESO', 'Ingresos'],
+  ['AMBOS', 'Gastos e ingresos'],
+] as const;
 
 export function CategoriasScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
 
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [lista, setLista] = useState<CategoriaMovimientoDTO[] | null>(null);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const [nombre, setNombre] = useState('');
-  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>('GASTO');
-  const [padre, setPadre] = useState('');
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editNombre, setEditNombre] = useState('');
-  const [editPadre, setEditPadre] = useState('');
+  const [busca, setBusca] = useState('');
 
   const cargar = useCallback(async () => {
     setError('');
@@ -45,162 +50,96 @@ export function CategoriasScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  // Raíces en su orden; cada una seguida de sus subcategorías.
+  const nueva = () => nav.go('CatalogoForm', { catalogo: 'categoria' });
   const raices = (lista ?? []).filter((x) => !x.categoriaPadreId);
   const hijosDe = (id: string) => (lista ?? []).filter((x) => x.categoriaPadreId === id);
-  const ordenadas: { cat: CategoriaMovimientoDTO; nivel: 0 | 1; iRaiz: number }[] = [];
-  raices.forEach((r, iRaiz) => {
-    ordenadas.push({ cat: r, nivel: 0, iRaiz });
-    hijosDe(r.id).forEach((h) => ordenadas.push({ cat: h, nivel: 1, iRaiz }));
-  });
-  const opcPadre = [
-    { value: '', label: 'Ninguna (categoría raíz)' },
-    ...raices.map((r) => ({ value: r.id, label: r.nombre })),
-  ];
 
-  const run = async (fn: () => Promise<unknown>, aviso?: string) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (aviso) toast.mostrar(aviso);
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const crear = () =>
-    run(async () => {
-      await api.post(
-        '/comandos/CrearCategoriaMovimiento',
-        {
-          hogarId,
-          nombre: nombre.trim(),
-          tipoAplicable: tipo,
-          ...(padre ? { categoriaPadreId: padre } : {}),
-        },
-        token,
-      );
-      setNombre('');
-      setPadre('');
-    }, 'Categoría creada');
-
-  const guardarEdicion = (cat: CategoriaMovimientoDTO) =>
-    run(async () => {
-      const body: Record<string, unknown> = { categoriaId: cat.id };
-      if (editNombre.trim() !== cat.nombre) body.nombre = editNombre.trim();
-      if (editPadre !== (cat.categoriaPadreId ?? '')) body.categoriaPadreId = editPadre || null;
-      await api.post('/comandos/ActualizarCategoriaMovimiento', body, token);
-      setEditId(null);
-    }, 'Guardado');
-
-  const archivar = async (cat: CategoriaMovimientoDTO) => {
-    if (!(await confirmar('Archivar categoría', `"${cat.nombre}" deja de aparecer al registrar movimientos. Los movimientos ya clasificados no cambian.`, 'Archivar')))
-      return;
-    await run(
-      () => api.post('/comandos/ArchivarCategoriaMovimiento', { categoriaId: cat.id }, token),
-      'Categoría archivada',
-    );
-  };
-
-  const mover = (iRaiz: number, delta: number) => {
-    const j = iRaiz + delta;
-    if (j < 0 || j >= raices.length) return;
+  // Sube o baja una raíz respecto de la vecina de su mismo grupo.
+  const mover = (grupo: CategoriaMovimientoDTO[], i: number, delta: number) => {
+    const a = grupo[i];
+    const b = grupo[i + delta];
+    if (!a || !b) return;
     const orden = [...raices];
-    [orden[iRaiz], orden[j]] = [orden[j], orden[iRaiz]];
+    const ia = orden.indexOf(a);
+    const ib = orden.indexOf(b);
+    [orden[ia], orden[ib]] = [orden[ib], orden[ia]];
     // orden espera TODAS las categorías del hogar — raíces reordenadas + sus hijos.
     const ids = orden.flatMap((r) => [r.id, ...hijosDe(r.id).map((h) => h.id)]);
-    void run(() =>
-      api.post('/comandos/ReordenarCategoriasMovimiento', { hogarId, orden: ids }, token),
+    api
+      .post('/comandos/ReordenarCategoriasMovimiento', { hogarId, orden: ids }, token)
+      .then(cargar)
+      .catch((e) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+  };
+
+  const fila = (cat: CategoriaMovimientoDTO, padre?: CategoriaMovimientoDTO, accesorio?: ReactNode) => {
+    const hijos = padre ? 0 : hijosDe(cat.id).length;
+    return (
+      <TxRow
+        key={cat.id}
+        title={cat.nombre}
+        subtitle={
+          padre ? `Dentro de ${padre.nombre}` : hijos ? `${hijos} subcategoría${hijos === 1 ? '' : 's'}` : undefined
+        }
+        amount=""
+        logo={{ color: cat.color ?? undefined }}
+        accesorio={accesorio}
+        onPress={() => nav.go('CatalogoForm', { catalogo: 'categoria', id: cat.id })}
+      />
     );
   };
 
+  const filtrando = busca.trim() !== '';
+  const total = lista?.length ?? 0;
+
   return (
-    <Screen onRefresh={cargar}>
-      <Ayuda>
-        Vocabulario del hogar para clasificar ingresos y gastos (Mercado,
-        Servicios, Sueldo…). Puedes anidarlas en dos niveles ("Servicios ›
-        Internet"). La lista y el orden los ven todos los miembros.
-      </Ayuda>
+    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva categoría" onPress={nueva} /> : undefined}>
+      <Ayuda>Clasifican ingresos y gastos del hogar.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
+      ) : total === 0 ? (
+        <EmptyState
+          icon="pricetag-outline"
+          titulo="Aún no hay categorías"
+          descripcion="Sirven para ver en qué se va la plata (Mercado, Servicios, Sueldo…)."
+          accion="Crear la primera"
+          onAccion={nueva}
+        />
       ) : (
-        ordenadas.map(({ cat, nivel, iRaiz }) => (
-          <Panel key={cat.id} style={nivel === 1 ? styles.hijo : undefined}>
-            {editId === cat.id ? (
-              <>
-                <Field label="Nombre" value={editNombre} onChangeText={setEditNombre} autoCapitalize="sentences" />
-                <Select
-                  label="Categoría padre"
-                  options={opcPadre.filter((o) => o.value !== cat.id)}
-                  value={editPadre}
-                  onChange={setEditPadre}
-                />
-                <View style={styles.fila}>
-                  <Button title="Guardar" onPress={() => guardarEdicion(cat)} loading={busy} />
-                  <LinkButton title="Cancelar" onPress={() => setEditId(null)} />
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.fila}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.nombre}>
-                      {nivel === 1 ? '› ' : ''}
-                      {cat.nombre}
-                    </Text>
-                    <Text style={styles.muted}>{etiqueta(cat.tipoAplicable)}</Text>
-                  </View>
-                  {nivel === 0 && (
-                    <View style={styles.filaBotones}>
-                      <Pressable hitSlop={8} onPress={() => mover(iRaiz, -1)} accessibilityRole="button" accessibilityLabel="Subir">
-                        <Text style={styles.flecha}>▲</Text>
-                      </Pressable>
-                      <Pressable hitSlop={8} onPress={() => mover(iRaiz, 1)} accessibilityRole="button" accessibilityLabel="Bajar">
-                        <Text style={styles.flecha}>▼</Text>
-                      </Pressable>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.fila}>
-                  <LinkButton
-                    title="Editar"
-                    onPress={() => {
-                      setEditId(cat.id);
-                      setEditNombre(cat.nombre);
-                      setEditPadre(cat.categoriaPadreId ?? '');
-                    }}
-                  />
-                  <LinkButton title="Archivar" onPress={() => archivar(cat)} />
-                </View>
-              </>
-            )}
-          </Panel>
-        ))
+        <>
+          <Buscador total={total} value={busca} onChange={setBusca} />
+          {GRUPOS.map(([tipo, titulo]) => {
+            const grupo = raices.filter((r) => r.tipoAplicable === tipo);
+            const filas = grupo.flatMap((r, i) => {
+              const hijos = hijosDe(r.id);
+              if (!filtrando)
+                return [
+                  fila(r, undefined, (
+                    <Ordenar
+                      onSubir={i > 0 ? () => mover(grupo, i, -1) : undefined}
+                      onBajar={i < grupo.length - 1 ? () => mover(grupo, i, 1) : undefined}
+                    />
+                  )),
+                  ...hijos.map((h) => fila(h, r)),
+                ];
+              return [
+                ...filtrar([r], (x) => x.nombre, busca).map((x) => fila(x)),
+                ...filtrar(hijos, (x) => x.nombre, busca).map((h) => fila(h, r)),
+              ];
+            });
+            return filas.length ? (
+              <Section key={tipo} title={titulo}>
+                <ListCard>{filas}</ListCard>
+              </Section>
+            ) : null;
+          })}
+          {filtrando && filtrar(lista, (x) => x.nombre, busca).length === 0 && (
+            <EmptyState titulo="Nada coincide con la búsqueda" />
+          )}
+        </>
       )}
-
-      <Panel>
-        <Text style={styles.nombre}>Nueva categoría</Text>
-        <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="p. ej. Mascotas" />
-        <Segmented label="Aplica a" options={TIPOS} value={tipo} onChange={setTipo} />
-        <Select label="Categoría padre" options={opcPadre} value={padre} onChange={setPadre} />
-        <Button title="Crear categoría" onPress={crear} loading={busy} disabled={!nombre.trim() || !hogarId} />
-      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  filaBotones: { flexDirection: 'row', gap: 16 },
-  flecha: { fontSize: 16, color: c.primary },
-  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
-  muted: tipoDe(c).nota,
-  hijo: { marginLeft: 20 },
-});
