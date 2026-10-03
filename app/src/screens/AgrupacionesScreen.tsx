@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, SelectRow, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, ElegirVarios, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 export function AgrupacionesScreen() {
   const c = useC();
@@ -107,21 +107,16 @@ export function AgrupacionesScreen() {
         <Panel key={a.id}>
           {editId === a.id ? (
             <>
-              <Text style={styles.nombre}>Elementos de "{a.nombre}"</Text>
-              {elementos.map((el) => {
-                const otra = agrupacionDe(el.id);
-                const enOtra = otra && otra.id !== a.id;
-                return (
-                  <SelectRow
-                    key={el.id}
-                    label={`${el.nombre}${enOtra ? ` · en "${otra!.nombre}"` : ''}`}
-                    selected={sel.includes(el.id)}
-                    onPress={() =>
-                      setSel((xs) => (xs.includes(el.id) ? xs.filter((x) => x !== el.id) : [...xs, el.id]))
-                    }
-                  />
-                );
-              })}
+              <ElegirVarios
+                label={`Elementos de "${a.nombre}"`}
+                values={sel}
+                onChange={setSel}
+                options={elementos.map((el) => {
+                  const otra = agrupacionDe(el.id);
+                  const enOtra = otra && otra.id !== a.id;
+                  return { value: el.id, label: `${el.nombre}${enOtra ? ` · en "${otra!.nombre}"` : ''}` };
+                })}
+              />
               <Button title="Guardar" onPress={() => guardarElementos(a.id)} loading={busy} />
               <LinkButton title="Cancelar" onPress={() => setEditId(null)} />
             </>

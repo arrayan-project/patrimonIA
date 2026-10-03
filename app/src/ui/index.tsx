@@ -1045,11 +1045,101 @@ export function SelectRow({
 export interface OpcionSelect {
   value: string;
   label: string;
+  /** Encabezado bajo el que se muestra (p. ej. "Cuentas", "Cuentas de Zoily"). */
+  grupo?: string;
+}
+
+/**
+ * HZ-3: toda lista de selección va en una hoja modal (`Select`), sin importar
+ * cuántas opciones tenga (homogeneidad). La pantalla nunca crece por una lista.
+ * Con más de `UMBRAL_BUSCADOR` opciones, la hoja muestra un buscador.
+ */
+export const UMBRAL_BUSCADOR = 6;
+
+/** Minúsculas y sin tildes, para el buscador. */
+const normalizar = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Agrupa conservando el orden de aparición; sin grupos (o con uno solo) no hay encabezados. */
+function agrupar(options: OpcionSelect[]): { grupo: string | null; items: OpcionSelect[] }[] {
+  const grupos: { grupo: string | null; items: OpcionSelect[] }[] = [];
+  for (const o of options) {
+    const g = o.grupo ?? null;
+    const actual = grupos.find((x) => x.grupo === g);
+    if (actual) actual.items.push(o);
+    else grupos.push({ grupo: g, items: [o] });
+  }
+  return grupos.length > 1 ? grupos : [{ grupo: null, items: options }];
+}
+
+/** Lista de la hoja modal: buscador (si hay más de UMBRAL_BUSCADOR) y encabezados de grupo. */
+function ListaOpciones({
+  options,
+  elegida,
+  onElegir,
+  extra,
+}: {
+  options: OpcionSelect[];
+  elegida: (v: string) => boolean;
+  onElegir: (v: string) => void;
+  extra?: ReactNode;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const [filtro, setFiltro] = useState('');
+  const visibles = filtro.trim()
+    ? options.filter((o) => normalizar(o.label).includes(normalizar(filtro.trim())))
+    : options;
+
+  return (
+    <>
+      {options.length > UMBRAL_BUSCADOR && (
+        <TextInput
+          style={styles.input}
+          value={filtro}
+          onChangeText={setFiltro}
+          placeholder="Buscar"
+          placeholderTextColor={c.mutedDim}
+          autoCorrect={false}
+          accessibilityLabel="Buscar"
+        />
+      )}
+      <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
+        {agrupar(visibles).map(({ grupo, items }) => (
+          <View key={grupo ?? '∅'}>
+            {grupo ? <Text style={styles.grupoOpciones}>{grupo}</Text> : null}
+            {items.map((o) => (
+              <Pressable
+                key={o.value}
+                style={styles.modalOpcion}
+                accessibilityRole="button"
+                accessibilityLabel={o.label}
+                accessibilityState={{ selected: elegida(o.value) }}
+                onPress={() => onElegir(o.value)}
+              >
+                <Text
+                  style={[
+                    styles.modalOpcionTxt,
+                    elegida(o.value) && { color: c.primary, fontWeight: '700' },
+                  ]}
+                >
+                  {o.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ))}
+        {visibles.length === 0 && <Text style={styles.nota}>Sin resultados.</Text>}
+        {extra}
+      </ScrollView>
+    </>
+  );
 }
 
 /**
  * Selector con hoja modal — para listas largas que como `Segmented` no caben.
  * Con `permiteOtro`, agrega la opción "Otro…" con un campo de texto libre.
+ * Con `opcionNula`, agrega primero una opción "ninguna" (value '').
  */
 export function Select({
   label,
@@ -1058,6 +1148,7 @@ export function Select({
   onChange,
   placeholder = 'Elegir…',
   permiteOtro,
+  opcionNula,
   paso,
 }: {
   label?: string;
@@ -1066,6 +1157,7 @@ export function Select({
   onChange: (v: string) => void;
   placeholder?: string;
   permiteOtro?: boolean;
+  opcionNula?: string;
   paso?: number;
 }) {
   const c = useC();
@@ -1074,8 +1166,11 @@ export function Select({
   const [modoOtro, setModoOtro] = useState(false);
   const [otro, setOtro] = useState('');
 
-  const conocida = options.find((o) => o.value === value);
-  const texto = conocida ? conocida.label : value ? value : placeholder;
+  const todas = opcionNula ? [{ value: '', label: opcionNula }, ...options] : options;
+  const conocida = todas.find((o) => o.value === value);
+  // Un valor fuera de la lista solo se muestra si es texto libre ("Otro…").
+  const libre = permiteOtro && !conocida && value ? value : '';
+  const texto = conocida ? conocida.label : libre || placeholder;
 
   const cerrar = () => {
     setAbierto(false);
@@ -1092,7 +1187,7 @@ export function Select({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <Text style={{ fontSize: 16, color: conocida || value ? c.text : c.mutedDim }}>
+        <Text style={{ flexShrink: 1, fontSize: 16, color: conocida || libre ? c.text : c.mutedDim }}>
           {texto}
         </Text>
         <Text style={styles.selectCaret}>▾</Text>
@@ -1124,42 +1219,121 @@ export function Select({
                 <LinkButton title="Volver a la lista" onPress={() => setModoOtro(false)} />
               </View>
             ) : (
-              <ScrollView style={{ maxHeight: 360 }}>
-                {options.map((o) => (
-                  <Pressable
-                    key={o.value}
-                    style={styles.modalOpcion}
-                    accessibilityRole="button"
-                    accessibilityLabel={o.label}
-                    accessibilityState={{ selected: o.value === value }}
-                    onPress={() => {
-                      onChange(o.value);
-                      cerrar();
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.modalOpcionTxt,
-                        o.value === value && { color: c.primary, fontWeight: '700' },
-                      ]}
+              <ListaOpciones
+                options={todas}
+                elegida={(v) => v === value}
+                onElegir={(v) => {
+                  onChange(v);
+                  cerrar();
+                }}
+                extra={
+                  permiteOtro ? (
+                    <Pressable
+                      style={styles.modalOpcion}
+                      accessibilityRole="button"
+                      accessibilityLabel="Otro valor"
+                      onPress={() => setModoOtro(true)}
                     >
-                      {o.label}
-                    </Text>
-                  </Pressable>
-                ))}
-                {permiteOtro && (
-                  <Pressable
-                    style={styles.modalOpcion}
-                    accessibilityRole="button"
-                    accessibilityLabel="Otro valor"
-                    onPress={() => setModoOtro(true)}
-                  >
-                    <Text style={[styles.modalOpcionTxt, { color: c.primary }]}>Otro…</Text>
-                  </Pressable>
-                )}
-              </ScrollView>
+                      <Text style={[styles.modalOpcionTxt, { color: c.primary }]}>Otro…</Text>
+                    </Pressable>
+                  ) : undefined
+                }
+              />
             )}
             <LinkButton title="Cancelar" onPress={cerrar} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+/** Elegir una opción (HZ-3): siempre `Select` en hoja modal. `null` = ninguna. */
+export function Elegir({
+  label,
+  value,
+  options,
+  onChange,
+  opcionNula,
+  placeholder,
+  paso,
+}: {
+  label: string;
+  value: string | null;
+  options: OpcionSelect[];
+  onChange: (v: string | null) => void;
+  opcionNula?: string;
+  placeholder?: string;
+  paso?: number;
+}) {
+  return (
+    <Select
+      label={label}
+      paso={paso}
+      value={value ?? ''}
+      options={options}
+      opcionNula={opcionNula}
+      placeholder={placeholder}
+      onChange={(v) => onChange(v === '' ? null : v)}
+    />
+  );
+}
+
+/** Elegir varias opciones (HZ-3): siempre en hoja modal, con botón "Listo". */
+export function ElegirVarios({
+  label,
+  values,
+  options,
+  onChange,
+  placeholder = 'Elegir…',
+  paso,
+}: {
+  label: string;
+  values: string[];
+  options: OpcionSelect[];
+  onChange: (vs: string[]) => void;
+  placeholder?: string;
+  paso?: number;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const [abierto, setAbierto] = useState(false);
+  const alternar = (v: string) =>
+    onChange(values.includes(v) ? values.filter((x) => x !== v) : [...values, v]);
+
+  const elegidas = options.filter((o) => values.includes(o.value));
+  const texto =
+    elegidas.length === 0
+      ? placeholder
+      : elegidas.length <= 2
+        ? elegidas.map((o) => o.label).join(', ')
+        : `${elegidas.length} elegidos`;
+
+  return (
+    <View style={styles.field}>
+      <Etiqueta paso={paso}>{label}</Etiqueta>
+      <Pressable
+        style={styles.selectBox}
+        onPress={() => setAbierto(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${texto}`}
+      >
+        <Text style={{ flexShrink: 1, fontSize: 16, color: elegidas.length ? c.text : c.mutedDim }}>
+          {texto}
+        </Text>
+        <Text style={styles.selectCaret}>▾</Text>
+      </Pressable>
+      <Modal visible={abierto} transparent animationType="slide" onRequestClose={() => setAbierto(false)}>
+        <Pressable
+          style={styles.modalFondo}
+          onPress={() => setAbierto(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar"
+        >
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            <Text style={styles.modalTitulo}>{label}</Text>
+            <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} />
+            <Button title="Listo" onPress={() => setAbierto(false)} />
           </Pressable>
         </Pressable>
       </Modal>
@@ -1766,6 +1940,7 @@ const crearEstilos = (c: Paleta) => {
     modalTitulo: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 4 },
     modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.panelAlt },
     modalOpcionTxt: { fontSize: 16, color: c.text },
+    grupoOpciones: { fontSize: 12, fontWeight: '700', color: c.muted, textTransform: 'uppercase', letterSpacing: 0.5, paddingTop: 10, paddingBottom: 2 },
     selectRowText: { fontSize: 15, color: c.text },
     selectRowTextActive: { color: c.text, fontWeight: '600' },
     dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },

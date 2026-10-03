@@ -44,7 +44,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
 | D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
-| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ (2026-10-03); siguiente: bloque 2 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
+| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ en rama, falta el merge (2026-10-03); siguiente: bloque 3, HZ-24 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -155,7 +155,7 @@ resume una cifra que ve el usuario.
 | HZ-1 | Movimientos | FLUJO | Préstamo o encargo de un tercero (Noira → 30.000 → compra del labial). No encontró cómo registrarlo como plata de un tercero. Cuando intentó crearlo, los pasos fueron confusos y no pudo terminar. |
 | HZ-2a | Movimientos | UI | Al registrar un gasto aparece una leyenda genérica ("alguien te aportó"). Debe decir explícitamente algo como *"¿Un miembro del hogar te ayudó a pagar este gasto?"*. |
 | HZ-2b | Movimientos / Hogar | FLUJO | La instrucción de registrarlo como transferencia de esa persona hacia ti es correcta, pero no queda claro **qué sigue**: quién registra qué, si la otra persona también debe registrar la transferencia para que se le descuente, o si basta con uno. |
-| HZ-3 | Transversal | UI | Las listas de selección (categorías, elementos, cuentas) hacen scroll de toda la pantalla y el usuario pierde contexto. **Decisión (Fase E, bloque 2):** listas de selección de más de 6 opciones usan `Select` (hoja modal con buscador y scroll propio). 6 o menos: opciones visibles en línea. La pantalla nunca crece por una lista. Aplica a toda la app. (Reemplaza la solución original, "scroll interno con altura acotada"; ver `GAPS.md`, G33.) |
+| HZ-3 | Transversal | UI | Las listas de selección (categorías, elementos, cuentas) hacen scroll de toda la pantalla y el usuario pierde contexto. **Decisión (Fase E, bloque 2):** toda lista de selección usa `Select` (hoja modal con scroll propio), sin importar cuántas opciones tenga, por homogeneidad de la interfaz; con más de 6 opciones, la hoja agrega un buscador. La pantalla nunca crece por una lista. Aplica a toda la app. (Reemplaza la solución original, "scroll interno con altura acotada", y un primer umbral de 6 opciones en línea; ver `GAPS.md`, G33.) |
 | HZ-4 | Metas | UI | Al apartar dinero se pueden elegir cuentas con disponible cero (por ejemplo Fintual ya apartada al 100%). El error aparece recién al confirmar. La cuenta debe seguir **visible pero deshabilitada (gris)**, mostrando su saldo y que el disponible es cero porque está apartado. No ocultarla, por transparencia. |
 | HZ-5 | Metas / Hogar | DOMINIO | En plantillas, una transferencia solo permite elegir **cuentas propias** como destino. Deberían aparecer las cuentas que otros miembros compartieron con el hogar, agrupadas o etiquetadas por dueño ("Mías" / "Zoily" / …). Toca visibilidad y autorización sobre elementos ajenos. Nota: Registrar movimiento sí ofrece cuentas del hogar en TRANSFERENCIA; revisar por qué las plantillas no. |
 | HZ-6 | Hogar / Inicio | BUG | En la vista del hogar, las cuentas compartidas aparecen pero **el total del hogar queda en cero**. Ver §7 (vía paralela BUG-HOG). |
@@ -176,6 +176,7 @@ resume una cifra que ve el usuario.
 | HZ-21 | Hogar | UI / PROYECCIÓN | Ningún lugar muestra lo que pasa entre los miembros del hogar. **Fase E:** "Entre [pareja] y tú" en Hogar: solicitudes (D-7) y transferencias entre miembros. Solo lectura; no reabre la atribución por persona. |
 | HZ-22 | Transversal | UI | Una decisión de uso frecuente al final del formulario, con un valor ya elegido, no se descubre. **Regla de diseño (Fase E):** la decisión que cambia el significado del registro va en el paso 2. |
 | HZ-23 | Movimientos | UI | El menú con una puerta por caso ("Gasto compartido", cuatro variantes de "Plata de otra persona") no calza con cómo piensa la usuaria (primero la dirección de la plata, después de quién era) y no escala a más miembros. **Resuelto con D-8** (§9). |
+| HZ-24 | Transversal | UI | Los colores no dejan claro qué se puede editar y en qué paso del formulario está el usuario (Juan, 2026-10-03). **Propuesta (pendiente de validar con Zoily):** resaltar el paso actual (círculo invertido: blanco con número negro en tema oscuro, negro con número claro en tema claro) y su sección; los pasos siguientes se ven atenuados y no se pueden tocar hasta completar el actual; lo ya hecho sigue editable. Reglas: (1) los pasos opcionales nunca bloquean; (2) un paso que ya trae valor (Fecha = hoy, Tipo preelegido, plantilla) cuenta como hecho: el paso actual es el primer obligatorio sin completar; (3) bloqueado se ve atenuado, no como error. Incluye revisar el contraste de los campos editables. Bloque 3 de la Fase E. |
 
 ## 5. Catálogo de escenarios de prueba
 
@@ -510,19 +511,24 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Rama `feat/G33-E1-palabras-y-pasos`, probada por Juan en el teléfono
      (tema oscuro y claro) y mergeada (2026-10-03). HZ-22 se aplicó solo a
      Ajuste y Nueva meta: el Tipo de Registrar movimiento y Programados pasa
-     a ser la puerta del menú con D-8 (bloque 6). Residuo: errores del backend
-     sin código (lista en `GAPS.md`, G33), para los bloques 5 o 6.
-  2. HZ-3 + HZ-17: listas de selección (más de 6 opciones en `Select`, hoja
-     modal) y "Desde qué cuenta" / "A qué cuenta" agrupadas por tipo, sin
-     listas repetidas.
-  3. HZ-13: gastar desde la meta (A5).
-  4. C1 + D-2: alta de cuenta y compartir con el hogar.
-  5. D-1: Ahorrar (A1/A2).
-  6. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+     a ser la puerta del menú con D-8 (bloque 7). Residuo: errores del backend
+     sin código (lista en `GAPS.md`, G33), para los bloques 6 o 7.
+  2. ✅ HZ-3 + HZ-17: listas de selección y cuentas agrupadas. Rama
+     `feat/G33-E2-listas`, probada por Juan en el teléfono (2026-10-03). Toda
+     lista de selección abre una hoja (`Elegir` / `ElegirVarios`), con buscador
+     sobre 6 opciones; cuentas agrupadas por tipo y, en Transferencia, por
+     miembro; "A qué cuenta" no repite la de "Desde". Falta: revisar el ajuste
+     "hoja siempre" (sin umbral) y hacer el merge.
+  3. HZ-24: paso actual resaltado y pasos siguientes bloqueados (con las
+     reglas de §4). Validar con Zoily.
+  4. HZ-13: gastar desde la meta (A5).
+  5. C1 + D-2: alta de cuenta y compartir con el hogar.
+  6. D-1: Ahorrar (A1/A2).
+  7. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
      Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
      y recuperación.
-  7. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
+  8. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
      "Entre [miembro] y tú".
-  8. D-5 + D-6: recurrencia y destino de otro miembro.
+  9. D-5 + D-6: recurrencia y destino de otro miembro.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.
