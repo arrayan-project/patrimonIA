@@ -51,7 +51,7 @@ const DICCIONARIO: Record<string, string> = {
   EN_PROGRESO: 'En progreso',
   COMPLETADO: 'Completado',
   CANCELADO: 'Cancelado',
-  LIBERADA: 'Liberada',
+  LIBERADA: 'Sacada de la meta',
   CONSUMIDA: 'Consumida',
 
   // Estado operativo de deuda/crédito (§B2)
@@ -61,7 +61,7 @@ const DICCIONARIO: Record<string, string> = {
   SALDADA: 'Saldada',
   CONDONADA: 'Condonada',
   INCOBRABLE: 'Incobrable',
-  MATERIALIZADO: 'Materializado',
+  MATERIALIZADO: 'Pago confirmado',
   CERRADO: 'Cerrado',
 
   // Rol en el hogar
@@ -106,27 +106,28 @@ const COMANDOS_AUDITORIA: Record<string, string> = {
   EliminarElementoPatrimonial: 'Eliminó el elemento',
   CondonarDeuda: 'Condonó la deuda',
   DeclararIncobrable: 'Declaró el crédito incobrable',
-  CrearObjetivoFinanciero: 'Creó el objetivo',
-  ActualizarDatosObjetivoFinanciero: 'Actualizó el objetivo',
+  CrearObjetivoFinanciero: 'Creó la meta',
+  ActualizarDatosObjetivoFinanciero: 'Actualizó la meta',
   CambiarEstadoObjetivoFinanciero: 'Cambió el estado',
-  CompletarObjetivo: 'El objetivo se completó',
-  EliminarObjetivoFinanciero: 'Eliminó el objetivo',
-  CrearAsignacion: 'Creó el apartado',
-  ActualizarDatosAsignacion: 'Actualizó el apartado',
-  CambiarAsociacionAObjetivo: 'Cambió el objetivo asociado',
-  EliminarAsignacion: 'Eliminó el apartado',
-  CrearReserva: 'Apartó dinero',
-  AjustarMontoReserva: 'Ajustó el monto apartado',
-  LiberarReserva: 'Liberó dinero apartado',
+  CompletarObjetivo: 'La meta se completó',
+  EliminarObjetivoFinanciero: 'Eliminó la meta',
+  CrearAsignacion: 'Creó el ahorro',
+  ActualizarDatosAsignacion: 'Actualizó el ahorro',
+  CambiarAsociacionAObjetivo: 'Cambió la meta asociada',
+  EliminarAsignacion: 'Eliminó el ahorro',
+  CrearReserva: 'Ahorró',
+  AjustarMontoReserva: 'Ajustó el monto ahorrado',
+  LiberarReserva: 'Sacó plata de la meta',
 };
 
 /**
- * Glosario de la UI (G32 H-01/H-13). En pantalla se habla de "Apartado";
- * Asignación y Reserva quedan como términos internos del dominio.
+ * Glosario de la UI (G32 H-01/H-13; D-4 de G33). En pantalla se habla de "Meta",
+ * "Ahorrar" y "en la meta"; Objetivo, Asignación y Reserva quedan como términos
+ * internos del dominio.
  */
 export const GLOSARIO = {
   apartado:
-    'Apartar es separar plata de una cuenta para una meta. No sale de la cuenta: sigue ahí, pero queda comprometida y no cuenta como disponible.',
+    'Ahorrar para una meta separa plata de una cuenta. No sale de la cuenta: sigue ahí, pero queda en la meta y no cuenta como libre para gastar.',
   valorizar:
     'Una valorización actualiza cuánto vale hoy un bien o inversión (precio de mercado, tasación). No es un movimiento de dinero. El nuevo valor reemplaza al vigente —no se suma— y el cambio queda en el historial.',
   ajuste:

@@ -12,6 +12,8 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
+  Etiqueta,
   Ayuda,
   Button,
   Card,
@@ -121,13 +123,15 @@ export function MovimientosProgramadosScreen() {
   const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
   const errFecha = fechaValida ? '' : 'Elige una fecha.';
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
       <Title>Movimientos programados</Title>
 
       <Ayuda>
         Un movimiento futuro con fecha: un ingreso (sueldo), un gasto (arriendo) o
-        una transferencia. Cuando llega la fecha lo "materializas" y recién ahí
+        una transferencia. Cuando llega la fecha, confirmas el pago y recién ahí
         entra como un movimiento real.
       </Ayuda>
 
@@ -159,18 +163,19 @@ export function MovimientosProgramadosScreen() {
 
       <Panel>
         <Text style={styles.nombre}>Nuevo movimiento programado</Text>
-        <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
+        <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={paso()} />
         <MoneyField
           label="Monto planificado"
+          paso={paso()}
           value={monto}
           onChange={setMonto}
           moneda={monedaRef}
           error={intento ? errMonto : undefined}
         />
-        <DateField label="Fecha" value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
+        <DateField label="Fecha" paso={paso()} value={fecha} onChange={setFecha} error={intento ? errFecha : undefined} />
         {usaOrigen && (
           <>
-            <Text style={styles.label}>Cuenta de origen (de dónde sale)</Text>
+            <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
             {elementos.map((el) => (
               <SelectRow
                 key={el.id}
@@ -183,7 +188,7 @@ export function MovimientosProgramadosScreen() {
         )}
         {usaDestino && (
           <>
-            <Text style={styles.label}>Cuenta de destino (a dónde entra)</Text>
+            <Etiqueta paso={paso()}>A qué cuenta</Etiqueta>
             {elementos.map((el) => (
               <SelectRow
                 key={el.id}
@@ -194,7 +199,7 @@ export function MovimientosProgramadosScreen() {
             ))}
           </>
         )}
-        <Field label="Observaciones (opcional)" value={obs} onChangeText={setObs} autoCapitalize="sentences" />
+        <Field label="Observaciones (opcional)" paso={paso()} value={obs} onChangeText={setObs} autoCapitalize="sentences" />
         <Button title="Programar" onPress={crear} loading={busy} />
       </Panel>
 

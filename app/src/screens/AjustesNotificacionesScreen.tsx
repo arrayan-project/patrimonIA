@@ -6,8 +6,8 @@ import { useToast } from '../ui/Toast';
 import { Ayuda, Button, ErrorText, Screen, Segmented, Skeleton, Title } from '../ui';
 
 const NOTIF_TIPOS = [
-  ['OBJETIVO_COMPLETADO', 'Objetivo completado'],
-  ['RESERVA_CONSUMIDA', 'Dinero apartado que se usó'],
+  ['OBJETIVO_COMPLETADO', 'Meta completada'],
+  ['RESERVA_CONSUMIDA', 'Plata de una meta que se usó'],
   ['INVITACION_RECIBIDA', 'Invitación a un hogar'],
 ] as const;
 

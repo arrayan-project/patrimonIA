@@ -139,10 +139,10 @@ export function HogarConsolidadoScreen() {
       })}
 
       <Panel>
-        <Text style={styles.sectionTitle}>Objetivos del hogar</Text>
+        <Text style={styles.sectionTitle}>Metas del hogar</Text>
         <Row
-          left="Objetivos"
-          right={`${met.objetivos.total} (${met.objetivos.enProgreso} en progreso, ${met.objetivos.completados} completados)`}
+          left="Metas"
+          right={`${met.objetivos.total} (${met.objetivos.enProgreso} en progreso, ${met.objetivos.completados} completadas)`}
         />
         {met.objetivos.avancePorcentaje != null && (
           <>

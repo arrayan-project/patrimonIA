@@ -16,6 +16,8 @@ import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
+  Etiqueta,
   Ayuda,
   Button,
   ErrorText,
@@ -129,7 +131,7 @@ export function ObjetivoDetalleScreen() {
         { asignacionId, elementoOrigenId: origenId, monto: Number(montoApartar) },
         token,
       );
-      toast.mostrar('Dinero apartado');
+      toast.mostrar('Ahorro registrado');
       setMontoApartar('');
       setOrigenId(null);
       await cargar();
@@ -149,6 +151,8 @@ export function ObjetivoDetalleScreen() {
     );
   }
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
       <Title>{obj.nombre}</Title>
@@ -159,18 +163,18 @@ export function ObjetivoDetalleScreen() {
         {obj.hogarId ? ' · del hogar' : ''}
       </Text>
       {obj.hogarId && !obj.puedoModificar && (
-        <Ayuda>Objetivo del hogar. Puedes verlo pero no modificarlo (no eres designado).</Ayuda>
+        <Ayuda>Meta del hogar. Puedes verla pero no modificarla (no eres designado).</Ayuda>
       )}
 
       {obj.puedoModificar && (
         <Panel>
-          <Text style={styles.sectionTitle}>Apartar dinero</Text>
+          <Text style={styles.sectionTitle}>Ahorrar</Text>
           <Ayuda>{GLOSARIO.apartado}</Ayuda>
           {cuentas.length === 0 ? (
-            <Text style={styles.muted}>Primero agrega una cuenta desde donde apartar.</Text>
+            <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
           ) : (
             <>
-              <Text style={styles.muted}>¿De qué cuenta?</Text>
+              <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
               {cuentas.map((el) => (
                 <SelectRow
                   key={el.id}
@@ -181,7 +185,7 @@ export function ObjetivoDetalleScreen() {
               ))}
               {asignaciones.length > 1 && (
                 <>
-                  <Text style={styles.muted}>¿Para qué parte de la meta?</Text>
+                  <Etiqueta paso={paso()}>¿Para qué parte de la meta?</Etiqueta>
                   {asignaciones.map((a) => (
                     <SelectRow
                       key={a.id}
@@ -192,9 +196,9 @@ export function ObjetivoDetalleScreen() {
                   ))}
                 </>
               )}
-              <MoneyField label="Monto a apartar" value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
+              <MoneyField label="¿Cuánto?" paso={paso()} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
               <Button
-                title="Apartar dinero"
+                title="Ahorrar"
                 loading={busy}
                 disabled={!origenId || !(Number(montoApartar) > 0)}
                 onPress={apartar}
@@ -206,8 +210,8 @@ export function ObjetivoDetalleScreen() {
 
       {(asignaciones.length > 0 || obj.puedoModificar) && (
         <Panel>
-          <Text style={styles.sectionTitle}>Lo apartado</Text>
-          {asignaciones.length === 0 && <Text style={styles.muted}>Aún no apartas dinero para esta meta.</Text>}
+          <Text style={styles.sectionTitle}>En la meta</Text>
+          {asignaciones.length === 0 && <Text style={styles.muted}>Aún no ahorras para esta meta.</Text>}
           {asignaciones.map((a) => (
             <Pressable
               key={a.id}
@@ -273,7 +277,7 @@ export function ObjetivoDetalleScreen() {
           />
           {obj.hogarId && (
             <>
-              <Ayuda>Elige quién más puede modificar este objetivo (apartar dinero, editar).</Ayuda>
+              <Ayuda>Elige quién más puede modificar esta meta (ahorrar, editar).</Ayuda>
               {miembros
                 .filter((m) => m.usuarioId !== usuario.id)
                 .map((m) => (
@@ -334,7 +338,7 @@ export function ObjetivoDetalleScreen() {
           <>
             <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
             <Button
-              title="Eliminar objetivo"
+              title="Eliminar meta"
               variant="secondary"
               loading={busy}
               disabled={motivo.trim().length < 3}

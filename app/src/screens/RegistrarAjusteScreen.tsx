@@ -7,6 +7,7 @@ import { GLOSARIO } from '../labels';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
   aISO,
   Ayuda,
   Button,
@@ -73,6 +74,8 @@ export function RegistrarAjusteScreen() {
     }
   };
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
@@ -86,27 +89,31 @@ export function RegistrarAjusteScreen() {
           : GLOSARIO.ajuste}
       </Ayuda>
 
-      <Segmented
-        label="El valor real es…"
-        options={['Menor', 'Mayor'] as const}
-        value={direccion}
-        onChange={setDireccion}
-      />
       <MoneyField
         label={`Diferencia (${moneda})`}
+        paso={paso()}
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
         error={intento ? errMagnitud : undefined}
+      />
+      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+      <Segmented
+        label="El valor real es…"
+        paso={paso()}
+        options={['Menor', 'Mayor'] as const}
+        value={direccion}
+        onChange={setDireccion}
       />
       {valorActual !== undefined && Number(magnitud) > 0 && (
         <Paragraph>
           Nuevo valor: {money(valorActual + monto, moneda)}
         </Paragraph>
       )}
-      <DateField label="Fecha" value={fecha} onChange={setFecha} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso()} />
       <Field
         label="Motivo (obligatorio)"
+        paso={paso()}
         value={motivo}
         onChangeText={setMotivo}
         placeholder="Por qué hay una diferencia"

@@ -59,7 +59,7 @@ export function AjusteDetalleScreen() {
         );
         toast.mostrar('Ajuste corregido');
       } else {
-        if (!(await confirmar('Anular ajuste', 'Se revierte el efecto del ajuste sobre el saldo.', 'Anular'))) {
+        if (!(await confirmar('Eliminar ajuste', 'Se revierte el efecto del ajuste sobre el saldo.', 'Eliminar'))) {
           setEnviando(false);
           return;
         }
@@ -68,7 +68,7 @@ export function AjusteDetalleScreen() {
           { ajusteId, motivo: motivo.trim() },
           token,
         );
-        toast.mostrar('Ajuste anulado');
+        toast.mostrar('Ajuste eliminado');
       }
       nav.back();
     } catch (e) {
@@ -97,14 +97,14 @@ export function AjusteDetalleScreen() {
       <Panel>
         <Row left="Fecha" right={fechaLegible(ajuste.fecha)} />
         <Row left="Motivo" right={ajuste.motivo} />
-        <Row left="Estado" right={ajuste.anulado ? 'Anulado' : 'Vigente'} />
+        <Row left="Estado" right={ajuste.anulado ? 'Eliminado' : 'Vigente'} />
         {ajuste.correccionDeId && <Text style={styles.nota}>Es la corrección de un ajuste anterior.</Text>}
       </Panel>
 
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
           <Button title="Corregir monto" onPress={() => setModo('corregir')} />
-          <Button title="Anular ajuste" variant="danger" onPress={() => setModo('anular')} />
+          <Button title="Eliminar ajuste" variant="danger" onPress={() => setModo('anular')} />
         </View>
       )}
 
@@ -121,10 +121,10 @@ export function AjusteDetalleScreen() {
 
       {modo === 'anular' && (
         <Panel>
-          <Text style={styles.formTitle}>Anular ajuste</Text>
+          <Text style={styles.formTitle}>Eliminar ajuste</Text>
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
-          <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <Button title="Eliminar" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </Panel>
       )}

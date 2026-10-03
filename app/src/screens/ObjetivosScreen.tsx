@@ -10,6 +10,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
   Ayuda,
   Button,
   EmptyState,
@@ -45,7 +46,7 @@ export function ObjetivosScreen() {
   const [busy, setBusy] = useState(false);
   const [intento, setIntento] = useState(false);
 
-  const errNombre = nombre.trim() ? '' : 'Ponle un nombre al objetivo.';
+  const errNombre = nombre.trim() ? '' : 'Ponle un nombre a la meta.';
   const errMonto = Number(monto) > 0 ? '' : 'La meta debe ser mayor a 0.';
 
   const cargar = useCallback(async () => {
@@ -80,7 +81,7 @@ export function ObjetivosScreen() {
         },
         token,
       );
-      toast.mostrar('Objetivo creado');
+      toast.mostrar('Meta creada');
       setNombre('');
       setMonto('');
       setMoneda('CLP');
@@ -95,28 +96,25 @@ export function ObjetivosScreen() {
 
   // G32 H-10 — el "+" de Planificar llega con `nuevo`: el formulario va primero.
   const nuevoArriba = nav.route.params?.nuevo === true;
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   const formulario = (
     <Panel>
-      <Text style={styles.nombre}>Nuevo objetivo</Text>
+      <Text style={styles.nombre}>Nueva meta</Text>
       <Field
         label="Nombre"
+        paso={paso()}
         value={nombre}
         onChangeText={setNombre}
         autoCapitalize="sentences"
         placeholder="Pie vivienda"
         error={intento ? errNombre : undefined}
       />
-      <MoneyField
-        label="Monto objetivo"
-        value={monto}
-        onChange={setMonto}
-        moneda={moneda}
-        error={intento ? errMonto : undefined}
-      />
-      <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
       {hogarId && (
         <Segmented
           label="¿Compartir con el hogar?"
+          paso={paso()}
           options={['No', 'Sí'] as const}
           value={compartir}
           onChange={setCompartir}
@@ -125,20 +123,29 @@ export function ObjetivosScreen() {
       )}
       {compartir === 'Sí' && (
         <Text style={styles.muted}>
-          Todos los miembros lo verán. Podrás designar quiénes pueden modificarlo.
+          Todos los miembros la verán. Podrás designar quiénes pueden modificarla.
         </Text>
       )}
-      <Button title="Crear objetivo" onPress={crear} loading={busy} />
+      <MoneyField
+        label="¿Cuánto quieres juntar?"
+        paso={paso()}
+        value={monto}
+        onChange={setMonto}
+        moneda={moneda}
+        error={intento ? errMonto : undefined}
+      />
+      <Select label="Moneda" paso={paso()} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      <Button title="Crear meta" onPress={crear} loading={busy} />
     </Panel>
   );
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Objetivos financieros</Title>
+      <Title>Metas</Title>
 
       <Ayuda>
-        Un objetivo es una meta de ahorro (el pie de una vivienda, un viaje).
-        Adentro apartas dinero de tus cuentas para ir viendo el avance.
+        Una meta es algo para lo que juntas plata (el pie de una vivienda, un viaje).
+        Adentro ahorras desde tus cuentas para ir viendo el avance.
       </Ayuda>
 
       {nuevoArriba && formulario}
@@ -148,8 +155,8 @@ export function ObjetivosScreen() {
       ) : objetivos.length === 0 ? (
         <EmptyState
           icon="flag-outline"
-          titulo="Aún no tienes objetivos"
-          descripcion={`Créalo ${nuevoArriba ? 'arriba' : 'abajo'} y luego aparta dinero para él.`}
+          titulo="Aún no tienes metas"
+          descripcion={`Créalo ${nuevoArriba ? 'arriba' : 'abajo'} y luego ahorra para ella.`}
         />
       ) : (
         (() => {
@@ -160,7 +167,7 @@ export function ObjetivosScreen() {
           const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
           return enProgreso.length > 1 && monedas.size === 1 ? (
             <GoalCard
-              name={`Avance total · ${enProgreso.length} objetivos activos`}
+              name={`Avance total · ${enProgreso.length} metas activas`}
               hint={`${pct}%`}
               pct={pct}
               footLeft={`${money(avance, [...monedas][0])} / ${money(meta, [...monedas][0])}`}

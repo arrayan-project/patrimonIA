@@ -781,16 +781,41 @@ export function Paragraph({ children }: { children: ReactNode }) {
   return <Text style={styles.paragraph}>{children}</Text>;
 }
 
+/**
+ * Numera las preguntas de un formulario (HZ-19). Se crea en cada render y se
+ * llama en el orden del JSX: un campo oculto no consume número, así que no
+ * quedan saltos.
+ */
+export function contadorPasos(): () => number {
+  let n = 0;
+  return () => ++n;
+}
+
+/** Etiqueta de una pregunta; con `paso`, lleva delante un número sutil. */
+export function Etiqueta({ paso, children }: { paso?: number; children: ReactNode }) {
+  const styles = useEstilos();
+  if (paso == null) return <Text style={styles.label}>{children}</Text>;
+  return (
+    <View style={styles.etiquetaPaso}>
+      <View style={styles.numeroPaso} accessibilityElementsHidden importantForAccessibility="no">
+        <Text style={styles.numeroPasoTexto}>{paso}</Text>
+      </View>
+      <Text style={[styles.label, { flexShrink: 1 }]}>{children}</Text>
+    </View>
+  );
+}
+
 export function Field({
   label,
   error,
+  paso,
   ...props
-}: TextInputProps & { label: string; error?: string }) {
+}: TextInputProps & { label: string; error?: string; paso?: number }) {
   const c = useC();
   const styles = useEstilos();
   return (
     <View style={styles.field}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         placeholderTextColor={c.mutedDim}
@@ -813,6 +838,7 @@ export function DateField({
   optional,
   error,
   placeholder = 'Elegir fecha',
+  paso,
 }: {
   label: string;
   value: string;
@@ -820,6 +846,7 @@ export function DateField({
   optional?: boolean;
   error?: string;
   placeholder?: string;
+  paso?: number;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -833,7 +860,7 @@ export function DateField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Etiqueta paso={paso}>{label}</Etiqueta>
       {Platform.OS === 'web' ? (
         <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
       ) : (
@@ -871,6 +898,7 @@ export function MoneyField({
   moneda,
   placeholder = '0',
   error,
+  paso,
 }: {
   label: string;
   value: string;
@@ -878,6 +906,7 @@ export function MoneyField({
   moneda?: string;
   placeholder?: string;
   error?: string;
+  paso?: number;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -899,7 +928,7 @@ export function MoneyField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{moneda ? `${label} (${moneda})` : label}</Text>
+      <Etiqueta paso={paso}>{moneda ? `${label} (${moneda})` : label}</Etiqueta>
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         keyboardType="numeric"
@@ -959,17 +988,19 @@ export function Segmented<T extends string>({
   value,
   onChange,
   formatearOpcion = etiqueta,
+  paso,
 }: {
   label?: string;
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
   formatearOpcion?: (v: T) => string;
+  paso?: number;
 }) {
   const styles = useEstilos();
   return (
     <View style={styles.field}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <View style={styles.segmented}>
         {options.map((opt) => (
           <Pressable
@@ -1027,6 +1058,7 @@ export function Select({
   onChange,
   placeholder = 'Elegir…',
   permiteOtro,
+  paso,
 }: {
   label?: string;
   value: string;
@@ -1034,6 +1066,7 @@ export function Select({
   onChange: (v: string) => void;
   placeholder?: string;
   permiteOtro?: boolean;
+  paso?: number;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -1052,7 +1085,7 @@ export function Select({
 
   return (
     <View style={styles.field}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
       <Pressable
         style={styles.selectBox}
         onPress={() => setAbierto(true)}
@@ -1654,6 +1687,17 @@ const crearEstilos = (c: Paleta) => {
     paragraph: { fontSize: 15, color: c.muted, lineHeight: 22 },
     field: { gap: 6 },
     label: { fontSize: 13, fontWeight: '600', color: c.text },
+    etiquetaPaso: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    numeroPaso: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.mutedDim,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    numeroPasoTexto: { fontSize: 11, fontWeight: '600', color: c.muted },
     input: {
       borderWidth: 1,
       borderColor: c.border,

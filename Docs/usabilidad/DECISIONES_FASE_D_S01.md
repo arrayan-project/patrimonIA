@@ -20,7 +20,7 @@ Fase E.
 | D-2 | Qué compartes con el hogar | Una pregunta con 4 niveles: **Nada · Que puedan transferirme · Que vean el saldo y sume al hogar · Todo (también movimientos)**. Combinaciones raras en "Avanzado". Si se omite al crear: **"Que puedan transferirme"**. Cuentas existentes que no calzan con un nivel: "Personalizado". | Ninguno (valores por defecto y presentación) |
 | D-3 | Plata de otra persona | Servicio `RegistrarPlataDeOtraPersona` con la opción (b) de `BENCHMARK_S01.md` §4: la Deuda o el Crédito nace con pendiente 0 **solo dentro de esta orquestación**, junto con la TRANSFERENCIA que lo origina. Puertas: intención en el menú `+` y "¿Era plata de otra persona?" en Gasto e Ingreso. La persona se elige de la lista de saldos existentes o "Nueva persona"; **nunca por texto libre**. | DOMINIO (HZ-11): invariante `valorPendiente > 0` admite 0 solo en esta orquestación |
 | D-3 · borde | Saldo que cruza de signo | Si un movimiento supera el saldo existente, la orquestación salda ese elemento a 0 y abre o aumenta el opuesto en la misma transacción. La UI muestra **un solo saldo con signo** ("Noira te debe 5.000"). Los elementos en 0 no se desactivan (se reúsan) y se ocultan de la lista mientras estén en 0. | Incluido en la orquestación de D-3 |
-| D-4 | Palabras | Diccionario de §2. Se retira de la superficie "Apartados sin objetivo"; las reservas existentes sin objetivo se muestran en un grupo "Separado sin meta", sin entrada para crear. | Ninguno |
+| D-4 | Palabras | Diccionario de §2. Se retira de la superficie "Apartados sin objetivo"; las reservas existentes sin objetivo se muestran en un grupo "Ahorro sin meta" (nombre ajustado en la Fase E, bloque 1), sin entrada para crear ni para agregarles plata. | Ninguno |
 | D-5 | Destino de otro miembro | Plantillas **y** programados aceptan como destino una cuenta de otro miembro con la misma regla de TRANSFERENCIA (G6): nivel ≥ "Que puedan transferirme". El origen sigue siendo propio. | DOMINIO: relajar G24 (plantillas) y G2 (programados) |
 | D-6 | Recurrencia | Los programados tienen periodicidad (mensual / anual), día y categoría. **No se registran solos:** en la fecha llega un aviso "¿Se pagó?"; al confirmar se puede ajustar el monto; sin respuesta queda pendiente. Las plantillas se muestran como "Frecuentes". | DOMINIO (HZ-16): campos nuevos en `MovimientoProgramado` |
 | D-7 | Solicitud de aporte (M7) | Notificación con acción (Principio 4), tipo nuevo `SOLICITUD_APORTE`. Quien pagó registra el gasto y responde "¿Lo compartes con tu pareja?"; la pareja toca "Transferir" y llega a la transferencia prellenada; puede confirmar o rechazar; quien pagó ve "pendiente / pagado". Si la cuenta de quien pagó no permite recibir, se le pide subir su nivel (D-2). | Tipo de notificación nuevo; comandos intactos |
@@ -34,7 +34,8 @@ Fase E.
 | Liberar | Sacar de la meta |
 | Disponible | Libre para gastar |
 | Origen / destino | Desde qué cuenta / A qué cuenta |
-| Valor inicial | Saldo actual |
+| Valor inicial | Saldo actual (cuentas) · Valor actual (bienes) · Lo que debes hoy (deudas) |
+| Apartados sin objetivo | Ahorro sin meta (solo los que ya existen) |
 | Materializar | Confirmar pago |
 | Anular | Eliminar |
 

@@ -44,7 +44,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
 | D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
-| E — Implementación | ▶ Siguiente (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
+| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ (2026-10-03); siguiente: bloque 2 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -506,7 +506,12 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 - [x] **Claude Code:** Tarea 7 de `CIERRE_FASE_D_S01.md` §6 (registro del cierre
       de la Fase D).
 - [ ] **Fase E**, en este orden ([`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5):
-  1. D-4 (diccionario) + HZ-19 (numeración) + HZ-22 (regla del paso 2).
+  1. ✅ D-4 (diccionario) + HZ-19 (numeración) + HZ-22 (regla del paso 2).
+     Rama `feat/G33-E1-palabras-y-pasos`, probada por Juan en el teléfono
+     (tema oscuro y claro) y mergeada (2026-10-03). HZ-22 se aplicó solo a
+     Ajuste y Nueva meta: el Tipo de Registrar movimiento y Programados pasa
+     a ser la puerta del menú con D-8 (bloque 5). Residuo: errores del backend
+     sin código (lista en `GAPS.md`, G33), para los bloques 4 o 5.
   2. HZ-13: gastar desde la meta (A5).
   3. C1 + D-2: alta de cuenta y compartir con el hogar.
   4. D-1: Ahorrar (A1/A2).

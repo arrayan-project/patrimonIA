@@ -136,7 +136,7 @@ export function MovimientoDetalleScreen() {
         await api.post('/comandos/CorregirEventoFinanciero', body, token);
         toast.mostrar('Movimiento corregido');
       } else {
-        if (!(await confirmar('Anular movimiento', 'Se revierte su efecto sobre el saldo. Queda en el historial marcado como anulado.', 'Anular'))) {
+        if (!(await confirmar('Eliminar movimiento', 'Se revierte su efecto sobre el saldo. Queda en el historial marcado como eliminado.', 'Eliminar'))) {
           setEnviando(false);
           return;
         }
@@ -145,7 +145,7 @@ export function MovimientoDetalleScreen() {
           { eventoId, motivo: motivo.trim() },
           token,
         );
-        toast.mostrar('Movimiento anulado');
+        toast.mostrar('Movimiento eliminado');
       }
       nav.back();
     } catch (e) {
@@ -279,7 +279,7 @@ export function MovimientoDetalleScreen() {
         {impacto && (
           <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
         )}
-        <Row left="Estado" right={evento.anulado ? 'Anulado' : 'Vigente'} />
+        <Row left="Estado" right={evento.anulado ? 'Eliminado' : 'Vigente'} />
         {evento.etiquetaIds.length > 0 && (
           <View style={styles.chips}>
             {evento.etiquetaIds.map((id) => {
@@ -297,8 +297,8 @@ export function MovimientoDetalleScreen() {
       {modo === null && accionable && (
         <Ayuda>
           Corregir: el movimiento ocurrió pero con otro monto, fecha o detalle. Se
-          registra la diferencia y el original queda enlazado a su corrección. Anular:
-          el movimiento no ocurrió — se revierte su efecto por completo.
+          registra la diferencia y el original queda enlazado a su corrección. Eliminar:
+          el movimiento no ocurrió — se revierte su efecto por completo y queda en el historial.
         </Ayuda>
       )}
 
@@ -326,7 +326,7 @@ export function MovimientoDetalleScreen() {
             />
           )}
           {accionable && (
-            <Button title="Anular movimiento" variant="danger" onPress={() => setModo('anular')} />
+            <Button title="Eliminar movimiento" variant="danger" onPress={() => setModo('anular')} />
           )}
         </View>
       )}
@@ -386,7 +386,7 @@ export function MovimientoDetalleScreen() {
           <Ayuda>
             El movimiento ocurrió, pero con otro monto, fecha o detalle. Se registra una
             corrección enlazada; el original queda intacto. Para cambiar el tipo o los
-            elementos, anula y regístralo de nuevo.
+            elementos, elimínalo y regístralo de nuevo.
           </Ayuda>
           <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={evento.moneda} />
           <DateField label="Fecha correcta" value={nuevaFecha} onChange={setNuevaFecha} />
@@ -410,10 +410,10 @@ export function MovimientoDetalleScreen() {
 
       {modo === 'anular' && (
         <Panel>
-          <Text style={styles.formTitle}>Anular movimiento</Text>
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" autoCapitalize="sentences" />
+          <Text style={styles.formTitle}>Eliminar movimiento</Text>
+          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se elimina" autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
-          <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <Button title="Eliminar" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </Panel>
       )}

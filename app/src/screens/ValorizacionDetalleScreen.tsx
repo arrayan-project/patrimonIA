@@ -64,7 +64,7 @@ export function ValorizacionDetalleScreen() {
         const efecto = esUltimaVigente
           ? 'El valor del elemento se descuenta en lo que subió o bajó con esta valorización.'
           : 'El valor actual no cambia (lo fija una valorización posterior); se recalcula el historial entre ambas.';
-        if (!(await confirmar('Anular valorización', efecto, 'Anular'))) {
+        if (!(await confirmar('Eliminar valorización', efecto, 'Eliminar'))) {
           setEnviando(false);
           return;
         }
@@ -73,7 +73,7 @@ export function ValorizacionDetalleScreen() {
           { valorizacionId, motivo: motivo.trim() },
           token,
         );
-        toast.mostrar('Valorización anulada');
+        toast.mostrar('Valorización eliminada');
       }
       nav.back();
     } catch (e) {
@@ -106,7 +106,7 @@ export function ValorizacionDetalleScreen() {
 
       <Panel>
         <Row left="Fecha" right={fechaLegible(val.fecha)} />
-        <Row left="Estado" right={val.anulada ? 'Anulada' : 'Vigente'} />
+        <Row left="Estado" right={val.anulada ? 'Eliminada' : 'Vigente'} />
         {val.correccionDeId && (
           <Text style={styles.nota}>Es la corrección de una valorización anterior.</Text>
         )}
@@ -118,7 +118,7 @@ export function ValorizacionDetalleScreen() {
       {accionable && modo === null && (
         <View style={{ gap: 8 }}>
           <Button title="Corregir valor" onPress={() => setModo('corregir')} />
-          <Button title="Anular valorización" variant="danger" onPress={() => setModo('anular')} />
+          <Button title="Eliminar valorización" variant="danger" onPress={() => setModo('anular')} />
         </View>
       )}
 
@@ -135,10 +135,10 @@ export function ValorizacionDetalleScreen() {
 
       {modo === 'anular' && (
         <Panel>
-          <Text style={styles.formTitle}>Anular valorización</Text>
+          <Text style={styles.formTitle}>Eliminar valorización</Text>
           <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
           <ErrorText>{error}</ErrorText>
-          <Button title="Anular" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
+          <Button title="Eliminar" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
           <LinkButton title="Cancelar" onPress={() => setModo(null)} />
         </Panel>
       )}

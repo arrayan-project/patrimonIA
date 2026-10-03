@@ -218,19 +218,19 @@ export function ElementoDetalleScreen() {
 
       {reservas.length > 0 && (
         <Panel>
-          <SectionTitle>Disponibilidad</SectionTitle>
+          <SectionTitle>Libre para gastar</SectionTitle>
           <Row left="Valor vigente" right={money(el.valorVigente, el.moneda)} />
-          <Row left="Apartado para metas" right={`− ${money(reservado, el.moneda)}`} />
-          <Row left="Disponible (libre)" right={money(libre, el.moneda)} />
+          <Row left="En metas" right={`− ${money(reservado, el.moneda)}`} />
+          <Row left="Libre para gastar" right={money(libre, el.moneda)} />
           <Nota>
-            Lo apartado no salió de la cuenta: sigue ahí, pero está comprometido
-            para tus objetivos. "Disponible" es lo que puedes usar sin tocar una meta.
+            Lo que está en metas no salió de la cuenta: sigue ahí, pero lo ahorraste
+            para tus metas. "Libre para gastar" es lo que puedes usar sin tocar una meta.
           </Nota>
           {reservas.map((r) => (
             <ListItem
               key={r.id}
               title={r.objetivoNombre ? `${r.objetivoNombre} · ${r.asignacionNombre}` : r.asignacionNombre}
-              subtitle={r.objetivoNombre ? 'Objetivo' : 'Apartado sin objetivo'}
+              subtitle={r.objetivoNombre ? 'Meta' : 'Ahorro sin meta'}
               right={money(r.monto, el.moneda)}
               onPress={() =>
                 nav.go('AsignacionDetalle', { asignacionId: r.asignacionId, contexto: el.nombre })
@@ -356,7 +356,7 @@ export function ElementoDetalleScreen() {
                 const monto =
                   (impacto?.monto ?? ev.monto) + (corr ? (corrImpacto?.monto ?? 0) : 0);
                 const sufijo = ev.anulado
-                  ? 'anulado'
+                  ? 'eliminado'
                   : corr
                     ? `corregido · ${fechaLegible(ev.fecha)}`
                     : fechaLegible(ev.fecha);
@@ -398,7 +398,7 @@ export function ElementoDetalleScreen() {
             valorizaciones.map((v) => (
               <ListItem
                 key={v.id}
-                title={v.anulada ? 'anulada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
+                title={v.anulada ? 'eliminada' : v.correccionDeId ? 'corrección' : fechaLegible(v.fecha)}
                 tachado={v.anulada}
                 right={
                   <Text style={[styles.movMonto, v.anulada && styles.tachado]}>
@@ -441,7 +441,7 @@ export function ElementoDetalleScreen() {
           ajustes.map((a) => (
             <ListItem
               key={a.id}
-              title={a.anulado ? 'anulado' : a.correccionDeId ? 'corrección' : a.motivo}
+              title={a.anulado ? 'eliminado' : a.correccionDeId ? 'corrección' : a.motivo}
               tachado={a.anulado}
               right={
                 a.anulado ? (

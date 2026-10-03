@@ -17,6 +17,8 @@ import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
+  Etiqueta,
   aISO,
   Button,
   Chip,
@@ -183,7 +185,7 @@ export function RegistrarMovimientoScreen() {
   const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
   const errMismo =
     necesitaOrigen && necesitaDestino && origenId && origenId === destinoId
-      ? 'El origen y el destino no pueden ser el mismo.'
+      ? 'La cuenta de salida y la de llegada no pueden ser la misma.'
       : '';
 
   const onSubmit = async () => {
@@ -236,6 +238,8 @@ export function RegistrarMovimientoScreen() {
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId;
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen>
       <Title>Registrar movimiento</Title>
@@ -260,11 +264,11 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} />
+      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={paso()} />
       {tipo === 'CONVERSION' && (
         <Paragraph>
-          Cambio de moneda: el monto va en la moneda del origen; el destino recibe el
-          equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
+          Cambio de moneda: el monto va en la moneda de la cuenta de salida; la de llegada
+          recibe el equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
         </Paragraph>
       )}
       {tipo === 'INGRESO' && (
@@ -288,14 +292,16 @@ export function RegistrarMovimientoScreen() {
       )}
       <MoneyField
         label="Monto"
+        paso={paso()}
         value={monto}
         onChange={setMonto}
         moneda={monedaEvento}
         error={intento ? errMonto : undefined}
       />
-      <DateField label="Fecha" value={fecha} onChange={setFecha} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso()} />
       <Field
         label="Detalle (opcional)"
+        paso={paso()}
         value={glosa}
         onChangeText={setGlosa}
         placeholder="p. ej. pago internet marzo"
@@ -305,7 +311,7 @@ export function RegistrarMovimientoScreen() {
 
       {puedeCategorizar && (
         <View style={styles.group}>
-          <Text style={styles.label}>Categoría (opcional)</Text>
+          <Etiqueta paso={paso()}>Categoría (opcional)</Etiqueta>
           <SelectRow
             label="Sin categoría"
             selected={categoriaId === null}
@@ -353,7 +359,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaOrigen && (
         <View style={styles.group}>
-          <Text style={styles.label}>Desde (origen)</Text>
+          <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
@@ -367,7 +373,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaDestino && (
         <View style={styles.group}>
-          <Text style={styles.label}>Hacia (destino)</Text>
+          <Etiqueta paso={paso()}>A qué cuenta</Etiqueta>
           {elsFiltrados.map((el) => (
             <SelectRow
               key={el.id}
@@ -396,7 +402,7 @@ export function RegistrarMovimientoScreen() {
 
       {etiquetas.length > 0 && (
         <View style={styles.group}>
-          <Text style={styles.label}>Etiquetas (opcional)</Text>
+          <Etiqueta paso={paso()}>Etiquetas (opcional)</Etiqueta>
           <View style={styles.chips}>
             {etiquetas.map((e) => (
               <Chip

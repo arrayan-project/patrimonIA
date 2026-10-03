@@ -138,7 +138,7 @@ export function PresupuestoRubrosScreen() {
       {objetivos.length > 0 && (
         <Panel>
           <View style={styles.filaTitulo}>
-            <Text style={styles.sectionTitle}>Ahorro por objetivo</Text>
+            <Text style={styles.sectionTitle}>Ahorro por meta</Text>
             <Text style={styles.muted}>
               {objetivos
                 .reduce((s, o) => s + Number(montosAhorro[o.id] || '0'), 0)
@@ -146,8 +146,8 @@ export function PresupuestoRubrosScreen() {
             </Text>
           </View>
           <Text style={styles.muted}>
-            Cuánto esperas apartar para cada objetivo en el período. El real usa lo
-            apartado dentro del período.
+            Cuánto esperas ahorrar para cada meta en el período. El real usa lo
+            ahorrado dentro del período.
           </Text>
           {objetivos.map((o) => (
             <MoneyField
