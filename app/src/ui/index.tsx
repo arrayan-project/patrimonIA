@@ -504,6 +504,7 @@ export function TxRow({
   logo,
   virtual,
   tag,
+  accesorio,
   onPress,
 }: {
   title: string;
@@ -515,6 +516,8 @@ export function TxRow({
   logo?: { icon?: NombreIcono; text?: string; color?: string };
   virtual?: boolean;
   tag?: string;
+  /** Controles al final de la fila (p. ej. ▲▼ para ordenar un catálogo). */
+  accesorio?: ReactNode;
   onPress?: () => void;
 }) {
   const c = useC();
@@ -551,7 +554,10 @@ export function TxRow({
           </Text>
         ) : null}
       </View>
-      <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
+      {amount ? (
+        <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
+      ) : null}
+      {accesorio}
     </>
   );
   if (onPress) {
@@ -1802,6 +1808,30 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
   );
 }
 
+/** ▲▼ para cambiar el orden de un catálogo en su Lista (`TxRow accesorio`). Sin handler, la flecha se atenúa. */
+export function Ordenar({ onSubir, onBajar }: { onSubir?: () => void; onBajar?: () => void }) {
+  const c = useC();
+  const styles = useEstilos();
+  const flecha = (icono: NombreIcono, label: string, onPress?: () => void) => (
+    <Pressable
+      hitSlop={8}
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !onPress }}
+    >
+      <Ionicons name={icono} size={18} color={onPress ? c.primary : c.border} />
+    </Pressable>
+  );
+  return (
+    <View style={styles.ordenar}>
+      {flecha('chevron-up', 'Subir', onSubir)}
+      {flecha('chevron-down', 'Bajar', onBajar)}
+    </View>
+  );
+}
+
 /** Datos en pares de un Detalle: una sola tarjeta, sin campos editables. */
 export function Datos({ children }: { children: ReactNode }) {
   return <ListCard>{children}</ListCard>;
@@ -2224,6 +2254,7 @@ const crearEstilos = (c: Paleta) => {
     txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
+    ordenar: { flexDirection: 'row', gap: 14, marginLeft: 8 },
 
     goalCard: {
       backgroundColor: c.bg,

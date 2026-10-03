@@ -1,37 +1,35 @@
-import { useMemo, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type TipoElementoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
+import { useNav } from '../navigation/navigator';
 import { etiqueta } from '../labels';
-import { Ayuda, Button, ErrorText, Field, LinkButton, Screen, Select, Skeleton, Panel, useC, type Paleta, tipoDe } from '../ui';
+import {
+  Ayuda,
+  Buscador,
+  Button,
+  EmptyState,
+  ErrorText,
+  filtrar,
+  ListCard,
+  Ordenar,
+  Screen,
+  Section,
+  Skeleton,
+  TxRow,
+} from '../ui';
 
-const OPC_CAT = [
-  { value: '', label: 'Sin sugerencia' },
-  ...(['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const).map((v) => ({
-    value: v,
-    label: etiqueta(v),
-  })),
-];
+/** Catálogos por tipo (plantilla Lista): una sección por categoría sugerida, en este orden. */
+const GRUPOS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO', null] as const;
 
 export function TiposElementoScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
-  const toast = useToast();
+  const nav = useNav();
 
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [lista, setLista] = useState<TipoElementoDTO[] | null>(null);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const [nombre, setNombre] = useState('');
-  const [cat, setCat] = useState('');
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editNombre, setEditNombre] = useState('');
-  const [editCat, setEditCat] = useState('');
+  const [busca, setBusca] = useState('');
 
   const cargar = useCallback(async () => {
     setError('');
@@ -47,128 +45,76 @@ export function TiposElementoScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const run = async (fn: () => Promise<unknown>, aviso?: string) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (aviso) toast.mostrar(aviso);
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const nuevo = () => nav.go('CatalogoForm', { catalogo: 'tipoElemento' });
 
-  const crear = () =>
-    run(async () => {
-      await api.post(
-        '/comandos/CrearTipoElemento',
-        { hogarId, nombre: nombre.trim(), ...(cat ? { categoriaSugerida: cat } : {}) },
-        token,
-      );
-      setNombre('');
-      setCat('');
-    }, 'Tipo creado');
-
-  const guardarEdicion = (t: TipoElementoDTO) =>
-    run(async () => {
-      const body: Record<string, unknown> = { tipoId: t.id };
-      if (editNombre.trim() !== t.nombre) body.nombre = editNombre.trim();
-      if (editCat !== (t.categoriaSugerida ?? '')) body.categoriaSugerida = editCat || null;
-      await api.post('/comandos/ActualizarTipoElemento', body, token);
-      setEditId(null);
-    }, 'Guardado');
-
-  const archivar = async (t: TipoElementoDTO) => {
-    if (!(await confirmar('Archivar tipo', `"${t.nombre}" deja de sugerirse al agregar cuentas o bienes. Los elementos ya creados no cambian.`, 'Archivar')))
-      return;
-    await run(() => api.post('/comandos/ArchivarTipoElemento', { tipoId: t.id }, token), 'Tipo archivado');
-  };
-
-  const mover = (i: number, delta: number) => {
-    if (!lista) return;
-    const j = i + delta;
-    if (j < 0 || j >= lista.length) return;
+  // Sube o baja un tipo respecto del vecino de su mismo grupo.
+  const mover = (grupo: TipoElementoDTO[], i: number, delta: number) => {
+    const a = grupo[i];
+    const b = grupo[i + delta];
+    if (!lista || !a || !b) return;
     const orden = lista.map((t) => t.id);
-    [orden[i], orden[j]] = [orden[j], orden[i]];
-    void run(() => api.post('/comandos/ReordenarTiposElemento', { hogarId, orden }, token));
+    const ia = orden.indexOf(a.id);
+    const ib = orden.indexOf(b.id);
+    [orden[ia], orden[ib]] = [orden[ib], orden[ia]];
+    api
+      .post('/comandos/ReordenarTiposElemento', { hogarId, orden }, token)
+      .then(cargar)
+      .catch((e) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
   };
+
+  const filtrando = busca.trim() !== '';
+  const total = lista?.length ?? 0;
+  const visibles = filtrar(lista ?? [], (t) => t.nombre, busca);
 
   return (
-    <Screen onRefresh={cargar}>
-      <Ayuda>
-        Vocabulario del hogar para clasificar cuentas y bienes (cuenta corriente,
-        APV, propiedad…). Al elegir un tipo al agregar un elemento se prellenar su
-        categoría. Todos los miembros ven la lista.
-      </Ayuda>
+    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nuevo tipo" onPress={nuevo} /> : undefined}>
+      <Ayuda>El tipo sugiere la categoría de la cuenta.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
+      ) : total === 0 ? (
+        <EmptyState
+          icon="albums-outline"
+          titulo="Aún no hay tipos"
+          descripcion="Nombran tus cuentas y bienes: cuenta corriente, APV, propiedad…"
+          accion="Crear el primero"
+          onAccion={nuevo}
+        />
       ) : (
-        lista.map((t, i) => (
-          <Panel key={t.id}>
-            {editId === t.id ? (
-              <>
-                <Field label="Nombre" value={editNombre} onChangeText={setEditNombre} autoCapitalize="sentences" />
-                <Select label="Categoría sugerida" options={OPC_CAT} value={editCat} onChange={setEditCat} />
-                <View style={styles.fila}>
-                  <Button title="Guardar" onPress={() => guardarEdicion(t)} loading={busy} />
-                  <LinkButton title="Cancelar" onPress={() => setEditId(null)} />
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.fila}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.nombre}>{t.nombre}</Text>
-                    <Text style={styles.muted}>
-                      {t.categoriaSugerida ? etiqueta(t.categoriaSugerida) : 'Sin sugerencia'}
-                    </Text>
-                  </View>
-                  <View style={styles.filaBotones}>
-                    <Pressable hitSlop={8} onPress={() => mover(i, -1)} accessibilityRole="button" accessibilityLabel="Subir">
-                      <Text style={styles.flecha}>▲</Text>
-                    </Pressable>
-                    <Pressable hitSlop={8} onPress={() => mover(i, 1)} accessibilityRole="button" accessibilityLabel="Bajar">
-                      <Text style={styles.flecha}>▼</Text>
-                    </Pressable>
-                  </View>
-                </View>
-                <View style={styles.fila}>
-                  <LinkButton
-                    title="Editar"
-                    onPress={() => {
-                      setEditId(t.id);
-                      setEditNombre(t.nombre);
-                      setEditCat(t.categoriaSugerida ?? '');
-                    }}
-                  />
-                  <LinkButton title="Archivar" onPress={() => archivar(t)} />
-                </View>
-              </>
-            )}
-          </Panel>
-        ))
+        <>
+          <Buscador total={total} value={busca} onChange={setBusca} />
+          {GRUPOS.map((g) => {
+            const grupo = lista.filter((t) => (t.categoriaSugerida ?? null) === g);
+            const filas = filtrando ? grupo.filter((t) => visibles.includes(t)) : grupo;
+            return filas.length ? (
+              <Section key={g ?? 'sin'} title={g ? etiqueta(g) : 'Sin sugerencia'}>
+                <ListCard>
+                  {filas.map((t, i) => (
+                    <TxRow
+                      key={t.id}
+                      title={t.nombre}
+                      amount=""
+                      logo={{ icon: 'albums-outline' }}
+                      accesorio={
+                        filtrando ? undefined : (
+                          <Ordenar
+                            onSubir={i > 0 ? () => mover(grupo, i, -1) : undefined}
+                            onBajar={i < grupo.length - 1 ? () => mover(grupo, i, 1) : undefined}
+                          />
+                        )
+                      }
+                      onPress={() => nav.go('CatalogoForm', { catalogo: 'tipoElemento', id: t.id })}
+                    />
+                  ))}
+                </ListCard>
+              </Section>
+            ) : null;
+          })}
+          {filtrando && visibles.length === 0 && <EmptyState titulo="Nada coincide con la búsqueda" />}
+        </>
       )}
-
-      <Panel>
-        <Text style={styles.nombre}>Nuevo tipo</Text>
-        <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" placeholder="p. ej. Billetera digital" />
-        <Select label="Categoría sugerida" options={OPC_CAT} value={cat} onChange={setCat} />
-        <Button title="Crear tipo" onPress={crear} loading={busy} disabled={!nombre.trim() || !hogarId} />
-      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  fila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  filaBotones: { flexDirection: 'row', gap: 16 },
-  flecha: { fontSize: 16, color: c.primary },
-  nombre: { fontSize: 15, fontWeight: '700', color: c.text },
-  muted: tipoDe(c).nota,
-});

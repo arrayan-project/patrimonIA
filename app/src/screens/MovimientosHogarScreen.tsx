@@ -1,11 +1,11 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type EventoConsolidadoDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import {
+  Ayuda,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -15,9 +15,6 @@ import {
   Section,
   Skeleton,
   TxRow,
-  useC,
-  tipoDe,
-  type Paleta,
 } from '../ui';
 
 const MESES = [
@@ -40,8 +37,6 @@ const iconoTipo = (tipo: string) =>
  * actor puede ver (elementos consolidados del hogar o propios).
  */
 export function MovimientosHogarScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const paramHogar = nav.route.params?.hogarId as string | undefined;
@@ -83,10 +78,7 @@ export function MovimientosHogarScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Text style={styles.muted}>
-        Ingresos, gastos y transferencias sobre el patrimonio consolidado y tus cuentas. Los
-        movimientos privados de otros miembros no aparecen.
-      </Text>
+      <Ayuda>Las cuentas del hogar, sin lo privado de otros.</Ayuda>
 
       {eventos === null ? (
         <Skeleton filas={4} />
@@ -94,7 +86,9 @@ export function MovimientosHogarScreen() {
         <EmptyState
           icon="receipt-outline"
           titulo="Sin movimientos del hogar"
-          descripcion="Cuando alguien registre un ingreso, gasto o transferencia sobre una cuenta consolidada, lo verás acá."
+          descripcion="Aquí aparece lo que se registre en las cuentas del hogar."
+          accion="Registrar movimiento"
+          onAccion={() => nav.go('RegistrarMovimiento')}
         />
       ) : (
         porMes.map(([mes, lista]) => {
@@ -132,8 +126,3 @@ export function MovimientosHogarScreen() {
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) =>
-  StyleSheet.create({
-    muted: tipoDe(c).nota,
-  });

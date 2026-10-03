@@ -4,7 +4,7 @@ import { api, ApiError, type AsignacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Ayuda, ErrorText, ListItem, Nota, Panel, Screen, Skeleton } from '../ui';
+import { Ayuda, EmptyState, ErrorText, ListCard, Screen, Skeleton, TxRow } from '../ui';
 
 /**
  * A7 — "Ahorro sin meta" (D-4 de G33): solo muestra las asignaciones sueltas que
@@ -42,26 +42,28 @@ export function AsignacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Ayuda>
-        Plata que separaste antes sin asociarla a una meta. Sigue en tus cuentas y
-        no cuenta como libre para gastar. Para ahorrar algo nuevo, crea una meta.
-      </Ayuda>
+      <Ayuda>Plata separada sin meta; no está libre.</Ayuda>
 
       {sueltas.length > 0 ? (
-        <Panel gap={0}>
+        <ListCard>
           {sueltas.map((a) => (
-            <ListItem
+            <TxRow
               key={a.id}
               title={a.nombre}
-              right={money(a.totalReservado, 'CLP')}
+              amount={money(a.totalReservado, 'CLP')}
+              logo={{ icon: 'wallet-outline' }}
               onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id })}
             />
           ))}
-        </Panel>
+        </ListCard>
       ) : (
-        <Panel>
-          <Nota>No tienes ahorro sin meta.</Nota>
-        </Panel>
+        <EmptyState
+          icon="wallet-outline"
+          titulo="No tienes ahorro sin meta"
+          descripcion="Para ahorrar algo nuevo, crea una meta."
+          accion="Crear una meta"
+          onAccion={() => nav.go('NuevaMeta')}
+        />
       )}
 
       <ErrorText>{error}</ErrorText>

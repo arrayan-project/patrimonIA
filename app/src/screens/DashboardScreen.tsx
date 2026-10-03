@@ -418,7 +418,7 @@ export function DashboardScreen() {
           </View>
           <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
           <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} c={c} styles={styles} />
-          <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('Objetivos', { nuevo: true })} c={c} styles={styles} />
+          <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('NuevaMeta')} c={c} styles={styles} />
           <Text style={styles.muted}>
             Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (ingresos y
             gastos), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que

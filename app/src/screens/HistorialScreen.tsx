@@ -6,6 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import {
   accionAuditoria,
+  EmptyState,
   ErrorText,
   etiqueta,
   fechaRelativa,
@@ -101,9 +102,7 @@ export function HistorialScreen() {
       <Nota>Quién hizo cada cambio y cuándo. No se puede editar ni borrar.</Nota>
 
       {entradas.length === 0 ? (
-        <Panel>
-          <Nota>Sin cambios registrados.</Nota>
-        </Panel>
+        <EmptyState icon="time-outline" titulo="Sin cambios registrados" />
       ) : (
         <Panel gap={0}>
           {entradas.map((e, i) => {

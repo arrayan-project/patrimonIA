@@ -185,7 +185,7 @@ export function AhorrarScreen() {
     return (
       <Screen>
         <Nota>No tienes metas en progreso donde ahorrar. Crea una meta primero.</Nota>
-        <Button title="Crear una meta" onPress={() => nav.go('Objetivos', { nuevo: true })} />
+        <Button title="Crear una meta" onPress={() => nav.go('NuevaMeta')} />
       </Screen>
     );
   }
