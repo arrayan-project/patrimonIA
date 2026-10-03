@@ -1936,7 +1936,7 @@ const crearEstilos = (c: Paleta) => {
     bloquePasoBloqueado: { opacity: 0.4, pointerEvents: 'none' },
     input: {
       borderWidth: 1,
-      borderColor: c.border,
+      borderColor: c.mutedDim, // HZ-24: contraste de lo editable
       borderRadius: 12,
       backgroundColor: c.fondo,
       paddingHorizontal: 12,
@@ -1964,7 +1964,7 @@ const crearEstilos = (c: Paleta) => {
     segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     segment: {
       borderWidth: 1,
-      borderColor: c.border,
+      borderColor: c.mutedDim, // HZ-24: contraste de lo editable
       borderRadius: 999,
       paddingVertical: 8,
       paddingHorizontal: 14,
@@ -1978,7 +1978,7 @@ const crearEstilos = (c: Paleta) => {
     selectRowActive: { borderColor: c.primary, backgroundColor: c.faint },
     selectBox: {
       borderWidth: 1,
-      borderColor: c.border,
+      borderColor: c.mutedDim, // HZ-24: contraste de lo editable
       borderRadius: 12,
       backgroundColor: c.fondo,
       paddingHorizontal: 12,
