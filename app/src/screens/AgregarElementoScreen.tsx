@@ -14,6 +14,7 @@ import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
+  AmountInput,
   Ayuda,
   Button,
   DateField,
@@ -23,12 +24,10 @@ import {
   MoneyField,
   Nota,
   Pasos,
-  Paragraph,
   Row,
   Screen,
   Segmented,
   Select,
-  Title,
   useC,
   type Paleta,
 } from '../ui';
@@ -279,14 +278,13 @@ export function AgregarElementoScreen() {
 
   return (
     <Screen>
-      <Title>Agregar cuenta o bien</Title>
       <Pasos actual={paso} total={totalPasos} />
       {mensaje && paso === 1 ? <Ayuda>{mensaje}</Ayuda> : null}
 
       {paso === 1 && (
         <>
           <Select
-            label="Tipo"
+            label="¿Qué tipo de cuenta o bien es?"
             value={tipo}
             options={opcTipo}
             onChange={elegirTipo}
@@ -344,7 +342,7 @@ export function AgregarElementoScreen() {
                       : 'Crédito por cobrar: lo que alguien te debe. Suma a tu patrimonio.'}
           </Ayuda>
           <Field
-            label="Nombre"
+            label="¿Cómo se llama?"
             value={nombre}
             onChangeText={setNombre}
             placeholder="Cuenta corriente"
@@ -357,7 +355,7 @@ export function AgregarElementoScreen() {
       {paso === 2 && (
         <>
           <Select
-            label="Moneda"
+            label="¿En qué moneda está?"
             value={moneda}
             options={OPC_MONEDA}
             onChange={setMoneda}
@@ -372,18 +370,18 @@ export function AgregarElementoScreen() {
           />
           {esDeudaOCredito ? (
             <>
-              <MoneyField
+              <AmountInput
                 label={categoria === 'DEUDA' ? 'Lo que debes hoy' : 'Lo que te deben hoy'}
                 value={valorPendiente}
                 onChange={setValorPendiente}
                 moneda={moneda.trim().toUpperCase() || undefined}
                 error={mostrar(2, errPendiente)}
               />
-              <Paragraph>
+              <Nota>
                 {categoria === 'DEUDA'
                   ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
                   : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
-              </Paragraph>
+              </Nota>
               <Segmented
                 label="¿Qué tipo es?"
                 options={['Financiera', 'Encargo o custodia'] as const}
@@ -413,7 +411,7 @@ export function AgregarElementoScreen() {
             </>
           ) : (
             <>
-              <MoneyField
+              <AmountInput
                 label={categoria === 'ACTIVO' ? 'Valor actual' : 'Saldo actual'}
                 value={valorInicial}
                 onChange={setValorInicial}
@@ -425,7 +423,7 @@ export function AgregarElementoScreen() {
                 value={valorizable}
                 onChange={setValorizable}
               />
-              <Paragraph>Puedes cambiarlo después desde Editar.</Paragraph>
+              <Nota>Puedes cambiarlo después desde Editar.</Nota>
             </>
           )}
         </>
