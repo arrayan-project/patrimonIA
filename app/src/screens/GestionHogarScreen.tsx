@@ -6,7 +6,7 @@ import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Select, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Ayuda, Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Select, Panel, useC, type Paleta, tipoDe } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
@@ -76,8 +76,6 @@ export function GestionHogarScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Gestionar hogar</Title>
-
       {soyAdmin && (
         <Panel>
           <Field label="Nombre del hogar" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />

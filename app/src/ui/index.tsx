@@ -148,11 +148,17 @@ export function Screen({
   children,
   onRefresh,
   fab,
+  pie,
 }: {
   children: ReactNode;
   onRefresh?: () => void | Promise<void>;
   /** Botón flotante fijo (no scrollea) abajo a la derecha. */
   fab?: ReactNode;
+  /**
+   * Pie fijo bajo el contenido (no scrollea): la frase de resumen y la acción
+   * principal de un Formulario, o la acción principal de un Detalle.
+   */
+  pie?: ReactNode;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -181,7 +187,7 @@ export function Screen({
           styles.screenContent,
           {
             paddingTop: conHeader ? 16 : 20 + insets.top,
-            paddingBottom: 24 + (conHeader ? insets.bottom : 0) + (fab ? 72 : 0),
+            paddingBottom: 24 + (conHeader && !pie ? insets.bottom : 0) + (fab ? 72 : 0),
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -194,6 +200,9 @@ export function Screen({
       >
         {children}
       </ScrollView>
+      {pie ? (
+        <View style={[styles.pie, { paddingBottom: 14 + (conHeader ? insets.bottom : 0) }]}>{pie}</View>
+      ) : null}
       {fab ? (
         <View
           style={[
@@ -1301,6 +1310,41 @@ export const UMBRAL_BUSCADOR = 6;
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+/** Los elementos cuyo texto contiene `filtro` (sin tildes ni mayúsculas). */
+export function filtrar<T>(items: T[], texto: (x: T) => string, filtro: string): T[] {
+  const f = normalizar(filtro.trim());
+  return f ? items.filter((x) => normalizar(texto(x)).includes(f)) : items;
+}
+
+/**
+ * Buscador de una Lista o de la hoja de `Select`: solo aparece con más de
+ * `UMBRAL_BUSCADOR` elementos (con menos estorba). Se filtra con `filtrar`.
+ */
+export function Buscador({
+  total,
+  value,
+  onChange,
+}: {
+  total: number;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  if (total <= UMBRAL_BUSCADOR) return null;
+  return (
+    <TextInput
+      style={styles.input}
+      value={value}
+      onChangeText={onChange}
+      placeholder="Buscar"
+      placeholderTextColor={c.mutedDim}
+      autoCorrect={false}
+      accessibilityLabel="Buscar"
+    />
+  );
+}
+
 /** Agrupa conservando el orden de aparición; sin grupos (o con uno solo) no hay encabezados. */
 function agrupar(options: OpcionSelect[]): { grupo: string | null; items: OpcionSelect[] }[] {
   const grupos: { grupo: string | null; items: OpcionSelect[] }[] = [];
@@ -1398,26 +1442,13 @@ function ListaOpciones({
   multiple?: boolean;
   extra?: ReactNode;
 }) {
-  const c = useC();
   const styles = useEstilos();
   const [filtro, setFiltro] = useState('');
-  const visibles = filtro.trim()
-    ? options.filter((o) => normalizar(o.label).includes(normalizar(filtro.trim())))
-    : options;
+  const visibles = filtrar(options, (o) => o.label, filtro);
 
   return (
     <>
-      {options.length > UMBRAL_BUSCADOR && (
-        <TextInput
-          style={styles.input}
-          value={filtro}
-          onChangeText={setFiltro}
-          placeholder="Buscar"
-          placeholderTextColor={c.mutedDim}
-          autoCorrect={false}
-          accessibilityLabel="Buscar"
-        />
-      )}
+      <Buscador total={options.length} value={filtro} onChange={setFiltro} />
       <ScrollView style={{ maxHeight: 400 }} keyboardShouldPersistTaps="handled">
         {visibles.length > 0 ? (
           <AccountList options={visibles} elegida={elegida} onElegir={onElegir} multiple={multiple} />
@@ -1771,6 +1802,35 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
   );
 }
 
+/** Datos en pares de un Detalle: una sola tarjeta, sin campos editables. */
+export function Datos({ children }: { children: ReactNode }) {
+  return <ListCard>{children}</ListCard>;
+}
+
+/** Un par etiqueta (izquierda) · valor (derecha) dentro de `Datos`. */
+export function Dato({ etiqueta: nombre, valor }: { etiqueta: string; valor: ReactNode }) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.dato}>
+      <Text style={styles.dataLeft}>{nombre}</Text>
+      {typeof valor === 'string' ? <Text style={styles.dataRight}>{valor}</Text> : valor}
+    </View>
+  );
+}
+
+/**
+ * Acción destructiva de una pantalla (Eliminar, Cerrar sesión): texto rojo,
+ * al final de todo el contenido. La confirmación la pide quien la usa.
+ */
+export function AccionDestructiva({ title, onPress }: { title: string; onPress: () => void }) {
+  const styles = useEstilos();
+  return (
+    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" style={styles.destructiva}>
+      <Text style={styles.destructivaTxt}>{title}</Text>
+    </Pressable>
+  );
+}
+
 export function ErrorText({ children }: { children: ReactNode }) {
   const styles = useEstilos();
   if (!children) return null;
@@ -1968,6 +2028,14 @@ const crearEstilos = (c: Paleta) => {
     screen: { flex: 1, backgroundColor: c.fondo },
     screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
     fabWrap: { position: 'absolute', right: 18 },
+    pie: {
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      gap: 10,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      backgroundColor: c.fondo,
+    },
     fab: {
       width: 58,
       height: 58,
@@ -2325,6 +2393,16 @@ const crearEstilos = (c: Paleta) => {
     modalOpcionTxt: { fontSize: 16, color: c.text },
     selectRowText: { fontSize: 15, color: c.text },
     selectRowTextActive: { color: c.text, fontWeight: '600' },
+    dato: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    destructiva: { alignSelf: 'stretch', paddingTop: 22, paddingBottom: 6 },
+    destructivaTxt: { color: c.danger, fontSize: 15, fontWeight: '600', textAlign: 'center' },
     dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },
     dataLeft: { fontSize: 14, color: c.muted },
     dataRight: { fontSize: 14, color: c.text, fontWeight: '700', textAlign: 'right', flexShrink: 1 },

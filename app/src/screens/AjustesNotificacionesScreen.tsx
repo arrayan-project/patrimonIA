@@ -3,7 +3,7 @@ import { api, ApiError, type UsuarioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Ayuda, Button, ErrorText, Screen, Segmented, Skeleton, Title } from '../ui';
+import { Ayuda, Button, ErrorText, Screen, Segmented, Skeleton } from '../ui';
 
 const NOTIF_TIPOS = [
   ['OBJETIVO_COMPLETADO', 'Meta completada'],
@@ -73,7 +73,6 @@ export function AjustesNotificacionesScreen() {
 
   return (
     <Screen>
-      <Title>Notificaciones</Title>
       <Ayuda>Elige qué avisos quieres recibir, en la app y como push.</Ayuda>
       {NOTIF_TIPOS.map(([k, etiq]) => (
         <Segmented

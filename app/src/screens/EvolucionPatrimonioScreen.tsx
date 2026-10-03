@@ -10,7 +10,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Button, DateField, ErrorText, fechaLegible, Nota, Row, Screen, SectionTitle, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Button, DateField, ErrorText, fechaLegible, Nota, Row, Screen, SectionTitle, Panel, useC, type Paleta, tipoDe } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 export function EvolucionPatrimonioScreen() {
@@ -70,8 +70,6 @@ export function EvolucionPatrimonioScreen() {
 
   return (
     <Screen>
-      <Title>Evolución de mi patrimonio</Title>
-
       <Panel>
         <SectionTitle>¿Cuánto tenía a una fecha?</SectionTitle>
         <DateField label="Fecha" value={fechaPunto} onChange={setFechaPunto} />

@@ -8,7 +8,7 @@ import {
   type MiembroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
@@ -28,7 +28,6 @@ import {
   SectionTitle,
   Select,
   SelectRow,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -234,6 +233,8 @@ export function EditarElementoScreen() {
     }
   };
 
+  useTitulo(el ? `Editar ${el.nombre}` : undefined);
+
   if (!el) {
     return (
       <Screen>
@@ -266,8 +267,6 @@ export function EditarElementoScreen() {
 
   return (
     <Screen>
-      <Title>Editar {el.nombre}</Title>
-
       {activo && (
         <Panel>
           <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />

@@ -21,7 +21,6 @@ import {
   Screen,
   Segmented,
   Select,
-  Title,
   Panel,
   useC,
   type Paleta,
@@ -106,8 +105,6 @@ export function PresupuestosScreen() {
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
-      <Title>Presupuestos</Title>
-
       <Ayuda>
         Un presupuesto fija cuánto esperas ingresar y gastar en un período y lo
         compara con lo real (en total y, si quieres, por rubro).

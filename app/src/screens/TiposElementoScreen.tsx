@@ -6,7 +6,7 @@ import { useSession } from '../auth/AuthContext';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import { etiqueta } from '../labels';
-import { Ayuda, Button, ErrorText, Field, LinkButton, Screen, Select, Skeleton, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Ayuda, Button, ErrorText, Field, LinkButton, Screen, Select, Skeleton, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 const OPC_CAT = [
   { value: '', label: 'Sin sugerencia' },
@@ -98,7 +98,6 @@ export function TiposElementoScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Tipos de elemento patrimonial</Title>
       <Ayuda>
         Vocabulario del hogar para clasificar cuentas y bienes (cuenta corriente,
         APV, propiedad…). Al elegir un tipo al agregar un elemento se prellenar su

@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, Panel, useC, type Paleta } from '../ui';
+import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Panel, useC, type Paleta } from '../ui';
 
 export function AjusteDetalleScreen() {
   const c = useC();
@@ -92,7 +92,6 @@ export function AjusteDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>Ajuste patrimonial</Title>
       <Text style={styles.monto}>{money(ajuste.monto, moneda)}</Text>
       <Panel>
         <Row left="Fecha" right={fechaLegible(ajuste.fecha)} />

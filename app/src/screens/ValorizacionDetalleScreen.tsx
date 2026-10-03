@@ -7,7 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Title, Panel, useC, type Paleta } from '../ui';
+import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Panel, useC, type Paleta } from '../ui';
 
 export function ValorizacionDetalleScreen() {
   const c = useC();
@@ -99,7 +99,6 @@ export function ValorizacionDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>Valorización</Title>
       <Text style={styles.valor}>
         {money(val.valorAnterior, moneda)} → {money(val.valorNuevo, moneda)}
       </Text>

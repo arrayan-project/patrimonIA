@@ -4,7 +4,7 @@ import { api, ApiError, type AsignacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Ayuda, ErrorText, ListItem, Nota, Panel, Screen, Title, Skeleton } from '../ui';
+import { Ayuda, ErrorText, ListItem, Nota, Panel, Screen, Skeleton } from '../ui';
 
 /**
  * A7 — "Ahorro sin meta" (D-4 de G33): solo muestra las asignaciones sueltas que
@@ -42,7 +42,6 @@ export function AsignacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Ahorro sin meta</Title>
       <Ayuda>
         Plata que separaste antes sin asociarla a una meta. Sigue en tus cuentas y
         no cuenta como libre para gastar. Para ahorrar algo nuevo, crea una meta.

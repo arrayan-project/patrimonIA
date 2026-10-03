@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 /**
@@ -81,6 +81,7 @@ interface NavApi {
   canGoBack: () => boolean;
   getParent: () => NavApi | undefined;
   reset: (state: { index: number; routes: { name: string; params?: unknown }[] }) => void;
+  setOptions: (opciones: { title?: string }) => void;
 }
 
 export function useNav(): NavHandle {
@@ -108,4 +109,15 @@ export function useNav(): NavHandle {
     }),
     [navigation, route.name, route.params],
   );
+}
+
+/**
+ * Título de la barra superior según los datos de la pantalla (p. ej. el nombre
+ * de la meta). Hay un solo título: no se repite dentro del contenido.
+ */
+export function useTitulo(titulo: string | undefined): void {
+  const navigation = useNavigation<NavApi>();
+  useLayoutEffect(() => {
+    if (titulo) navigation.setOptions({ title: titulo });
+  }, [navigation, titulo]);
 }

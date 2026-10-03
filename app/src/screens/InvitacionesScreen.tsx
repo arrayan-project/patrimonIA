@@ -4,7 +4,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, ErrorText, Panel, Paragraph, Screen, Skeleton, Title, useC, type Paleta } from '../ui';
+import { Button, ErrorText, Panel, Paragraph, Screen, Skeleton, useC, type Paleta } from '../ui';
 
 export function InvitacionesScreen() {
   const c = useC();
@@ -55,7 +55,6 @@ export function InvitacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Invitaciones pendientes</Title>
       <ErrorText>{error}</ErrorText>
 
       {invitaciones === null ? (

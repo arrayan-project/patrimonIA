@@ -8,7 +8,7 @@ import {
   type ElementoPatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { confirmar } from '../ui/confirmar';
@@ -25,7 +25,6 @@ import {
   MoneyField,
   Row,
   Screen,
-  Title,
   Skeleton,
   Panel,
   useC,
@@ -78,6 +77,8 @@ export function AsignacionDetalleScreen() {
     }
   };
 
+  useTitulo(asg?.nombre);
+
   if (!asg) {
     return (
       <Screen>
@@ -95,7 +96,6 @@ export function AsignacionDetalleScreen() {
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>{asg.nombre}</Title>
       <Text style={styles.muted}>Ahorrado: {money(asg.totalReservado, asg.moneda)}</Text>
 
       <Ayuda>{GLOSARIO.apartado}</Ayuda>

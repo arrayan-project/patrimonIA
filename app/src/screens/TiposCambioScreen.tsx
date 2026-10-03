@@ -16,7 +16,6 @@ import {
   Row,
   Skeleton,
   Screen,
-  Title,
   Panel,
   useC,
   tipoDe,
@@ -95,7 +94,6 @@ export function TiposCambioScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Tipos de cambio</Title>
       <Text style={styles.muted}>
         1 unidad de la moneda origen = tasa unidades de la destino. Se conservan
         históricamente; la conversión usa la más reciente vigente a la fecha.

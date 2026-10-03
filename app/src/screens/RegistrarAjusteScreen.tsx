@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api, ApiError, type AjustePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
@@ -20,7 +20,6 @@ import {
   Paragraph,
   Screen,
   Segmented,
-  Title,
 } from '../ui';
 
 export function RegistrarAjusteScreen() {
@@ -77,10 +76,11 @@ export function RegistrarAjusteScreen() {
   // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
   // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
+  useTitulo(modoInteres ? 'Registrar interés' : undefined);
+
   return (
     <Screen>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>{modoInteres ? 'Registrar interés' : 'Registrar ajuste patrimonial'}</Title>
       {valorActual !== undefined && (
         <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
       )}

@@ -12,7 +12,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, ElegirVarios, Title, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { Skeleton, Ayuda, Button, EmptyState, ErrorText, Field, LinkButton, Screen, ElegirVarios, Panel, useC, type Paleta, tipoDe } from '../ui';
 
 export function AgrupacionesScreen() {
   const c = useC();
@@ -96,7 +96,6 @@ export function AgrupacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Agrupaciones de elementos</Title>
       <Ayuda>
         Carpetas para ordenar tus cuentas y activos en el Inicio (p. ej.
         "Inversiones" con tu APV y fondos). No afectan tu patrimonio ni la

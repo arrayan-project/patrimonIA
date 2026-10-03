@@ -14,7 +14,6 @@ import {
   Panel,
   Screen,
   Skeleton,
-  Title,
   useC,
   type Paleta,
   tipoDe,
@@ -99,7 +98,6 @@ export function HistorialScreen() {
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Title>Historial de cambios</Title>
       <Nota>Quién hizo cada cambio y cuándo. No se puede editar ni borrar.</Nota>
 
       {entradas.length === 0 ? (

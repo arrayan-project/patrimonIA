@@ -14,7 +14,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, ErrorText, LinkButton, MoneyField, Screen, Title, Panel, useC, tipoDe, type Paleta } from '../ui';
+import { Skeleton, Button, ErrorText, LinkButton, MoneyField, Screen, Panel, useC, tipoDe, type Paleta } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
@@ -126,7 +126,6 @@ export function PresupuestoRubrosScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Presupuesto por rubro</Title>
       <Text style={styles.muted}>
         Fija cuánto esperas gastar o ingresar por categoría dentro del período del
         presupuesto. Deja en blanco (o 0) los rubros que no quieras seguir.
