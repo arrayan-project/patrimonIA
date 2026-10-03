@@ -14,6 +14,7 @@ import {
   View,
   type StyleProp,
   type TextInputProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import DateTimePicker, {
@@ -23,12 +24,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 import { etiqueta } from '../labels';
-import { CLARO, useC, type Paleta } from './tema';
+import { CLARO, radio, tipografia, useC, type Paleta } from './tema';
 
 export type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
 
 export { etiqueta, humanizar, accionAuditoria } from '../labels';
-export { TemaProvider, useC, useTema, type Paleta, type ModoTema } from './tema';
+export { TemaProvider, useC, useTema, radio, tipografia, type Paleta, type ModoTema } from './tema';
 
 /** Paleta activa memoizada + estilos derivados. Para los componentes de este archivo. */
 function useEstilos() {
@@ -117,7 +118,7 @@ export const panelDe = (c: Paleta) =>
     backgroundColor: c.bg,
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 16,
+    borderRadius: radio.tarjeta,
     padding: escala.lg,
   }) as const;
 /** @deprecated usa `panelDe(useC())` o el componente `<Panel>`. */
@@ -227,9 +228,12 @@ export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void 
  * cosa (registrar un movimiento — frecuente — vs. agregar una cuenta — raro).
  */
 export function FabMenu({
+  titulo,
   actions,
 }: {
-  actions: { icon: NombreIcono; label: string; onPress: () => void }[];
+  /** Pregunta arriba de la hoja (p. ej. "¿Qué quieres anotar?"). */
+  titulo?: string;
+  actions: { icon: NombreIcono; label: string; subtitle?: string; onPress: () => void }[];
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -242,23 +246,31 @@ export function FabMenu({
         accessibilityRole="button"
         accessibilityLabel="Crear"
       >
-        <Ionicons name="add" size={24} color={c.primaryText} />
+        <Ionicons name="add" size={28} color={c.primaryText} />
       </Pressable>
       <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
         <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            <View style={styles.agarre} />
+            {titulo ? <Text style={styles.modalTitulo}>{titulo}</Text> : null}
             {actions.map((a) => (
               <Pressable
                 key={a.label}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.faint }]}
+                accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
+                style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.bg }]}
                 onPress={() => {
                   setAbierto(false);
                   a.onPress();
                 }}
               >
-                <Ionicons name={a.icon} size={20} color={c.text} />
-                <Text style={styles.fabActionTxt}>{a.label}</Text>
+                <View style={styles.fabActionIc}>
+                  <Ionicons name={a.icon} size={20} color={c.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fabActionTxt}>{a.label}</Text>
+                  {a.subtitle ? <Text style={styles.fabActionSub}>{a.subtitle}</Text> : null}
+                </View>
               </Pressable>
             ))}
             <LinkButton title="Cancelar" onPress={() => setAbierto(false)} />
@@ -479,6 +491,7 @@ export function TxRow({
   subtitle,
   amount,
   positivo,
+  negativo,
   logo,
   virtual,
   tag,
@@ -488,6 +501,8 @@ export function TxRow({
   subtitle?: string;
   amount: string;
   positivo?: boolean;
+  /** Monto en rojo (deuda, saldo en contra). */
+  negativo?: boolean;
   logo?: { icon?: NombreIcono; text?: string; color?: string };
   virtual?: boolean;
   tag?: string;
@@ -495,6 +510,8 @@ export function TxRow({
 }) {
   const c = useC();
   const styles = useEstilos();
+  // Sobre un color propio, el ícono va en blanco; sobre el gris de la fila, en el color del texto.
+  const tinta = virtual ? c.muted : logo?.color ? '#fff' : c.text;
   const cuerpo = (
     <>
       <View
@@ -506,9 +523,9 @@ export function TxRow({
         ]}
       >
         {logo?.icon ? (
-          <Ionicons name={logo.icon} size={16} color={virtual ? c.muted : '#fff'} />
+          <Ionicons name={logo.icon} size={17} color={tinta} />
         ) : (
-          <Text style={[styles.txLogoTxt, { color: virtual ? c.muted : '#fff' }]}>
+          <Text style={[styles.txLogoTxt, { color: tinta }]}>
             {(logo?.text ?? title).slice(0, 1).toUpperCase()}
           </Text>
         )}
@@ -525,7 +542,7 @@ export function TxRow({
           </Text>
         ) : null}
       </View>
-      <Text style={[styles.txAmt, positivo && { color: c.ok }]}>{amount}</Text>
+      <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
     </>
   );
   if (onPress) {
@@ -553,6 +570,7 @@ export function GoalCard({
   footLeft,
   footRight,
   ok,
+  accion,
   onPress,
 }: {
   name: string;
@@ -561,6 +579,8 @@ export function GoalCard({
   footLeft?: string;
   footRight?: string;
   ok?: boolean;
+  /** Botón chico al pie, a la derecha (p. ej. "Ahorrar"); reemplaza a `footRight`. */
+  accion?: { label: string; onPress: () => void };
   onPress?: () => void;
 }) {
   const c = useC();
@@ -577,10 +597,22 @@ export function GoalCard({
       <View style={styles.goalBar}>
         <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.text }]} />
       </View>
-      {footLeft || footRight ? (
+      {footLeft || footRight || accion ? (
         <View style={styles.goalFoot}>
-          <Text style={styles.goalFootTxt}>{footLeft}</Text>
-          <Text style={[styles.goalFootTxt, ok && { color: c.ok }]}>{footRight}</Text>
+          <Text style={styles.goalFootTxt}>{conMontos(footLeft, styles.goalFootMonto)}</Text>
+          {accion ? (
+            <Pressable
+              onPress={accion.onPress}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={`${accion.label} en ${name}`}
+              style={({ pressed }) => [styles.goalBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.goalBtnTxt}>{accion.label}</Text>
+            </Pressable>
+          ) : (
+            <Text style={[styles.goalFootTxt, ok && { color: c.ok }]}>{conMontos(footRight, styles.goalFootMonto)}</Text>
+          )}
         </View>
       ) : null}
     </>
@@ -597,6 +629,33 @@ export function GoalCard({
     );
   }
   return <View style={styles.goalCard}>{cuerpo}</View>;
+}
+
+/** Pone en negrita los montos (`money()`: "150.000 CLP") dentro de un texto. */
+function conMontos(texto: string | undefined, estilo: TextStyle): ReactNode {
+  if (!texto) return texto;
+  return texto.split(/(-?[\d.,]+ [A-Z]{3})/).map((t, i) =>
+    i % 2 === 1 ? (
+      <Text key={i} style={estilo}>
+        {t}
+      </Text>
+    ) : (
+      t
+    ),
+  );
+}
+
+/**
+ * Tarjeta única con filas (`TxRow`, `ListItem`) separadas por una línea, como
+ * las listas del prototipo. La línea de la última fila queda oculta.
+ */
+export function ListCard({ children }: { children: ReactNode }) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.listCard}>
+      <View style={{ marginBottom: -1 }}>{children}</View>
+    </View>
+  );
 }
 
 /** Rejilla de mini-métricas (2 columnas). */
@@ -705,6 +764,40 @@ export function Panel({
 export function SectionTitle({ children }: { children: ReactNode }) {
   const styles = useEstilos();
   return <Text style={styles.sectionTitle}>{children}</Text>;
+}
+
+/**
+ * Sección de una pantalla (patrón del prototipo): título corto en mayúsculas
+ * y, a la derecha, un enlace "Ver todos" que lleva a la lista completa. El
+ * contenido (una tarjeta, varias metas) va como `children`.
+ */
+export function Section({
+  title,
+  accion = 'Ver todos',
+  onAccion,
+  children,
+}: {
+  title: string;
+  accion?: string;
+  onAccion?: () => void;
+  children?: ReactNode;
+}) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.seccion}>
+      <View style={styles.seccionCabeza}>
+        <Text style={styles.rotulo} accessibilityRole="header">
+          {title}
+        </Text>
+        {onAccion ? (
+          <Pressable onPress={onAccion} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${accion}: ${title}`}>
+            <Text style={styles.seccionAccion}>{accion}</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      {children}
+    </View>
+  );
 }
 
 /** Texto secundario corto (13px, gris). Para pies de tarjeta y aclaraciones. */
@@ -847,10 +940,34 @@ export function BloquePaso({
   );
 }
 
-/** Etiqueta de una pregunta; con `paso`, lleva delante su número (invertido si es el actual). */
-export function Etiqueta({ paso, children }: { paso?: Paso; children: ReactNode }) {
+const SUFIJO_OPCIONAL = /\s*\(opcional\)$/i;
+
+/**
+ * Pregunta de un formulario en lenguaje natural ("¿Cuánto?", "¿Desde qué
+ * cuenta pagaste?"), patrón del prototipo en vez de una etiqueta seca. Con
+ * `paso`, conserva delante su número (HZ-19), invertido si es el actual
+ * (HZ-24): el prototipo no numera, pero ganan los HZ. "(opcional)" —como
+ * prop o al final del texto— se muestra atenuado.
+ */
+export function Question({
+  paso,
+  opcional,
+  children,
+}: {
+  paso?: Paso;
+  opcional?: boolean;
+  children: ReactNode;
+}) {
   const styles = useEstilos();
-  if (paso == null) return <Text style={styles.label}>{children}</Text>;
+  const sufijo = typeof children === 'string' && SUFIJO_OPCIONAL.test(children);
+  const texto = sufijo ? (children as string).replace(SUFIJO_OPCIONAL, '') : children;
+  const cuerpo = (
+    <Text style={[styles.label, { flexShrink: 1 }]}>
+      {texto}
+      {opcional || sufijo ? <Text style={styles.labelOpcional}> (opcional)</Text> : null}
+    </Text>
+  );
+  if (paso == null) return cuerpo;
   const n = typeof paso === 'object' ? paso.n : paso;
   const actual = estadoDe(paso) === 'actual';
   return (
@@ -862,10 +979,13 @@ export function Etiqueta({ paso, children }: { paso?: Paso; children: ReactNode 
       >
         <Text style={[styles.numeroPasoTexto, actual && styles.numeroPasoTextoActual]}>{n}</Text>
       </View>
-      <Text style={[styles.label, { flexShrink: 1 }]}>{children}</Text>
+      {cuerpo}
     </View>
   );
 }
+
+/** @deprecated nombre anterior de `Question`. */
+export const Etiqueta = Question;
 
 export function Field({
   label,
@@ -877,7 +997,7 @@ export function Field({
   const styles = useEstilos();
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
+      {label ? <Question paso={paso}>{label}</Question> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         placeholderTextColor={c.mutedDim}
@@ -922,7 +1042,7 @@ export function DateField({
 
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      <Etiqueta paso={paso}>{label}</Etiqueta>
+      <Question paso={paso}>{label}</Question>
       {Platform.OS === 'web' ? (
         <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
       ) : (
@@ -953,6 +1073,23 @@ export function DateField({
  * decimal — ej. "8000000" o "8000000.5"); se muestra formateado es-CL
  * ("8.000.000" / "8.000,50"). `onChange` recibe siempre el canónico.
  */
+/** Canónico ("8000000.5") → como se ve en es-CL ("8.000.000,5"). */
+function montoVisible(value: string): string {
+  if (value === '') return '';
+  const [entero, dec] = value.split('.');
+  return agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
+}
+
+/** Lo que escribe el usuario ("8.000,50") → canónico ("8000.50"), máx. 2 decimales. */
+function montoCanonico(t: string): string {
+  let limpio = t.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+  const i = limpio.indexOf('.');
+  if (i !== -1) {
+    limpio = limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '').slice(0, 2);
+  }
+  return limpio.replace(/^0+(?=\d)/, '');
+}
+
 export function MoneyField({
   label,
   value,
@@ -972,33 +1109,71 @@ export function MoneyField({
 }) {
   const c = useC();
   const styles = useEstilos();
-  const [entero, dec] = value.split('.');
-  const display =
-    value === ''
-      ? ''
-      : agruparMiles(entero || '0') + (value.includes('.') ? `,${dec ?? ''}` : '');
-
-  const alEscribir = (t: string) => {
-    let limpio = t.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-    const i = limpio.indexOf('.');
-    if (i !== -1) {
-      limpio = limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '').slice(0, 2);
-    }
-    limpio = limpio.replace(/^0+(?=\d)/, '');
-    onChange(limpio);
-  };
-
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      <Etiqueta paso={paso}>{moneda ? `${label} (${moneda})` : label}</Etiqueta>
+      <Question paso={paso}>{moneda ? `${label} (${moneda})` : label}</Question>
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         keyboardType="numeric"
-        value={display}
-        onChangeText={alEscribir}
+        value={montoVisible(value)}
+        onChangeText={(t) => onChange(montoCanonico(t))}
         placeholder={placeholder}
         placeholderTextColor={c.mutedDim}
       />
+      {error ? <Text style={styles.errorInline}>{error}</Text> : null}
+    </BloquePaso>
+  );
+}
+
+/**
+ * Monto protagonista de un formulario (patrón del prototipo): número grande
+ * sobre una línea, con la moneda al lado. Mismo contrato que `MoneyField`
+ * (`value` canónico). La línea usa `mutedDim` para que se vea editable (HZ-24).
+ */
+export function AmountInput({
+  label = '¿Cuánto?',
+  value,
+  onChange,
+  moneda,
+  error,
+  paso,
+  autoFocus,
+}: {
+  label?: string;
+  value: string;
+  onChange: (canonico: string) => void;
+  moneda?: string;
+  error?: string;
+  paso?: Paso;
+  autoFocus?: boolean;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const [foco, setFoco] = useState(false);
+  return (
+    <BloquePaso paso={paso} style={styles.field}>
+      <Question paso={paso}>{label}</Question>
+      <View
+        style={[
+          styles.monto,
+          foco && { borderBottomColor: c.text },
+          error ? { borderBottomColor: c.danger } : null,
+        ]}
+      >
+        <TextInput
+          style={styles.montoInput}
+          keyboardType="numeric"
+          value={montoVisible(value)}
+          onChangeText={(t) => onChange(montoCanonico(t))}
+          onFocus={() => setFoco(true)}
+          onBlur={() => setFoco(false)}
+          placeholder="0"
+          placeholderTextColor={c.mutedDim}
+          autoFocus={autoFocus}
+          accessibilityLabel={moneda ? `${label} en ${moneda}` : label}
+        />
+        {moneda ? <Text style={styles.montoMoneda}>{moneda}</Text> : null}
+      </View>
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </BloquePaso>
   );
@@ -1062,7 +1237,7 @@ export function Segmented<T extends string>({
   const styles = useEstilos();
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
+      {label ? <Question paso={paso}>{label}</Question> : null}
       <View style={styles.segmented}>
         {options.map((opt) => (
           <Pressable
@@ -1109,6 +1284,10 @@ export interface OpcionSelect {
   label: string;
   /** Encabezado bajo el que se muestra (p. ej. "Cuentas", "Cuentas de Zoily"). */
   grupo?: string;
+  /** Segunda línea de la fila (p. ej. el saldo). */
+  sub?: string;
+  /** Se muestra atenuada y no se puede elegir; `sub` debería decir por qué. */
+  deshabilitada?: boolean;
 }
 
 /**
@@ -1134,16 +1313,89 @@ function agrupar(options: OpcionSelect[]): { grupo: string | null; items: Opcion
   return grupos.length > 1 ? grupos : [{ grupo: null, items: options }];
 }
 
-/** Lista de la hoja modal: buscador (si hay más de UMBRAL_BUSCADOR) y encabezados de grupo. */
+/**
+ * Lista de opciones en una sola tarjeta (patrón del prototipo): filas
+ * compactas con título y segunda línea, encabezados de grupo dentro de la
+ * tarjeta y opciones deshabilitadas atenuadas. Se usa dentro de la hoja de
+ * `Select` (HZ-3: la lista nunca va suelta en la pantalla).
+ */
+export function AccountList({
+  options,
+  elegida,
+  onElegir,
+  multiple,
+}: {
+  options: OpcionSelect[];
+  elegida: (v: string) => boolean;
+  onElegir: (v: string) => void;
+  /** Varias a la vez: casilla en vez de círculo. */
+  multiple?: boolean;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const grupos = agrupar(options);
+  return (
+    <View style={styles.lista}>
+      {grupos.map(({ grupo, items }, gi) => (
+        <View key={grupo ?? '∅'}>
+          {grupo ? <Text style={styles.listaGrupo}>{grupo}</Text> : null}
+          {items.map((o, i) => {
+            const on = elegida(o.value);
+            const ultima = gi === grupos.length - 1 && i === items.length - 1;
+            return (
+              <Pressable
+                key={o.value}
+                disabled={o.deshabilitada}
+                style={({ pressed }) => [
+                  styles.listaFila,
+                  ultima && { borderBottomWidth: 0 },
+                  o.deshabilitada && { opacity: 0.45 },
+                  pressed && { backgroundColor: c.panelAlt },
+                ]}
+                accessibilityRole={multiple ? 'checkbox' : 'radio'}
+                accessibilityLabel={o.sub ? `${o.label}. ${o.sub}` : o.label}
+                accessibilityState={{ checked: on, disabled: !!o.deshabilitada }}
+                onPress={() => onElegir(o.value)}
+              >
+                <View
+                  style={[
+                    multiple ? styles.casilla : styles.radio,
+                    on && (multiple ? styles.casillaOn : styles.radioOn),
+                  ]}
+                >
+                  {multiple && on ? <Ionicons name="checkmark" size={14} color={c.primaryText} /> : null}
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.listaTitulo} numberOfLines={1}>
+                    {o.label}
+                  </Text>
+                  {o.sub ? (
+                    <Text style={styles.listaSub} numberOfLines={1}>
+                      {o.sub}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Contenido de la hoja modal: buscador (si hay más de UMBRAL_BUSCADOR) y `AccountList`. */
 function ListaOpciones({
   options,
   elegida,
   onElegir,
+  multiple,
   extra,
 }: {
   options: OpcionSelect[];
   elegida: (v: string) => boolean;
   onElegir: (v: string) => void;
+  multiple?: boolean;
   extra?: ReactNode;
 }) {
   const c = useC();
@@ -1166,32 +1418,12 @@ function ListaOpciones({
           accessibilityLabel="Buscar"
         />
       )}
-      <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
-        {agrupar(visibles).map(({ grupo, items }) => (
-          <View key={grupo ?? '∅'}>
-            {grupo ? <Text style={styles.grupoOpciones}>{grupo}</Text> : null}
-            {items.map((o) => (
-              <Pressable
-                key={o.value}
-                style={styles.modalOpcion}
-                accessibilityRole="button"
-                accessibilityLabel={o.label}
-                accessibilityState={{ selected: elegida(o.value) }}
-                onPress={() => onElegir(o.value)}
-              >
-                <Text
-                  style={[
-                    styles.modalOpcionTxt,
-                    elegida(o.value) && { color: c.primary, fontWeight: '700' },
-                  ]}
-                >
-                  {o.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        ))}
-        {visibles.length === 0 && <Text style={styles.nota}>Sin resultados.</Text>}
+      <ScrollView style={{ maxHeight: 400 }} keyboardShouldPersistTaps="handled">
+        {visibles.length > 0 ? (
+          <AccountList options={visibles} elegida={elegida} onElegir={onElegir} multiple={multiple} />
+        ) : (
+          <Text style={styles.nota}>Sin resultados.</Text>
+        )}
         {extra}
       </ScrollView>
     </>
@@ -1242,22 +1474,24 @@ export function Select({
 
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      {label ? <Etiqueta paso={paso}>{label}</Etiqueta> : null}
+      {label ? <Question paso={paso}>{label}</Question> : null}
       <Pressable
         style={styles.selectBox}
         onPress={() => setAbierto(true)}
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <Text style={{ flexShrink: 1, fontSize: 16, color: conocida || libre ? c.text : c.mutedDim }}>
-          {texto}
-        </Text>
-        <Text style={styles.selectCaret}>▾</Text>
+        <View style={{ flexShrink: 1 }}>
+          <Text style={{ fontSize: 16, color: conocida || libre ? c.text : c.mutedDim }}>{texto}</Text>
+          {conocida?.sub ? <Text style={styles.listaSub}>{conocida.sub}</Text> : null}
+        </View>
+        <Ionicons name="chevron-down" size={16} color={c.muted} />
       </Pressable>
 
       <Modal visible={abierto} transparent animationType="slide" onRequestClose={cerrar}>
         <Pressable style={styles.modalFondo} onPress={cerrar} accessibilityRole="button" accessibilityLabel="Cerrar">
           <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            <View style={styles.agarre} />
             {label ? <Text style={styles.modalTitulo}>{label}</Text> : null}
             {modoOtro ? (
               <View style={{ gap: 10 }}>
@@ -1296,7 +1530,7 @@ export function Select({
                       accessibilityLabel="Otro valor"
                       onPress={() => setModoOtro(true)}
                     >
-                      <Text style={[styles.modalOpcionTxt, { color: c.primary }]}>Otro…</Text>
+                      <Text style={[styles.modalOpcionTxt, { fontWeight: '600' }]}>Otro…</Text>
                     </Pressable>
                   ) : undefined
                 }
@@ -1373,7 +1607,7 @@ export function ElegirVarios({
 
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      <Etiqueta paso={paso}>{label}</Etiqueta>
+      <Question paso={paso}>{label}</Question>
       <Pressable
         style={styles.selectBox}
         onPress={() => setAbierto(true)}
@@ -1383,7 +1617,7 @@ export function ElegirVarios({
         <Text style={{ flexShrink: 1, fontSize: 16, color: elegidas.length ? c.text : c.mutedDim }}>
           {texto}
         </Text>
-        <Text style={styles.selectCaret}>▾</Text>
+        <Ionicons name="chevron-down" size={16} color={c.muted} />
       </Pressable>
       <Modal visible={abierto} transparent animationType="slide" onRequestClose={() => setAbierto(false)}>
         <Pressable
@@ -1393,8 +1627,9 @@ export function ElegirVarios({
           accessibilityLabel="Cerrar"
         >
           <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            <View style={styles.agarre} />
             <Text style={styles.modalTitulo}>{label}</Text>
-            <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} />
+            <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} multiple />
             <Button title="Listo" onPress={() => setAbierto(false)} />
           </Pressable>
         </Pressable>
@@ -1734,9 +1969,9 @@ const crearEstilos = (c: Paleta) => {
     screenContent: { paddingHorizontal: 16, gap: 14, flexGrow: 1 },
     fabWrap: { position: 'absolute', right: 18 },
     fab: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
+      width: 58,
+      height: 58,
+      borderRadius: 29,
       backgroundColor: c.primary,
       alignItems: 'center',
       justifyContent: 'center',
@@ -1744,12 +1979,84 @@ const crearEstilos = (c: Paleta) => {
     fabAction: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      paddingVertical: 13,
-      paddingHorizontal: 8,
-      borderRadius: 10,
+      gap: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 6,
+      borderRadius: 14,
     },
-    fabActionTxt: { fontSize: 16, color: c.text, fontWeight: '500' },
+    fabActionIc: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    fabActionTxt: { fontSize: 16, color: c.text, fontWeight: '600' },
+    fabActionSub: { fontSize: 13, color: c.muted, marginTop: 2 },
+    agarre: {
+      width: 40,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: c.panelAlt,
+      alignSelf: 'center',
+      marginTop: -8,
+      marginBottom: 4,
+    },
+    seccion: { gap: 8, marginTop: 8 },
+    seccionCabeza: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    rotulo: { ...tipografia.rotulo, color: c.muted },
+    seccionAccion: { fontSize: 13, fontWeight: '600', color: c.muted },
+    listCard: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radio.tarjeta,
+      paddingHorizontal: 14,
+      overflow: 'hidden',
+    },
+    lista: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radio.tarjeta,
+      overflow: 'hidden',
+    },
+    listaGrupo: { ...tipografia.rotulo, color: c.muted, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 14 },
+    listaFila: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    listaTitulo: { ...tipografia.fila, color: c.text },
+    listaSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
+    radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: c.mutedDim },
+    radioOn: { borderWidth: 6, borderColor: c.text },
+    casilla: {
+      width: 20,
+      height: 20,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: c.mutedDim,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    casillaOn: { backgroundColor: c.text, borderColor: c.text },
+    monto: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 8,
+      borderBottomWidth: 2,
+      borderBottomColor: c.mutedDim, // HZ-24: contraste de lo editable
+    },
+    montoInput: { ...tipografia.monto, flex: 1, minWidth: 0, color: c.text, paddingVertical: 6 },
+    montoMoneda: { fontSize: 18, fontWeight: '600', color: c.muted },
     pillToggle: {
       flexDirection: 'row',
       backgroundColor: c.bg,
@@ -1805,19 +2112,13 @@ const crearEstilos = (c: Paleta) => {
     iconBtnBadgeTxt: { color: '#fff', fontSize: 9, fontWeight: '800' },
 
     hero: { paddingHorizontal: 2, gap: 6 },
-    heroLbl: {
-      fontSize: 10,
-      fontWeight: '700',
-      color: c.muted,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-    },
+    heroLbl: { ...tipografia.rotulo, color: c.muted },
     heroRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-    heroVal: { fontSize: 34, fontWeight: '700', color: c.text, letterSpacing: -0.5 },
+    heroVal: { ...tipografia.hero, color: c.text },
     heroChg: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
     heroSubs: { flexDirection: 'row', gap: 18, flexWrap: 'wrap' },
-    heroSub: { fontSize: 12, color: c.muted },
-    heroSubB: { color: c.text, fontWeight: '600' },
+    heroSub: { fontSize: 13, color: c.muted },
+    heroSubB: { color: c.text, fontWeight: '700' },
     heroChart: { marginTop: 10 },
 
     quickRow: { flexDirection: 'row', gap: 10 },
@@ -1838,39 +2139,49 @@ const crearEstilos = (c: Paleta) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      paddingVertical: 9,
+      paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: c.panelAlt,
+      borderBottomColor: c.border,
     },
     txLogo: {
-      width: 38,
-      height: 38,
-      borderRadius: 10,
+      width: 36,
+      height: 36,
+      borderRadius: radio.icono,
       alignItems: 'center',
       justifyContent: 'center',
     },
     txLogoTxt: { fontSize: 15, fontWeight: '800' },
     txMain: { flex: 1, minWidth: 0 },
-    txTitle: { fontSize: 14, fontWeight: '600', color: c.text },
-    txSub: { fontSize: 11, color: c.mutedDim, marginTop: 1 },
+    txTitle: { ...tipografia.fila, color: c.text },
+    txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
-    txAmt: { fontSize: 14, fontWeight: '700', color: c.text },
+    txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
 
     goalCard: {
       backgroundColor: c.bg,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 16,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
+      borderRadius: radio.tarjeta,
+      padding: 14,
     },
     goalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
-    goalName: { fontSize: 14, fontWeight: '600', color: c.text, flex: 1 },
-    goalHint: { fontSize: 11, color: c.mutedDim },
-    goalBar: { height: 3, backgroundColor: c.panelAlt, borderRadius: 2, marginTop: 10, overflow: 'hidden' },
-    goalBarFill: { height: 3 },
-    goalFoot: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-    goalFootTxt: { fontSize: 11, color: c.mutedDim },
+    goalName: { ...tipografia.fila, color: c.text, flex: 1 },
+    goalHint: { fontSize: 13, color: c.muted },
+    goalBar: { height: 4, backgroundColor: c.panelAlt, borderRadius: 2, marginTop: 10, overflow: 'hidden' },
+    goalBarFill: { height: 4 },
+    goalFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 10 },
+    goalFootTxt: { fontSize: 13, color: c.muted, flexShrink: 1 },
+    goalFootMonto: { color: c.text, fontWeight: '700' },
+    goalBtn: {
+      height: 34,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.panelAlt,
+      justifyContent: 'center',
+    },
+    goalBtnTxt: { fontSize: 14, fontWeight: '600', color: c.text },
 
     miniGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     miniPanel: {
@@ -1896,7 +2207,7 @@ const crearEstilos = (c: Paleta) => {
 
     card: {
       backgroundColor: c.bg,
-      borderRadius: 16,
+      borderRadius: radio.tarjeta,
       borderWidth: 1,
       borderColor: c.border,
       padding: 16,
@@ -1922,7 +2233,8 @@ const crearEstilos = (c: Paleta) => {
     migajaTexto: { fontSize: 13, color: c.muted, fontWeight: '600' },
     paragraph: { fontSize: 15, color: c.muted, lineHeight: 22 },
     field: { gap: 6 },
-    label: { fontSize: 13, fontWeight: '600', color: c.text },
+    label: { ...tipografia.pregunta, color: c.text },
+    labelOpcional: { fontWeight: '400', color: c.muted },
     etiquetaPaso: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     numeroPaso: {
       width: 20,
@@ -1943,10 +2255,10 @@ const crearEstilos = (c: Paleta) => {
     input: {
       borderWidth: 1,
       borderColor: c.mutedDim, // HZ-24: contraste de lo editable
-      borderRadius: 12,
-      backgroundColor: c.fondo,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      borderRadius: radio.campo,
+      backgroundColor: c.bg,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
       fontSize: 16,
       color: c.text,
     },
@@ -1954,68 +2266,70 @@ const crearEstilos = (c: Paleta) => {
     errorInline: { color: c.danger, fontSize: 12 },
     button: {
       backgroundColor: c.primary,
-      borderRadius: 12,
+      borderRadius: radio.boton,
       paddingVertical: 15,
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 50,
+      minHeight: 52,
     },
     buttonSecondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.primary },
     buttonDanger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.danger },
-    buttonDisabled: { opacity: 0.4 },
+    buttonDisabled: { opacity: 0.35 },
     buttonPressed: { opacity: 0.85 },
-    buttonText: { color: c.primaryText, fontSize: 16, fontWeight: '700' },
+    buttonText: { ...tipografia.boton, color: c.primaryText },
     error: { color: c.danger, fontSize: 14 },
     link: { color: c.text, fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
     segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     segment: {
       borderWidth: 1,
       borderColor: c.mutedDim, // HZ-24: contraste de lo editable
-      borderRadius: 999,
-      paddingVertical: 8,
+      borderRadius: radio.pastilla,
+      backgroundColor: c.bg,
+      paddingVertical: 9,
       paddingHorizontal: 14,
       minHeight: 40,
       justifyContent: 'center',
     },
     segmentActive: { backgroundColor: c.primary, borderColor: c.primary },
-    segmentText: { fontSize: 13, color: c.muted, fontWeight: '600' },
+    segmentText: { fontSize: 14, color: c.text, fontWeight: '500' },
     segmentTextActive: { color: c.primaryText },
     selectRow: { borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 12 },
     selectRowActive: { borderColor: c.primary, backgroundColor: c.faint },
     selectBox: {
       borderWidth: 1,
       borderColor: c.mutedDim, // HZ-24: contraste de lo editable
-      borderRadius: 12,
-      backgroundColor: c.fondo,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      borderRadius: radio.campo,
+      backgroundColor: c.bg,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      gap: 8,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
-    selectCaret: { fontSize: 14, color: c.muted },
     modalFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
     modalHoja: {
-      backgroundColor: c.bg,
-      borderTopLeftRadius: 18,
-      borderTopRightRadius: 18,
+      backgroundColor: c.fondo,
+      borderTopLeftRadius: radio.hoja,
+      borderTopRightRadius: radio.hoja,
       borderWidth: 1,
       borderColor: c.border,
-      padding: 20,
+      paddingHorizontal: 16,
+      paddingTop: 18,
       paddingBottom: 32,
-      gap: 8,
+      gap: 10,
+      maxHeight: '85%',
     },
-    modalTitulo: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 4 },
-    modalOpcion: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.panelAlt },
+    modalTitulo: { fontSize: 17, fontWeight: '700', color: c.text, marginBottom: 2 },
+    modalOpcion: { paddingVertical: 14, paddingHorizontal: 2 },
     modalOpcionTxt: { fontSize: 16, color: c.text },
-    grupoOpciones: { fontSize: 12, fontWeight: '700', color: c.muted, textTransform: 'uppercase', letterSpacing: 0.5, paddingTop: 10, paddingBottom: 2 },
     selectRowText: { fontSize: 15, color: c.text },
     selectRowTextActive: { color: c.text, fontWeight: '600' },
     dataRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 },
     dataLeft: { fontSize: 14, color: c.muted },
-    dataRight: { fontSize: 14, color: c.text, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
+    dataRight: { fontSize: 14, color: c.text, fontWeight: '700', textAlign: 'right', flexShrink: 1 },
     progressTrack: { height: 4, borderRadius: 2, backgroundColor: c.panelAlt, overflow: 'hidden' },
-    progressFill: { height: 4, borderRadius: 2, backgroundColor: c.primary },
+    progressFill: { height: 4, borderRadius: 2, backgroundColor: c.text },
     distTrack: {
       flexDirection: 'row',
       height: 10,
@@ -2038,7 +2352,7 @@ const crearEstilos = (c: Paleta) => {
       backgroundColor: c.bg,
     },
     menuLinkTitle: { fontSize: 15, fontWeight: '600', color: c.text },
-    menuLinkSub: { fontSize: 12, color: c.mutedDim, marginTop: 2 },
+    menuLinkSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     menuIcono: {
       width: 32,
       height: 32,
@@ -2052,19 +2366,19 @@ const crearEstilos = (c: Paleta) => {
       backgroundColor: c.bg,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 16,
+      borderRadius: radio.tarjeta,
       overflow: 'hidden',
     },
     menuListFila: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      paddingVertical: 13,
-      paddingHorizontal: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
       borderBottomWidth: 1,
-      borderBottomColor: c.panelAlt,
+      borderBottomColor: c.border,
     },
-    menuListTxt: { fontSize: 13, color: c.text, fontWeight: '500' },
+    menuListTxt: { ...tipografia.fila, color: c.text },
     menuListChev: { fontSize: 15, color: c.mutedDim },
     menuBadge: {
       minWidth: 22,
@@ -2082,13 +2396,7 @@ const crearEstilos = (c: Paleta) => {
       alignItems: 'center',
       marginTop: 4,
     },
-    groupLabel: {
-      fontSize: 10,
-      fontWeight: '700',
-      color: c.mutedDim,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-    },
+    groupLabel: { ...tipografia.rotulo, color: c.muted },
     ayuda: {
       flexDirection: 'row',
       gap: 8,

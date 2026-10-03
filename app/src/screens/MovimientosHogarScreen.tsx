@@ -10,11 +10,10 @@ import {
   ErrorText,
   etiqueta,
   fechaLegible,
-  GroupLabel,
-  Panel,
+  ListCard,
   Screen,
+  Section,
   Skeleton,
-  Title,
   TxRow,
   useC,
   tipoDe,
@@ -84,7 +83,6 @@ export function MovimientosHogarScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Title>Movimientos del hogar</Title>
       <Text style={styles.muted}>
         Ingresos, gastos y transferencias sobre el patrimonio consolidado y tus cuentas. Los
         movimientos privados de otros miembros no aparecen.
@@ -103,27 +101,28 @@ export function MovimientosHogarScreen() {
           const [anio, m] = mes.split('-');
           return (
             <Fragment key={mes}>
-              <GroupLabel>{`${MESES[Number(m) - 1]} ${anio}`}</GroupLabel>
-              <Panel gap={0}>
-                {lista.map((e) => {
-                  const neutro = NEUTRO.has(e.tipo);
-                  const signo = e.tipo === 'GASTO' ? '−' : neutro ? '' : '+';
-                  const subtitle = neutro
-                    ? `${e.elementos.map((x) => x.nombre).join(' → ') || 'Transferencia interna'} · ${fechaLegible(e.fecha)}`
-                    : `${etiqueta(e.tipo)} · ${e.elementos[0]?.nombre ?? ''} · ${fechaLegible(e.fecha)}`;
-                  return (
-                    <TxRow
-                      key={e.eventoId}
-                      title={e.glosa || (neutro ? 'Transferencia' : etiqueta(e.tipo))}
-                      subtitle={`${subtitle}${e.corregido ? ' · corregido' : ''}`}
-                      amount={`${signo}${money(e.montoEfectivo, e.moneda)}`}
-                      positivo={!neutro && (e.tipo === 'INGRESO' || e.tipo === 'SALDO_INICIAL')}
-                      logo={{ icon: iconoTipo(e.tipo) }}
-                      onPress={() => nav.go('MovimientoDetalle', { eventoId: e.eventoId })}
-                    />
-                  );
-                })}
-              </Panel>
+              <Section title={`${MESES[Number(m) - 1]} ${anio}`}>
+                <ListCard>
+                  {lista.map((e) => {
+                    const neutro = NEUTRO.has(e.tipo);
+                    const signo = e.tipo === 'GASTO' ? '−' : neutro ? '' : '+';
+                    const subtitle = neutro
+                      ? `${e.elementos.map((x) => x.nombre).join(' → ') || 'Transferencia interna'} · ${fechaLegible(e.fecha)}`
+                      : `${etiqueta(e.tipo)} · ${e.elementos[0]?.nombre ?? ''} · ${fechaLegible(e.fecha)}`;
+                    return (
+                      <TxRow
+                        key={e.eventoId}
+                        title={e.glosa || (neutro ? 'Transferencia' : etiqueta(e.tipo))}
+                        subtitle={`${subtitle}${e.corregido ? ' · corregido' : ''}`}
+                        amount={`${signo}${money(e.montoEfectivo, e.moneda)}`}
+                        positivo={!neutro && (e.tipo === 'INGRESO' || e.tipo === 'SALDO_INICIAL')}
+                        logo={{ icon: iconoTipo(e.tipo) }}
+                        onPress={() => nav.go('MovimientoDetalle', { eventoId: e.eventoId })}
+                      />
+                    );
+                  })}
+                </ListCard>
+              </Section>
             </Fragment>
           );
         })

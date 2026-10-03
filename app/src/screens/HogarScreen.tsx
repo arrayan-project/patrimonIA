@@ -13,16 +13,17 @@ import { leer } from '../auth/secureStorage';
 import { money } from '../format';
 import {
   ErrorText,
-  GroupLabel,
+  GoalCard,
   IconButton,
-  ListItem,
+  ListCard,
   MenuList,
   Nota,
-  Panel,
   Screen,
+  Section,
   Skeleton,
   Title,
   TopRow,
+  TxRow,
 } from '../ui';
 
 /** Tab "Hogar": personas y lo que se comparte. El patrimonio consolidado vive en Inicio (toggle). */
@@ -103,81 +104,84 @@ export function HogarScreen() {
         }
       />
 
-      <GroupLabel>Personas</GroupLabel>
-      <MenuList
-        items={[
-          {
-            title: 'Miembros y roles',
-            subtitle: 'Nombre del hogar, miembros, roles, moneda de consolidación',
-            icon: 'people-outline',
-            onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
-          },
-          {
-            title: 'Invitaciones recibidas',
-            subtitle: 'Hogares a los que te invitaron',
-            icon: 'mail-outline',
-            onPress: () => nav.go('Invitaciones'),
-          },
-        ]}
-      />
-
-      <GroupLabel>Qué se comparte</GroupLabel>
-      <Panel gap={0}>
-        <ListItem
-          title="Elementos en el patrimonio del hogar"
-          subtitle={
-            compartidos.length === 0
-              ? 'Ninguno por ahora'
-              : `${compartidos.length} ${compartidos.length === 1 ? 'elemento cuenta' : 'elementos cuentan'} en la consolidación`
-          }
+      <Section title="Patrimonio">
+        <MenuList
+          items={[
+            {
+              title: 'Patrimonio del hogar',
+              subtitle: 'Consolidado por moneda, distribución de activos y pasivos',
+              icon: 'home-outline',
+              onPress: () => nav.go('HogarConsolidado', { hogarId: hogar.id }),
+            },
+            {
+              title: 'Movimientos del hogar',
+              subtitle: 'Ingresos, gastos y transferencias sobre el patrimonio consolidado',
+              icon: 'swap-horizontal-outline',
+              onPress: () => nav.go('MovimientosHogar', { hogarId: hogar.id }),
+            },
+          ]}
         />
-        {compartidos.slice(0, 4).map((e) => (
-          <ListItem
-            key={e.id}
-            title={e.nombre}
-            subtitle={e.propietarios.map((p) => p.nombre ?? 'Propietario').join(', ')}
-            right={e.valorOculto ? '—' : money(e.valorVigente, e.moneda)}
-            onPress={() => nav.go('ElementoDetalle', { elementoId: e.id })}
-          />
-        ))}
+      </Section>
+
+      <Section
+        title="Lo que suma al hogar"
+        accion="Ver todo"
+        onAccion={compartidos.length > 4 ? () => nav.go('HogarConsolidado', { hogarId: hogar.id }) : undefined}
+      >
+        {compartidos.length === 0 ? (
+          <Nota>Ninguna cuenta ni bien suma al hogar por ahora.</Nota>
+        ) : (
+          <ListCard>
+            {compartidos.slice(0, 4).map((e) => (
+              <TxRow
+                key={e.id}
+                title={e.nombre}
+                subtitle={e.propietarios.map((p) => p.nombre ?? 'Propietario').join(', ')}
+                amount={e.valorOculto ? '—' : money(e.valorVigente, e.moneda)}
+                logo={{ icon: 'wallet-outline' }}
+                onPress={() => nav.go('ElementoDetalle', { elementoId: e.id })}
+              />
+            ))}
+          </ListCard>
+        )}
         {compartidos.length > 4 && <Nota>y {compartidos.length - 4} más</Nota>}
-      </Panel>
-      <Panel gap={0}>
-        <ListItem
-          title="Metas del hogar"
-          subtitle={
-            objetivosHogar.length === 0
-              ? 'Ninguna compartida'
-              : `${objetivosHogar.length} ${objetivosHogar.length === 1 ? 'meta compartida' : 'metas compartidas'}`
-          }
-        />
-        {objetivosHogar.slice(0, 4).map((o) => (
-          <ListItem
-            key={o.id}
-            title={o.nombre}
-            subtitle={`${o.progresoPorcentaje}% · ${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
-            onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-          />
-        ))}
-      </Panel>
+      </Section>
 
-      <GroupLabel>Patrimonio</GroupLabel>
-      <MenuList
-        items={[
-          {
-            title: 'Patrimonio del hogar',
-            subtitle: 'Consolidado por moneda, distribución de activos y pasivos',
-            icon: 'home-outline',
-            onPress: () => nav.go('HogarConsolidado', { hogarId: hogar.id }),
-          },
-          {
-            title: 'Movimientos del hogar',
-            subtitle: 'Ingresos, gastos y transferencias sobre el patrimonio consolidado',
-            icon: 'swap-horizontal-outline',
-            onPress: () => nav.go('MovimientosHogar', { hogarId: hogar.id }),
-          },
-        ]}
-      />
+      <Section title="Metas del hogar">
+        {objetivosHogar.length === 0 ? (
+          <Nota>Ninguna meta compartida.</Nota>
+        ) : (
+          objetivosHogar.slice(0, 4).map((o) => (
+            <GoalCard
+              key={o.id}
+              name={o.nombre}
+              hint={`${o.progresoPorcentaje}%`}
+              pct={o.progresoPorcentaje}
+              footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
+              onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+            />
+          ))
+        )}
+      </Section>
+
+      <Section title="Personas">
+        <MenuList
+          items={[
+            {
+              title: 'Miembros y roles',
+              subtitle: 'Nombre del hogar, miembros, roles, moneda de consolidación',
+              icon: 'people-outline',
+              onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
+            },
+            {
+              title: 'Invitaciones recibidas',
+              subtitle: 'Hogares a los que te invitaron',
+              icon: 'mail-outline',
+              onPress: () => nav.go('Invitaciones'),
+            },
+          ]}
+        />
+      </Section>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
