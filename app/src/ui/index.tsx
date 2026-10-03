@@ -1167,7 +1167,9 @@ export function Select({
 
   const todas = opcionNula ? [{ value: '', label: opcionNula }, ...options] : options;
   const conocida = todas.find((o) => o.value === value);
-  const texto = conocida ? conocida.label : value ? value : placeholder;
+  // Un valor fuera de la lista solo se muestra si es texto libre ("Otro…").
+  const libre = permiteOtro && !conocida && value ? value : '';
+  const texto = conocida ? conocida.label : libre || placeholder;
 
   const cerrar = () => {
     setAbierto(false);
@@ -1184,7 +1186,7 @@ export function Select({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <Text style={{ flexShrink: 1, fontSize: 16, color: conocida || value ? c.text : c.mutedDim }}>
+        <Text style={{ flexShrink: 1, fontSize: 16, color: conocida || libre ? c.text : c.mutedDim }}>
           {texto}
         </Text>
         <Text style={styles.selectCaret}>▾</Text>

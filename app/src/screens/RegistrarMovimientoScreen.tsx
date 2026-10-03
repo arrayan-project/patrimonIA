@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   api,
   ApiError,
@@ -15,9 +15,11 @@ import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { money } from '../format';
+import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
+  Elegir,
   Etiqueta,
   aISO,
   Button,
@@ -31,7 +33,6 @@ import {
   Skeleton,
   Screen,
   Segmented,
-  SelectRow,
   Title,
   useC,
   type Paleta,
@@ -66,7 +67,6 @@ export function RegistrarMovimientoScreen() {
   const destinoInicial = (params.destinoId as string | undefined) ?? null;
   const [origenId, setOrigenId] = useState<string | null>(origenInicial);
   const [destinoId, setDestinoId] = useState<string | null>(destinoInicial);
-  const [filtroEl, setFiltroEl] = useState('');
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [crearCat, setCrearCat] = useState(false);
@@ -228,9 +228,16 @@ export function RegistrarMovimientoScreen() {
     );
   }
 
-  const elsFiltrados = filtroEl.trim()
-    ? elementos.filter((e) => e.nombre.toLowerCase().includes(filtroEl.trim().toLowerCase()))
-    : elementos;
+  // HZ-17: agrupadas por tipo; "A qué cuenta" no repite la de "Desde" y, en una
+  // transferencia, suma las cuentas de los otros miembros agrupadas por persona.
+  const propios = new Set(elementos.map((e) => e.id));
+  const opcionesDesde = opcionesDeElementos(elementos);
+  const opcionesA = [
+    ...opcionesDeElementos(elementos, { excluir: origenId }),
+    ...(tipo === 'TRANSFERENCIA'
+      ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId })
+      : []),
+  ];
 
   const puedeEnviar =
     Number(monto) > 0 &&
@@ -246,15 +253,19 @@ export function RegistrarMovimientoScreen() {
 
       {plantillas.length > 0 ? (
         <View style={styles.group}>
-          <Text style={styles.label}>Desde una plantilla</Text>
-          {plantillas.map((p) => (
-            <SelectRow
-              key={p.id}
-              label={p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre}
-              selected={false}
-              onPress={() => aplicarPlantilla(p)}
-            />
-          ))}
+          <Elegir
+            label="Desde una plantilla"
+            placeholder="Elegir una plantilla"
+            value={null}
+            options={plantillas.map((p) => ({
+              value: p.id,
+              label: p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre,
+            }))}
+            onChange={(id) => {
+              const p = plantillas.find((x) => x.id === id);
+              if (p) aplicarPlantilla(p);
+            }}
+          />
           <LinkButton title="Gestionar plantillas" onPress={() => nav.go('Plantillas')} />
         </View>
       ) : (
@@ -311,20 +322,17 @@ export function RegistrarMovimientoScreen() {
 
       {puedeCategorizar && (
         <View style={styles.group}>
-          <Etiqueta paso={paso()}>Categoría (opcional)</Etiqueta>
-          <SelectRow
-            label="Sin categoría"
-            selected={categoriaId === null}
-            onPress={() => setCategoriaId(null)}
+          <Elegir
+            label="Categoría (opcional)"
+            paso={paso()}
+            opcionNula="Sin categoría"
+            value={categoriaId}
+            options={categoriasAplicables.map((c) => ({
+              value: c.id,
+              label: c.categoriaPadreId ? `›  ${c.nombre}` : c.nombre,
+            }))}
+            onChange={setCategoriaId}
           />
-          {categoriasAplicables.map((c) => (
-            <SelectRow
-              key={c.id}
-              label={c.categoriaPadreId ? `›  ${c.nombre}` : c.nombre}
-              selected={categoriaId === c.id}
-              onPress={() => setCategoriaId(c.id)}
-            />
-          ))}
           {crearCat ? (
             <View style={{ gap: 8, marginTop: 8 }}>
               <Field
@@ -348,56 +356,29 @@ export function RegistrarMovimientoScreen() {
         </View>
       )}
 
-      {(necesitaOrigen || necesitaDestino) && elementos.length > 6 && (
-        <Field
-          label="Buscar cuenta o bien"
-          value={filtroEl}
-          onChangeText={setFiltroEl}
-          placeholder="Escribe parte del nombre"
+      {necesitaOrigen && (
+        <Elegir
+          label="Desde qué cuenta"
+          paso={paso()}
+          placeholder="Elegir cuenta"
+          value={origenId}
+          options={opcionesDesde}
+          onChange={(v) => {
+            setOrigenId(v);
+            if (v === destinoId) setDestinoId(null);
+          }}
         />
       )}
 
-      {necesitaOrigen && (
-        <View style={styles.group}>
-          <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
-          {elsFiltrados.map((el) => (
-            <SelectRow
-              key={el.id}
-              label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
-              selected={origenId === el.id}
-              onPress={() => setOrigenId(el.id)}
-            />
-          ))}
-        </View>
-      )}
-
       {necesitaDestino && (
-        <View style={styles.group}>
-          <Etiqueta paso={paso()}>A qué cuenta</Etiqueta>
-          {elsFiltrados.map((el) => (
-            <SelectRow
-              key={el.id}
-              label={`${el.nombre} · ${money(el.valorVigente, el.moneda)}`}
-              selected={destinoId === el.id}
-              onPress={() => setDestinoId(el.id)}
-            />
-          ))}
-          {tipo === 'TRANSFERENCIA' && elementosHogar.length > 0 && (
-            <>
-              <Text style={styles.label}>De otro miembro del hogar</Text>
-              {elementosHogar.map((el) => (
-                <SelectRow
-                  key={el.id}
-                  label={`${el.nombre}${el.valorOculto ? '' : ` · ${money(el.valorVigente, el.moneda)}`} · ${
-                    el.propietarios[0]?.nombre ?? 'hogar'
-                  }`}
-                  selected={destinoId === el.id}
-                  onPress={() => setDestinoId(el.id)}
-                />
-              ))}
-            </>
-          )}
-        </View>
+        <Elegir
+          label="A qué cuenta"
+          paso={paso()}
+          placeholder="Elegir cuenta"
+          value={destinoId}
+          options={opcionesA}
+          onChange={setDestinoId}
+        />
       )}
 
       {etiquetas.length > 0 && (
