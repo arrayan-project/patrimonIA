@@ -55,7 +55,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; siguiente: bloque 5 (HZ-13). | ⬜ |
-| — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
+| — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -89,13 +89,14 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
 
-#### G34 — El login distingue mayúsculas en el email  ⬜ PENDIENTE (2026-10-03)
+#### G34 — El login distingue mayúsculas en el email  ✅ RESUELTO (2026-10-03)
 - **Qué pasa**: `POST /auth/login` busca el email tal cual llega
   (`auth.service.ts`, `login`), pero el registro y la recuperación de contraseña
   lo pasan a minúsculas. Quien se registró como `juan@…` y entra escribiendo
   `Juan@…` recibe "Credenciales inválidas". Verificado contra el backend local.
-- **Arreglo propuesto**: pasar el email a minúsculas también en el login (una
-  línea en `auth.controller.ts`), con un test e2e. No aplicado.
+- **Arreglo**: el login pasa el email a minúsculas en `auth.controller.ts`,
+  como el registro y el reset. Test e2e en
+  `api/test/reset-password.e2e-spec.ts` ("G34: …").
 
 ### Tema H · Notificaciones
 

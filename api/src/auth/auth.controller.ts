@@ -17,7 +17,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   login(@Body() dto: LoginDto): Promise<LoginResult> {
-    return this.auth.login(dto.email, dto.password);
+    return this.auth.login(dto.email.toLowerCase(), dto.password);
   }
 
   @Public()
