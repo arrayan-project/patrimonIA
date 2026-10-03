@@ -490,6 +490,7 @@ export function TxRow({
   subtitle,
   amount,
   positivo,
+  negativo,
   logo,
   virtual,
   tag,
@@ -499,6 +500,8 @@ export function TxRow({
   subtitle?: string;
   amount: string;
   positivo?: boolean;
+  /** Monto en rojo (deuda, saldo en contra). */
+  negativo?: boolean;
   logo?: { icon?: NombreIcono; text?: string; color?: string };
   virtual?: boolean;
   tag?: string;
@@ -506,6 +509,8 @@ export function TxRow({
 }) {
   const c = useC();
   const styles = useEstilos();
+  // Sobre un color propio, el ícono va en blanco; sobre el gris de la fila, en el color del texto.
+  const tinta = virtual ? c.muted : logo?.color ? '#fff' : c.text;
   const cuerpo = (
     <>
       <View
@@ -517,9 +522,9 @@ export function TxRow({
         ]}
       >
         {logo?.icon ? (
-          <Ionicons name={logo.icon} size={16} color={virtual ? c.muted : '#fff'} />
+          <Ionicons name={logo.icon} size={17} color={tinta} />
         ) : (
-          <Text style={[styles.txLogoTxt, { color: virtual ? c.muted : '#fff' }]}>
+          <Text style={[styles.txLogoTxt, { color: tinta }]}>
             {(logo?.text ?? title).slice(0, 1).toUpperCase()}
           </Text>
         )}
@@ -536,7 +541,7 @@ export function TxRow({
           </Text>
         ) : null}
       </View>
-      <Text style={[styles.txAmt, positivo && { color: c.ok }]}>{amount}</Text>
+      <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
     </>
   );
   if (onPress) {
@@ -608,6 +613,19 @@ export function GoalCard({
     );
   }
   return <View style={styles.goalCard}>{cuerpo}</View>;
+}
+
+/**
+ * Tarjeta única con filas (`TxRow`, `ListItem`) separadas por una línea, como
+ * las listas del prototipo. La línea de la última fila queda oculta.
+ */
+export function ListCard({ children }: { children: ReactNode }) {
+  const styles = useEstilos();
+  return (
+    <View style={styles.listCard}>
+      <View style={{ marginBottom: -1 }}>{children}</View>
+    </View>
+  );
 }
 
 /** Rejilla de mini-métricas (2 columnas). */
@@ -1961,6 +1979,14 @@ const crearEstilos = (c: Paleta) => {
     seccionCabeza: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     rotulo: { ...tipografia.rotulo, color: c.muted },
     seccionAccion: { fontSize: 13, fontWeight: '600', color: c.muted },
+    listCard: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radio.tarjeta,
+      paddingHorizontal: 14,
+      overflow: 'hidden',
+    },
     lista: {
       backgroundColor: c.bg,
       borderWidth: 1,

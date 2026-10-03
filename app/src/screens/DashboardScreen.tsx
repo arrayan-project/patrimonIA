@@ -29,22 +29,23 @@ import {
   ErrorText,
   etiqueta,
   FabMenu,
-  GroupLabel,
+  GoalCard,
   Hero,
   IconButton,
-  LinkButton,
-  MiniGrid,
-  MiniPanel,
+  ListCard,
   MoneyText,
+  Nota,
   Panel,
   PillToggle,
-  ProgressBar,
   QuickActions,
   Row,
   Screen,
+  Section,
   Skeleton,
   TopRow,
+  TxRow,
   useC,
+  type NombreIcono,
   type Paleta,
   tipoDe,
 } from '../ui';
@@ -58,6 +59,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /** Categorías funcionales, en el orden en que se muestran en la composición. */
 const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
+const ICONO_CAT: Record<(typeof CATS)[number], NombreIcono> = {
+  LIQUIDEZ: 'wallet-outline',
+  RESERVA: 'umbrella-outline',
+  INVERSION: 'trending-up-outline',
+  ACTIVO: 'home-outline',
+  CREDITO: 'arrow-down-circle-outline',
+  DEUDA: 'card-outline',
+};
 
 export function DashboardScreen() {
   const c = useC();
@@ -239,7 +248,7 @@ export function DashboardScreen() {
     : [];
 
   // ── Composición ────────────────────────────────────────────────────────
-  const composicion: { cat: string; valor: number; sub: string }[] = [];
+  const composicion: { cat: (typeof CATS)[number]; valor: number; sub: string }[] = [];
   if (alcance === 'hogar' && metricasHogar) {
     const m = metricasHogar;
     const act = new Map(m.distribucionPorActivo.map((d) => [d.categoria, d]));
@@ -261,10 +270,6 @@ export function DashboardScreen() {
 
   // ── Objetivos ──────────────────────────────────────────────────────────
   const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
-  const monedasObj = new Set(enProgreso.map((o) => o.moneda));
-  const metaObj = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
-  const avanceObj = enProgreso.reduce((s, o) => s + o.progreso, 0);
-  const pctObj = metaObj > 0 ? Math.round((avanceObj / metaObj) * 100) : 0;
 
   // ── Alertas (máx 3, por prioridad) ─────────────────────────────────────
   const enMora = elementos.filter(
@@ -302,9 +307,20 @@ export function DashboardScreen() {
       onRefresh={cargar}
       fab={
         <FabMenu
+          titulo="¿Qué quieres anotar?"
           actions={[
-            { icon: 'swap-vertical-outline', label: 'Registrar movimiento', onPress: () => nav.go('RegistrarMovimiento') },
-            { icon: 'add-circle-outline', label: 'Agregar cuenta o bien', onPress: () => nav.go('AgregarElemento') },
+            {
+              icon: 'swap-vertical-outline',
+              label: 'Registrar movimiento',
+              subtitle: 'Un gasto, un ingreso o plata que mueves entre cuentas',
+              onPress: () => nav.go('RegistrarMovimiento'),
+            },
+            {
+              icon: 'add-circle-outline',
+              label: 'Agregar cuenta o bien',
+              subtitle: 'Una cuenta, tarjeta, inversión, deuda o bien',
+              onPress: () => nav.go('AgregarElemento'),
+            },
           ]}
         />
       }
@@ -331,6 +347,28 @@ export function DashboardScreen() {
         }
       />
 
+      {alertas.length > 0 && (
+        <ListCard>
+          {alertas.slice(0, 3).map((a, i) => (
+            <Pressable
+              key={i}
+              onPress={a.onPress}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.alerta, pressed && { opacity: 0.6 }]}
+            >
+              <View style={[styles.alertaPunto, { backgroundColor: a.danger ? c.danger : c.muted }]} />
+              <Text style={styles.alertaTxt}>{a.texto}</Text>
+              <Text style={styles.alertaChev}>›</Text>
+            </Pressable>
+          ))}
+          {alertas.length > 3 && (
+            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')} accessibilityRole="button" accessibilityLabel={`Ver todas las alertas (${alertas.length})`}>
+              <Text style={[styles.alertaTxt, { color: c.muted }]}>Ver todas ({alertas.length})</Text>
+            </Pressable>
+          )}
+        </ListCard>
+      )}
+
       <Pressable
         onPress={verPatrimonio}
         accessibilityRole="button"
@@ -349,36 +387,25 @@ export function DashboardScreen() {
               : undefined
           }
           changeDir={v && v.variacion < 0 ? 'neg' : 'pos'}
+          substats={
+            ver.disponibilidad && alcance === 'mios' && principal
+              ? [
+                  { label: 'Libre para gastar', value: money(principal.valorLibre, principal.moneda) },
+                  { label: 'En metas', value: money(principal.valorReservado, principal.moneda) },
+                ]
+              : undefined
+          }
         >
           {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} /> : null}
         </Hero>
       </Pressable>
+      {ver.disponibilidad && alcance === 'mios' && principal ? (
+        <Nota>“En metas” es plata que ahorraste para tus metas: sigue en la cuenta, pero no es libre para gastar.</Nota>
+      ) : null}
 
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
       {hh?.tipo === 'parcial' && (
         <ErrorText>{`Total parcial en ${hh.moneda}: falta tipo de cambio para ${hh.faltantes.join(', ')}.`}</ErrorText>
-      )}
-
-      {alertas.length > 0 && (
-        <Panel gap={0}>
-          {alertas.slice(0, 3).map((a, i) => (
-            <Pressable
-              key={i}
-              onPress={a.onPress}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.alerta, i > 0 && styles.alertaSep, pressed && { opacity: 0.6 }]}
-            >
-              <View style={[styles.alertaPunto, { backgroundColor: a.danger ? c.danger : c.muted }]} />
-              <Text style={styles.alertaTxt}>{a.texto}</Text>
-              <Text style={styles.alertaChev}>›</Text>
-            </Pressable>
-          ))}
-          {alertas.length > 3 && (
-            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')} accessibilityRole="button" accessibilityLabel={`Ver todas las alertas (${alertas.length})`}>
-              <Text style={[styles.alertaTxt, { color: c.muted }]}>Ver todas ({alertas.length})</Text>
-            </Pressable>
-          )}
-        </Panel>
       )}
 
       {!onbOculto && (
@@ -401,106 +428,86 @@ export function DashboardScreen() {
       )}
 
       {hogares.length > 1 && (
-        <Panel>
-          <Elegir
-            label="Hogar activo"
-            value={hogarId}
-            options={hogares.map((h) => ({ value: h.id, label: h.nombre }))}
-            onChange={(id) => id && elegirHogar(id)}
-          />
-        </Panel>
+        <Elegir
+          label="¿Qué hogar quieres ver?"
+          value={hogarId}
+          options={hogares.map((h) => ({ value: h.id, label: h.nombre }))}
+          onChange={(id) => id && elegirHogar(id)}
+        />
       )}
 
       {ver.composicion && (
-        <GroupLabel
-          right={composicion.length > 0 ? <LinkButton title="Ver todo ›" onPress={verPatrimonio} /> : undefined}
+        <Section
+          title={alcance === 'hogar' ? 'Patrimonio del hogar' : 'Tu patrimonio'}
+          accion="Ver todo"
+          onAccion={composicion.length > 0 ? verPatrimonio : undefined}
         >
-          Composición
-        </GroupLabel>
-      )}
-      {!ver.composicion ? null : composicion.length === 0 && alcance === 'mios' ? (
-        <EmptyState
-          icon="wallet-outline"
-          titulo="Aún no tienes cuentas ni bienes"
-          descripcion="Agrega tu primera cuenta, inversión o deuda para empezar."
-          accion="Agregar mi primera cuenta"
-          onAccion={() => nav.go('AgregarElemento')}
-        />
-      ) : composicion.length === 0 ? (
-        <Panel>
-          <Text style={styles.muted}>Sin desglose disponible para el patrimonio del hogar.</Text>
-        </Panel>
-      ) : (
-        <MiniGrid>
-          {composicion.map((x) => (
-            <MiniPanel
-              key={x.cat}
-              label={etiqueta(x.cat)}
-              value={money(Math.abs(x.valor), monedaPrin)}
-              sub={x.sub}
-              tone={x.valor < 0 ? 'danger' : undefined}
-              onPress={() =>
-                nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin })
-              }
+          {composicion.length === 0 && alcance === 'mios' ? (
+            <EmptyState
+              icon="wallet-outline"
+              titulo="Aún no tienes cuentas ni bienes"
+              descripcion="Agrega tu primera cuenta, inversión o deuda para empezar."
+              accion="Agregar mi primera cuenta"
+              onAccion={() => nav.go('AgregarElemento')}
             />
-          ))}
-        </MiniGrid>
+          ) : composicion.length === 0 ? (
+            <Panel>
+              <Text style={styles.muted}>Sin desglose disponible para el patrimonio del hogar.</Text>
+            </Panel>
+          ) : (
+            <ListCard>
+              {composicion.map((x) => (
+                <TxRow
+                  key={x.cat}
+                  title={etiqueta(x.cat)}
+                  subtitle={x.sub}
+                  amount={money(Math.abs(x.valor), monedaPrin)}
+                  negativo={x.valor < 0}
+                  logo={{ icon: ICONO_CAT[x.cat] }}
+                  onPress={() => nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin })}
+                />
+              ))}
+            </ListCard>
+          )}
+        </Section>
       )}
 
-      {ver.disponibilidad && alcance === 'mios' && principal && (
-        <Panel>
-          <Text style={styles.section}>Libre para gastar</Text>
-          <View style={styles.dispRow}>
-            <Disp label="Líquido" valor={money(principal.valorLiquido, principal.moneda)} styles={styles} />
-            <Disp label="En metas" valor={money(principal.valorReservado, principal.moneda)} styles={styles} onPress={() => nav.go('Planificar')} />
-            <Disp label="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} styles={styles} strong />
-          </View>
-          <Text style={styles.muted}>“En metas” es plata que ahorraste para tus metas: sigue en la cuenta, pero no es libre para gastar.</Text>
-        </Panel>
+      {ver.objetivos && enProgreso.length > 0 && (
+        <Section title="Metas" accion="Ver todas" onAccion={() => nav.go('Planificar')}>
+          {enProgreso.slice(0, 3).map((o) => (
+            <GoalCard
+              key={o.id}
+              name={o.nombre}
+              hint={`${Math.round(o.progresoPorcentaje)}%`}
+              pct={o.progresoPorcentaje}
+              footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
+              onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+            />
+          ))}
+        </Section>
       )}
 
       {ver.flujo && (
-        <Panel>
-          <View style={styles.headRow}>
-            <Text style={styles.section}>Flujo de {MESES[hoy.getMonth()]}</Text>
-            <Pressable hitSlop={8} onPress={() => nav.go('Movimientos')} accessibilityRole="button" accessibilityLabel="Ver movimientos">
-              <Text style={styles.link}>Ver movimientos ›</Text>
-            </Pressable>
-          </View>
-          {flujo ? (
-            <>
-              <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
-              <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
-              <Row
-                left="Balance"
-                right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
-              />
-            </>
-          ) : (
-            <Text style={styles.muted}>Sin movimientos este mes.</Text>
-          )}
-        </Panel>
-      )}
-
-      {ver.objetivos && enProgreso.length > 0 && monedasObj.size === 1 && (
-        <Panel>
-          <View style={styles.headRow}>
-            <Text style={styles.section}>Metas</Text>
-            <Pressable hitSlop={8} onPress={() => nav.go('Planificar')} accessibilityRole="button" accessibilityLabel="Ir a Planificar">
-              <Text style={styles.link}>Planificar ›</Text>
-            </Pressable>
-          </View>
-          <ProgressBar pct={pctObj} />
-          <Text style={styles.muted}>
-            {money(avanceObj, [...monedasObj][0])} de {money(metaObj, [...monedasObj][0])} · {pctObj}% · {enProgreso.length}{' '}
-            {enProgreso.length === 1 ? 'meta' : 'metas'}
-          </Text>
-        </Panel>
+        <Section title={`Flujo de ${MESES[hoy.getMonth()]}`} accion="Ver todos" onAccion={() => nav.go('Movimientos')}>
+          <Panel gap={0}>
+            {flujo ? (
+              <>
+                <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
+                <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
+                <Row
+                  left="Balance"
+                  right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
+                />
+              </>
+            ) : (
+              <Text style={styles.muted}>Sin movimientos este mes.</Text>
+            )}
+          </Panel>
+        </Section>
       )}
 
       {ver.accesos && (
-        <>
-          <GroupLabel>Accesos rápidos</GroupLabel>
+        <Section title="Accesos rápidos">
           <QuickActions
             items={[
               { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
@@ -509,7 +516,7 @@ export function DashboardScreen() {
               { icon: 'wallet-outline', label: 'Mi patrimonio', onPress: verPatrimonio },
             ]}
           />
-        </>
+        </Section>
       )}
 
       <ErrorText>{error}</ErrorText>
@@ -538,51 +545,23 @@ function Paso({
   );
 }
 
-function Disp({
-  label,
-  valor,
-  strong,
-  onPress,
-  styles,
-}: {
-  label: string;
-  valor: string;
-  strong?: boolean;
-  onPress?: () => void;
-  styles: ReturnType<typeof crearEstilos>;
-}) {
-  const cuerpo = (
-    <>
-      <Text style={styles.dispLbl}>{label}</Text>
-      <Text style={[styles.dispVal, strong && styles.dispValStrong]}>{valor}</Text>
-    </>
-  );
-  return onPress ? (
-    <Pressable style={styles.dispCol} onPress={onPress} accessibilityRole="button">
-      {cuerpo}
-    </Pressable>
-  ) : (
-    <View style={styles.dispCol}>{cuerpo}</View>
-  );
-}
-
 const crearEstilos = (c: Paleta) =>
   StyleSheet.create({
     section: tipoDe(c).seccion,
     muted: tipoDe(c).nota,
-    link: { fontSize: 13, color: c.text, fontWeight: '600' },
     headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     balance: { fontSize: 14, fontWeight: '700' },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     pasoTxt: { fontSize: 14, color: c.text },
-    alerta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11 },
-    alertaSep: { borderTopWidth: 1, borderTopColor: c.panelAlt },
+    alerta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
     alertaPunto: { width: 7, height: 7, borderRadius: 4 },
-    alertaTxt: { flex: 1, fontSize: 14, color: c.text, fontWeight: '500' },
+    alertaTxt: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
     alertaChev: { fontSize: 18, color: c.mutedDim },
-    dispRow: { flexDirection: 'row', gap: 8 },
-    dispCol: { flex: 1, gap: 3 },
-    dispLbl: { fontSize: 11, color: c.mutedDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-    dispVal: { fontSize: 15, color: c.muted, fontWeight: '600' },
-    dispValStrong: { color: c.text, fontWeight: '800' },
   });
