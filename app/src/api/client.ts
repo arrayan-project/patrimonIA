@@ -1,9 +1,12 @@
+import { traducirError } from './errores';
 import { API_URL } from '../config';
 
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** G33: código estable del backend, si lo trae. */
+    readonly codigo?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -76,7 +79,8 @@ async function req<T>(method: string, path: string, opts: Options = {}): Promise
   if (!res.ok) {
     if (res.status === 401 && opts.token) alExpirarSesion?.();
     const msg = data?.message;
-    throw new ApiError(res.status, Array.isArray(msg) ? msg.join('\n') : (msg ?? res.statusText));
+    const texto = Array.isArray(msg) ? msg.join('\n') : (msg ?? res.statusText);
+    throw new ApiError(res.status, traducirError(data?.codigo, data?.datos, texto), data?.codigo);
   }
   return data as T;
 }
