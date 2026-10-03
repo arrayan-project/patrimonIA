@@ -44,7 +44,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
 | D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
-| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado y bloque 3 (HZ-24) ✅ mergeados (2026-10-03); siguiente: bloque 4, HZ-13 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
+| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado y bloque 3 (HZ-24) ✅ mergeados (2026-10-03); siguiente: bloque 4, rediseño visual; HZ-13 pasa al bloque 5 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -511,8 +511,8 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Rama `feat/G33-E1-palabras-y-pasos`, probada por Juan en el teléfono
      (tema oscuro y claro) y mergeada (2026-10-03). HZ-22 se aplicó solo a
      Ajuste y Nueva meta: el Tipo de Registrar movimiento y Programados pasa
-     a ser la puerta del menú con D-8 (bloque 7). Residuo: errores del backend
-     sin código (lista en `GAPS.md`, G33), para los bloques 6 o 7.
+     a ser la puerta del menú con D-8 (bloque 8). Residuo: errores del backend
+     sin código (lista en `GAPS.md`, G33), para los bloques 7 u 8.
   2. ✅ HZ-3 + HZ-17: listas de selección y cuentas agrupadas. Rama
      `feat/G33-E2-listas`, probada por Juan en el teléfono (2026-10-03). Toda
      lista de selección abre una hoja (`Elegir` / `ElegirVarios`), con buscador
@@ -531,14 +531,16 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Presupuestos no cambia (todo trae valor o es opcional). Contraste: el
      borde de los campos editables pasa a `mutedDim`. El botón final no se
      bloquea (sigue mostrando los errores al tocarlo). Validar con Zoily.
-  4. HZ-13: gastar desde la meta (A5).
-  5. C1 + D-2: alta de cuenta y compartir con el hogar.
-  6. D-1: Ahorrar (A1/A2).
-  7. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+  4. Rediseño visual con el prototipo como referencia única (insertado el
+     2026-10-03; ver `GAPS.md`, G33).
+  5. HZ-13: gastar desde la meta (A5).
+  6. C1 + D-2: alta de cuenta y compartir con el hogar.
+  7. D-1: Ahorrar (A1/A2).
+  8. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
      Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
      y recuperación.
-  8. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
+  9. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
      "Entre [miembro] y tú".
-  9. D-5 + D-6: recurrencia y destino de otro miembro.
+  10. D-5 + D-6: recurrencia y destino de otro miembro.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.

@@ -36,6 +36,7 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 - **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G33), por qué, qué se decidió, y a qué documento se integró. Ordenado en **Pendiente** (Parte 1, con resumen priorizado) e **Implementado / decisión cerrada** (Parte 2), y dentro de cada parte por tema.
 - **[retirado/DOMINIO_PENDIENTE.md](retirado/DOMINIO_PENDIENTE.md)** — *retirado*. Análisis de Fase 28; sus conclusiones están en `diseño/DDD.md` §X y `diseño/UX_FLOWS.md` Parte 3.
+- **[retirado/propuesta-rediseno-C-rimu.html](retirado/propuesta-rediseno-C-rimu.html)** — *retirado* (2026-10-03). Propuesta visual C: clara pero poco comprensible; la referencia visual es `usabilidad/prototipo/prototipo-fase-d-s01.html` (ver `GAPS.md`, G33, bloque 4).
 - **[retirado/UI_UX_BACKLOG.md](retirado/UI_UX_BACKLOG.md)** — *journal* de la implementación de UI/UX. El estado vigente está en `diseño/UX_FLOWS.md` Parte 3; de sus pulidos sueltos solo queda `ListItem` en dos listas, diferido a propósito (U3 en `GAPS.md`).
 
 ## Usabilidad
@@ -56,4 +57,4 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 ## Análisis de diseño (artefactos, no canónicos)
 
-- **[mockup/](mockup/)** — mockup navegable, propuesta de rediseño, mapa de IA, casos de dominio probados contra el backend.
+- **[mockup/](mockup/)** — mockup navegable, mapa de IA, casos de dominio probados contra el backend.

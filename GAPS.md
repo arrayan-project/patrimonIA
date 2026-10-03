@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; siguiente: bloque 4 (HZ-13). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; siguiente: bloque 4 (rediseño visual); HZ-13 pasa al bloque 5. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -238,7 +238,18 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅: rama `feat/G33-E2-listas`,
   probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅: rama
   `feat/G33-E3-paso-actual`, probada por Juan y mergeada (2026-10-03).
-  Siguiente: bloque 4 (HZ-13).
+  Siguiente: bloque 4 (rediseño visual).
+- **Bloque 4 de la Fase E — `UI` rediseño visual** (insertado el 2026-10-03;
+  HZ-13 pasa al bloque 5 y los siguientes se corren uno): la referencia única
+  es el prototipo [`Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`](Docs/usabilidad/prototipo/prototipo-fase-d-s01.html).
+  Se traducen su estructura, jerarquía y patrones a React Native (no sus
+  tamaños ni su CSS): tokens y componentes en `app/src/ui` y después una
+  pantalla por commit, sin cambios de lógica ni de API. Si el prototipo
+  contradice un hallazgo HZ ya decidido, gana el HZ.
+  **Retirada la propuesta C "rimu"** (`Docs/mockup/propuesta-rediseno-C-rimu.html`
+  → [`Docs/retirado/propuesta-rediseno-C-rimu.html`](Docs/retirado/propuesta-rediseno-C-rimu.html)):
+  era clara visualmente pero poco comprensible; manda el prototipo, que Zoily
+  sí completó (6 de 6).
 - **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
   - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
     `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por
@@ -272,7 +283,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   `exigirPropietario` → 403). **Defecto relacionado que sí existe:** si B
   además anota la plata como INGRESO en su cuenta, los ingresos (y el
   patrimonio) de B y del hogar quedan duplicados en 50.000. El test lo deja
-  como `it.fails`. Se corrige con D-8 (bloque 7): en Recibí, "De alguien del
+  como `it.fails`. Se corrige con D-8 (bloque 8): en Recibí, "De alguien del
   hogar" no crea evento. Al corregirlo, pasar ese `it.fails` a `it`.
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
