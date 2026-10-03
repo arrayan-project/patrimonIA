@@ -629,11 +629,26 @@ export class EventoFinancieroService {
     return cat.id;
   }
 
+  /**
+   * La asignación es del actor o de una meta del hogar que puede modificar
+   * (dueño o designado, P9): así se puede gastar desde la parte que creó otro
+   * miembro, como ya se puede ahorrar en ella (G33).
+   */
   async #asignacionPropia(asignacionId: string, actorId: string) {
     const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
     if (!a) throw new NotFoundException('Asignación no encontrada');
-    if (a.usuario_id !== actorId) throw new ForbiddenException('La asignación no es tuya');
-    return a;
+    if (a.usuario_id === actorId) return a;
+    if (a.objetivo_financiero_id) {
+      const o = await this.prisma.objetivo_financiero.findUnique({ where: { id: a.objetivo_financiero_id } });
+      if (o?.usuario_id === actorId) return a;
+      if (o?.hogar_id) {
+        const d = await this.prisma.objetivo_designado.findUnique({
+          where: { objetivo_id_usuario_id: { objetivo_id: o.id, usuario_id: actorId } },
+        });
+        if (d) return a;
+      }
+    }
+    throw new ForbiddenException('La asignación no es tuya');
   }
 
   /** ¿Hay una corrección no-anulada apuntando a este evento? */

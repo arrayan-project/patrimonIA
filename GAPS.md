@@ -61,6 +61,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
+| — | **G31** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
+| — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
 
 > U3 se refiere al hallazgo G1 del backlog de UI (`Docs/retirado/UI_UX_BACKLOG.md`),
 > no al gap G1 de Deuda/Crédito.
@@ -258,10 +260,12 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Contradicción prototipo vs. HZ resuelta a favor del HZ: el tipo y los
   niveles se eligen en la hoja (HZ-3), no en chips ni en línea; se mantiene
   "Saldo actual" (D-4). Sin dominio nuevo; guardar un nivel son dos comandos
-  existentes (visibilidad y consolidación), no una transacción. **Queda
-  fuera:** C2 (tarjeta sin "Financiera / Encargo") y HZ-10 (3): la pestaña
-  Hogar sigue mostrando solo las cuentas que suman. Capturas en
-  `Docs/usabilidad/capturas-e6/`.
+  existentes (visibilidad y consolidación), no una transacción. Capturas en
+  `Docs/usabilidad/capturas-e6/`. **Completado después (2026-10-03, rama
+  `fix/G33-rapidos`):** C2 (la tarjeta de crédito no pregunta "Financiera /
+  Encargo": siempre es financiera) y HZ-10 (3) (en Hogar, "Para transferir"
+  lista las cuentas de otros miembros que no suman; al tocarlas se abre una
+  transferencia hacia ellas).
 - **Bloque 5 de la Fase E — `FLUJO` HZ-13, gastar desde la meta (A5)
   (✅ mergeado, 2026-10-03)**: en
   Registrar movimiento, un gasto cuya cuenta tiene plata en metas muestra
@@ -271,9 +275,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   cuentas (decisión de Juan). Backend: "Consumir reserva" ya no descuenta
   reservas de otras cuentas (ver G14). En el detalle de la meta, "Usar esta
   plata" abre el gasto con la meta (y la cuenta, si es una sola) elegidas.
-  Capturas en `Docs/usabilidad/capturas-e5/`. **Límite conocido:** el backend
-  solo deja usar asignaciones propias; en una meta del hogar, la parte de
-  otro miembro no se puede gastar desde la cuenta propia.
+  Capturas en `Docs/usabilidad/capturas-e5/`. **Límite resuelto (2026-10-03):**
+  el backend solo dejaba usar asignaciones propias; ahora también las de una
+  meta del hogar que el actor puede modificar (dueño o designado), como al
+  ahorrar (test en `objetivo-compartido.e2e-spec.ts`).
 - **Bloque 4 de la Fase E — `UI` rediseño visual (✅ mergeado, 2026-10-03)** (insertado el 2026-10-03;
   HZ-13 pasa al bloque 5 y los siguientes se corren uno): la referencia única
   es el prototipo [`Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`](Docs/usabilidad/prototipo/prototipo-fase-d-s01.html).
