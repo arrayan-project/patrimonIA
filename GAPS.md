@@ -572,7 +572,7 @@ Planificar).
 
 Hallazgos F4/F6/F7/F8 de `Docs/mockup/casos-dominio-probados.html` (F1/F2/F3/F5
 ya cerrados en Fases 50–51).
-- **F6/F7 — REQUISITES línea 213** ("la transferencia como un único movimiento en
+- **F6/F7 — REQUISITES §K, punto 13** ("la transferencia como un único movimiento en
   la vista consolidada"): el feed `/hogares/:id/eventos-financieros` ya existía
   pero (a) ninguna pantalla lo usaba y (b) devolvía movimientos de cuentas
   PRIVADAS de otros miembros. Ahora `ConsolidacionService.eventosDelHogar`
@@ -766,7 +766,7 @@ ya cerrados en Fases 50–51).
   representarse como un Crédito/Deuda (para que el neto patrimonial cuadre), pero
   no había forma de distinguirlo de una deuda financiera real — quedaba mezclado
   con el hipotecario y las tarjetas. F3 de `Docs/mockup/casos-dominio-probados.html`
-  (escenario de REQUISITES línea 430, "caso de uso típico").
+  (escenario de REQUISITES, "Caso de uso tipico").
 - **Por qué no se resolvió antes**: el DDD modela Deuda/Crédito como una sola
   especialización de Elemento Patrimonial; UX_FLOWS pedía "sugerir crear un
   Crédito/Deuda" pero sin sub-tipos.

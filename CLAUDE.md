@@ -7,4 +7,5 @@
   buscador y scroll propio, en `app/src/ui/index.tsx`), nunca `SelectRow`
   apilados. 6 o menos: opciones visibles en línea. La pantalla nunca crece por
   una lista (HZ-3).
+- Citas entre documentos: por sección o punto, nunca por número de línea.
 - Referencia visual vigente: `Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`.

@@ -217,7 +217,7 @@ deudor), `fecha_inicio`, `fecha_termino`, `cuota_monto`, `tasa_interes`,
 `ActualizarDatosElementoPatrimonial` / `CorregirDatosElementoPatrimonial`.
 
 ### B-custodia · Naturaleza de Deuda/Crédito: financiera vs. custodia informal — `GAPS G28` — ✅ RESUELTO (Fase 50)
-**Problema**: el "caso de uso típico" (REQUISITES línea 430) — un amigo me
+**Problema**: el "caso de uso típico" (REQUISITES, "Caso de uso tipico") — un amigo me
 transfiere plata para que le compre algo — obliga a modelar ese dinero como un
 Crédito/Deuda para que el patrimonio neto cuadre (la plata pasó por mis cuentas
 pero no es mía). Sin distinción, queda mezclado con el hipotecario y las tarjetas.

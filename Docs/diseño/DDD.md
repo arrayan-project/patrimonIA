@@ -772,7 +772,7 @@ incluye TRANSFERENCIA/CONVERSION como filas neutras con `efectoPropio` (impacto
 neto sobre las cuentas propias del alcance consultado); **no** suman a los
 totales de ingreso/gasto. La vista consolidada del hogar
 (`/hogares/:id/eventos-financieros`) colapsa la transferencia a un solo
-movimiento (REQUISITES línea 213) y filtra por §M: solo eventos que tocan un
+movimiento (REQUISITES §K, punto 13) y filtra por §M: solo eventos que tocan un
 elemento consolidado del hogar o de propiedad del actor.
 
 ## X.4 · Movimiento Programado (§S, resuelto)
