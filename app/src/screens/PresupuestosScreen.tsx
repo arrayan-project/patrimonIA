@@ -7,6 +7,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
   Ayuda,
   Button,
   Card,
@@ -101,6 +102,8 @@ export function PresupuestosScreen() {
     }
   };
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
       <Title>Presupuestos</Title>
@@ -146,28 +149,29 @@ export function PresupuestosScreen() {
 
       <Panel>
         <Text style={styles.nombre}>Nuevo presupuesto</Text>
-        <Segmented label="Tipo" options={['INDIVIDUAL', 'FAMILIAR'] as const} value={tipo} onChange={setTipo} />
+        <Segmented label="Tipo" options={['INDIVIDUAL', 'FAMILIAR'] as const} value={tipo} onChange={setTipo} paso={paso()} />
         {tipo === 'FAMILIAR' && !hogarId && (
           <Text style={styles.muted}>Necesitas pertenecer a un hogar para un presupuesto familiar.</Text>
         )}
         <Segmented
           label="Periodicidad"
+          paso={paso()}
           options={['PERIODICO', 'ESPECIFICO'] as const}
           value={periodicidad}
           onChange={setPeriodicidad}
         />
         {periodicidad === 'PERIODICO' ? (
-          <Segmented label="Intervalo" options={INTERVALOS} value={intervalo} onChange={setIntervalo} />
+          <Segmented label="Intervalo" paso={paso()} options={INTERVALOS} value={intervalo} onChange={setIntervalo} />
         ) : (
           <>
-            <DateField label="Inicio (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
-            <DateField label="Fin (opcional)" value={fechaFin} onChange={setFechaFin} optional />
+            <DateField label="Inicio (opcional)" paso={paso()} value={fechaInicio} onChange={setFechaInicio} optional />
+            <DateField label="Fin (opcional)" paso={paso()} value={fechaFin} onChange={setFechaFin} optional />
           </>
         )}
-        <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
-        <MoneyField label="Ingresos esperados" value={ingresos} onChange={setIngresos} moneda={moneda} />
-        <MoneyField label="Gastos esperados" value={gastos} onChange={setGastos} moneda={moneda} />
-        <MoneyField label="Ahorro esperado" value={ahorro} onChange={setAhorro} />
+        <Select label="Moneda" paso={paso()} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+        <MoneyField label="Ingresos esperados" paso={paso()} value={ingresos} onChange={setIngresos} moneda={moneda} />
+        <MoneyField label="Gastos esperados" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
+        <MoneyField label="Ahorro esperado" paso={paso()} value={ahorro} onChange={setAhorro} />
         <Button
           title="Crear presupuesto"
           onPress={crear}

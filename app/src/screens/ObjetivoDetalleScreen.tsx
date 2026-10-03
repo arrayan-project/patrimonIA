@@ -16,6 +16,8 @@ import { money } from '../format';
 import { GLOSARIO } from '../labels';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
+  Etiqueta,
   Ayuda,
   Button,
   ErrorText,
@@ -149,6 +151,8 @@ export function ObjetivoDetalleScreen() {
     );
   }
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
       <Title>{obj.nombre}</Title>
@@ -170,7 +174,7 @@ export function ObjetivoDetalleScreen() {
             <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
           ) : (
             <>
-              <Text style={styles.muted}>Desde qué cuenta</Text>
+              <Etiqueta paso={paso()}>Desde qué cuenta</Etiqueta>
               {cuentas.map((el) => (
                 <SelectRow
                   key={el.id}
@@ -181,7 +185,7 @@ export function ObjetivoDetalleScreen() {
               ))}
               {asignaciones.length > 1 && (
                 <>
-                  <Text style={styles.muted}>¿Para qué parte de la meta?</Text>
+                  <Etiqueta paso={paso()}>¿Para qué parte de la meta?</Etiqueta>
                   {asignaciones.map((a) => (
                     <SelectRow
                       key={a.id}
@@ -192,7 +196,7 @@ export function ObjetivoDetalleScreen() {
                   ))}
                 </>
               )}
-              <MoneyField label="¿Cuánto?" value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
+              <MoneyField label="¿Cuánto?" paso={paso()} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
               <Button
                 title="Ahorrar"
                 loading={busy}

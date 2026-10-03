@@ -10,6 +10,7 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
   Ayuda,
   Button,
   EmptyState,
@@ -95,11 +96,14 @@ export function ObjetivosScreen() {
 
   // G32 H-10 — el "+" de Planificar llega con `nuevo`: el formulario va primero.
   const nuevoArriba = nav.route.params?.nuevo === true;
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   const formulario = (
     <Panel>
       <Text style={styles.nombre}>Nueva meta</Text>
       <Field
         label="Nombre"
+        paso={paso()}
         value={nombre}
         onChangeText={setNombre}
         autoCapitalize="sentences"
@@ -110,6 +114,7 @@ export function ObjetivosScreen() {
       {hogarId && (
         <Segmented
           label="¿Compartir con el hogar?"
+          paso={paso()}
           options={['No', 'Sí'] as const}
           value={compartir}
           onChange={setCompartir}
@@ -123,12 +128,13 @@ export function ObjetivosScreen() {
       )}
       <MoneyField
         label="¿Cuánto quieres juntar?"
+        paso={paso()}
         value={monto}
         onChange={setMonto}
         moneda={moneda}
         error={intento ? errMonto : undefined}
       />
-      <Select label="Moneda" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      <Select label="Moneda" paso={paso()} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
       <Button title="Crear meta" onPress={crear} loading={busy} />
     </Panel>
   );

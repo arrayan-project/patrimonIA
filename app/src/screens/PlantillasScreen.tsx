@@ -15,6 +15,8 @@ import { money } from '../format';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
+  Etiqueta,
   Ayuda,
   Button,
   EmptyState,
@@ -190,6 +192,8 @@ export function PlantillasScreen() {
     (c) => c.tipoAplicable === 'AMBOS' || c.tipoAplicable === b.tipo,
   );
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
       <Title>Plantillas de movimiento</Title>
@@ -240,6 +244,7 @@ export function PlantillasScreen() {
           <Text style={styles.nombre}>{modo === 'nueva' ? 'Nueva plantilla' : 'Editar plantilla'}</Text>
           <Field
             label="Nombre"
+            paso={paso()}
             value={b.nombre}
             onChangeText={(nombre) => setB((x) => ({ ...x, nombre }))}
             autoCapitalize="sentences"
@@ -248,19 +253,21 @@ export function PlantillasScreen() {
           />
           <Segmented
             label="Tipo"
+            paso={paso()}
             options={TIPOS}
             value={b.tipo}
             onChange={(tipo) => setB((x) => ({ ...x, tipo }))}
           />
           <MoneyField
             label="Monto (opcional)"
+            paso={paso()}
             value={b.monto}
             onChange={(monto) => setB((x) => ({ ...x, monto }))}
           />
 
           {necesitaOrigen && (
             <View style={styles.group}>
-              <Text style={styles.label}>Desde (opcional)</Text>
+              <Etiqueta paso={paso()}>Desde qué cuenta (opcional)</Etiqueta>
               <SelectRow
                 label="Sin definir"
                 selected={b.origenId === null}
@@ -279,7 +286,7 @@ export function PlantillasScreen() {
 
           {necesitaDestino && (
             <View style={styles.group}>
-              <Text style={styles.label}>Hacia (opcional)</Text>
+              <Etiqueta paso={paso()}>A qué cuenta (opcional)</Etiqueta>
               <SelectRow
                 label="Sin definir"
                 selected={b.destinoId === null}
@@ -298,7 +305,7 @@ export function PlantillasScreen() {
 
           {b.tipo !== 'TRANSFERENCIA' && catAplicables.length > 0 && (
             <View style={styles.group}>
-              <Text style={styles.label}>Categoría (opcional)</Text>
+              <Etiqueta paso={paso()}>Categoría (opcional)</Etiqueta>
               <SelectRow
                 label="Sin categoría"
                 selected={b.categoriaId === null}
@@ -317,6 +324,7 @@ export function PlantillasScreen() {
 
           <Field
             label="Detalle (opcional)"
+            paso={paso()}
             value={b.glosa}
             onChangeText={(glosa) => setB((x) => ({ ...x, glosa }))}
             autoCapitalize="sentences"

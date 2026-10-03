@@ -7,6 +7,7 @@ import { GLOSARIO } from '../labels';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
+  contadorPasos,
   aISO,
   Ayuda,
   Button,
@@ -73,6 +74,8 @@ export function RegistrarAjusteScreen() {
     }
   };
 
+  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
+  const paso = contadorPasos();
   return (
     <Screen>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
@@ -88,6 +91,7 @@ export function RegistrarAjusteScreen() {
 
       <MoneyField
         label={`Diferencia (${moneda})`}
+        paso={paso()}
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
@@ -96,6 +100,7 @@ export function RegistrarAjusteScreen() {
       {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
       <Segmented
         label="El valor real es…"
+        paso={paso()}
         options={['Menor', 'Mayor'] as const}
         value={direccion}
         onChange={setDireccion}
@@ -105,9 +110,10 @@ export function RegistrarAjusteScreen() {
           Nuevo valor: {money(valorActual + monto, moneda)}
         </Paragraph>
       )}
-      <DateField label="Fecha" value={fecha} onChange={setFecha} />
+      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso()} />
       <Field
         label="Motivo (obligatorio)"
+        paso={paso()}
         value={motivo}
         onChangeText={setMotivo}
         placeholder="Por qué hay una diferencia"
