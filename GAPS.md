@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) en rama, por probar. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; siguiente: bloque 6 (C1 + D-2). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -240,9 +240,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅: rama
   `feat/G33-E3-paso-actual`, probada por Juan y mergeada (2026-10-03).
   Bloque 4 (rediseño visual) ✅: rama `feat/G33-E4-rediseno`, probada por Juan
-  y mergeada (2026-10-03). Bloque 5 (HZ-13): en rama, por probar en el teléfono.
-- **Bloque 5 de la Fase E — `FLUJO` HZ-13, gastar desde la meta (A5)**
-  (rama `feat/G33-E5-gastar-meta`, 2026-10-03; falta la prueba de Juan): en
+  y mergeada (2026-10-03). Bloque 5 (HZ-13) ✅: rama `feat/G33-E5-gastar-meta`,
+  probada por Juan y mergeada (2026-10-03). Siguiente: bloque 6 (C1 + D-2).
+- **Bloque 5 de la Fase E — `FLUJO` HZ-13, gastar desde la meta (A5)
+  (✅ mergeado, 2026-10-03)**: en
   Registrar movimiento, un gasto cuya cuenta tiene plata en metas muestra
   "¿Esta compra sale de una meta?" (opcional; sin plata en metas, no aparece)
   y envía `asignacionId`. Si el gasto supera lo de la meta en esa cuenta, se
