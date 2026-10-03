@@ -13,8 +13,8 @@ const GRUPOS: [string, string][] = [
 ];
 
 /**
- * Elementos propios como opciones agrupadas por tipo. Con `saldo`, la etiqueta
- * lleva el valor vigente (o la moneda, si no). `excluir` saca un id (p. ej. la
+ * Elementos propios como opciones agrupadas por tipo. El nombre va en la
+ * etiqueta y, en la segunda línea, el valor vigente (con `saldo`) o la moneda. `excluir` saca un id (p. ej. la
  * cuenta ya elegida en "Desde", para que no aparezca otra vez en "A qué cuenta").
  */
 export function opcionesDeElementos(
@@ -30,7 +30,8 @@ export function opcionesDeElementos(
     .sort((a, b) => orden(a.categoriaFuncional) - orden(b.categoriaFuncional))
     .map((e) => ({
       value: e.id,
-      label: saldo ? `${e.nombre} · ${money(e.valorVigente, e.moneda)}` : `${e.nombre} · ${e.moneda}`,
+      label: e.nombre,
+      sub: saldo ? money(e.valorVigente, e.moneda) : e.moneda,
       grupo: GRUPOS.find(([k]) => k === e.categoriaFuncional)?.[1] ?? 'Otros',
     }));
 }
@@ -44,7 +45,8 @@ export function opcionesDeMiembros(
     .filter((e) => e.id !== excluir)
     .map((e) => ({
       value: e.id,
-      label: e.valorOculto ? e.nombre : `${e.nombre} · ${money(e.valorVigente, e.moneda)}`,
+      label: e.nombre,
+      sub: e.valorOculto ? undefined : money(e.valorVigente, e.moneda),
       grupo: `Cuentas de ${e.propietarios[0]?.nombre ?? 'otro miembro'}`,
     }))
     .sort((a, b) => a.grupo.localeCompare(b.grupo));

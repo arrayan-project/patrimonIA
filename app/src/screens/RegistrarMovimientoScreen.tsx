@@ -19,9 +19,10 @@ import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
+  AmountInput,
   Elegir,
   BloquePaso,
-  Etiqueta,
+  Question,
   aISO,
   Button,
   Chip,
@@ -29,12 +30,10 @@ import {
   ErrorText,
   Field,
   LinkButton,
-  MoneyField,
-  Paragraph,
+  Nota,
   Skeleton,
   Screen,
   Segmented,
-  Title,
   useC,
   type Paleta,
 } from '../ui';
@@ -259,8 +258,6 @@ export function RegistrarMovimientoScreen() {
   const pEtiquetas = etiquetas.length > 0 ? paso({ opcional: true }) : undefined;
   return (
     <Screen>
-      <Title>Registrar movimiento</Title>
-
       {plantillas.length > 0 ? (
         <View style={styles.group}>
           <Elegir
@@ -285,20 +282,20 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      <Segmented label="Tipo" options={TIPOS} value={tipo} onChange={setTipo} paso={pTipo} />
+      <Segmented label="¿Qué quieres anotar?" options={TIPOS} value={tipo} onChange={setTipo} paso={pTipo} />
       {tipo === 'CONVERSION' && (
-        <Paragraph>
+        <Nota>
           Cambio de moneda: el monto va en la moneda de la cuenta de salida; la de llegada
           recibe el equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
-        </Paragraph>
+        </Nota>
       )}
       {tipo === 'INGRESO' && (
         <View style={styles.hint}>
-          <Paragraph>
+          <Nota>
             ¿Te van a devolver este dinero, o es de un tercero para comprarle algo? No lo
             registres como ingreso —se sumaría a tus ingresos del mes—. Créalo como un
             Crédito (te deben) o una Deuda tipo "encargo".
-          </Paragraph>
+          </Nota>
           <LinkButton
             title="Crear un crédito o una deuda"
             onPress={() => nav.go('AgregarElemento', { categoria: 'CREDITO' })}
@@ -306,22 +303,22 @@ export function RegistrarMovimientoScreen() {
         </View>
       )}
       {tipo === 'GASTO' && (
-        <Paragraph>
+        <Nota>
           ¿Alguien más puso parte? Registra primero una transferencia desde su cuenta a la
           tuya y luego este gasto por el total: así queda el rastro de quién aportó cuánto.
-        </Paragraph>
+        </Nota>
       )}
-      <MoneyField
-        label="Monto"
+      <AmountInput
+        label="¿Cuánto?"
         paso={pMonto}
         value={monto}
         onChange={setMonto}
         moneda={monedaEvento}
         error={intento ? errMonto : undefined}
       />
-      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={pFecha} />
+      <DateField label="¿Cuándo?" value={fecha} onChange={setFecha} paso={pFecha} />
       <Field
-        label="Detalle (opcional)"
+        label={`${tipo === 'GASTO' ? '¿En qué?' : tipo === 'INGRESO' ? '¿Qué fue?' : '¿Para qué?'} (opcional)`}
         paso={pDetalle}
         value={glosa}
         onChangeText={setGlosa}
@@ -368,7 +365,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaOrigen && (
         <Elegir
-          label="Desde qué cuenta"
+          label={tipo === 'GASTO' ? '¿Desde qué cuenta pagaste?' : '¿Desde qué cuenta?'}
           paso={pDesde}
           placeholder="Elegir cuenta"
           value={origenId}
@@ -382,7 +379,7 @@ export function RegistrarMovimientoScreen() {
 
       {necesitaDestino && (
         <Elegir
-          label="A qué cuenta"
+          label={tipo === 'INGRESO' ? '¿A qué cuenta llegó?' : '¿A qué cuenta?'}
           paso={pA}
           placeholder="Elegir cuenta"
           value={destinoId}
@@ -393,7 +390,7 @@ export function RegistrarMovimientoScreen() {
 
       {etiquetas.length > 0 && (
         <BloquePaso paso={pEtiquetas} style={styles.group}>
-          <Etiqueta paso={pEtiquetas}>Etiquetas (opcional)</Etiqueta>
+          <Question paso={pEtiquetas}>Etiquetas (opcional)</Question>
           <View style={styles.chips}>
             {etiquetas.map((e) => (
               <Chip
@@ -418,6 +415,5 @@ export function RegistrarMovimientoScreen() {
 const crearEstilos = (c: Paleta) => StyleSheet.create({
   group: { gap: 8 },
   hint: { gap: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: c.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
