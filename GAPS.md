@@ -34,7 +34,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
-| **A** · Cuenta y autenticación | G4 (captcha) | G31 |
+| **A** · Cuenta y autenticación | G4 (captcha), G34 | G31 |
 | **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
@@ -54,7 +54,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; siguiente: bloque 2 (HZ-3 + HZ-17). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅ en rama, falta el merge; siguiente: bloque 3 (HZ-24). | ⬜ |
+| — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -87,6 +88,14 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
+
+#### G34 — El login distingue mayúsculas en el email  ⬜ PENDIENTE (2026-10-03)
+- **Qué pasa**: `POST /auth/login` busca el email tal cual llega
+  (`auth.service.ts`, `login`), pero el registro y la recuperación de contraseña
+  lo pasan a minúsculas. Quien se registró como `juan@…` y entra escribiendo
+  `Juan@…` recibe "Credenciales inválidas". Verificado contra el backend local.
+- **Arreglo propuesto**: pasar el email a minúsculas también en el login (una
+  línea en `auth.controller.ts`), con un test e2e. No aplicado.
 
 ### Tema H · Notificaciones
 
@@ -226,20 +235,30 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Fase D, bloque 2 (prototipo v5; Zoily completó 6 de 6) ✅ y Fase D cerrada
   (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
   Fase E, en el orden de su §5: bloque 1 (D-4 + HZ-19 + HZ-22, solo frontend)
-  ✅ (2026-10-03). Siguiente: bloque 2 (HZ-3 + HZ-17, listas de selección).
-- **Pendientes del bloque 2 de la Fase E** (insertado el 2026-10-03, antes de
-  HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
-  - `UI` **HZ-3**: listas de selección de más de 6 opciones en `Select` (hoja
-    modal con buscador y scroll propio), nunca `SelectRow` apilados; 6 o menos,
-    opciones visibles en línea. La pantalla nunca crece por una lista. Aplica a
-    toda la app. **Cambio de solución (2026-10-03):** la original era "scroll
+  ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅ en la rama `feat/G33-E2-listas`,
+  probado por Juan (2026-10-03); falta revisar el ajuste "hoja siempre" y el
+  merge. Siguiente: bloque 3 (HZ-24).
+- **Bloque 2 de la Fase E** (insertado el 2026-10-03, antes de HZ-13; detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4):
+  - ✅ `UI` **HZ-3**: toda lista de selección abre una hoja modal (`Elegir` /
+    `ElegirVarios` sobre `Select`), sin importar cuántas opciones tenga, por
+    homogeneidad; buscador con más de 6. Nunca `SelectRow` apilados. La pantalla
+    nunca crece por una lista. **Historia de la solución (2026-10-03):** primero
+    se descartó el umbral de 6 opciones en línea (Juan prefirió un solo control
+    en toda la app); la original era "scroll
     interno con altura acotada"; se descarta por el scroll anidado en móvil (una
     lista con scroll dentro de una pantalla con scroll). Motivo adicional:
-    `Select` ya existe en `app/src/ui`. Al implementar, a `Select` le faltan
-    buscador y grupos (HZ-17).
-  - `UI` **HZ-17**: en Registrar movimiento, "Desde qué cuenta" y "A qué
-    cuenta" agrupadas por tipo, sin la lista repetida en Transferencia y con la
-    cuenta fuera de las categorías; amplía HZ-3.
+    `Select` ya existe en `app/src/ui`. Se le agregaron buscador, grupos y opción
+    "ninguna". Las listas de miembros del hogar (compartir con, designados)
+    quedan en línea por ahora.
+  - ✅ `UI` **HZ-17**: "Desde qué cuenta" y "A qué cuenta" agrupadas por tipo
+    (`app/src/opciones.ts`), en Transferencia también por miembro; "A qué
+    cuenta" no repite la de "Desde"; amplía HZ-3.
+- **Bloque 3 de la Fase E — `UI` HZ-24 (propuesta, pendiente)**: paso actual
+  resaltado y pasos siguientes bloqueados hasta completar el actual; lo hecho
+  sigue editable. Reglas: los opcionales nunca bloquean; un paso que ya trae
+  valor cuenta como hecho; bloqueado se ve atenuado, no como error. Incluye el
+  contraste de los campos editables. No se probó con Zoily: validarlo con ella.
+  Detalle en [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md) §4.
 - **Verificación: transferencia entre miembros registrada por ambos**
   (2026-10-03, `api/test/transferencia-entre-miembros.e2e-spec.ts`). El bug de
   una versión anterior (gastos del hogar inflados) **no existe**: una
@@ -250,7 +269,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   `exigirPropietario` → 403). **Defecto relacionado que sí existe:** si B
   además anota la plata como INGRESO en su cuenta, los ingresos (y el
   patrimonio) de B y del hogar quedan duplicados en 50.000. El test lo deja
-  como `it.fails`. Se corrige con D-8 (bloque 6): en Recibí, "De alguien del
+  como `it.fails`. Se corrige con D-8 (bloque 7): en Recibí, "De alguien del
   hogar" no crea evento. Al corregirlo, pasar ese `it.fails` a `it`.
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
@@ -300,7 +319,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     objetivo". Los comandos mantienen su nombre. **Implementada** en la Fase E,
     bloque 1 (2026-10-03); los sueltos existentes se ven como "Ahorro sin meta".
   - **Residuo de D-4: errores del backend sin código** (solo texto; la app no
-    los puede traducir). Pendientes para los bloques 5 o 6 de la Fase E:
+    los puede traducir). Pendientes para los bloques 6 o 7 de la Fase E:
     "Objetivo no encontrado", "El objetivo no es tuyo", "No puedes modificar
     este objetivo", "El objetivo no está compartido con un hogar", "El objetivo
     ya tiene ese estado", "Solo el dueño puede compartir/eliminar el objetivo",
