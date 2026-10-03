@@ -34,6 +34,9 @@ export function HogarScreen() {
 
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [compartidos, setCompartidos] = useState<ElementoPatrimonialDTO[]>([]);
+  // HZ-10 (3) / D-2: cuentas de otros miembros visibles que no suman ("Que
+  // puedan transferirte"). Sin esto parecía que ese nivel no hacía nada.
+  const [paraTransferir, setParaTransferir] = useState<ElementoPatrimonialDTO[]>([]);
   const [objetivosHogar, setObjetivosHogar] = useState<ObjetivoFinancieroDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [error, setError] = useState('');
@@ -56,9 +59,11 @@ export function HogarScreen() {
           api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
         ]);
         setCompartidos(els.filter((e) => e.participaConsolidacion));
+        setParaTransferir(els.filter((e) => !e.participaConsolidacion && e.categoriaFuncional !== 'DEUDA' && e.categoriaFuncional !== 'CREDITO'));
         setObjetivosHogar(objs.filter((o) => o.hogarId));
       } catch {
         setCompartidos([]);
+        setParaTransferir([]);
         setObjetivosHogar([]);
       }
 
@@ -146,6 +151,24 @@ export function HogarScreen() {
         )}
         {compartidos.length > 4 && <Nota>y {compartidos.length - 4} más</Nota>}
       </Section>
+
+      {paraTransferir.length > 0 && (
+        <Section title="Para transferir">
+          <Nota>Cuentas de otros miembros a las que puedes transferir. No suman al hogar.</Nota>
+          <ListCard>
+            {paraTransferir.map((e) => (
+              <TxRow
+                key={e.id}
+                title={e.nombre}
+                subtitle={e.propietarios.map((p) => p.nombre ?? 'Propietario').join(', ')}
+                amount={e.valorOculto ? '' : money(e.valorVigente, e.moneda)}
+                logo={{ icon: 'arrow-redo-outline' }}
+                onPress={() => nav.go('RegistrarMovimiento', { tipo: 'TRANSFERENCIA', destinoId: e.id })}
+              />
+            ))}
+          </ListCard>
+        </Section>
+      )}
 
       <Section title="Metas del hogar">
         {objetivosHogar.length === 0 ? (
