@@ -13,23 +13,34 @@ import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
+import { money } from '../format';
+import {
+  altaPorDefecto,
+  aplicarNivel,
+  NIVEL_POR_DEFECTO,
+  opcionesNivel,
+  type NivelHogar,
+} from '../compartirHogar';
 import {
   AmountInput,
   Ayuda,
   Button,
+  contadorPasos,
   DateField,
+  Elegir,
   ErrorText,
   Field,
   LinkButton,
   MoneyField,
   Nota,
-  Pasos,
+  Panel,
   Row,
   Screen,
   Segmented,
   Select,
   useC,
   type Paleta,
+  tipoDe,
 } from '../ui';
 import {
   etiqueta,
@@ -39,12 +50,14 @@ import {
 } from '../labels';
 
 const CATEGORIAS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const;
+type Categoria = (typeof CATEGORIAS)[number];
 const OPC_CATEGORIA = CATEGORIAS.map((c) => ({ value: c, label: etiqueta(c) }));
 const OPC_TIPO_FALLBACK = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({ value: etiqueta(t), label: etiqueta(t) }));
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
   value: m,
   label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
 }));
+const valorizaPorDefecto = (c: Categoria) => (c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
 
 /** Solo dígitos, máx 2 decimales, en [0, 100]. */
 function limpiarPct(t: string): string {
@@ -55,6 +68,12 @@ function limpiarPct(t: string): string {
   return s;
 }
 
+/**
+ * G33 bloque 6 — C1 (HZ-9): una sola pantalla con tres datos (nombre, tipo y
+ * saldo de hoy, obligatorio y sin 0 por defecto); lo demás tiene valores por
+ * defecto y queda en "Más opciones". D-2: la pregunta del hogar aparece después
+ * de crear; si se omite, queda en "Que puedan transferirte".
+ */
 export function AgregarElementoScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
@@ -63,13 +82,13 @@ export function AgregarElementoScreen() {
   const toast = useToast();
   const { key } = useIdempotencyKey();
 
-  const catInicial = CATEGORIAS.includes(nav.route.params?.categoria as (typeof CATEGORIAS)[number])
-    ? (nav.route.params?.categoria as (typeof CATEGORIAS)[number])
+  const catInicial = CATEGORIAS.includes(nav.route.params?.categoria as Categoria)
+    ? (nav.route.params?.categoria as Categoria)
     : 'LIQUIDEZ';
 
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
-  const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>(catInicial);
+  const [categoria, setCategoria] = useState<Categoria>(catInicial);
   const [cambiarCat, setCambiarCat] = useState(false);
   const mensaje = nav.route.params?.mensaje as string | undefined;
   const [tiposCat, setTiposCat] = useState<TipoElementoDTO[]>([]);
@@ -77,23 +96,22 @@ export function AgregarElementoScreen() {
   const [crearTipo, setCrearTipo] = useState(false);
   const [tipoNuevo, setTipoNuevo] = useState('');
   const [tipoBusy, setTipoBusy] = useState(false);
-  const [valorInicial, setValorInicial] = useState('0');
-  const [valorPendiente, setValorPendiente] = useState('');
+  const [monto, setMonto] = useState('');
   const [contraparte, setContraparte] = useState('');
   const [fechaTermino, setFechaTermino] = useState('');
   const [cuota, setCuota] = useState('');
   const [moneda, setMoneda] = useState('CLP');
   const [fechaAlta, setFechaAlta] = useState('');
-  const [valorizable, setValorizable] = useState<'No' | 'Sí'>('No');
+  const [valorizable, setValorizable] = useState<'No' | 'Sí'>(valorizaPorDefecto(catInicial));
   const [naturaleza, setNaturaleza] = useState<'Financiera' | 'Encargo o custodia'>('Financiera');
-  const [verHogar, setVerHogar] = useState<'No' | 'Sí'>('No');
-  const [verSaldo, setVerSaldo] = useState<'No' | 'Sí'>('No');
+  const [masOpciones, setMasOpciones] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [intento, setIntento] = useState(false);
 
-  // Paso actual del wizard y qué pasos ya intentó avanzar (para mostrar errores).
-  const [paso, setPaso] = useState(1);
-  const [intentado, setIntentado] = useState<Record<number, boolean>>({});
+  // D-2: tras crear, la pregunta del hogar.
+  const [creado, setCreado] = useState<ElementoPatrimonialDTO | null>(null);
+  const [nivel, setNivel] = useState<NivelHogar>(NIVEL_POR_DEFECTO);
 
   // ── Co-propietarios (B8) ──────────────────────────────────────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
@@ -117,19 +135,26 @@ export function AgregarElementoScreen() {
       .catch(() => setMiembros([]));
   }, [token]);
 
+  // Agrupados por categoría, en el orden del catálogo.
   const opcTipo =
     tiposCat.length > 0
-      ? tiposCat.map((t) => ({ value: t.nombre, label: t.nombre }))
+      ? tiposCat.map((t) => ({
+          value: t.nombre,
+          label: t.nombre,
+          grupo: t.categoriaSugerida ? etiqueta(t.categoriaSugerida) : 'Otros',
+        }))
       : OPC_TIPO_FALLBACK;
+
+  const elegirCategoria = (cat: Categoria) => {
+    setCategoria(cat);
+    setValorizable(valorizaPorDefecto(cat));
+  };
 
   const elegirTipo = (v: string) => {
     setTipo(v);
     setCambiarCat(false);
     const t = tiposCat.find((x) => x.nombre === v);
-    if (t?.categoriaSugerida) {
-      setCategoria(t.categoriaSugerida);
-      setValorizable(t.categoriaSugerida === 'ACTIVO' || t.categoriaSugerida === 'INVERSION' ? 'Sí' : 'No');
-    }
+    if (t?.categoriaSugerida) elegirCategoria(t.categoriaSugerida);
   };
 
   const crearTipoInline = async () => {
@@ -154,9 +179,9 @@ export function AgregarElementoScreen() {
     }
   };
 
-  const hayComiembros = miembros.some((m) => m.usuarioId !== usuario.id);
+  const otros = miembros.filter((m) => m.usuarioId !== usuario.id);
+  const hayComiembros = otros.length > 0;
   const compartida = propiedad === 'Compartida' && hayComiembros;
-  const totalPasos = hayComiembros ? 3 : 2;
 
   const pctDe = (id: string) => Number(pcts[id] || 0);
   const propietarios = miembros
@@ -166,34 +191,34 @@ export function AgregarElementoScreen() {
 
   const esDeudaOCredito = categoria === 'DEUDA' || categoria === 'CREDITO';
   const sucio =
-    nombre.trim().length > 0 ||
-    tipo !== '' ||
-    categoria !== 'LIQUIDEZ' ||
-    valorInicial !== '0' ||
-    valorPendiente !== '' ||
-    contraparte !== '' ||
-    fechaTermino !== '' ||
-    cuota !== '' ||
-    moneda !== 'CLP' ||
-    fechaAlta !== '' ||
-    propiedad !== 'Solo mía' ||
-    naturaleza !== 'Financiera' ||
-    verHogar !== 'No' ||
-    verSaldo !== 'No';
+    !creado &&
+    (nombre.trim().length > 0 ||
+      tipo !== '' ||
+      monto !== '' ||
+      contraparte !== '' ||
+      fechaTermino !== '' ||
+      cuota !== '' ||
+      moneda !== 'CLP' ||
+      fechaAlta !== '' ||
+      propiedad !== 'Solo mía' ||
+      naturaleza !== 'Financiera');
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
-  // ── Validación por paso ───────────────────────────────────────────────────
-  const errNombre = nombre.trim() ? '' : 'Escribe un nombre para identificarlo.';
-  const errTipo = tipo.trim() ? '' : 'Elige o escribe un tipo.';
+  // ── Validación ────────────────────────────────────────────────────────────
+  const errNombre = nombre.trim() ? '' : 'Escribe un nombre para identificarla.';
+  const errTipo = tipo.trim() ? '' : 'Elige qué tipo es.';
+  const errMonto = esDeudaOCredito
+    ? Number(monto) > 0
+      ? ''
+      : categoria === 'DEUDA'
+        ? 'Indica cuánto debes.'
+        : 'Indica cuánto te deben.'
+    : monto === ''
+      ? 'Escribe cuánto tiene hoy. Si está vacía, escribe 0.'
+      : '';
   const errMoneda = /^[A-Za-z]{3}$/.test(moneda.trim())
     ? ''
     : 'Usa el código de 3 letras (CLP, USD, EUR…).';
-  const errPendiente =
-    esDeudaOCredito && !(Number(valorPendiente) > 0)
-      ? categoria === 'DEUDA'
-        ? 'Indica cuánto debes.'
-        : 'Indica cuánto te deben.'
-      : '';
   const errReparto = !compartida
     ? ''
     : Math.abs(totalPct - 100) > 0.001
@@ -203,16 +228,7 @@ export function AgregarElementoScreen() {
         : propietarios.length < 2
           ? 'Agrega al menos otra persona con un porcentaje.'
           : '';
-
-  const errorDelPaso = (p: number) =>
-    p === 1 ? errNombre || errTipo : p === 2 ? errMoneda || errPendiente : errReparto;
-  const mostrar = (p: number, msg: string) => (intentado[p] && msg ? msg : undefined);
-
-  const avanzar = () => {
-    setIntentado((x) => ({ ...x, [paso]: true }));
-    if (errorDelPaso(paso)) return;
-    setPaso((p) => Math.min(totalPasos, p + 1));
-  };
+  const mostrar = (msg: string) => (intento && msg ? msg : undefined);
 
   const onPropiedad = (v: 'Solo mía' | 'Compartida') => {
     setPropiedad(v);
@@ -222,12 +238,17 @@ export function AgregarElementoScreen() {
   };
 
   const onSubmit = async () => {
-    setIntentado((x) => ({ ...x, [paso]: true }));
-    if (errNombre || errTipo || errMoneda || errPendiente || errReparto) return;
+    setIntento(true);
+    if (errNombre || errTipo || errMonto) return;
+    // Los errores de "Más opciones" se muestran ahí; se abre si hay alguno.
+    if (errMoneda || errReparto) {
+      setMasOpciones(true);
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      await api.comando<ElementoPatrimonialDTO>(
+      const el = await api.comando<ElementoPatrimonialDTO>(
         '/comandos/RegistrarElementoPatrimonial',
         {
           nombre: nombre.trim(),
@@ -238,7 +259,7 @@ export function AgregarElementoScreen() {
           ...(compartida && propietarios.length > 1 ? { propietarios } : {}),
           ...(esDeudaOCredito
             ? {
-                valorPendiente: Number(valorPendiente) || 0,
+                valorPendiente: Number(monto) || 0,
                 naturaleza:
                   naturaleza === 'Encargo o custodia' ? 'CUSTODIA_INFORMAL' : 'FINANCIERA',
                 ...(contraparte.trim() ? { contraparte: contraparte.trim() } : {}),
@@ -246,24 +267,41 @@ export function AgregarElementoScreen() {
                 ...(Number(cuota) > 0 ? { cuotaMonto: Number(cuota) } : {}),
               }
             : {
-                valorInicial: Number(valorInicial) || 0,
+                valorInicial: Number(monto) || 0,
                 participaValorLiquido: categoria === 'LIQUIDEZ',
                 admiteValorizacion: valorizable === 'Sí',
               }),
-          ...(verHogar === 'Sí'
-            ? {
-                visibilidadPorTipo: {
-                  EXISTENCIA: 'FAMILIAR',
-                  VALOR: verSaldo === 'Sí' ? 'FAMILIAR' : 'PRIVADA',
-                },
-              }
-            : {}),
+          ...altaPorDefecto(),
         },
         token,
         key,
       );
-      toast.mostrar('Elemento agregado');
       permitirSalida();
+      if (hayComiembros) {
+        setCreado(el);
+      } else {
+        toast.mostrar(`${el.nombre} quedó agregada`);
+        nav.back();
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const guardarNivel = async () => {
+    if (!creado) return;
+    if (nivel === NIVEL_POR_DEFECTO) {
+      toast.mostrar('Guardado');
+      nav.back();
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await aplicarNivel(token, creado.id, nivel, creado.participaConsolidacion);
+      toast.mostrar('Guardado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -272,88 +310,152 @@ export function AgregarElementoScreen() {
     }
   };
 
-  const esUltimo = paso === totalPasos;
+  // ── Paso 2 (D-2): ¿qué compartes con el hogar? ────────────────────────────
+  if (creado) {
+    const pareja = otros.length === 1 ? otros[0].nombre : undefined;
+    const valor = creado.valorPendiente ?? creado.valorVigente;
+    return (
+      <Screen>
+        <Panel>
+          <Text style={styles.listo}>✓ {creado.nombre} quedó agregada</Text>
+          <Text style={styles.muted}>
+            {creado.categoriaFuncional === 'DEUDA' ? 'Debes' : creado.categoriaFuncional === 'CREDITO' ? 'Te deben' : 'Tiene'}{' '}
+            {money(valor, creado.moneda)}.
+          </Text>
+        </Panel>
+        <Elegir
+          label={`¿Qué compartes de ${creado.nombre} con ${pareja ?? 'el hogar'}?`}
+          value={nivel}
+          options={opcionesNivel(pareja)}
+          onChange={(v) => v && setNivel(v as NivelHogar)}
+        />
+        <Nota>Puedes cambiarlo cuando quieras desde la cuenta.</Nota>
+        <ErrorText>{error}</ErrorText>
+        <View style={styles.pie}>
+          <Button title="Guardar" onPress={guardarNivel} loading={loading} />
+          <Button title="Ahora no" variant="secondary" onPress={() => nav.back()} />
+        </View>
+      </Screen>
+    );
+  }
+
   const categoriaResuelta =
     !cambiarCat && tiposCat.find((x) => x.nombre === tipo)?.categoriaSugerida === categoria;
+  const monedaVista = moneda.trim().toUpperCase() || undefined;
+
+  // HZ-19 y HZ-24: numera las preguntas y marca el paso actual.
+  const paso = contadorPasos();
+  const pNombre = paso({ hecho: !!nombre.trim() });
+  const pTipo = paso({ hecho: !!tipo.trim() });
+  const pMonto = paso({ hecho: !errMonto });
 
   return (
     <Screen>
-      <Pasos actual={paso} total={totalPasos} />
-      {mensaje && paso === 1 ? <Ayuda>{mensaje}</Ayuda> : null}
+      {mensaje ? <Ayuda>{mensaje}</Ayuda> : null}
 
-      {paso === 1 && (
-        <>
-          <Select
-            label="¿Qué tipo de cuenta o bien es?"
-            value={tipo}
-            options={opcTipo}
-            onChange={elegirTipo}
-            permiteOtro
-          />
-          {crearTipo ? (
-            <View style={{ gap: 8 }}>
-              <Field
-                label="Nombre del tipo"
-                value={tipoNuevo}
-                onChangeText={setTipoNuevo}
-                autoCapitalize="sentences"
-                placeholder="p. ej. Billetera digital"
-              />
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <Button title="Crear" onPress={crearTipoInline} loading={tipoBusy} disabled={!tipoNuevo.trim()} />
-                <LinkButton title="Cancelar" onPress={() => setCrearTipo(false)} />
-              </View>
-            </View>
-          ) : hogarId ? (
-            <LinkButton
-              title="¿No encuentras el tipo? Crear uno nuevo"
-              onPress={() => setCrearTipo(true)}
-            />
-          ) : null}
-          {intentado[1] && errTipo ? <ErrorText>{errTipo}</ErrorText> : null}
-          {/* G32 H-09 — si el tipo ya sugiere la categoría, se muestra resuelta. */}
-          {categoriaResuelta ? (
-            <Row
-              left={`Categoría: ${etiqueta(categoria)}`}
-              right={<LinkButton title="Cambiar" onPress={() => setCambiarCat(true)} />}
-            />
-          ) : (
-            <Select
-              label="¿Qué es?"
-              value={categoria}
-              options={OPC_CATEGORIA}
-              onChange={(c) => {
-                setCategoria(c as (typeof CATEGORIAS)[number]);
-                setValorizable(c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
-              }}
-            />
-          )}
-          <Ayuda>
-            {categoria === 'LIQUIDEZ'
-              ? 'Liquidez: efectivo y cuentas de uso diario.'
-              : categoria === 'RESERVA'
-                ? 'Ahorro / fondo de emergencia: plata que guardas pero no gastas. (Para juntar plata para algo concreto, crea una meta.)'
-                : categoria === 'INVERSION'
-                  ? 'Inversión: fondos mutuos, APV, acciones, depósitos a plazo.'
-                  : categoria === 'ACTIVO'
-                    ? 'Activo: bienes como un inmueble o un vehículo.'
-                    : categoria === 'DEUDA'
-                      ? 'Deuda: lo que debes (un crédito, un préstamo). Resta a tu patrimonio.'
-                      : 'Crédito por cobrar: lo que alguien te debe. Suma a tu patrimonio.'}
-          </Ayuda>
+      <Field
+        label="¿Cómo se llama?"
+        paso={pNombre}
+        value={nombre}
+        onChangeText={setNombre}
+        placeholder="Ej: Falabella"
+        autoCapitalize="sentences"
+        error={mostrar(errNombre)}
+      />
+
+      <Select
+        label="¿Qué tipo es?"
+        paso={pTipo}
+        placeholder="Elegir tipo"
+        value={tipo}
+        options={opcTipo}
+        onChange={elegirTipo}
+        permiteOtro
+      />
+      {mostrar(errTipo) ? <ErrorText>{errTipo}</ErrorText> : null}
+      {crearTipo ? (
+        <View style={{ gap: 8 }}>
           <Field
-            label="¿Cómo se llama?"
-            value={nombre}
-            onChangeText={setNombre}
-            placeholder="Cuenta corriente"
+            label="Nombre del tipo"
+            value={tipoNuevo}
+            onChangeText={setTipoNuevo}
             autoCapitalize="sentences"
-            error={mostrar(1, errNombre)}
+            placeholder="p. ej. Billetera digital"
           />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Button title="Crear" onPress={crearTipoInline} loading={tipoBusy} disabled={!tipoNuevo.trim()} />
+            <LinkButton title="Cancelar" onPress={() => setCrearTipo(false)} />
+          </View>
+        </View>
+      ) : hogarId ? (
+        <LinkButton title="¿No encuentras el tipo? Crear uno nuevo" onPress={() => setCrearTipo(true)} />
+      ) : null}
+      {/* G32 H-09 — si el tipo ya sugiere la categoría, se muestra resuelta. */}
+      {tipo ? (
+        categoriaResuelta ? (
+          <Row
+            left={`Categoría: ${etiqueta(categoria)}`}
+            right={<LinkButton title="Cambiar" onPress={() => setCambiarCat(true)} />}
+          />
+        ) : (
+          <Select
+            label="¿Qué es?"
+            value={categoria}
+            options={OPC_CATEGORIA}
+            onChange={(v) => elegirCategoria(v as Categoria)}
+          />
+        )
+      ) : null}
+
+      <AmountInput
+        label={
+          categoria === 'DEUDA'
+            ? 'Lo que debes hoy'
+            : categoria === 'CREDITO'
+              ? 'Lo que te deben hoy'
+              : categoria === 'ACTIVO'
+                ? 'Valor actual'
+                : 'Saldo actual'
+        }
+        paso={pMonto}
+        value={monto}
+        onChange={setMonto}
+        moneda={monedaVista}
+        error={mostrar(errMonto)}
+      />
+      <Nota>
+        {categoria === 'DEUDA'
+          ? 'Lo que debes a la fecha, según tu estado de cuenta o la app del banco.'
+          : categoria === 'CREDITO'
+            ? 'Lo que te deben a la fecha. Se reduce cuando te pagan.'
+            : categoria === 'ACTIVO'
+              ? 'Lo que vale hoy, aproximado.'
+              : 'El saldo que ves hoy en la app de tu banco.'}
+      </Nota>
+
+      {esDeudaOCredito && (
+        <>
+          <Segmented
+            label="¿Qué tipo es?"
+            options={['Financiera', 'Encargo o custodia'] as const}
+            value={naturaleza}
+            onChange={setNaturaleza}
+            formatearOpcion={(v) => v}
+          />
+          <Ayuda>
+            {naturaleza === 'Encargo o custodia'
+              ? 'Encargo: plata que solo pasa por tus cuentas para comprarle algo a alguien. No es tuya ni la debes de verdad — la app la muestra aparte de las deudas financieras.'
+              : 'Financiera: un crédito real, un préstamo entre personas, el saldo de una tarjeta.'}
+          </Ayuda>
         </>
       )}
 
-      {paso === 2 && (
-        <>
+      <LinkButton
+        title={masOpciones ? 'Ocultar más opciones' : 'Más opciones (moneda, fecha, propietarios…)'}
+        onPress={() => setMasOpciones((x) => !x)}
+      />
+      {masOpciones && (
+        <Panel>
           <Select
             label="¿En qué moneda está?"
             value={moneda}
@@ -361,39 +463,10 @@ export function AgregarElementoScreen() {
             onChange={setMoneda}
             permiteOtro
           />
-          {intentado[2] && errMoneda ? <ErrorText>{errMoneda}</ErrorText> : null}
-          <DateField
-            label="¿Desde cuándo lo tienes? (opcional)"
-            value={fechaAlta}
-            onChange={setFechaAlta}
-            optional
-          />
+          {mostrar(errMoneda) ? <ErrorText>{errMoneda}</ErrorText> : null}
+          <DateField label="¿Desde cuándo la tienes? (opcional)" value={fechaAlta} onChange={setFechaAlta} optional />
           {esDeudaOCredito ? (
             <>
-              <AmountInput
-                label={categoria === 'DEUDA' ? 'Lo que debes hoy' : 'Lo que te deben hoy'}
-                value={valorPendiente}
-                onChange={setValorPendiente}
-                moneda={moneda.trim().toUpperCase() || undefined}
-                error={mostrar(2, errPendiente)}
-              />
-              <Nota>
-                {categoria === 'DEUDA'
-                  ? 'Resta a tu patrimonio. Se salda con transferencias hacia esta deuda.'
-                  : 'Suma a tu patrimonio. Se reduce cuando te pagan (transferencia hacia esta cuenta).'}
-              </Nota>
-              <Segmented
-                label="¿Qué tipo es?"
-                options={['Financiera', 'Encargo o custodia'] as const}
-                value={naturaleza}
-                onChange={setNaturaleza}
-                formatearOpcion={(v) => v}
-              />
-              <Ayuda>
-                {naturaleza === 'Encargo o custodia'
-                  ? 'Encargo: plata que solo pasa por tus cuentas para comprarle algo a alguien. No es tuya ni la debes de verdad — la app la muestra aparte de las deudas financieras.'
-                  : 'Financiera: un crédito real, un préstamo entre personas, el saldo de una tarjeta.'}
-              </Ayuda>
               <Field
                 label={categoria === 'DEUDA' ? 'Acreedor (opcional)' : 'Deudor (opcional)'}
                 value={contraparte}
@@ -401,123 +474,70 @@ export function AgregarElementoScreen() {
                 autoCapitalize="sentences"
                 placeholder={categoria === 'DEUDA' ? 'Banco, persona…' : 'A quién le prestaste'}
               />
-              <DateField
-                label="Fecha de término (opcional)"
-                value={fechaTermino}
-                onChange={setFechaTermino}
-                optional
-              />
-              <MoneyField label="Cuota (opcional)" value={cuota} onChange={setCuota} moneda={moneda.trim().toUpperCase() || undefined} />
+              <DateField label="Fecha de término (opcional)" value={fechaTermino} onChange={setFechaTermino} optional />
+              <MoneyField label="Cuota (opcional)" value={cuota} onChange={setCuota} moneda={monedaVista} />
             </>
           ) : (
-            <>
-              <AmountInput
-                label={categoria === 'ACTIVO' ? 'Valor actual' : 'Saldo actual'}
-                value={valorInicial}
-                onChange={setValorInicial}
-                moneda={moneda.trim().toUpperCase() || undefined}
-              />
-              <Segmented
-                label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
-                options={['No', 'Sí'] as const}
-                value={valorizable}
-                onChange={setValorizable}
-              />
-              <Nota>Puedes cambiarlo después desde Editar.</Nota>
-            </>
-          )}
-        </>
-      )}
-
-      {paso === 3 && (
-        <>
-          <Segmented
-            label="¿De quién es?"
-            options={['Solo mía', 'Compartida'] as const}
-            value={propiedad}
-            onChange={onPropiedad}
-            formatearOpcion={(v) => v}
-          />
-          {compartida ? (
-            <View style={styles.reparto}>
-              <Ayuda>
-                Reparte el 100% entre los propietarios. Cada uno verá su parte en su
-                patrimonio; el hogar la ve completa.
-              </Ayuda>
-              {miembros.map((m) => (
-                <View key={m.usuarioId} style={styles.filaPct}>
-                  <Text style={styles.filaNombre} numberOfLines={1}>
-                    {m.usuarioId === usuario.id ? `${m.nombre} (tú)` : m.nombre}
-                  </Text>
-                  <View style={styles.pctInput}>
-                    <Field
-                      label=""
-                      value={pcts[m.usuarioId] ?? ''}
-                      onChangeText={(t) =>
-                        setPcts((p) => ({ ...p, [m.usuarioId]: limpiarPct(t) }))
-                      }
-                      keyboardType="numeric"
-                      placeholder="0"
-                    />
-                  </View>
-                  <Text style={styles.pctSigno}>%</Text>
-                </View>
-              ))}
-              <Text style={[styles.total, Math.abs(totalPct - 100) < 0.001 && styles.totalOk]}>
-                Total: {Math.round(totalPct * 100) / 100}%
-              </Text>
-              {intentado[3] && errReparto ? <ErrorText>{errReparto}</ErrorText> : null}
-            </View>
-          ) : (
-            <Nota>Quedas como propietario al 100%.</Nota>
-          )}
-
-          <Segmented
-            label="¿El hogar puede ver que esta cuenta existe?"
-            options={['No', 'Sí'] as const}
-            value={verHogar}
-            onChange={(v) => {
-              setVerHogar(v);
-              if (v === 'No') setVerSaldo('No');
-            }}
-          />
-          {verHogar === 'Sí' ? (
             <Segmented
-              label="¿También puede ver el saldo?"
+              label="¿Se valoriza en el tiempo? (inmuebles, inversiones)"
               options={['No', 'Sí'] as const}
-              value={verSaldo}
-              onChange={setVerSaldo}
+              value={valorizable}
+              onChange={setValorizable}
             />
-          ) : null}
-          <Ayuda>
-            {verHogar === 'No'
-              ? 'Si el hogar no ve la cuenta, nadie del hogar puede transferirte a ella.'
-              : verSaldo === 'No'
-                ? 'El hogar verá que la cuenta existe (para poder transferirte), pero no el saldo ni los movimientos.'
-                : 'El hogar verá la cuenta y su saldo. Los movimientos siguen siendo privados.'}
-          </Ayuda>
-        </>
+          )}
+          {hayComiembros && (
+            <>
+              <Segmented
+                label="¿De quién es?"
+                options={['Solo mía', 'Compartida'] as const}
+                value={propiedad}
+                onChange={onPropiedad}
+                formatearOpcion={(v) => v}
+              />
+              {compartida ? (
+                <View style={styles.reparto}>
+                  <Ayuda>
+                    Reparte el 100% entre los propietarios. Cada uno verá su parte en su
+                    patrimonio; el hogar la ve completa.
+                  </Ayuda>
+                  {miembros.map((m) => (
+                    <View key={m.usuarioId} style={styles.filaPct}>
+                      <Text style={styles.filaNombre} numberOfLines={1}>
+                        {m.usuarioId === usuario.id ? `${m.nombre} (tú)` : m.nombre}
+                      </Text>
+                      <View style={styles.pctInput}>
+                        <Field
+                          label=""
+                          value={pcts[m.usuarioId] ?? ''}
+                          onChangeText={(t) => setPcts((p) => ({ ...p, [m.usuarioId]: limpiarPct(t) }))}
+                          keyboardType="numeric"
+                          placeholder="0"
+                        />
+                      </View>
+                      <Text style={styles.pctSigno}>%</Text>
+                    </View>
+                  ))}
+                  <Text style={[styles.total, Math.abs(totalPct - 100) < 0.001 && styles.totalOk]}>
+                    Total: {Math.round(totalPct * 100) / 100}%
+                  </Text>
+                  {mostrar(errReparto) ? <ErrorText>{errReparto}</ErrorText> : null}
+                </View>
+              ) : null}
+            </>
+          )}
+          <Nota>Si no lo tocas: pesos chilenos, desde hoy y solo tuya.</Nota>
+        </Panel>
       )}
 
       <ErrorText>{error}</ErrorText>
-
-      <View style={styles.pie}>
-        {esUltimo ? (
-          <Button title="Agregar" onPress={onSubmit} loading={loading} />
-        ) : (
-          <Button title="Siguiente" onPress={avanzar} />
-        )}
-        {paso > 1 ? (
-          <View style={styles.atras}>
-            <LinkButton title="← Atrás" onPress={() => setPaso((p) => p - 1)} />
-          </View>
-        ) : null}
-      </View>
+      <Button title="Agregar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
+  listo: { fontSize: 18, fontWeight: '700', color: c.text },
+  muted: tipoDe(c).nota,
   reparto: { gap: 10 },
   filaPct: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   filaNombre: { flex: 1, fontSize: 14, color: c.text },
@@ -526,5 +546,4 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   total: { fontSize: 13, fontWeight: '700', color: c.muted, textAlign: 'right' },
   totalOk: { color: c.primary },
   pie: { gap: 10 },
-  atras: { alignItems: 'center' },
 });
