@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; siguiente: bloque 5 (HZ-13). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) en rama, por probar. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -240,7 +240,19 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅: rama
   `feat/G33-E3-paso-actual`, probada por Juan y mergeada (2026-10-03).
   Bloque 4 (rediseño visual) ✅: rama `feat/G33-E4-rediseno`, probada por Juan
-  y mergeada (2026-10-03). Siguiente: bloque 5 (HZ-13).
+  y mergeada (2026-10-03). Bloque 5 (HZ-13): en rama, por probar en el teléfono.
+- **Bloque 5 de la Fase E — `FLUJO` HZ-13, gastar desde la meta (A5)**
+  (rama `feat/G33-E5-gastar-meta`, 2026-10-03; falta la prueba de Juan): en
+  Registrar movimiento, un gasto cuya cuenta tiene plata en metas muestra
+  "¿Esta compra sale de una meta?" (opcional; sin plata en metas, no aparece)
+  y envía `asignacionId`. Si el gasto supera lo de la meta en esa cuenta, se
+  avisa que el resto sale de lo libre de la cuenta; nada se toma de otras
+  cuentas (decisión de Juan). Backend: "Consumir reserva" ya no descuenta
+  reservas de otras cuentas (ver G14). En el detalle de la meta, "Usar esta
+  plata" abre el gasto con la meta (y la cuenta, si es una sola) elegidas.
+  Capturas en `Docs/usabilidad/capturas-e5/`. **Límite conocido:** el backend
+  solo deja usar asignaciones propias; en una meta del hogar, la parte de
+  otro miembro no se puede gastar desde la cuenta propia.
 - **Bloque 4 de la Fase E — `UI` rediseño visual (✅ mergeado, 2026-10-03)** (insertado el 2026-10-03;
   HZ-13 pasa al bloque 5 y los siguientes se corren uno): la referencia única
   es el prototipo [`Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`](Docs/usabilidad/prototipo/prototipo-fase-d-s01.html).
@@ -1030,9 +1042,10 @@ ya cerrados en Fases 50–51).
   las que siguen CONSUMIDA vuelven a ACTIVA; recalcula el progreso del objetivo.
   `evento.service.#reactivarReservasConsumidas`.
 - ✅ (2026-09-29) **Consumo parcial**: el evento consume reservas ACTIVAS de la
-  asignación **solo hasta su monto**. Orden: primero las que están sobre un
-  elemento que el evento mueve, luego las más antiguas; solo las de la misma
-  moneda que el evento. **Decisión: dividir** (no columna `monto_consumido`) — si
+  asignación **solo hasta su monto**. Solo las que están sobre un elemento que
+  el evento mueve (desde G33 HZ-13, 2026-10-03: antes seguía con las de otras
+  cuentas, aunque esa plata no se movía), de la más antigua a la más nueva, y
+  de la misma moneda que el evento. Lo que no cubren sale de lo libre. **Decisión: dividir** (no columna `monto_consumido`) — si
   una reserva queda a medias, la fila original baja al monto consumido y pasa a
   CONSUMIDA, y el resto queda en una reserva ACTIVA nueva. Sin migración, los
   estados siguen binarios y `AnularEventoFinanciero` no cambia (reactiva los ids

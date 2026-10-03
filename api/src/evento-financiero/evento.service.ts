@@ -362,8 +362,10 @@ export class EventoFinancieroService {
 
   /**
    * G14 — política "Consumir reserva": consume reservas ACTIVAS de la asignación
-   * solo hasta el monto del evento. Solo cuentan las de la misma moneda; primero
-   * las que están sobre un elemento que el evento mueve, luego las más antiguas.
+   * solo hasta el monto del evento. Solo cuentan las de la misma moneda y las que
+   * están sobre un elemento que el evento mueve, de la más antigua a la más nueva
+   * (G33 HZ-13: la plata ahorrada en otra cuenta no se movió, así que no se toca;
+   * lo que no cubren sale de lo libre de la cuenta).
    * Si una queda a medias se divide: la fila original baja al monto consumido y
    * pasa a CONSUMIDA, y el resto queda en una reserva ACTIVA nueva (`resto_id`).
    * Así los estados siguen siendo binarios y anular el evento solo tiene que
@@ -376,14 +378,15 @@ export class EventoFinancieroService {
     moneda: string,
     elementosEvento: Set<string>,
   ): Promise<{ id: string; monto: number; resto_id?: string }[]> {
-    const activas = await tx.reserva.findMany({
-      where: { asignacion_id: asignacionId, estado: 'ACTIVA', elemento_patrimonial: { moneda } },
+    const candidatas = await tx.reserva.findMany({
+      where: {
+        asignacion_id: asignacionId,
+        estado: 'ACTIVA',
+        elemento_origen_id: { in: [...elementosEvento] },
+        elemento_patrimonial: { moneda },
+      },
       orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
     });
-    const candidatas = [
-      ...activas.filter((r) => elementosEvento.has(r.elemento_origen_id)),
-      ...activas.filter((r) => !elementosEvento.has(r.elemento_origen_id)),
-    ];
 
     const consumidas: { id: string; monto: number; resto_id?: string }[] = [];
     let restante = monto;

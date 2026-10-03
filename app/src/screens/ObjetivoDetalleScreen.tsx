@@ -9,6 +9,7 @@ import {
   type HogarDTO,
   type MiembroDTO,
   type ObjetivoFinancieroDTO,
+  type ReservaDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -60,6 +61,7 @@ export function ObjetivoDetalleScreen() {
   const [nombreAsg, setNombreAsg] = useState('');
   const [verPartes, setVerPartes] = useState(false);
   const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[]>([]);
+  const [reservas, setReservas] = useState<ReservaDTO[]>([]);
   const [origenId, setOrigenId] = useState<string | null>(null);
   const [parteId, setParteId] = useState<string | null>(null);
   const [montoApartar, setMontoApartar] = useState('');
@@ -75,12 +77,17 @@ export function ObjetivoDetalleScreen() {
       setObj(o);
       setNuevoEstado(o.estado as (typeof ESTADOS)[number]);
       setDesignados(o.designados);
-      setAsignaciones(await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token));
+      const asgs = await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token);
+      setAsignaciones(asgs);
       if (o.puedoModificar) {
         const els = await api
           .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
           .catch(() => []);
         setCuentas(els.filter((e) => e.categoriaFuncional !== 'DEUDA' && e.categoriaFuncional !== 'CREDITO'));
+        const rs = await Promise.all(
+          asgs.map((a) => api.get<ReservaDTO[]>(`/asignaciones/${a.id}/reservas`, token).catch(() => [])),
+        );
+        setReservas(rs.flat());
       }
       const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []);
       setHogarId(hs[0]?.id ?? null);
@@ -158,6 +165,15 @@ export function ObjetivoDetalleScreen() {
   // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
   // paso actual (el primer obligatorio sin completar).
   const paso = contadorPasos();
+  // HZ-13: las cuentas propias donde la meta tiene plata; si es una sola, el
+  // gasto llega con ella elegida.
+  const cuentasConPlata = [
+    ...new Set(
+      reservas
+        .filter((r) => r.estado === 'ACTIVA' && cuentas.some((c) => c.id === r.elementoOrigenId))
+        .map((r) => r.elementoOrigenId),
+    ),
+  ];
   return (
     <Screen onRefresh={cargar}>
       <Hero
@@ -176,6 +192,19 @@ export function ObjetivoDetalleScreen() {
       </Nota>
       {obj.hogarId && !obj.puedoModificar && (
         <Ayuda>Meta del hogar. Puedes verla pero no modificarla (no eres designado).</Ayuda>
+      )}
+      {obj.puedoModificar && cuentasConPlata.length > 0 && (
+        <Button
+          title="Usar esta plata"
+          variant="secondary"
+          onPress={() =>
+            nav.go('RegistrarMovimiento', {
+              tipo: 'GASTO',
+              objetivoId,
+              ...(cuentasConPlata.length === 1 ? { origenId: cuentasConPlata[0] } : {}),
+            })
+          }
+        />
       )}
 
       {obj.puedoModificar && (
