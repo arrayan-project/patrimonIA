@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Siguiente: Fase E (implementación). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; siguiente: bloque 2 (HZ-13). | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -225,7 +225,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md)) ✅ (2026-09-29).
   Fase D, bloque 2 (prototipo v5; Zoily completó 6 de 6) ✅ y Fase D cerrada
   (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
-  Siguiente: Fase E, en el orden de su §5.
+  Fase E, en el orden de su §5: bloque 1 (D-4 + HZ-19 + HZ-22, solo frontend)
+  ✅ (2026-10-03). Siguiente: bloque 2 (HZ-13, gastar desde la meta).
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
   - `PROYECCIÓN` **HZ-18**: "Libre para gastar" resta el total de deudas por
@@ -234,9 +235,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     transferencias entre miembros), solo lectura; no reabre M9/M7.
   - `FLUJO` **HZ-20**: recuperar un ingreso mal clasificado anulándolo y
     registrándolo con D-3 en una sola transacción.
-  - `UI` **HZ-19**: numeración sutil de los pasos de un formulario.
-  - `UI` **HZ-22**: la decisión que cambia el significado del registro va en el
-    paso 2.
+  - ✅ `UI` **HZ-19**: numeración sutil de los pasos de un formulario (bloque 1).
+  - ✅ `UI` **HZ-22**: la decisión que cambia el significado del registro va en el
+    paso 2 (bloque 1: Ajuste y Nueva meta; Gasté y Recibí llegan con D-8).
   - `UI` **HZ-23**: menú con una puerta por caso → resuelto con D-8.
 - **`DOMINIO` pendiente de implementar en la Fase E** (no antes; detalle en
   [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §1):
@@ -271,7 +272,24 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     de la lista, nunca por texto libre; un solo saldo con signo en la UI.
   - ✅ **D-4 — Palabras** (HIP-3): diccionario de superficie ("Meta",
     "Ahorrar", "Libre para gastar", "Eliminar"…); se retira "Apartados sin
-    objetivo". Los comandos mantienen su nombre.
+    objetivo". Los comandos mantienen su nombre. **Implementada** en la Fase E,
+    bloque 1 (2026-10-03); los sueltos existentes se ven como "Ahorro sin meta".
+  - **Residuo de D-4: errores del backend sin código** (solo texto; la app no
+    los puede traducir). Pendientes para los bloques 4 o 5 de la Fase E:
+    "Objetivo no encontrado", "El objetivo no es tuyo", "No puedes modificar
+    este objetivo", "El objetivo no está compartido con un hogar", "El objetivo
+    ya tiene ese estado", "Solo el dueño puede compartir/eliminar el objetivo",
+    "Hay un objetivo repetido en las líneas", "Un objetivo no existe o no está en
+    el alcance del presupuesto", "Asignación no encontrada", "La asignación no
+    es tuya", "Reserva no encontrada", "La reserva no está activa", "El elemento
+    financia reservas activas", "El elemento solo tiene $X disponible", "El
+    origen y el destino no pueden ser el mismo", "Origen y destino no pueden ser
+    el mismo elemento", "Origen y destino son la misma moneda", "No eres
+    propietario del elemento origen", "No puedes mover fondos a ese elemento
+    destino", "El evento/ajuste/movimiento ya está anulado", "La valorización ya
+    está anulada", "No se puede corregir un evento/ajuste/valorización
+    anulado(a)" y las validaciones técnicas "… requiere elementoOrigenId…".
+    Camino propuesto: que el backend devuelva un código y la app lo traduzca.
   - ✅ **D-5 — Destino de otro miembro** en plantillas y programados: ver arriba.
   - ✅ **D-6 — Recurrencia** (HZ-16): ver arriba. Las plantillas se muestran
     como "Frecuentes".
