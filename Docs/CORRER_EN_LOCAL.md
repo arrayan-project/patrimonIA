@@ -7,6 +7,11 @@ y para volver de un modo al otro sin dejar procesos colgados.
 Desde el despliegue (2026-09-07) hay **dos escenarios**. El de arriba es el que
 usás casi siempre.
 
+| Quiero… | Modo | Comando de la app |
+|---|---|---|
+| Usar la app con lo que ya está en la nube | **A** | `./scripts/app.sh` |
+| Probar cambios que aún no están en la nube (backend o una rama) | **B** | `./scripts/app-local.sh` (más `db.sh` y `api.sh` antes) |
+
 ---
 
 # A · Usar la app con el backend en la nube  ← lo normal
@@ -60,44 +65,76 @@ cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
 
 ---
 
-# B · Desarrollar el backend en local
+# B · Probar con el backend en tu PC (local)
 
-Solo si vas a **tocar código del backend** (`api/`) y probarlo antes de subirlo.
-Acá corren 3 piezas en tu PC y el teléfono va por la **misma WiFi**.
+Úsalo cuando quieras probar **cambios que todavía no están en la nube**: código
+del backend (`api/`) o una rama de la app que no se ha subido. Todo corre en tu
+PC y el teléfono se conecta por la **misma WiFi**.
 
-## Inicial (una vez)
+> **Lo más importante:** en este modo **no uses `./scripts/app.sh`**. Ese script
+> abre un túnel por internet y la app termina buscando la API en un lugar donde
+> no hay nada ("sin conexión"). Para local se usa **`./scripts/app-local.sh`**.
+
+## Antes de la primera vez (una sola vez)
 
 ```bash
-docker volume create patrimonia_pgdata     # opcional, db.sh lo crea si falta
-sudo ufw allow 3000/tcp
-sudo ufw allow 8081:8090/tcp
 cd ~/Desktop/Projects/PersonalProjects/PatrimonIA/api && nvm use && npm install
+sudo ufw allow 3000/tcp        # deja que el teléfono llegue al backend
+sudo ufw allow 8081:8090/tcp   # deja que el teléfono llegue a Expo
 ```
 
-## Cada vez
+## Cada vez: 3 terminales, en este orden
 
-**Terminal 1 — base de datos + backend:**
+Abre tres terminales en `~/Desktop/Projects/PersonalProjects/PatrimonIA`.
+
+| Terminal | Comando | Qué hace | ¿Se queda abierta? |
+|---|---|---|---|
+| 1 | `./scripts/db.sh` | Levanta la base de datos (Docker) | Termina sola |
+| 2 | `./scripts/api.sh` | Levanta el backend en el puerto 3000 | **Sí**, ahí ves los logs |
+| 3 | `./scripts/app-local.sh` | Levanta la app apuntando a tu backend y muestra el QR | **Sí** |
+
+Después escanea el QR con el teléfono (igual que en el modo A).
+
+- `app-local.sh` revisa que el backend esté arriba; si no lo está, te lo dice y
+  no arranca.
+- También muestra la dirección del backend (algo como `http://192.168.1.20:3000`).
+
+### ¿Tengo que tocar `app/.env`?
+
+**No.** Deja `app/.env` como está, con la línea **sin comentar**:
+
+```
+EXPO_PUBLIC_API_URL=https://patrimonia-q3lz.onrender.com
+```
+
+`app-local.sh` le pasa a la app la dirección de tu PC al arrancar, y esa le gana
+a la del `.env`. **Si alguna vez la comentaste** (le pusiste `#` adelante),
+descoméntala: quítale el `#` y guarda el archivo.
+
+### Si la app dice "sin conexión"
+
+1. En el **navegador del teléfono**, abre la dirección que mostró
+   `app-local.sh` + `/health` (ej. `http://192.168.1.20:3000/health`).
+2. **Si no carga**, el problema es la red, no la app:
+   - ¿El teléfono y el PC están en la **misma WiFi**?
+   - ¿Corriste `sudo ufw allow 3000/tcp`?
+   - Si el PC está conectado al **hotspot del iPhone** (IP `172.20.10.x`), el
+     iPhone que comparte la conexión a veces no puede entrar al PC. Conecta los
+     dos a la misma WiFi normal.
+   - En redes de oficina u hotel suele estar bloqueado: usa el modo A.
+3. **Si carga** (`"status":"ok"`), cierra la app en el teléfono y vuelve a
+   escanear el QR.
+
+## Datos de prueba (opcional)
+
+Con el backend corriendo:
+
 ```bash
-cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
-./scripts/db.sh
-./scripts/api.sh          # dejá abierta
+./scripts/seed.sh
 ```
 
-**Terminal 2 — Expo apuntando al backend local:**
-```bash
-cd ~/Desktop/Projects/PersonalProjects/PatrimonIA/app
-# comentá temporalmente la línea de app/.env, o exportá la IP LAN:
-EXPO_PUBLIC_API_URL="http://$(hostname -I | awk '{print $1}'):3000" npm start
-```
+Crea estos usuarios:
 
-> Si no seteás `EXPO_PUBLIC_API_URL`, `app/src/config.ts` infiere la IP LAN del
-> PC — pero como `app/.env` ahora apunta a Render, hay que sobreescribirla acá.
-
-## Datos de prueba (backend local)
-
-```bash
-./scripts/seed.sh     # con el backend corriendo
-```
 ```
 demo@patrimonia.cl / demo1234       (admin)
 pareja@patrimonia.cl / demo1234     (miembro)
@@ -109,45 +146,31 @@ pareja@patrimonia.cl / demo1234     (miembro)
 ./scripts/estado.sh
 ```
 
-## Salir del modo B y volver al modo A (producción)
+## Terminar y volver al modo A (nube)
 
-Paso a paso, en orden:
-
-1. **Cortar backend y Metro**:
+1. **Cortar backend y app:** `Ctrl+C` en las terminales 2 y 3, o:
    ```bash
-   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
    ./scripts/parar.sh
    ```
-   Cierra lo que esté en los puertos 3000 y 8081. **No toca Docker** (a propósito).
+   (cierra lo que esté en los puertos 3000 y 8081; no toca Docker).
 
-2. **Bajar Docker** (Postgres, y `banking-worker` si lo usaste). Ojo: si
-   arrancaste la base con `./scripts/db.sh`, quedó en un proyecto Docker
-   distinto (`patrimonia-db`) del que usa `banking-worker`
-   (`patrimonia`, definido en el `docker-compose.yml` de la raíz) — un solo
-   `docker compose down` no baja los dos, hacen falta ambos:
+2. **Bajar la base de datos:**
    ```bash
-   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
-   docker compose down                 # banking-worker (si lo levantaste)
-   cd api/db && docker compose down    # Postgres
+   cd api/db && docker compose down && cd ../..
    ```
-   El volumen `patrimonia_pgdata` es externo — sobrevive a `docker compose down`
-   sin importar cuál de los dos comandos lo toque; los datos no se pierden.
-   Confirmar que no queda nada: `docker ps` debe salir vacío.
+   Si además levantaste `banking-worker`, corre también `docker compose down`
+   en la raíz del proyecto. Los datos **no se pierden** (quedan en el volumen
+   `patrimonia_pgdata`). `docker ps` debe salir vacío.
 
-3. **Restaurar `app/.env`**: la línea `EXPO_PUBLIC_API_URL=https://patrimonia-q3lz.onrender.com`
-   debe quedar **descomentada** (es el default de fábrica — si en el paso B la
-   comentaste a mano en vez de exportar la variable inline, hay que
-   descomentarla de nuevo acá).
+3. **Revisar `app/.env`:** la línea `EXPO_PUBLIC_API_URL=...onrender.com` debe
+   estar **sin `#`**. Si la comentaste, descoméntala y guarda.
 
-4. **Reiniciar Expo normal**:
+4. **Arrancar la app en modo nube**, limpiando lo que quedó del modo local:
    ```bash
-   cd ~/Desktop/Projects/PersonalProjects/PatrimonIA
-   ./scripts/app.sh
+   ./scripts/app.sh --clear
    ```
-   **Importante**: los `EXPO_PUBLIC_*` se inyectan al bundle una sola vez, al
-   arrancar Metro — un simple refresh/hot-reload de la app **no** recoge el
-   cambio de `.env`. Hay que matar el proceso de Metro viejo (`parar.sh` ya lo
-   hace) y arrancarlo de nuevo.
+   El `--clear` es importante: la app guarda la dirección del backend al
+   arrancar; sin él podría seguir buscando tu PC.
 
 ---
 
@@ -168,9 +191,10 @@ Paso a paso, en orden:
 | Login se queda pensando ~1 min la primera vez | Render + Neon despertando del suspend (free tier) | Esperá y reintentá. A partir de la 2ª request va rápido |
 | "No se pudo conectar con el servidor" siempre | `app/.env` mal, o Render caído | Probá `https://patrimonia-q3lz.onrender.com/health` en el navegador → debe dar `{"status":"ok"}` |
 | Expo Go: "There was a problem running the requested project" | Metro cayó / versión de Node | Mirá la terminal. `node -v` debe decir `v22.x` |
+| (modo B) La app dice "sin conexión" aunque el backend corre | Arrancaste la app con `./scripts/app.sh` (túnel) | Usa `./scripts/app-local.sh` |
 | (modo B) `http://<ip>:3000/health` no carga en el teléfono | Firewall o AP isolation | `sudo ufw allow 3000/tcp`; si es red de oficina/hotel, usá el modo A (túnel) |
 | `EADDRINUSE :::3000` | Backend viejo colgado | `./scripts/parar.sh` y de nuevo |
-| `docker compose down` no bajó Postgres | `db.sh` la arrancó en un proyecto Docker separado (`patrimonia-db`) del de la raíz (`patrimonia`) | Bajar los dos por separado — ver "Salir del modo B" arriba |
+| `docker compose down` no bajó Postgres | `db.sh` la arrancó en un proyecto Docker separado (`patrimonia-db`) del de la raíz (`patrimonia`) | Bajar los dos por separado — ver "Terminar y volver al modo A" arriba |
 | Cambié `app/.env` y la app sigue pegándole a la URL vieja | Metro solo lee `EXPO_PUBLIC_*` al arrancar | Matar Metro (`./scripts/parar.sh`) y arrancarlo de nuevo, no alcanza con recargar |
 
 ---
