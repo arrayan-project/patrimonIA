@@ -47,6 +47,21 @@ export class EventoFinancieroService {
    * Auditoría: Creación — comando, usuario, fecha, monto, elementos afectados.
    */
   async registrarEvento(actorId: string, dto: RegistrarEventoDto): Promise<EventoFinancieroDTO> {
+    return this.prisma.$transaction((tx) => this.registrarEventoEnTx(tx, actorId, dto));
+  }
+
+  /**
+   * Lo mismo que `registrarEvento`, dentro de una transacción ajena: lo usan
+   * las orquestaciones (p. ej. AhorrarParaObjetivo, D-1) para que el evento y
+   * lo demás queden en una sola transacción. `encadenadaDeId` liga su entrada
+   * de auditoría a la del comando raíz.
+   */
+  async registrarEventoEnTx(
+    tx: Prisma.TransactionClient,
+    actorId: string,
+    dto: RegistrarEventoDto,
+    opts: { encadenadaDeId?: string } = {},
+  ): Promise<EventoFinancieroDTO> {
     const moneda = dto.moneda.toUpperCase();
     const fecha = dto.fecha ? new Date(dto.fecha) : new Date();
     const monto = new Prisma.Decimal(dto.monto);
@@ -60,7 +75,7 @@ export class EventoFinancieroService {
 
     const categoriaId = await this.#validarCategoria(dto, actorId);
 
-    const resultado = await this.prisma.$transaction(async (tx) => {
+    const resultado = await (async () => {
       const evento = await tx.evento_financiero.create({
         data: {
           tipo: dto.tipo,
@@ -87,9 +102,11 @@ export class EventoFinancieroService {
             },
           }),
         );
+        // increment: en una orquestación, el mismo elemento puede recibir
+        // varios eventos en la misma transacción.
         await tx.elemento_patrimonial.update({
           where: { id: p.elemento.id },
-          data: { valor_vigente: new Prisma.Decimal(p.elemento.valor_vigente).plus(p.monto) },
+          data: { valor_vigente: { increment: p.monto } },
         });
         await derivarValorPendiente(tx, p.elemento.id);
       }
@@ -103,6 +120,7 @@ export class EventoFinancieroService {
         usuarioId: actorId,
         entidadTipo: 'EVENTO_FINANCIERO',
         entidadId: evento.id,
+        encadenadaDeId: opts.encadenadaDeId,
         valorPosterior: {
           tipo: evento.tipo,
           monto: dto.monto,
@@ -147,7 +165,7 @@ export class EventoFinancieroService {
       );
 
       return { evento, impactos, etiquetaIds };
-    });
+    })();
 
     return toEventoDTO(resultado.evento, resultado.impactos, resultado.etiquetaIds);
   }

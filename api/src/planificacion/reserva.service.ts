@@ -35,10 +35,24 @@ export class ReservaService {
    * objetivo asociado a la asignación.
    */
   async crear(actorId: string, dto: CrearReservaDto): Promise<ReservaDTO> {
-    const asignacion = await this.#asignacionPropia(dto.asignacionId, actorId);
+    return this.prisma.$transaction((tx) => this.crearEnTx(tx, actorId, dto));
+  }
+
+  /**
+   * CrearReserva dentro de una transacción ajena (D-1, AhorrarParaObjetivo):
+   * la disponibilidad se mide con `tx`, así que ve las transferencias que la
+   * orquestación ya hizo. `encadenadaDeId` liga la auditoría al comando raíz.
+   */
+  async crearEnTx(
+    tx: Prisma.TransactionClient,
+    actorId: string,
+    dto: CrearReservaDto,
+    opts: { encadenadaDeId?: string } = {},
+  ): Promise<ReservaDTO> {
+    const asignacion = await this.#asignacionPropia(dto.asignacionId, actorId, tx);
     await this.#exigirPropietarioElemento(dto.elementoOrigenId, actorId);
 
-    const libre = await this.progreso.disponibilidad(dto.elementoOrigenId);
+    const libre = await this.progreso.disponibilidad(dto.elementoOrigenId, tx);
     if (dto.monto > libre + 1e-9) {
       throw errorConCodigo(
         ConflictException,
@@ -48,39 +62,37 @@ export class ReservaService {
       );
     }
 
-    const reserva = await this.prisma.$transaction(async (tx) => {
-      const creada = await tx.reserva.create({
-        data: {
-          asignacion_id: asignacion.id,
-          elemento_origen_id: dto.elementoOrigenId,
-          monto: new Prisma.Decimal(dto.monto),
-          estado: 'ACTIVA',
-        },
-      });
-      const entradaId = await this.auditoria.registrar(tx, {
-        comando: 'CrearReserva',
-        usuarioId: actorId,
-        entidadTipo: 'RESERVA',
-        entidadId: creada.id,
-        valorPosterior: {
-          elemento_origen_id: dto.elementoOrigenId,
-          monto: dto.monto,
-          asignacion_id: asignacion.id,
-        },
-        entidadRelacionadaTipo: 'ASIGNACION',
-        entidadRelacionadaId: asignacion.id,
-      });
-      if (asignacion.objetivo_financiero_id) {
-        await this.progreso.recalcularYCompletar(
-          tx,
-          asignacion.objetivo_financiero_id,
-          actorId,
-          entradaId,
-        );
-      }
-      return creada;
+    const creada = await tx.reserva.create({
+      data: {
+        asignacion_id: asignacion.id,
+        elemento_origen_id: dto.elementoOrigenId,
+        monto: new Prisma.Decimal(dto.monto),
+        estado: 'ACTIVA',
+      },
     });
-    return toReservaDTO(reserva);
+    const entradaId = await this.auditoria.registrar(tx, {
+      comando: 'CrearReserva',
+      usuarioId: actorId,
+      entidadTipo: 'RESERVA',
+      entidadId: creada.id,
+      valorPosterior: {
+        elemento_origen_id: dto.elementoOrigenId,
+        monto: dto.monto,
+        asignacion_id: asignacion.id,
+      },
+      entidadRelacionadaTipo: 'ASIGNACION',
+      entidadRelacionadaId: asignacion.id,
+      encadenadaDeId: opts.encadenadaDeId,
+    });
+    if (asignacion.objetivo_financiero_id) {
+      await this.progreso.recalcularYCompletar(
+        tx,
+        asignacion.objetivo_financiero_id,
+        actorId,
+        opts.encadenadaDeId ?? entradaId,
+      );
+    }
+    return toReservaDTO(creada);
   }
 
   /** AS #28 — AjustarMontoReserva. Re-valida disponibilidad. */
@@ -209,14 +221,18 @@ export class ReservaService {
     return r;
   }
 
-  async #asignacionPropia(asignacionId: string, actorId: string) {
-    const a = await this.prisma.asignacion.findUnique({ where: { id: asignacionId } });
+  async #asignacionPropia(
+    asignacionId: string,
+    actorId: string,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    const a = await client.asignacion.findUnique({ where: { id: asignacionId } });
     if (!a) throw errorConCodigo(NotFoundException, 'ASIGNACION_NO_ENCONTRADA', 'Asignación no encontrada');
     if (a.usuario_id === actorId) return a;
     // P9 — asignación de un objetivo compartido: dueño/designados reservan su
     // propio dinero hacia ella.
     if (a.objetivo_financiero_id) {
-      const o = await this.prisma.objetivo_financiero.findUnique({
+      const o = await client.objetivo_financiero.findUnique({
         where: { id: a.objetivo_financiero_id },
       });
       if (o?.usuario_id === actorId) return a;

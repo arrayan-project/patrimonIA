@@ -11,6 +11,7 @@ import { UsuarioModule } from './usuario/usuario.module.js';
 import { HogarModule } from './hogar/hogar.module.js';
 import { ElementoModule } from './elemento/elemento.module.js';
 import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
+import { AhorroModule } from './ahorro/ahorro.module.js';
 import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AgrupacionModule } from './agrupacion/agrupacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
@@ -39,6 +40,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     HogarModule,
     ElementoModule,
     EventoFinancieroModule,
+    AhorroModule,
     ValorizacionModule,
     AjustePatrimonialModule,
     AgrupacionModule,

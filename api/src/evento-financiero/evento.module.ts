@@ -8,5 +8,6 @@ import { ElementoModule } from '../elemento/elemento.module.js';
   imports: [PlanificacionModule, ElementoModule],
   controllers: [EventoFinancieroController],
   providers: [EventoFinancieroService],
+  exports: [EventoFinancieroService],
 })
 export class EventoFinancieroModule {}

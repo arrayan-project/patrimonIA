@@ -8,6 +8,6 @@ import { ReservaService } from './reserva.service.js';
 @Module({
   controllers: [PlanificacionController],
   providers: [ProgresoService, ObjetivoService, AsignacionService, ReservaService],
-  exports: [ProgresoService],
+  exports: [ProgresoService, ReservaService],
 })
 export class PlanificacionModule {}
