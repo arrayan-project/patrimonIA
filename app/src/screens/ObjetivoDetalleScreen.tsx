@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -17,6 +17,7 @@ import { GLOSARIO } from '../labels';
 import { useToast } from '../ui/Toast';
 import { opcionesDeElementos } from '../opciones';
 import {
+  AmountInput,
   Elegir,
   contadorPasos,
   Ayuda,
@@ -24,14 +25,16 @@ import {
   ErrorText,
   etiqueta,
   Field,
+  Hero,
   LinkButton,
-  MoneyField,
+  ListCard,
+  Nota,
   ProgressBar,
-  Row,
   Screen,
+  Section,
   Segmented,
   SelectRow,
-  Title,
+  TxRow,
   Skeleton,
   Panel,
   useC,
@@ -157,71 +160,79 @@ export function ObjetivoDetalleScreen() {
   const paso = contadorPasos();
   return (
     <Screen onRefresh={cargar}>
-      <Title>{obj.nombre}</Title>
-      <ProgressBar pct={obj.progresoPorcentaje} />
-      <Text style={styles.muted}>
-        {money(obj.progreso, obj.moneda)} de {money(obj.montoObjetivo, obj.moneda)} · {obj.progresoPorcentaje}% ·{' '}
+      <Hero
+        label={obj.nombre}
+        value={money(obj.progreso, obj.moneda)}
+        substats={[
+          { label: 'de', value: money(obj.montoObjetivo, obj.moneda) },
+          { label: 'Avance', value: `${obj.progresoPorcentaje}%` },
+        ]}
+      >
+        <ProgressBar pct={obj.progresoPorcentaje} />
+      </Hero>
+      <Nota>
         {etiqueta(obj.estado)}
-        {obj.hogarId ? ' · del hogar' : ''}
-      </Text>
+        {obj.hogarId ? ' · meta del hogar' : ''}
+      </Nota>
       {obj.hogarId && !obj.puedoModificar && (
         <Ayuda>Meta del hogar. Puedes verla pero no modificarla (no eres designado).</Ayuda>
       )}
 
       {obj.puedoModificar && (
-        <Panel>
-          <Text style={styles.sectionTitle}>Ahorrar</Text>
-          <Ayuda>{GLOSARIO.apartado}</Ayuda>
-          {cuentas.length === 0 ? (
-            <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
-          ) : (
-            <>
-              <Elegir
-                label="Desde qué cuenta"
-                paso={paso({ hecho: !!origenId })}
-                placeholder="Elegir cuenta"
-                value={origenId}
-                options={opcionesDeElementos(cuentas)}
-                onChange={setOrigenId}
-              />
-              {asignaciones.length > 1 && (
+        <Section title="Ahorrar">
+          <Panel gap={14}>
+            <Ayuda>{GLOSARIO.apartado}</Ayuda>
+            {cuentas.length === 0 ? (
+              <Text style={styles.muted}>Primero agrega una cuenta desde donde ahorrar.</Text>
+            ) : (
+              <>
                 <Elegir
-                  label="¿Para qué parte de la meta?"
-                  paso={paso({ hecho: true })}
-                  value={parteId ?? asignaciones[0].id}
-                  options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
-                  onChange={(v) => v && setParteId(v)}
+                  label="¿Desde qué cuenta?"
+                  paso={paso({ hecho: !!origenId })}
+                  placeholder="Elegir cuenta"
+                  value={origenId}
+                  options={opcionesDeElementos(cuentas)}
+                  onChange={setOrigenId}
                 />
-              )}
-              <MoneyField label="¿Cuánto?" paso={paso({ hecho: Number(montoApartar) > 0 })} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
-              <Button
-                title="Ahorrar"
-                loading={busy}
-                disabled={!origenId || !(Number(montoApartar) > 0)}
-                onPress={apartar}
-              />
-            </>
-          )}
-        </Panel>
+                {asignaciones.length > 1 && (
+                  <Elegir
+                    label="¿Para qué parte de la meta?"
+                    paso={paso({ hecho: true })}
+                    value={parteId ?? asignaciones[0].id}
+                    options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
+                    onChange={(v) => v && setParteId(v)}
+                  />
+                )}
+                <AmountInput label="¿Cuánto?" paso={paso({ hecho: Number(montoApartar) > 0 })} value={montoApartar} onChange={setMontoApartar} moneda={obj.moneda} />
+                <Button
+                  title="Ahorrar"
+                  loading={busy}
+                  disabled={!origenId || !(Number(montoApartar) > 0)}
+                  onPress={apartar}
+                />
+              </>
+            )}
+          </Panel>
+        </Section>
       )}
 
       {(asignaciones.length > 0 || obj.puedoModificar) && (
-        <Panel>
-          <Text style={styles.sectionTitle}>En la meta</Text>
-          {asignaciones.length === 0 && <Text style={styles.muted}>Aún no ahorras para esta meta.</Text>}
-          {asignaciones.map((a) => (
-            <Pressable
-              key={a.id}
-              style={styles.asg}
-              accessibilityRole="button"
-              accessibilityLabel={`${a.nombre}, ${money(a.totalReservado, a.moneda)}`}
-              onPress={() =>
-                nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })
-              }
-            >
-              <Row left={`${a.nombre} ›`} right={money(a.totalReservado, a.moneda)} />
-            </Pressable>
-          ))}
+        <Section title="En la meta">
+          {asignaciones.length === 0 ? (
+            <Text style={styles.muted}>Aún no ahorras para esta meta.</Text>
+          ) : (
+            <ListCard>
+              {asignaciones.map((a) => (
+                <TxRow
+                  key={a.id}
+                  title={a.nombre}
+                  amount={money(a.totalReservado, a.moneda)}
+                  logo={{ icon: 'flag-outline' }}
+                  onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })}
+                />
+              ))}
+            </ListCard>
+          )}
           {obj.puedoModificar &&
             (verPartes ? (
               <>
@@ -251,109 +262,112 @@ export function ObjetivoDetalleScreen() {
             ) : (
               <LinkButton title="Dividir la meta en partes (opcional)" onPress={() => setVerPartes(true)} />
             ))}
-        </Panel>
+        </Section>
       )}
 
       {obj.esMio && hogarId && (
+        <Section title="Compartir con el hogar">
+          <Panel>
+            <Segmented
+              label="¿La compartes con el hogar?"
+              options={['No', 'Sí'] as const}
+              value={obj.hogarId ? 'Sí' : 'No'}
+              formatearOpcion={(v) => v}
+              onChange={(v) =>
+                run(() =>
+                  api.post(
+                    '/comandos/CompartirObjetivoConHogar',
+                    { objetivoId, hogarId: v === 'Sí' ? hogarId : null },
+                    token,
+                  ),
+                )
+              }
+            />
+            {obj.hogarId && (
+              <>
+                <Ayuda>Elige quién más puede modificar esta meta (ahorrar, editar).</Ayuda>
+                {miembros
+                  .filter((m) => m.usuarioId !== usuario.id)
+                  .map((m) => (
+                    <SelectRow
+                      key={m.usuarioId}
+                      label={m.nombre}
+                      selected={designados.includes(m.usuarioId)}
+                      onPress={() =>
+                        setDesignados((d) =>
+                          d.includes(m.usuarioId)
+                            ? d.filter((x) => x !== m.usuarioId)
+                            : [...d, m.usuarioId],
+                        )
+                      }
+                    />
+                  ))}
+                <Button
+                  title="Guardar designados"
+                  variant="secondary"
+                  loading={busy}
+                  disabled={
+                    [...designados].sort().join() === [...obj.designados].sort().join()
+                  }
+                  onPress={() =>
+                    run(() =>
+                      api.post(
+                        '/comandos/DefinirDesignadosObjetivo',
+                        { objetivoId, usuarioIds: designados },
+                        token,
+                      ),
+                    )
+                  }
+                />
+              </>
+            )}
+          </Panel>
+        </Section>
+      )}
+
+      {obj.puedoModificar && (
+      <Section title="Estado">
         <Panel>
-          <Text style={styles.sectionTitle}>Compartir con el hogar</Text>
-          <Segmented
-            label="¿Compartido?"
-            options={['No', 'Sí'] as const}
-            value={obj.hogarId ? 'Sí' : 'No'}
-            formatearOpcion={(v) => v}
-            onChange={(v) =>
+          <Segmented label="¿En qué estado está?" options={ESTADOS} value={nuevoEstado} onChange={setNuevoEstado} />
+          <Button
+            title="Cambiar estado"
+            variant="secondary"
+            loading={busy}
+            disabled={nuevoEstado === obj.estado}
+            onPress={() =>
               run(() =>
                 api.post(
-                  '/comandos/CompartirObjetivoConHogar',
-                  { objetivoId, hogarId: v === 'Sí' ? hogarId : null },
+                  '/comandos/CambiarEstadoObjetivoFinanciero',
+                  { objetivoId, estado: nuevoEstado },
                   token,
                 ),
               )
             }
           />
-          {obj.hogarId && (
+          {obj.esMio && (
             <>
-              <Ayuda>Elige quién más puede modificar esta meta (ahorrar, editar).</Ayuda>
-              {miembros
-                .filter((m) => m.usuarioId !== usuario.id)
-                .map((m) => (
-                  <SelectRow
-                    key={m.usuarioId}
-                    label={m.nombre}
-                    selected={designados.includes(m.usuarioId)}
-                    onPress={() =>
-                      setDesignados((d) =>
-                        d.includes(m.usuarioId)
-                          ? d.filter((x) => x !== m.usuarioId)
-                          : [...d, m.usuarioId],
-                      )
-                    }
-                  />
-                ))}
+              <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
               <Button
-                title="Guardar designados"
+                title="Eliminar meta"
                 variant="secondary"
                 loading={busy}
-                disabled={
-                  [...designados].sort().join() === [...obj.designados].sort().join()
-                }
+                disabled={motivo.trim().length < 3}
                 onPress={() =>
-                  run(() =>
-                    api.post(
-                      '/comandos/DefinirDesignadosObjetivo',
-                      { objetivoId, usuarioIds: designados },
-                      token,
-                    ),
+                  run(
+                    () =>
+                      api.post(
+                        '/comandos/EliminarObjetivoFinanciero',
+                        { objetivoId, motivo: motivo.trim() },
+                        token,
+                      ),
+                    true,
                   )
                 }
               />
             </>
           )}
         </Panel>
-      )}
-
-      {obj.puedoModificar && (
-      <Panel>
-        <Segmented label="Estado" options={ESTADOS} value={nuevoEstado} onChange={setNuevoEstado} />
-        <Button
-          title="Cambiar estado"
-          variant="secondary"
-          loading={busy}
-          disabled={nuevoEstado === obj.estado}
-          onPress={() =>
-            run(() =>
-              api.post(
-                '/comandos/CambiarEstadoObjetivoFinanciero',
-                { objetivoId, estado: nuevoEstado },
-                token,
-              ),
-            )
-          }
-        />
-        {obj.esMio && (
-          <>
-            <Field label="Motivo (para eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-            <Button
-              title="Eliminar meta"
-              variant="secondary"
-              loading={busy}
-              disabled={motivo.trim().length < 3}
-              onPress={() =>
-                run(
-                  () =>
-                    api.post(
-                      '/comandos/EliminarObjetivoFinanciero',
-                      { objetivoId, motivo: motivo.trim() },
-                      token,
-                    ),
-                  true,
-                )
-              }
-            />
-          </>
-        )}
-      </Panel>
+      </Section>
       )}
 
       <Button
@@ -374,7 +388,5 @@ export function ObjetivoDetalleScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  sectionTitle: tipoDe(c).seccion,
-  asg: { borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 4 },
   muted: tipoDe(c).nota,
 });
