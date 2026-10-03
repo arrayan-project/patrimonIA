@@ -48,6 +48,7 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 - **[usabilidad/DECISIONES_FASE_D_S01.md](usabilidad/DECISIONES_FASE_D_S01.md)** — Fase D de G33, bloque 1: decisiones D-1 a D-7 cerradas, diccionario de superficie, M9/M7 fuera de alcance y orden de la Fase E.
 - **[usabilidad/CIERRE_FASE_D_S01.md](usabilidad/CIERRE_FASE_D_S01.md)** — cierre de la Fase D de G33: señal de validación con el prototipo (6 de 6), hallazgos HZ-18 a HZ-23, decisión D-8 (dos puertas y "¿de quién es?") y orden actualizado de la Fase E.
 - **[usabilidad/prototipo/prototipo-fase-d-s01.html](usabilidad/prototipo/prototipo-fase-d-s01.html)** — prototipo interactivo de la Fase D (v5). En el menú `+` y el paso 2 de Gasté y Recibí manda D-8.
+- **[usabilidad/prototipo/plantillas-pantalla-s01.html](usabilidad/prototipo/plantillas-pantalla-s01.html)** — las 5 plantillas de pantalla (Resumen, Lista, Detalle, Formulario, Ajustes) con sus reglas, las reglas comunes y el mapa de cada pantalla de la app a su plantilla. Si una plantilla contradice un hallazgo HZ decidido, gana el hallazgo.
 
 ## Operación
 

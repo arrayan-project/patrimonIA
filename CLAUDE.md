@@ -9,3 +9,6 @@
   nunca crece por una lista (HZ-3).
 - Citas entre documentos: por sección o punto, nunca por número de línea.
 - Referencia visual vigente: `Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`.
+- Toda pantalla sigue su plantilla y las reglas comunes de
+  `Docs/usabilidad/prototipo/plantillas-pantalla-s01.html` (el mapa dice qué
+  plantilla usa cada pantalla; una pantalla nueva se agrega al mapa).
