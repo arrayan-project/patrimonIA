@@ -57,7 +57,10 @@ export function AhorrarScreen() {
     (nav.route.params?.objetivoId as string | undefined) ?? null,
   );
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
-  const [parteId, setParteId] = useState<string | null>(null);
+  // Desde el Detalle de una parte, llega ya elegida.
+  const [parteId, setParteId] = useState<string | null>(
+    (nav.route.params?.asignacionId as string | undefined) ?? null,
+  );
   // La cuenta de la meta derivada de sus reservas (null = aún no tiene).
   const [cuentaMeta, setCuentaMeta] = useState<string | null>(null);
   const [destinoElegido, setDestinoElegido] = useState<string | null>(null);

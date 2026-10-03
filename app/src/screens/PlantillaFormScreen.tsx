@@ -49,21 +49,25 @@ const VACIO: Borrador = {
 };
 
 /**
- * Formulario de una plantilla (plantillas de pantalla, R2): sin `plantillaId`
- * crea; con él edita y ofrece eliminar al final. Ya no vive bajo la lista.
+ * Formulario de una plantilla (plantillas de pantalla, R2 y R3): sin
+ * `plantillaId` crea; con él edita y ofrece eliminar al final. Con `desde`
+ * (Detalle de un movimiento: "Guardar como plantilla") crea con esos datos.
  */
+export type DesdeMovimiento = Omit<Borrador, 'monto'> & { monto: number; moneda: string };
+
 export function PlantillaFormScreen() {
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
   const plantillaId = nav.route.params?.plantillaId as string | undefined;
+  const desde = nav.route.params?.desde as DesdeMovimiento | undefined;
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [cargado, setCargado] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [b, setB] = useState<Borrador>(VACIO);
+  const [b, setB] = useState<Borrador>(desde ? { ...desde, monto: String(desde.monto) } : VACIO);
   const [actual, setActual] = useState<PlantillaMovimientoDTO | null>(null);
 
   useTitulo(plantillaId ? 'Editar plantilla' : 'Nueva plantilla');
@@ -130,7 +134,11 @@ export function PlantillaFormScreen() {
         await api.post('/comandos/ActualizarPlantillaMovimiento', { plantillaId: actual.id, ...campos }, token);
         toast.mostrar('Plantilla guardada');
       } else {
-        await api.post('/comandos/CrearPlantillaMovimiento', campos, token);
+        await api.post(
+          '/comandos/CrearPlantillaMovimiento',
+          { ...campos, ...(desde && campos.monto != null ? { moneda: desde.moneda } : {}) },
+          token,
+        );
         toast.mostrar('Plantilla creada');
       }
       nav.back();

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
   Button,
@@ -23,13 +23,22 @@ const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — $
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
 
-/** Formulario de un presupuesto nuevo (plantillas de pantalla, R2: ya no vive bajo la lista). */
-export function NuevoPresupuestoScreen() {
+/**
+ * Formulario de un presupuesto (plantillas de pantalla, R2 y R3): sin
+ * `presupuestoId` crea; con él edita los montos esperados (lo único que se
+ * puede cambiar de un presupuesto ya creado).
+ */
+export function PresupuestoFormScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
+  const presupuestoId = nav.route.params?.presupuestoId as string | undefined;
+  const inicial = (k: string) => {
+    const v = nav.route.params?.[k] as number | null | undefined;
+    return v == null ? '' : String(v);
+  };
   const [hogarId, setHogarId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -39,10 +48,12 @@ export function NuevoPresupuestoScreen() {
   const [intervalo, setIntervalo] = useState<(typeof INTERVALOS)[number]>('MENSUAL');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
-  const [ingresos, setIngresos] = useState('');
-  const [gastos, setGastos] = useState('');
-  const [ahorro, setAhorro] = useState('');
-  const [moneda, setMoneda] = useState('CLP');
+  const [ingresos, setIngresos] = useState(inicial('ingresos'));
+  const [gastos, setGastos] = useState(inicial('gastos'));
+  const [ahorro, setAhorro] = useState(inicial('ahorro'));
+  const [moneda, setMoneda] = useState((nav.route.params?.moneda as string | undefined) ?? 'CLP');
+
+  useTitulo(presupuestoId ? 'Editar montos' : undefined);
 
   useEffect(() => {
     api
@@ -52,6 +63,24 @@ export function NuevoPresupuestoScreen() {
   }, [token]);
 
   const num = (s: string) => (s.trim() === '' ? undefined : Number(s));
+
+  const guardarMontos = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const body: Record<string, unknown> = { presupuestoId };
+      if (num(ingresos) !== undefined) body.ingresosEsperados = num(ingresos);
+      if (num(gastos) !== undefined) body.gastosEsperados = num(gastos);
+      if (num(ahorro) !== undefined) body.ahorroEsperado = num(ahorro);
+      await api.post('/comandos/ActualizarDatosPresupuesto', body, token);
+      toast.mostrar('Guardado');
+      nav.back();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const crear = async () => {
     setBusy(true);
@@ -80,6 +109,16 @@ export function NuevoPresupuestoScreen() {
 
   // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
   const paso = contadorPasos();
+  if (presupuestoId) {
+    return (
+      <Screen pie={<Button title="Guardar montos" onPress={guardarMontos} loading={busy} />}>
+        <MoneyField label="Ingresos esperados" paso={paso()} value={ingresos} onChange={setIngresos} moneda={moneda} />
+        <MoneyField label="Gastos esperados" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
+        <MoneyField label="Ahorro esperado" paso={paso()} value={ahorro} onChange={setAhorro} moneda={moneda} />
+        <ErrorText>{error}</ErrorText>
+      </Screen>
+    );
+  }
   return (
     <Screen
       pie={
