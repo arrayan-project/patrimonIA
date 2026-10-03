@@ -1030,9 +1030,10 @@ ya cerrados en Fases 50–51).
   las que siguen CONSUMIDA vuelven a ACTIVA; recalcula el progreso del objetivo.
   `evento.service.#reactivarReservasConsumidas`.
 - ✅ (2026-09-29) **Consumo parcial**: el evento consume reservas ACTIVAS de la
-  asignación **solo hasta su monto**. Orden: primero las que están sobre un
-  elemento que el evento mueve, luego las más antiguas; solo las de la misma
-  moneda que el evento. **Decisión: dividir** (no columna `monto_consumido`) — si
+  asignación **solo hasta su monto**. Solo las que están sobre un elemento que
+  el evento mueve (desde G33 HZ-13, 2026-10-03: antes seguía con las de otras
+  cuentas, aunque esa plata no se movía), de la más antigua a la más nueva, y
+  de la misma moneda que el evento. Lo que no cubren sale de lo libre. **Decisión: dividir** (no columna `monto_consumido`) — si
   una reserva queda a medias, la fila original baja al monto consumido y pasa a
   CONSUMIDA, y el resto queda en una reserva ACTIVA nueva. Sin migración, los
   estados siguen binarios y `AnularEventoFinanciero` no cambia (reactiva los ids

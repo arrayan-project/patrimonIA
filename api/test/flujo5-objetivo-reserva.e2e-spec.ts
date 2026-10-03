@@ -128,13 +128,14 @@ describe('Flujo 5 — objetivo + asignación + reserva (e2e)', () => {
     expect(obj.body.progreso).toBe(9_900_000);
   });
 
-  it('un evento mayor que una reserva la consume entera y sigue con la siguiente', async () => {
+  it('un evento mayor que lo reservado en su cuenta no toca las reservas de otras cuentas (HZ-13)', async () => {
     await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
       .send({ tipo: 'GASTO', monto: 8_500_000, moneda: 'CLP', elementoOrigenId: ahorroId, asignacionId })
       .expect(201);
     const activas = await prisma.reserva.findMany({ where: { asignacion_id: asignacionId, estado: 'ACTIVA' } });
-    // 7,9M de ahorro enteros + 600k de los 2M de Fintual → queda 1,4M en Fintual.
-    expect(activas.map((r) => [r.elemento_origen_id, Number(r.monto)])).toEqual([[fintualId, 1_400_000]]);
+    // Se consumen los 7,9M de ahorro; los 600k restantes salen de lo libre de
+    // ahorro. Los 2M de Fintual siguen intactos.
+    expect(activas.map((r) => [r.elemento_origen_id, Number(r.monto)])).toEqual([[fintualId, 2_000_000]]);
   });
 
   it('liberar una reserva baja el progreso (pero no revierte el estado)', async () => {
