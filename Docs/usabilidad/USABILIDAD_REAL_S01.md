@@ -43,8 +43,8 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | BUG-HOG | ✅ Cerrada (2026-09-29): causa 1 confirmada y activada desde la app; corrección defensiva en `63005d1` |
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
-| D — Rediseño y mockup | ▶ Bloque 1 (decisiones) cerrado; bloque 2 (prototipo) siguiente ([`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §5) |
-| E — Implementación | ⏳ Espera D (orden en [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §4) |
+| D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
+| E — Implementación | ▶ Siguiente (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -147,7 +147,8 @@ la reserva. La decisión de cómo orquestarlo está en §9, D-1.
 
 Tipos: `UI` = presentación e interacción · `FLUJO` = orden o encadenamiento
 de pasos · `DOMINIO` = requiere decisión de dominio (se registra en GAPS) ·
-`BUG` = comportamiento incorrecto.
+`BUG` = comportamiento incorrecto · `PROYECCIÓN` = cómo se calcula o
+resume una cifra que ve el usuario.
 
 | ID | Área | Tipo | Hallazgo |
 |----|------|------|----------|
@@ -169,6 +170,12 @@ de pasos · `DOMINIO` = requiere decisión de dominio (se registra en GAPS) ·
 | HZ-15 | Movimientos | UI | Los avisos de Gasto y de Ingreso para casos T2 aparecen en el 100% de los registros T1. **Decisión:** incorporar; se resuelve con divulgación contextual (P-C). |
 | HZ-16 | Planificación / Hogar | DOMINIO | Los movimientos programados no tienen recurrencia ni categoría; "todos los meses" (M5, H3) obliga a crear uno por mes. **Decisión:** incorporar a `GAPS.md` y abrir D-6 (§9). |
 | HZ-17 | Movimientos | UI | En Registrar movimiento, "Desde" y "Hacia" mezclan todos los elementos, en Transferencia la lista sale dos veces y la cuenta queda bajo todas las categorías. **Decisión:** incorporar; amplía HZ-3 (agrupar por tipo, destino = persona). |
+| HZ-18 | Inicio / Cuentas | PROYECCIÓN | "Disponible" (pasa a llamarse "Libre para gastar") incluye plata de terceros e invita a gastarla. **Fase E:** restar del libre el total de deudas por plata de terceros (D-3) y avisar cuánta plata ajena hay en las cuentas. Detalle en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §3. |
+| HZ-19 | Transversal | UI | En tema oscuro no se percibe el orden de los pasos de un formulario. **Fase E:** numerar los pasos de forma sutil. |
+| HZ-20 | Movimientos | FLUJO | No hay cómo recuperarse de un registro mal clasificado (un ingreso que era plata de otra persona). **Fase E:** corregir desde el flujo siguiente: anular el ingreso y registrarlo con D-3 en una sola transacción; si no estaba anotado, registrar ambos hechos. |
+| HZ-21 | Hogar | UI / PROYECCIÓN | Ningún lugar muestra lo que pasa entre los miembros del hogar. **Fase E:** "Entre [pareja] y tú" en Hogar: solicitudes (D-7) y transferencias entre miembros. Solo lectura; no reabre la atribución por persona. |
+| HZ-22 | Transversal | UI | Una decisión de uso frecuente al final del formulario, con un valor ya elegido, no se descubre. **Regla de diseño (Fase E):** la decisión que cambia el significado del registro va en el paso 2. |
+| HZ-23 | Movimientos | UI | El menú con una puerta por caso ("Gasto compartido", cuatro variantes de "Plata de otra persona") no calza con cómo piensa la usuaria (primero la dirección de la plata, después de quién era) y no escala a más miembros. **Resuelto con D-8** (§9). |
 
 ## 5. Catálogo de escenarios de prueba
 
@@ -389,6 +396,13 @@ en el orden de su §4.
   "¿Se pagó?", sin registro automático. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
 - ✅ **D-7 — Solicitud de aporte (M7):** notificación con acción, tipo
   `SOLICITUD_APORTE`. [§1](DECISIONES_FASE_D_S01.md#1-decisiones-cerradas)
+- ✅ **D-8 — Dos puertas y "¿de quién es?" (HZ-23):** el menú `+` tiene una
+  puerta por dirección de la plata (Gasté · Recibí · Moví plata · …) y el
+  paso 2 de Gasté y Recibí pregunta de quién es. Desaparecen "Gasto
+  compartido" y "Plata de otra persona". Sin dominio nuevo (mismas
+  orquestaciones de D-3 y D-7). Cerrada al terminar la Fase D (2026-10-02);
+  riesgo aceptado: no probada con una usuaria sin contacto previo.
+  [§4 de `CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md#4-d-8-dos-puertas-y-de-quién-es-decisión-nueva)
 
 M9/M7 (atribución del gasto por persona) queda **fuera de alcance**; condición
 de reapertura en [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md) §3.
@@ -483,6 +497,24 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
 - [x] **Claude (chat) y Juan:** Fase D, bloque 1 (decisiones D-1 a D-7,
       `DECISIONES_FASE_D_S01.md`, 2026-09-29).
 - [x] **Claude Code:** Tarea 6 de `DECISIONES_FASE_D_S01.md` §6 (registro del bloque 1).
-- [ ] **Claude (chat):** Fase D, bloque 2 (prototipo interactivo, `DECISIONES_FASE_D_S01.md` §5).
-- [ ] **Zoily:** completar M1, M8, A1 y M7 sola en el prototipo (señal del
-      bloque 2).
+- [x] **Claude (chat):** Fase D, bloque 2 (prototipo interactivo v5,
+      `prototipo/prototipo-fase-d-s01.html`, 2026-10-02).
+- [x] **Zoily:** completar M1, M8, A1 y M7 sola en el prototipo (señal del
+      bloque 2). Cumplida: 6 de 6 (pruebas 4 y 6 en el 2º intento).
+- [x] **Juan:** D-8 aprobada, con el riesgo aceptado de
+      [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §4.5 (2026-10-02).
+- [x] **Claude Code:** Tarea 7 de `CIERRE_FASE_D_S01.md` §6 (registro del cierre
+      de la Fase D).
+- [ ] **Fase E**, en este orden ([`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5):
+  1. D-4 (diccionario) + HZ-19 (numeración) + HZ-22 (regla del paso 2).
+  2. HZ-13: gastar desde la meta (A5).
+  3. C1 + D-2: alta de cuenta y compartir con el hogar.
+  4. D-1: Ahorrar (A1/A2).
+  5. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+     Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
+     y recuperación.
+  6. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
+     "Entre [miembro] y tú".
+  7. D-5 + D-6: recurrencia y destino de otro miembro.
+- [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
+      completar sola los mismos seis escenarios.

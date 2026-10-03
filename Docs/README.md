@@ -45,6 +45,8 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 - **[usabilidad/RECORRIDO_ESCENARIOS_S01.md](usabilidad/RECORRIDO_ESCENARIOS_S01.md)** — Fase B de G33: recorrido de los escenarios T1/T2 en el código, con conteo y veredicto.
 - **[usabilidad/BENCHMARK_S01.md](usabilidad/BENCHMARK_S01.md)** — Fase C de G33: benchmark de patrones (P-A a P-E) para cada brecha de B, hallazgos HZ-11 a HZ-17 y decisiones D-6 y D-7.
 - **[usabilidad/DECISIONES_FASE_D_S01.md](usabilidad/DECISIONES_FASE_D_S01.md)** — Fase D de G33, bloque 1: decisiones D-1 a D-7 cerradas, diccionario de superficie, M9/M7 fuera de alcance y orden de la Fase E.
+- **[usabilidad/CIERRE_FASE_D_S01.md](usabilidad/CIERRE_FASE_D_S01.md)** — cierre de la Fase D de G33: señal de validación con el prototipo (6 de 6), hallazgos HZ-18 a HZ-23, decisión D-8 (dos puertas y "¿de quién es?") y orden actualizado de la Fase E.
+- **[usabilidad/prototipo/prototipo-fase-d-s01.html](usabilidad/prototipo/prototipo-fase-d-s01.html)** — prototipo interactivo de la Fase D (v5). En el menú `+` y el paso 2 de Gasté y Recibí manda D-8.
 
 ## Operación
 

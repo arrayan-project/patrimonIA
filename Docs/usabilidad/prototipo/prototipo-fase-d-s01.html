@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PatrimonIA</title>
+<style>
+:root{
+  --bg:#000000; --panel:#0c0c0d; --panel2:#151517; --text:#f5f5f5; --muted:#8a8a8e; --dim:#5a5a5e;
+  --line:#1f1f22; --ok:#34d399; --okbg:rgba(52,211,153,.14); --neg:#ff5c5c; --negbg:rgba(255,92,92,.14);
+  --btn:#f5f5f5; --btnText:#000; --sel:#f5f5f5; --selText:#000; --shadow:0 10px 30px rgba(0,0,0,.6);
+  --r:16px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#ffffff; --panel:#f4f4f5; --panel2:#e9e9ec; --text:#111113; --muted:#6b6b70; --dim:#9a9a9f;
+    --line:#e4e4e7; --ok:#059669; --okbg:rgba(5,150,105,.1); --neg:#dc2626; --negbg:rgba(220,38,38,.08);
+    --btn:#111113; --btnText:#fff; --sel:#111113; --selText:#fff; --shadow:0 10px 30px rgba(0,0,0,.15);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#ffffff; --panel:#f4f4f5; --panel2:#e9e9ec; --text:#111113; --muted:#6b6b70; --dim:#9a9a9f;
+  --line:#e4e4e7; --ok:#059669; --okbg:rgba(5,150,105,.1); --neg:#dc2626; --negbg:rgba(220,38,38,.08);
+  --btn:#111113; --btnText:#fff; --sel:#111113; --selText:#fff; --shadow:0 10px 30px rgba(0,0,0,.15);
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+
+#app{max-width:480px;margin:0 auto;height:100%;position:relative;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;padding:14px 16px 110px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg);border-top:1px solid var(--line);z-index:20}
+.tabbar-in{max-width:480px;margin:0 auto;display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;font-size:11px;color:var(--dim)}
+.tab .e{font-size:18px;filter:grayscale(1);opacity:.6}
+.tab.on{color:var(--text)}
+.tab.on .e{filter:none;opacity:1}
+.fab{position:fixed;bottom:calc(74px + env(safe-area-inset-bottom,0px));right:max(18px,calc(50% - 222px));width:58px;height:58px;border-radius:29px;background:var(--btn);color:var(--btnText);font-size:30px;line-height:58px;text-align:center;box-shadow:var(--shadow);z-index:21}
+
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{font-weight:800;font-size:17px;letter-spacing:-.3px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:19px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px}
+.badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--neg);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+.lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:22px 0 8px}
+.sec .lk{font-size:13px;color:var(--muted);font-weight:600}
+.hero .val{font-size:36px;font-weight:700;letter-spacing:-.8px;margin-top:6px}
+.hero .subs{display:flex;gap:18px;margin-top:8px;font-size:13px;color:var(--muted)}
+.hero .subs b{color:var(--text);font-weight:600}
+.chart{margin-top:10px;height:60px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row .ic{width:36px;height:36px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.row .mn{flex:1;min-width:0}
+.row .t{font-size:15px;font-weight:600}
+.row .s{font-size:12px;color:var(--muted);margin-top:2px}
+.row .am{font-size:15px;font-weight:700;white-space:nowrap}
+.pos{color:var(--ok)} .neg{color:var(--neg)}
+.row .chev{color:var(--dim)}
+
+.req{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.req .t{font-size:15px;font-weight:600}
+.req .s{font-size:13px;color:var(--muted);margin-top:3px}
+.req .acts{display:flex;gap:8px;margin-top:12px}
+
+.bar{height:4px;background:var(--panel2);border-radius:2px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--text)}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.ov-in{max-width:480px;width:100%;margin:0 auto;height:100%;display:flex;flex-direction:column}
+.ovh{display:flex;align-items:center;gap:10px;padding:10px 12px 6px}
+.ovh .back{width:38px;height:38px;border-radius:19px;font-size:20px;display:flex;align-items:center;justify-content:center}
+.ovh h1{font-size:18px;margin:0;font-weight:700}
+.ovb{flex:1;overflow-y:auto;padding:6px 16px 24px}
+.ovf{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg)}
+
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--bg);border-top-left-radius:22px;border-top-right-radius:22px;border:1px solid var(--line);padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;max-height:85%;overflow-y:auto}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--panel2);margin:0 auto 10px}
+.sheet h2{font-size:17px;margin:4px 6px 10px}
+.opt{display:flex;align-items:center;gap:14px;padding:13px 10px;border-radius:14px;width:100%;text-align:left}
+.opt:active{background:var(--panel)}
+.opt .ic{width:42px;height:42px;border-radius:21px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.opt .t{font-size:16px;font-weight:600}
+.opt .s{font-size:13px;color:var(--muted);margin-top:2px}
+.sep{height:1px;background:var(--line);margin:6px 10px}
+
+.q{font-size:14px;font-weight:600;margin:20px 0 8px}
+.q small{font-weight:400;color:var(--muted)}
+.ovb{counter-reset:paso}
+.ovb > .q:not(.nonum){counter-increment:paso;display:flex;align-items:center;gap:10px;margin-top:26px}
+.ovb > .q:not(.nonum)::before{content:counter(paso);width:22px;height:22px;border-radius:11px;border:1px solid var(--dim);color:var(--muted);font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ovb > .q:not(.nonum):first-child{margin-top:12px}
+.amount{width:100%;background:transparent;border:0;border-bottom:2px solid var(--line);font-size:38px;font-weight:700;padding:6px 0;outline:none;letter-spacing:-.5px}
+.amount:focus{border-bottom-color:var(--text)}
+.inp{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
+.inp:focus{border-color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:14px;font-weight:500}
+.chip.on{background:var(--sel);color:var(--selText);border-color:var(--sel)}
+.pick{max-height:260px;overflow-y:auto}
+.acc{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.acc:last-child{border-bottom:0}
+.acc .rad{width:20px;height:20px;border-radius:10px;border:2px solid var(--dim);flex:none}
+.acc.on .rad{border:6px solid var(--text)}
+.acc .mn{flex:1}
+.acc .t{font-size:15px;font-weight:600}
+.acc .s{font-size:12px;color:var(--muted);margin-top:2px}
+.acc.off{opacity:.45}
+.grp{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:10px 14px 4px}
+
+.tog{display:flex;align-items:center;gap:12px;padding:14px;width:100%;text-align:left}
+.tog .mn{flex:1}
+.tog .t{font-size:15px;font-weight:600}
+.tog .s{font-size:12px;color:var(--muted);margin-top:2px}
+.sw{width:46px;height:28px;border-radius:14px;background:var(--panel2);position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:var(--muted);transition:left .15s}
+.tog.on .sw{background:var(--ok)}
+.tog.on .sw::after{left:21px;background:#fff}
+.sub{padding:0 14px 14px}
+
+.more{font-size:14px;color:var(--muted);font-weight:600;padding:14px 2px}
+.note{font-size:13px;color:var(--muted);line-height:1.45;margin-top:10px}
+.sum{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45;margin-top:18px}
+.err{color:var(--neg);font-size:13px;margin-top:10px}
+.primary{width:100%;height:52px;border-radius:14px;background:var(--btn);color:var(--btnText);font-size:16px;font-weight:700}
+.primary:disabled{opacity:.35}
+.ghost{width:100%;height:46px;border-radius:14px;border:1px solid var(--line);font-size:15px;font-weight:600;margin-top:8px}
+.small{height:38px;padding:0 14px;border-radius:12px;font-size:14px;font-weight:600}
+.small.p{background:var(--btn);color:var(--btnText)}
+.small.g{border:1px solid var(--line)}
+.linkbtn{font-size:13px;font-weight:600;color:var(--muted);text-decoration:underline}
+
+.done{text-align:center;padding:40px 10px 10px}
+.done .big{width:72px;height:72px;border-radius:36px;background:var(--okbg);color:var(--ok);font-size:34px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.done h2{font-size:22px;margin:0 0 10px}
+.done p{font-size:15px;color:var(--muted);line-height:1.5;margin:6px 0}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));background:var(--text);color:var(--bg);padding:12px 16px;border-radius:14px;font-size:14px;font-weight:600;z-index:60;max-width:92%;box-shadow:var(--shadow)}
+.empty{font-size:14px;color:var(--muted);padding:14px}
+
+/* panel del observador */
+.obs{position:fixed;inset:0;z-index:80;background:var(--bg);overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.obs h1{font-size:18px}
+.obs table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.obs td,.obs th{border-bottom:1px solid var(--line);padding:7px 4px;text-align:left}
+.obs textarea{width:100%;height:160px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;font-size:11px;padding:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+// ---------- utilidades ----------
+const $ = (s,el=document)=>el.querySelector(s);
+const fmt = n => (n<0?"−":"")+"$"+Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const num = s => parseInt(String(s||"").replace(/\D/g,""),10)||0;
+const dots = s => { const n=num(s); return n? n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,".") : ""; };
+const mv = x => (x===undefined||x==="")? "" : "$"+(x==="0"?"0":dots(x));
+const uid = ()=>Math.random().toString(36).slice(2,9);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = ()=>new Date().toISOString().slice(0,10);
+const yesterday = ()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);};
+const niceDate = iso => { const [y,m,d]=iso.split("-"); const ms=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return (+d)+" "+ms[+m-1]; };
+const KEY="patrimonia-proto-s01";
+
+// ---------- datos iniciales (perspectiva de Zoily) ----------
+function seed(){
+  return {
+    me:"Zoily", partner:"Juan",
+    accounts:[
+      {id:"rut", name:"CuentaRUT", type:"Cuenta vista / RUT", emoji:"🏦", balance:185000, share:"transfer"},
+      {id:"fintual", name:"Fintual", type:"Inversión", emoji:"📈", balance:500000, share:"transfer"}
+    ],
+    partnerAccounts:[{id:"j1", name:"Cuenta corriente de Juan"}],
+    goals:[{id:"hogar", name:"Hogar", emoji:"🏠", target:5000000, home:"fintual", inAcc:{fintual:500000}}],
+    people:[], // balance > 0: te debe · < 0: le debes
+    moves:[
+      {id:uid(), title:"Supermercado", kind:"gasto", amount:-42300, acc:"rut", date:yesterday()}
+    ],
+    requests:[{id:"r1", from:"Juan", what:"Supermercado Lider", total:60000, part:30000, to:"j1", status:"pendiente"}],
+    log:[], task:"—"
+  };
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem(KEY)) || seed(); }catch(e){ S = seed(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+// ---------- modelo ----------
+const acc = id => S.accounts.find(a=>a.id===id);
+const inGoals = id => S.goals.reduce((s,g)=>s+(g.inAcc[id]||0),0);
+const free = id => { const a=acc(id); return a.type==="Tarjeta de crédito"?0:a.balance-inGoals(id); };
+const isCard = a => a.type==="Tarjeta de crédito";
+const goalTotal = g => Object.values(g.inAcc).reduce((s,v)=>s+v,0);
+const person = id => S.people.find(p=>p.id===id);
+function addMove(m){ S.moves.unshift(Object.assign({id:uid(), date:today()}, m)); }
+function personBal(name){ let p=S.people.find(x=>x.name.toLowerCase()===name.toLowerCase()); if(!p){p={id:uid(),name,balance:0};S.people.push(p);} return p; }
+const isPartner = n => (n||"").trim().toLowerCase()===S.partner.toLowerCase();
+const partnerMsg = () => S.partner+" es parte del hogar. Para plata entre ustedes usa «Moví plata» o «Compartido con "+S.partner+"».";
+function balText(p){ if(p.balance>0) return p.name+" te debe "+fmt(p.balance); if(p.balance<0) return "Le debes "+fmt(-p.balance)+" a "+p.name; return "Están a mano con "+p.name; }
+function logDone(kind){ S.log.push({ts:Date.now(), task:S.task, type:"hecho", what:kind}); save(); }
+
+// ---------- navegación ----------
+let tab="inicio", stack=[], sheet=null, obsOpen=false, toastT=null;
+function push(scr){ stack.push(scr); sheet=null; render(); const b=$(".ovb"); if(b) b.scrollTop=0; }
+function pop(){ stack.pop(); render(); }
+function closeAll(){ stack=[]; sheet=null; render(); }
+function toast(msg){ clearTimeout(toastT); let t=$(".toast"); if(t) t.remove(); t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); toastT=setTimeout(()=>t.remove(),3600); }
+
+// ---------- componentes ----------
+function accPicker(field, f, opts={}){
+  const list = S.accounts.filter(a=> opts.cards? true : !isCard(a));
+  let h = '<div class="card pick">';
+  list.forEach(a=>{
+    const fr=free(a.id), g=inGoals(a.id), card=isCard(a);
+    const off = opts.needFree && !card && fr<=0 && !(opts.allowGoal && g>0);
+    const sub = card? "Debes "+fmt(-a.balance) : (g>0? "Libre para gastar "+fmt(fr)+" · "+fmt(g)+" en metas" : "Tienes "+fmt(a.balance));
+    h+=`<button class="acc ${f[field]===a.id?"on":""} ${off?"off":""}" data-a="set" data-f="${field}" data-v="${a.id}" ${off?'data-off="1"':""}><span class="rad"></span><span class="mn"><div class="t">${a.emoji} ${esc(a.name)}</div><div class="s">${sub}</div></span></button>`;
+  });
+  if(opts.partner){
+    h+='<div class="grp">De '+S.partner+'</div>';
+    S.partnerAccounts.forEach(a=>{ h+=`<button class="acc ${f[field]===a.id?"on":""}" data-a="set" data-f="${field}" data-v="${a.id}"><span class="rad"></span><span class="mn"><div class="t">👤 ${esc(a.name)}</div><div class="s">${S.partner} la compartió para recibir transferencias</div></span></button>`; });
+  }
+  if(!list.length) h+='<div class="empty">Todavía no tienes cuentas. Agrega una desde Inicio.</div>';
+  return h+'</div>';
+}
+function dateField(f){
+  const mode = f.date===today()?"hoy": f.date===yesterday()?"ayer":"otra";
+  return `<div class="q">¿Cuándo?</div><div class="chips">
+    <button class="chip ${mode==="hoy"?"on":""}" data-a="set" data-f="date" data-v="${today()}">Hoy</button>
+    <button class="chip ${mode==="ayer"?"on":""}" data-a="set" data-f="date" data-v="${yesterday()}">Ayer</button>
+    <button class="chip ${mode==="otra"||f.pickDate?"on":""}" data-a="set" data-f="pickDate" data-v="1">Otra fecha</button></div>
+    ${(mode==="otra"||f.pickDate)?`<input class="inp" style="margin-top:10px" type="date" data-in="date" value="${f.date}">`:""}`;
+}
+function toggle(field,f,t,s){ return `<button class="tog ${f[field]?"on":""}" data-a="flip" data-f="${field}"><span class="mn"><div class="t">${t}</div>${s?`<div class="s">${s}</div>`:""}</span><span class="sw"></span></button>`; }
+function personPick(f, filter){
+  const list = S.people.filter(filter||(()=>true));
+  let h='<div class="chips">';
+  list.forEach(p=>{ h+=`<button class="chip ${f.person===p.id?"on":""}" data-a="set" data-f="person" data-v="${p.id}">${esc(p.name)}</button>`; });
+  h+=`<button class="chip ${f.person==="new"?"on":""}" data-a="set" data-f="person" data-v="new">+ Otra persona</button></div>`;
+  if(f.person==="new") h+=`<input class="inp" style="margin-top:10px" placeholder="¿Cómo se llama?" data-in="newName" value="${esc(f.newName||"")}">`;
+  return h;
+}
+const CATS=["🍦 Comida","🛒 Supermercado","🏠 Casa","🚌 Transporte","💊 Salud","🎉 Salidas","🎁 Regalos","📦 Otros"];
+
+// ---------- pantallas ----------
+const screens = {};
+
+screens.menu = ()=>{
+  const hasCard = S.accounts.some(isCard);
+  return `<div class="sheetbg" data-a="closeSheet"></div><div class="sheet" role="dialog" aria-label="¿Qué quieres anotar?"><div class="grab"></div><h2>¿Qué quieres anotar?</h2>
+  ${opt("gasto","💸","Gasté","Compré o pagué algo")}
+  ${opt("compartido","🧾","Gasto compartido con "+S.partner,"Pagué algo de los dos y "+S.partner+" pone su parte")}
+  ${opt("ingreso","💰","Recibí","Me llegó plata")}
+  ${opt("mover","🔁","Moví plata","De una cuenta mía a otra, o a "+S.partner)}
+  ${opt("ahorrar","🎯","Ahorrar para una meta","Mandar plata a una meta")}
+  ${hasCard?opt("pagarTarjeta","💳","Pagar tarjeta","Pagar lo que debes de una tarjeta"):""}
+  ${opt("otro","🤝","Plata de otra persona","Me pasaron plata para algo, o pagué por alguien")}
+  <div class="sep"></div>
+  ${opt("cuenta","🏦","Agregar una cuenta","Banco, inversión, tarjeta o efectivo")}
+  </div>`;
+  function opt(k,e,t,s){ return `<button class="opt" data-a="go" data-v="${k}"><span class="ic">${e}</span><span><div class="t">${t}</div><div class="s">${s}</div></span></button>`; }
+};
+
+// --- Agregar cuenta (C1)
+screens.cuenta = f => {
+  const types=["Cuenta corriente","Cuenta vista / RUT","Ahorro","Inversión","Tarjeta de crédito","Efectivo","Otro"];
+  const card=f.type==="Tarjeta de crédito";
+  return ovl("Agregar cuenta", `
+    <div class="q">¿Cómo se llama?</div><input class="inp" data-in="name" placeholder="Ej: Falabella" value="${esc(f.name||"")}" autocomplete="off">
+    <div class="q">¿Qué tipo es?</div><div class="chips">${types.map(t=>`<button class="chip ${f.type===t?"on":""}" data-a="set" data-f="type" data-v="${t}">${t}</button>`).join("")}</div>
+    <div class="q">${card?"¿Cuánto debes hoy en esta tarjeta?":"¿Cuánto tiene hoy?"}</div>
+    <input class="amount" inputmode="numeric" data-in="amount" data-money placeholder="$0" value="${mv(f.amount)}">
+    <div class="note">${card?"Lo que debes a la fecha, según tu estado de cuenta o la app del banco.":"El saldo que ves hoy en la app de tu banco."}</div>
+    ${f.err?`<div class="err">${f.err}</div>`:""}`,
+    `<button class="primary" data-a="saveCuenta">Agregar cuenta</button>`);
+};
+screens.compartir = f => {
+  const a=acc(f.accId);
+  const lv=[["none","Nada","Solo tú la ves."],["transfer","Que "+S.partner+" pueda transferirte","Ve el nombre de la cuenta, no cuánto tiene."],["sum","Que vea el saldo y sume a la plata del hogar","Cuenta en el total del hogar."],["all","Todo, también los movimientos","Ve el saldo y lo que entra y sale."]];
+  return ovl("", `<div class="done" style="padding-top:10px"><div class="big">✓</div><h2>${esc(a.name)} quedó agregada</h2><p>Tiene ${fmt(a.balance)}.</p></div>
+    <div class="q nonum">¿Qué compartes de ${esc(a.name)} con ${S.partner}?</div>
+    <div class="card">${lv.map(l=>`<button class="acc ${f.level===l[0]?"on":""}" data-a="set" data-f="level" data-v="${l[0]}"><span class="rad"></span><span class="mn"><div class="t">${l[1]}</div><div class="s">${l[2]}</div></span></button>`).join("")}</div>
+    <div class="note">Puedes cambiarlo cuando quieras desde la cuenta.</div>`,
+    `<button class="primary" data-a="saveShare">Guardar</button><button class="ghost" data-a="skipShare">Ahora no</button>`, true);
+};
+
+// --- Gasté (M1, M7a, M8 compra)
+screens.gasto = f => {
+  const owe = S.people.filter(p=>p.balance<0);
+  const a = f.acc && acc(f.acc);
+  const goalsHere = a? S.goals.filter(g=>(g.inAcc[a.id]||0)>0):[];
+  const who=f.who||"mio";
+  const whoOpts=[["mio","Mío"],["compartido","Compartido con "+S.partner],["porOtro","Lo pagué por otra persona"],["otraPlata","Con plata de otra persona"]];
+  let h = `<div class="q">¿Cuánto?</div><input class="amount" inputmode="numeric" data-in="amount" data-money placeholder="$0" value="${mv(f.amount)}">
+    <div class="q">¿De quién es este gasto?</div><div class="chips">${whoOpts.map(o=>`<button class="chip ${who===o[0]?"on":""}" data-a="set" data-f="who" data-v="${o[0]}">${esc(o[1])}</button>`).join("")}</div>`;
+  if(who==="compartido") h+=`<div class="card" style="margin-top:12px;padding:14px"><div class="q" style="margin-top:0">¿Cuánto le toca a ${S.partner}?</div><div class="chips">
+      <button class="chip ${f.split!=="otro"?"on":""}" data-a="set" data-f="split" data-v="mitad">La mitad ${f.amount?"("+fmt(Math.round(num(f.amount)/2))+")":""}</button>
+      <button class="chip ${f.split==="otro"?"on":""}" data-a="set" data-f="split" data-v="otro">Otro monto</button></div>
+      ${f.split==="otro"?`<input class="inp" style="margin-top:10px" inputmode="numeric" data-in="part" data-money placeholder="Monto de ${S.partner}" value="${mv(f.part)}">`:""}
+      <div class="note">Le pedimos su parte a ${S.partner} y te la transfiere. Lo ves en la pestaña Hogar.</div></div>`;
+  if(who==="porOtro") h+=`<div class="card" style="margin-top:12px;padding:14px"><div class="q" style="margin-top:0">¿Quién te lo va a devolver?</div>${personPick(f)}<div class="note">No cuenta como gasto tuyo: queda como plata que te deben.</div></div>`;
+  if(who==="otraPlata"){
+    h+=`<div class="card" style="margin-top:12px;padding:14px"><div class="q" style="margin-top:0">¿De quién era la plata?</div>${personPick(f)}`;
+    const p = f.person && f.person!=="new" ? person(f.person) : null;
+    if(p && p.balance<0) h+=`<div class="note">Le debes ${fmt(-p.balance)} a ${esc(p.name)}. Si usas su plata, no cuenta como gasto tuyo.</div>`;
+    else if(f.person){
+      const nm = p? p.name : ((f.newName||"").trim()||"esa persona");
+      const ings = S.moves.filter(m=>m.kind==="ingreso"&&m.amount>0).slice(0,4);
+      h+=`<div class="q">¿Anotaste cuando ${esc(nm)} te pasó la plata?</div><div class="chips">
+        ${ings.map(m=>`<button class="chip ${f.fixIng===m.id?"on":""}" data-a="set" data-f="fixIng" data-v="${m.id}">Sí, como ingreso: ${fmt(m.amount)} · ${esc(m.title)} · ${niceDate(m.date)}</button>`).join("")}
+        <button class="chip ${f.fixIng==="none"?"on":""}" data-a="set" data-f="fixIng" data-v="none">No lo anoté</button></div>
+        <div class="note">${f.fixIng==="none"?"Anotamos las dos cosas: que te pasó la plata y que la usaste.":f.fixIng?"Ese ingreso pasa a ser plata de "+esc(nm)+", y no cuenta como tuyo.":"Si lo anotaste como ingreso, elígelo y lo corregimos."}</div>`;
+    }
+    h+=`</div>`;
+  }
+  h+=`<div class="q">¿En qué?</div><input class="inp" data-in="what" placeholder="Ej: helado, luz, cortinas" value="${esc(f.what||"")}" autocomplete="off">
+    <div class="q">Categoría <small>(opcional)</small></div><div class="chips">${CATS.map(c=>`<button class="chip ${f.cat===c?"on":""}" data-a="set" data-f="cat" data-v="${c}">${c}</button>`).join("")}</div>
+    <div class="q">¿Desde qué cuenta pagaste?</div>${accPicker("acc",f,{cards:true, allowGoal:true})}
+    ${dateField(f)}`;
+  if(goalsHere.length && (who==="mio"||who==="compartido")){
+    h+=`<div class="card" style="margin-top:18px">${toggle("fromGoal",f,"¿Esta compra sale de una meta?","En "+esc(a.name)+" tienes plata en "+goalsHere.map(g=>g.name).join(", "))}
+    ${f.fromGoal?`<div class="sub"><div class="chips">${goalsHere.map(g=>`<button class="chip ${f.goal===g.id?"on":""}" data-a="set" data-f="goal" data-v="${g.id}">${g.emoji} ${g.name}</button>`).join("")}</div></div>`:""}</div>`;
+  }
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl(f.title||"Gasté", h, `<button class="primary" data-a="saveGasto">Anotar gasto</button>`);
+};
+
+// --- Recibí (M2, M8 entrada)
+screens.ingreso = f => {
+  const mine = !f.other;
+  let h = `<div class="q">¿Cuánto?</div><input class="amount" inputmode="numeric" data-in="amount" data-money placeholder="$0" value="${mv(f.amount)}">
+    <div class="q">¿De quién es esta plata?</div><div class="chips">
+      <button class="chip ${mine?"on":""}" data-a="setOther" data-v="0">Mía</button>
+      <button class="chip ${!mine?"on":""}" data-a="setOther" data-v="1">De otra persona</button></div>
+    ${!mine?`<div class="card" style="margin-top:12px;padding:14px"><div class="note" style="margin-top:0">Te la pasaron para que le compres algo, te la prestaron o te devolvieron algo. No cuenta como ingreso tuyo.</div><div class="q">¿De quién?</div>${personPick(f)}</div>`:""}
+    <div class="q">¿Qué fue?</div><input class="inp" data-in="what" placeholder="${mine?"Ej: sueldo, venta, reembolso":"Ej: para su labial"}" value="${esc(f.what||"")}" autocomplete="off">
+    <div class="q">¿A qué cuenta llegó?</div>${accPicker("acc",f)}
+    ${dateField(f)}`;
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl("Recibí", h, `<button class="primary" data-a="saveIngreso">Anotar</button>`);
+};
+
+// --- Moví (M3, M4) y Pagar tarjeta
+screens.mover = f => {
+  let h = `<div class="q">¿Cuánto?</div><input class="amount" inputmode="numeric" data-in="amount" data-money placeholder="$0" value="${mv(f.amount)}">
+    <div class="q">¿Desde qué cuenta?</div>${accPicker("from",f,{needFree:true})}
+    <div class="q">¿A qué cuenta?</div>${accPicker("to",f,{partner:true, cards:true})}
+    ${dateField(f)}`;
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl(f.title||"Moví plata", h, `<button class="primary" data-a="saveMover">${f.title?"Pagar":"Anotar"}</button>`);
+};
+
+// --- Ahorrar (A1, A2)
+screens.ahorrar = f => {
+  const g = S.goals.find(x=>x.id===f.goal);
+  let h = `<div class="q">¿Para qué meta?</div><div class="chips">${S.goals.map(x=>`<button class="chip ${f.goal===x.id?"on":""}" data-a="set" data-f="goal" data-v="${x.id}">${x.emoji} ${x.name}</button>`).join("")}</div>`;
+  if(g){
+    const home=acc(g.home);
+    h+=`<div class="note">La plata de ${g.name} se guarda en <b>${esc(home.name)}</b>. Llevas ${fmt(goalTotal(g))} de ${fmt(g.target)}.</div>
+    <div class="q">¿De dónde sale la plata?</div>`;
+    f.src.forEach((s,i)=>{
+      h+=`<div class="card" style="margin-bottom:10px">${S.accounts.filter(a=>!isCard(a)).map(a=>{
+          const fr=free(a.id), usedElse=f.src.some((o,j)=>j!==i&&o.acc===a.id), off=fr<=0||usedElse;
+          const sub= fr<=0? "Libre "+fmt(0)+(inGoals(a.id)?" · todo está en tus metas":"") : "Libre para ahorrar "+fmt(fr);
+          return `<button class="acc ${s.acc===a.id?"on":""} ${off?"off":""}" data-a="src" data-i="${i}" data-v="${a.id}" ${off?'data-off="1"':""}><span class="rad"></span><span class="mn"><div class="t">${a.emoji} ${esc(a.name)}${a.id===g.home?" <small style='color:var(--muted);font-weight:400'>(la cuenta de la meta)</small>":""}</div><div class="s">${sub}</div></span></button>`;}).join("")}
+        ${s.acc?`<div class="sub" style="padding-top:12px"><input class="amount" style="font-size:28px" inputmode="numeric" data-src="${i}" data-money placeholder="¿Cuánto?" value="${mv(s.amount)}">
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="chip" data-a="allFree" data-i="${i}">Todo lo libre (${fmt(free(s.acc))})</button>${f.src.length>1?`<button class="chip" data-a="rmSrc" data-i="${i}">Quitar</button>`:""}</div></div>`:""}</div>`;
+    });
+    h+=`<button class="more" data-a="addSrc">＋ Sumar otra cuenta</button>
+    <div class="sum" data-live="ahorro"></div>`;
+  }
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl("Ahorrar para una meta", h, `<button class="primary" data-a="saveAhorro" data-live="ahorroBtn">Ahorrar</button>`);
+};
+function ahorroText(f){
+  const g=S.goals.find(x=>x.id===f.goal); if(!g) return "";
+  const home=acc(g.home), ok=f.src.filter(s=>s.acc&&num(s.amount)>0);
+  if(!ok.length) return "Elige de qué cuenta sale la plata y cuánto.";
+  const moved=ok.filter(s=>s.acc!==g.home), same=ok.filter(s=>s.acc===g.home);
+  let t="";
+  if(moved.length) t+="Se van a mover "+moved.map(s=>fmt(num(s.amount))+" de "+acc(s.acc).name).join(" y ")+" a "+home.name+". ";
+  if(same.length) t+=fmt(same.reduce((x,s)=>x+num(s.amount),0))+" que ya están en "+home.name+" quedan separados. ";
+  const tot=ok.reduce((x,s)=>x+num(s.amount),0);
+  return t+"Tu meta "+g.name+" sube a "+fmt(goalTotal(g)+tot)+".";
+}
+
+// --- Plata de otra persona (M8, M10)
+screens.otro = () => {
+  const withBal=S.people.filter(p=>p.balance!==0);
+  let h = withBal.length? `<div class="card" style="margin-bottom:8px">${withBal.map(p=>`<div class="row"><span class="ic">👤</span><span class="mn"><div class="t">${esc(p.name)}</div><div class="s">${balText(p)}</div></span></div>`).join("")}</div>`:"";
+  h+=`<div class="grp" style="padding:16px 6px 2px">Te pasaron plata que no es tuya</div>
+    ${o("recibi","⬇️","Me pasaron plata","Entra a tu cuenta. Ej: Noira te transfiere $30.000 para que le compres algo.")}
+    ${o("use","⬆️","La usé o la devolví","Sale de tu cuenta. Ej: compras lo que Noira te pidió, con su plata.")}
+    <div class="grp" style="padding:16px 6px 2px">Pagaste por otra persona</div>
+    ${o("pague","⬆️","Pagué por alguien","Sale de tu cuenta y te lo deben. Ej: compras remedios para tus papás.")}
+    ${o("medevolvio","⬇️","Me devolvieron lo que pagué","Entra a tu cuenta. Ej: tus papás te pagan los remedios.")}`;
+  return ovl("Plata de otra persona", h, "");
+  function o(k,e,t,s){ return `<button class="opt" data-a="otroGo" data-v="${k}"><span class="ic">${e}</span><span><div class="t">${t}</div><div class="s">${s}</div></span></button>`; }
+};
+const PMODE={
+  recibi:{t:"Me pasaron plata",q:"¿Quién te pasó la plata?",acc:"¿A qué cuenta llegó?",inc:true,filter:()=>true,note:"No cuenta como ingreso tuyo: es plata de esa persona."},
+  use:{t:"La usé o la devolví",q:"¿De quién era la plata?",acc:"¿Desde qué cuenta salió?",inc:false,filter:p=>p.balance<0,empty:"No tienes plata de nadie anotada. Si alguien te pasó plata, anótalo primero en «Me pasaron plata».",note:"No cuenta como gasto tuyo."},
+  pague:{t:"Pagué por alguien",q:"¿Quién te lo va a devolver?",acc:"¿Desde qué cuenta pagaste?",inc:false,filter:()=>true,note:"No cuenta como gasto tuyo: queda como plata que te deben."},
+  medevolvio:{t:"Me devolvieron lo que pagué",q:"¿Quién te devolvió?",acc:"¿A qué cuenta llegó?",inc:true,filter:p=>p.balance>0,empty:"Nadie te debe plata anotada. Si es otra persona, agrégala.",note:"No cuenta como ingreso tuyo."}
+};
+screens.persona = f => {
+  const m=PMODE[f.mode], list=S.people.filter(m.filter);
+  let h=`<div class="q">${m.q}</div>${list.length?"":`<div class="note" style="margin:0 0 10px">${m.empty||""}</div>`}${personPick(f,m.filter)}`;
+  if(f.person && f.person!=="new"){ h+=`<div class="note">${balText(person(f.person))}.</div>`; }
+  h+=`<div class="q">¿Cuánto?</div><input class="amount" inputmode="numeric" data-in="amount" data-money placeholder="$0" value="${mv(f.amount)}">
+    <div class="q">${m.acc}</div>${accPicker("acc",f)}
+    <div class="q">¿Para qué? <small>(opcional)</small></div><input class="inp" data-in="what" placeholder="Ej: su labial" value="${esc(f.what||"")}" autocomplete="off">
+    ${dateField(f)}<div class="note">${m.note}</div>`;
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl(m.t, h, `<button class="primary" data-a="savePersona">Anotar</button>`);
+};
+
+// --- Solicitud de aporte (M7b)
+screens.pagarParte = f => {
+  const r=S.requests.find(x=>x.id===f.req);
+  let h=`<div class="note" style="font-size:15px;color:var(--text)">${r.from} pagó ${fmt(r.total)} en ${esc(r.what)}. Tu parte es <b>${fmt(r.part)}</b>.</div>
+    <div class="q">¿Desde qué cuenta le transfieres?</div>${accPicker("acc",f,{needFree:true})}
+    <div class="q nonum">Va a</div><div class="card"><div class="row"><span class="ic">👤</span><span class="mn"><div class="t">${esc(S.partnerAccounts.find(a=>a.id===r.to).name)}</div></span></div></div>`;
+  if(f.err) h+=`<div class="err">${f.err}</div>`;
+  return ovl("Pagarle a "+r.from, h, `<button class="primary" data-a="savePagarParte">Transferir ${fmt(r.part)}</button><button class="ghost" data-a="rechazar">No me corresponde</button>`);
+};
+
+// --- Resultado
+screens.listo = f => ovl("", `<div class="done"><div class="big">✓</div><h2>${f.title}</h2>${f.lines.map(l=>`<p>${l}</p>`).join("")}</div>`,
+  `<button class="primary" data-a="closeAll">Listo</button>`, true);
+
+// --- Avisos
+screens.avisos = () => {
+  const pend=S.requests.filter(r=>r.status==="pendiente");
+  let h = pend.length? pend.map(reqCard).join("") : `<div class="empty">No tienes avisos pendientes.</div>`;
+  return ovl("Avisos", h, "");
+};
+function reqCard(r){ return `<div class="req"><div class="t">${r.from} te pide tu parte: ${fmt(r.part)}</div><div class="s">Pagó ${fmt(r.total)} en ${esc(r.what)}</div><div class="acts"><button class="small p" data-a="pagarParte" data-v="${r.id}">Pagar mi parte</button></div></div>`; }
+
+function ovl(title, body, foot, noBack){
+  return `<div class="ov"><div class="ov-in"><div class="ovh">${noBack?"":`<button class="back" data-a="back" aria-label="Volver">←</button>`}<h1>${title}</h1></div><div class="ovb">${body}</div>${foot?`<div class="ovf">${foot}</div>`:""}</div></div>`;
+}
+
+// ---------- pestañas ----------
+function viewInicio(){
+  const total = S.accounts.reduce((s,a)=>s+a.balance,0) + S.people.reduce((s,p)=>s+p.balance,0);
+  const ajena = S.people.reduce((s,p)=>s+(p.balance<0?-p.balance:0),0);
+  const libre = S.accounts.filter(a=>!isCard(a)).reduce((s,a)=>s+free(a.id),0) - ajena;
+  const metas = S.goals.reduce((s,g)=>s+goalTotal(g),0);
+  const pend = S.requests.filter(r=>r.status==="pendiente");
+  const withBal=S.people.filter(p=>p.balance!==0);
+  return `<div class="top"><div class="logo" id="logo">PatrimonIA</div><button class="iconbtn" data-a="go" data-v="avisos" aria-label="Avisos">🔔${pend.length?`<span class="badge">${pend.length}</span>`:""}</button></div>
+  ${pend.map(reqCard).join("")}
+  ${(S.myRequests||[]).filter(r=>r.status==="pendiente").map(r=>`<div class="req"><div class="t">${S.partner} te debe su parte: ${fmt(r.part)}</div><div class="s">${esc(r.what)} · esperando que te transfiera</div></div>`).join("")}
+  <div class="hero"><div class="lbl">Tu plata</div><div class="val">${fmt(total)}</div>
+    <div class="subs"><span>Libre para gastar <b>${fmt(libre)}</b></span><span>En metas <b>${fmt(metas)}</b></span></div>
+    <svg class="chart" width="100%" viewBox="0 0 343 60" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".18"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><path d="M0,45 C50,40 80,22 120,24 C170,27 200,35 240,26 C280,18 310,12 343,10 L343,60 L0,60Z" fill="url(#gg)"/><path d="M0,45 C50,40 80,22 120,24 C170,27 200,35 240,26 C280,18 310,12 343,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  </div>
+  <div class="sec"><span class="lbl">Tus cuentas</span></div>
+  <div class="card">${S.accounts.map(a=>{const g=inGoals(a.id);return `<div class="row"><span class="ic">${a.emoji}</span><span class="mn"><div class="t">${esc(a.name)}</div><div class="s">${isCard(a)?"Tarjeta de crédito":g?"Libre "+fmt(free(a.id))+" · "+fmt(g)+" en metas":esc(a.type)}</div></span><span class="am ${a.balance<0?"neg":""}">${fmt(a.balance)}</span></div>`;}).join("")}
+    <button class="row" data-a="go" data-v="cuenta"><span class="ic">＋</span><span class="mn"><div class="t">Agregar cuenta</div></span></button></div>
+  ${withBal.length?`<div class="sec"><span class="lbl">Con otras personas</span></div><div class="card">${withBal.map(p=>`<div class="row"><span class="ic">👤</span><span class="mn"><div class="t">${esc(p.name)}</div><div class="s">${balText(p)}</div></span><span class="am">${fmt(Math.abs(p.balance))}</span></div>`).join("")}</div>
+  <div class="note">${ajena?"Tus cuentas tienen "+fmt(ajena)+" que son de otras personas: no cuentan como tu plata ni como libre para gastar. ":""}Lo que te deben sigue siendo tuyo, aunque hoy no esté en tus cuentas.</div>`:""}
+  <div class="sec"><span class="lbl">Metas</span><button class="lk" data-a="tab" data-v="planificar">Ver todas</button></div>
+  ${S.goals.map(goalCard).join("")}
+  <div class="sec"><span class="lbl">Últimos movimientos</span><button class="lk" data-a="tab" data-v="movimientos">Ver todos</button></div>
+  <div class="card">${S.moves.slice(0,4).map(moveRow).join("")||'<div class="empty">Aún no anotas nada.</div>'}</div>`;
+}
+function goalCard(g){ const t=goalTotal(g), p=Math.min(100,Math.round(t/g.target*100));
+  return `<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:600;font-size:15px">${g.emoji} ${g.name}</span><span style="font-size:13px;color:var(--muted)">${p}%</span></div>
+  <div class="bar"><i style="width:${p}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><span style="font-size:13px;color:var(--muted)">${fmt(t)} de ${fmt(g.target)}</span><button class="small g" data-a="ahorrarMeta" data-v="${g.id}">Ahorrar</button></div></div>`; }
+function moveRow(m){ const a=acc(m.acc)||S.partnerAccounts.find(x=>x.id===m.acc)||{name:""}; const e={gasto:"💸",ingreso:"💰",mover:"🔁",ahorro:"🎯",otro:"🤝"}[m.kind]||"•";
+  return `<div class="row"><span class="ic">${e}</span><span class="mn"><div class="t">${esc(m.title)}</div><div class="s">${esc(a.name)} · ${niceDate(m.date)}${m.tag?" · "+m.tag:""}</div></span><span class="am ${m.amount>0?"pos":""}">${m.amount>0?"+":""}${fmt(m.amount)}</span></div>`; }
+function viewMovs(){ return `<div class="top"><div class="logo">Movimientos</div></div><div class="card">${S.moves.map(moveRow).join("")||'<div class="empty">Aún no anotas nada.</div>'}</div>`; }
+function viewPlan(){ return `<div class="top"><div class="logo">Planificar</div></div><div class="sec" style="margin-top:0"><span class="lbl">Metas</span></div>${S.goals.map(goalCard).join("")}`; }
+function viewHogar(){
+  const mine=S.accounts.filter(a=>a.share==="sum"||a.share==="all").reduce((s,a)=>s+a.balance,0), juan=3200000, P=S.partner;
+  const reqs=[...(S.myRequests||[]).map(r=>({t:"Le pediste a "+P+" su parte de "+r.what,a:r.part,st:r.status})), ...S.requests.map(r=>({t:P+" te pidió tu parte de "+r.what,a:r.part,st:r.status}))];
+  const movs=S.moves.filter(m=>m.tag&&(m.tag==="De "+P||m.tag==="A "+P));
+  const stTxt={pendiente:"Pendiente",pagada:"Pagado",rechazada:"Rechazado"};
+  return `<div class="top"><div class="logo">Hogar</div></div><div class="hero"><div class="lbl">Plata del hogar</div><div class="val">${fmt(mine+juan)}</div><div class="subs"><span>Tuyo <b>${fmt(mine)}</b></span><span>${P} <b>${fmt(juan)}</b></span></div></div>
+  <div class="note">Suma las cuentas que cada uno decidió sumar al hogar.</div>
+  <div class="sec"><span class="lbl">Entre ${P} y tú</span></div>
+  <div class="card">${reqs.map(r=>`<div class="row"><span class="ic">🧾</span><span class="mn"><div class="t">${esc(r.t)}</div><div class="s">${stTxt[r.st]||r.st}</div></span><span class="am">${fmt(r.a)}</span></div>`).join("")}
+  ${movs.map(m=>`<div class="row"><span class="ic">${m.amount>0?"⬇️":"⬆️"}</span><span class="mn"><div class="t">${m.amount>0?P+" te transfirió":"Le transferiste a "+P}</div><div class="s">${esc(m.title)} · ${niceDate(m.date)}</div></span><span class="am">${fmt(Math.abs(m.amount))}</span></div>`).join("")}
+  ${!reqs.length&&!movs.length?'<div class="empty">Todavía no hay plata entre ustedes este mes.</div>':""}</div>`;
+}
+
+// ---------- render ----------
+function render(){
+  const v = tab==="inicio"?viewInicio(): tab==="movimientos"?viewMovs(): tab==="planificar"?viewPlan(): viewHogar();
+  const tabs=[["inicio","🏠","Inicio"],["movimientos","📊","Movimientos"],["planificar","🎯","Planificar"],["hogar","👪","Hogar"]];
+  let h = `<div class="scroll">${v}</div><button class="fab" data-a="menu" aria-label="Anotar algo">+</button>
+    <nav class="tabbar"><div class="tabbar-in">${tabs.map(t=>`<button class="tab ${tab===t[0]?"on":""}" data-a="tab" data-v="${t[0]}"><span class="e">${t[1]}</span>${t[2]}</button>`).join("")}</div></nav>`;
+  if(sheet) h+=screens[sheet]();
+  const top=stack[stack.length-1];
+  if(top) h+=screens[top.s](top.f);
+  if(obsOpen) h+=obsView();
+  $("#app").innerHTML=h;
+  const b=$(".ovb"); if(b&&top&&top.scroll) b.scrollTop=top.scroll;
+  updateLive();
+  bindLogo();
+}
+function updateLive(){
+  const top=stack[stack.length-1]; if(!top) return;
+  const el=$('[data-live="ahorro"]'); if(el) el.textContent=ahorroText(top.f);
+  const bt=$('[data-live="ahorroBtn"]'); if(bt){ const tot=top.f.src.reduce((s,x)=>s+(x.acc?num(x.amount):0),0); bt.textContent= tot? "Ahorrar "+fmt(tot):"Ahorrar"; }
+}
+
+// ---------- acciones ----------
+function F(){ return stack[stack.length-1].f; }
+function rememberScroll(){ const top=stack[stack.length-1], b=$(".ovb"); if(top&&b) top.scroll=b.scrollTop; }
+const A = {
+  menu(){ sheet="menu"; render(); },
+  closeSheet(){ sheet=null; render(); },
+  tab(v){ tab=v; stack=[]; sheet=null; render(); $(".scroll").scrollTop=0; },
+  back(){ pop(); },
+  closeAll(){ closeAll(); },
+  go(v){
+    const base={date:today()};
+    if(v==="gasto") push({s:"gasto",f:{...base,who:"mio"}});
+    else if(v==="compartido") push({s:"gasto",f:{...base,who:"compartido",split:"mitad",title:"Gasto compartido con "+S.partner}});
+    else if(v==="ingreso") push({s:"ingreso",f:{...base}});
+    else if(v==="mover") push({s:"mover",f:{...base}});
+    else if(v==="pagarTarjeta") push({s:"mover",f:{...base,title:"Pagar tarjeta",to:(S.accounts.find(isCard)||{}).id}});
+    else if(v==="ahorrar") push({s:"ahorrar",f:{goal:S.goals.length===1?S.goals[0].id:null,src:[{}]}});
+    else if(v==="otro") push({s:"otro",f:{}});
+    else if(v==="cuenta") push({s:"cuenta",f:{}});
+    else if(v==="avisos") push({s:"avisos",f:{}});
+  },
+  ahorrarMeta(v){ push({s:"ahorrar",f:{goal:v,src:[{}]}}); },
+  pagarParte(v){ push({s:"pagarParte",f:{req:v}}); },
+  set(v,el){ if(el.dataset.off) { const f=F(); f.err=offMsg(el.dataset.v); rememberScroll(); render(); return; } const f=F(); const k=el.dataset.f; f[k]=v; if(k==="pickDate"){f.pickDate=true;} else if(k==="date"){f.pickDate=false;} f.err=null; rememberScroll(); render(); },
+  setOther(v){ const f=F(); f.other= v==="1"; f.err=null; rememberScroll(); render(); },
+  flip(v,el){ const f=F(); f[el.dataset.f]=!f[el.dataset.f]; f.err=null; rememberScroll(); render(); },
+  src(v,el){ const f=F(); if(el.dataset.off){ f.err=offMsg(v); rememberScroll(); render(); return; } const i=+el.dataset.i; f.src[i].acc=v; f.err=null; rememberScroll(); render(); },
+  allFree(v,el){ const f=F(), i=+el.dataset.i; f.src[i].amount=String(free(f.src[i].acc)); rememberScroll(); render(); },
+  addSrc(){ const f=F(); f.src.push({}); rememberScroll(); render(); },
+  rmSrc(v,el){ const f=F(); f.src.splice(+el.dataset.i,1); rememberScroll(); render(); },
+  otroGo(v){
+    const m=PMODE[v], only=S.people.filter(m.filter);
+    push({s:"persona",f:{date:today(),mode:v,person:(v==="use"||v==="medevolvio")&&only.length===1?only[0].id:undefined}});
+  },
+
+  saveCuenta(){
+    const f=F(), n=(f.name||"").trim(), amt=num(f.amount);
+    if(!n) return err("Escribe el nombre de la cuenta.");
+    if(!f.type) return err("Elige qué tipo de cuenta es.");
+    if(f.amount===undefined||f.amount==="") return err("Escribe cuánto tiene hoy. Si está vacía, escribe 0.");
+    const card=f.type==="Tarjeta de crédito";
+    const emoji={"Cuenta corriente":"🏦","Cuenta vista / RUT":"🏦","Ahorro":"🐷","Inversión":"📈","Tarjeta de crédito":"💳","Efectivo":"💵","Otro":"📁"}[f.type];
+    const a={id:uid(),name:n,type:f.type,emoji,balance:card?-amt:amt,share:"transfer"};
+    S.accounts.push(a); logDone("cuenta_agregada"); save();
+    stack=[{s:"compartir",f:{accId:a.id,level:"transfer"}}]; render();
+  },
+  saveShare(){ const f=F(); acc(f.accId).share=f.level; logDone("compartir_"+f.level); save(); closeAll(); toast("Guardado"); },
+  skipShare(){ logDone("compartir_ahora_no"); closeAll(); },
+
+  saveGasto(){
+    const f=F(), amt=num(f.amount);
+    if(!amt) return err("Escribe cuánto gastaste.");
+    if(!f.acc) return err("Elige desde qué cuenta pagaste.");
+    const a=acc(f.acc), what=(f.what||"").trim()||"Gasto";
+    const who=f.who||"mio"; f.shared= who==="compartido"; f.forOther= who==="porOtro"; if(!(who==="mio"||who==="compartido")) f.fromGoal=false;
+    let usedP = [];
+    if(who==="otraPlata"){
+      if(!f.person) return err("Elige de quién era la plata.");
+      if(f.person==="new" && !(f.newName||"").trim()) return err("Escribe el nombre de la persona.");
+      if(f.person==="new" && isPartner(f.newName)) return err(partnerMsg());
+      const p0 = f.person==="new"? null : person(f.person);
+      if(!(p0 && p0.balance<0) && !f.fixIng) return err("Dinos si anotaste cuando te pasó la plata.");
+    }
+    if(f.forOther && f.person==="new" && isPartner(f.newName)) return err(partnerMsg());
+    if(f.forOther && !f.person) return err("Elige quién te lo va a devolver.");
+    if(f.forOther && f.person==="new" && !(f.newName||"").trim()) return err("Escribe el nombre de la persona.");
+    if(f.fromGoal && !f.goal) return err("Elige de qué meta sale.");
+    let part=0;
+    if(f.shared){ f.split=f.split||"mitad"; part = f.split==="otro"? num(f.part) : Math.round(amt/2); if(!part||part>amt) return err("Revisa cuánto le toca a "+S.partner+"."); }
+    // plata disponible
+    let goalUse=0;
+    if(f.fromGoal){ const g=S.goals.find(x=>x.id===f.goal); goalUse=Math.min(amt,g.inAcc[a.id]||0); }
+    const entra = (who==="otraPlata" && f.fixIng==="none" && !(f.person!=="new" && person(f.person) && person(f.person).balance<0))? amt : 0;
+    if(!isCard(a) && amt-goalUse-entra>free(a.id)) return err(`En ${a.name} tienes libre ${fmt(free(a.id))}${inGoals(a.id)?" (el resto está en tus metas)":""}. Si la compra sale de una meta, márcalo arriba.`);
+    const lines=[];
+    if(who==="otraPlata"){
+      const p = f.person==="new"? personBal(f.newName.trim()) : person(f.person);
+      if(!(p.balance<0)){
+        if(f.fixIng==="none"){ a.balance+=amt; p.balance-=amt; addMove({title:"Plata de "+p.name,kind:"otro",amount:amt,acc:a.id,date:f.date,tag:p.name}); lines.push(`Anotamos que ${esc(p.name)} te pasó ${fmt(amt)}.`); }
+        else { const m=S.moves.find(x=>x.id===f.fixIng); m.kind="otro"; m.tag=p.name; m.title="Plata de "+p.name; p.balance-=m.amount; lines.push(`Corregimos el ingreso de ${fmt(m.amount)}: era plata de ${esc(p.name)}.`); }
+      }
+      usedP=[p];
+    }
+    a.balance-=amt; let rest=amt, tag=f.cat||"";
+    usedP.forEach(p=>{ const u=Math.min(rest,-p.balance); p.balance+=u; rest-=u; lines.push(`Usaste ${fmt(u)} de ${esc(p.name)}. `+(p.balance===0?"Ya no le debes nada.":"Todavía le debes "+fmt(-p.balance)+".")); });
+    if(f.forOther){ const p= f.person==="new"? personBal(f.newName.trim()) : person(f.person); p.balance+=rest; lines.push(`${esc(p.name)} te debe ${fmt(p.balance)}. No cuenta como gasto tuyo.`); rest=0; }
+    if(f.fromGoal){ const g=S.goals.find(x=>x.id===f.goal); g.inAcc[a.id]-=goalUse; lines.push(`Salió de tu meta ${g.name}: ahora tiene ${fmt(goalTotal(g))}.`); tag=g.emoji+" "+g.name; }
+    addMove({title:what,kind:usedP.length||f.forOther?"otro":"gasto",amount:-amt,acc:a.id,date:f.date,tag});
+    if(rest>0 && !usedP.length && !f.forOther) lines.unshift(`Gastaste ${fmt(amt)} desde ${esc(a.name)}.`);
+    else if(rest>0) lines.push(`${fmt(rest)} fueron gasto tuyo.`);
+    if(f.shared){
+      lines.push(`Le pedimos a ${S.partner} su parte: ${fmt(part)}. Te avisamos cuando te la transfiera. Lo ves en la pestaña Hogar.`);
+      const accId=a.id; const myReq={id:uid(),what,part,status:"pendiente"}; S.myRequests=S.myRequests||[]; S.myRequests.unshift(myReq);
+      setTimeout(()=>{ const x=acc(accId)&&!isCard(acc(accId))?acc(accId):S.accounts.find(z=>!isCard(z)); x.balance+=part; const mr=(S.myRequests||[]).find(r=>r.id===myReq.id); if(mr) mr.status="pagada"; addMove({title:"Parte de "+S.partner+": "+what,kind:"ingreso",amount:part,acc:x.id,tag:"De "+S.partner}); save(); render(); toast(S.partner+" te transfirió "+fmt(part)+" a "+x.name); S.log.push({ts:Date.now(),task:S.task,type:"sim",what:"pareja_transfirio"}); save(); }, 12000);
+    }
+    logDone(f.shared?"gasto_compartido":usedP.length?"uso_plata_otro":f.forOther?"pago_por_otro":f.fromGoal?"gasto_desde_meta":"gasto");
+    save(); stack=[{s:"listo",f:{title:"Anotado",lines}}]; render();
+  },
+  saveIngreso(){
+    const f=F(), amt=num(f.amount);
+    if(!amt) return err("Escribe cuánto recibiste.");
+    if(!f.acc) return err("Elige a qué cuenta llegó.");
+    if(f.other && !f.person) return err("Elige de quién es la plata.");
+    if(f.other && f.person==="new" && !(f.newName||"").trim()) return err("Escribe el nombre de la persona.");
+    if(f.other && f.person==="new" && isPartner(f.newName)) return err(partnerMsg());
+    const a=acc(f.acc); a.balance+=amt; let lines;
+    if(f.other){ const p= f.person==="new"? personBal(f.newName.trim()) : person(f.person); p.balance-=amt;
+      addMove({title:(f.what||"").trim()||"Plata de "+p.name,kind:"otro",amount:amt,acc:a.id,date:f.date,tag:"De "+p.name});
+      lines=[`Entraron ${fmt(amt)} a ${esc(a.name)}.`, balText(p)+". No cuenta como ingreso tuyo."]; logDone("recibi_plata_otro");
+    } else { addMove({title:(f.what||"").trim()||"Ingreso",kind:"ingreso",amount:amt,acc:a.id,date:f.date}); lines=[`Entraron ${fmt(amt)} a ${esc(a.name)}.`]; logDone("ingreso"); }
+    save(); stack=[{s:"listo",f:{title:"Anotado",lines}}]; render();
+  },
+  savePersona(){
+    const f=F(), m=PMODE[f.mode], amt=num(f.amount);
+    if(!f.person) return err("Elige la persona.");
+    if(f.person==="new" && !(f.newName||"").trim()) return err("Escribe el nombre de la persona.");
+    if(f.person==="new" && isPartner(f.newName)) return err(partnerMsg());
+    if(!amt) return err("Escribe el monto.");
+    if(!f.acc) return err(m.inc?"Elige a qué cuenta llegó.":"Elige desde qué cuenta salió.");
+    const a=acc(f.acc);
+    if(!m.inc && amt>free(a.id)) return err(`En ${a.name} tienes libre ${fmt(free(a.id))}.`);
+    const p= f.person==="new"? personBal(f.newName.trim()) : person(f.person);
+    if(m.inc){ a.balance+=amt; p.balance-=amt; } else { a.balance-=amt; p.balance+=amt; }
+    addMove({title:(f.what||"").trim()||m.t,kind:"otro",amount:m.inc?amt:-amt,acc:a.id,date:f.date,tag:p.name});
+    logDone("persona_"+f.mode); save();
+    stack=[{s:"listo",f:{title:"Anotado",lines:[(m.inc?`Entraron ${fmt(amt)} a `:`Salieron ${fmt(amt)} de `)+esc(a.name)+".", balText(p)+".", m.note]}}]; render();
+  },
+  saveMover(){
+    const f=F(), amt=num(f.amount);
+    if(!amt) return err("Escribe cuánto moviste.");
+    if(!f.from||!f.to) return err("Elige desde qué cuenta y a qué cuenta.");
+    if(f.from===f.to) return err("Elige dos cuentas distintas.");
+    const a=acc(f.from); if(amt>free(a.id)) return err(`En ${a.name} tienes libre ${fmt(free(a.id))}.`);
+    a.balance-=amt; const b=acc(f.to), pa=S.partnerAccounts.find(x=>x.id===f.to);
+    if(b) b.balance+=amt;
+    addMove({title:"A "+(b?b.name:pa.name),kind:"mover",amount:-amt,acc:a.id,date:f.date,tag:pa?"A "+S.partner:""});
+    logDone(pa?"transfer_pareja":f.title?"pago_tarjeta":"mover"); save();
+    stack=[{s:"listo",f:{title:"Anotado",lines:[`Pasaste ${fmt(amt)} de ${esc(a.name)} a ${esc(b?b.name:pa.name)}.`]}}]; render();
+  },
+  saveAhorro(){
+    const f=F(), g=S.goals.find(x=>x.id===f.goal);
+    if(!g) return err("Elige para qué meta ahorras.");
+    const ok=f.src.filter(s=>s.acc&&num(s.amount)>0);
+    if(!ok.length) return err("Elige de qué cuenta sale la plata y cuánto.");
+    for(const s of ok){ if(num(s.amount)>free(s.acc)) return err(`En ${acc(s.acc).name} tienes libre ${fmt(free(s.acc))}.`); }
+    const home=acc(g.home); let tot=0;
+    ok.forEach(s=>{ const n=num(s.amount); tot+=n; if(s.acc!==g.home){ acc(s.acc).balance-=n; home.balance+=n; addMove({title:"Ahorro para "+g.name,kind:"ahorro",amount:-n,acc:s.acc,tag:"A "+home.name}); } g.inAcc[g.home]=(g.inAcc[g.home]||0)+n; });
+    logDone(ok.length>1?"ahorro_varias_cuentas":"ahorro"); save();
+    stack=[{s:"listo",f:{title:"Ahorraste "+fmt(tot),lines:[ahorroResumen(ok,g,home), `Tu meta ${g.name} lleva ${fmt(goalTotal(g))} de ${fmt(g.target)}.`]}}]; render();
+  },
+  savePagarParte(){
+    const f=F(), r=S.requests.find(x=>x.id===f.req);
+    if(!f.acc) return err("Elige desde qué cuenta le transfieres.");
+    const a=acc(f.acc); if(r.part>free(a.id)) return err(`En ${a.name} tienes libre ${fmt(free(a.id))}.`);
+    a.balance-=r.part; r.status="pagada";
+    addMove({title:"Mi parte: "+r.what,kind:"mover",amount:-r.part,acc:a.id,tag:"A "+r.from});
+    logDone("pague_mi_parte"); save();
+    stack=[{s:"listo",f:{title:"Listo",lines:[`Le transferiste ${fmt(r.part)} a ${r.from}.`, `${r.from} ya ve que pagaste tu parte.`]}}]; render();
+  },
+  rechazar(){ const f=F(), r=S.requests.find(x=>x.id===f.req); r.status="rechazada"; logDone("rechazo_solicitud"); save(); closeAll(); toast("Le avisamos a "+r.from); }
+};
+function ahorroResumen(ok,g,home){ const m=ok.filter(s=>s.acc!==g.home); return m.length? "Pasaste "+m.map(s=>fmt(num(s.amount))+" de "+acc(s.acc).name).join(" y ")+" a "+home.name+"." : "La plata quedó separada en "+home.name+"."; }
+function offMsg(id){ const a=acc(id); if(!a) return ""; return inGoals(id)? `${a.name} no tiene plata libre: sus ${fmt(inGoals(id))} están en tus metas.` : `${a.name} no tiene plata libre.`; }
+function err(m){ const f=F(); f.err=m; rememberScroll(); render(); logEv("error",m); const e=$(".err"); if(e&&e.scrollIntoView) e.scrollIntoView({block:"center"}); }
+
+// ---------- eventos ----------
+document.addEventListener("click", e=>{
+  const el=e.target.closest("[data-a]");
+  if(!obsOpen) logEv(el&&el.dataset.a==="back"?"atras":"toque", (el?(el.dataset.a+":"+(el.dataset.v||el.dataset.f||"")):(e.target.textContent||"").trim().slice(0,30)));
+  if(!el||obsOpen&&!el.closest(".obs")) return;
+  const fn=A[el.dataset.a]; if(fn) fn(el.dataset.v, el);
+});
+document.addEventListener("input", e=>{
+  const el=e.target; const top=stack[stack.length-1]; if(!top) return;
+  let raw=null;
+  if(el.dataset.money!==undefined){ raw=el.value.replace(/\D/g,"").replace(/^0+(?=\d)/,""); el.value= raw===""? "" : "$"+(raw==="0"?"0":dots(raw)); }
+  if(el.dataset.in){ top.f[el.dataset.in] = raw!==null? raw : el.value; if(el.dataset.in==="amount"&&top.s==="gasto"&&top.f.shared){ const c=$('[data-v="mitad"]'); if(c) c.textContent="La mitad ("+fmt(Math.round(num(el.value)/2))+")"; } }
+  if(el.dataset.src!==undefined){ top.f.src[+el.dataset.src].amount=raw; }
+  updateLive();
+});
+document.addEventListener("focusin", e=>{ const el=e.target; if(el.dataset&&el.dataset.money!==undefined&&el.value&&el.value[0]!=="$"){ el.value="$"+el.value; } });
+
+// ---------- registro del observador ----------
+function logEv(type,what){ S.log.push({ts:Date.now(),task:S.task,type,what,scr:(stack[stack.length-1]||{}).s||sheet||tab}); if(S.log.length>5000) S.log.shift(); save(); }
+let lpT=null;
+function bindLogo(){ const l=$("#logo"); if(!l) return;
+  const start=()=>{ lpT=setTimeout(()=>{ obsOpen=true; render(); },800); }, stop=()=>clearTimeout(lpT);
+  l.addEventListener("touchstart",start,{passive:true}); l.addEventListener("touchend",stop); l.addEventListener("mousedown",start); l.addEventListener("mouseup",stop); l.addEventListener("mouseleave",stop); }
+const TASKS=["—","C1","M1","A1","M7a","M7b","M8"];
+function summary(){
+  const by={}; S.log.forEach(ev=>{ const t=ev.task||"—"; (by[t]=by[t]||{taps:0,back:0,err:0,done:[],t0:ev.ts,t1:ev.ts}); const o=by[t]; if(ev.type==="toque")o.taps++; if(ev.type==="atras"){o.taps++;o.back++;} if(ev.type==="error")o.err++; if(ev.type==="hecho")o.done.push(ev.what); o.t0=Math.min(o.t0,ev.ts); o.t1=Math.max(o.t1,ev.ts); });
+  return by;
+}
+function obsView(){
+  const s=summary();
+  return `<div class="obs"><h1>Panel de prueba</h1>
+  <div class="note">Solo para quien observa. Elige la tarea antes de leerle cada escenario a Zoily.</div>
+  <div class="q">Tarea actual: <b>${S.task}</b></div><div class="chips">${TASKS.map(t=>`<button class="chip ${S.task===t?"on":""}" data-a="obsTask" data-v="${t}">${t}</button>`).join("")}</div>
+  <table><tr><th>Tarea</th><th>Toques</th><th>Atrás</th><th>Errores</th><th>Seg.</th><th>Resultado</th></tr>
+  ${Object.keys(s).map(k=>{const o=s[k];return `<tr><td>${k}</td><td>${o.taps}</td><td>${o.back}</td><td>${o.err}</td><td>${Math.round((o.t1-o.t0)/1000)}</td><td>${o.done.join(", ")||"—"}</td></tr>`;}).join("")}</table>
+  <div class="q">Registro completo (para copiar)</div><textarea readonly>${esc(JSON.stringify(S.log))}</textarea>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="small g" data-a="obsCopy">Copiar registro</button><button class="small g" data-a="obsReset">Reiniciar todo</button><button class="small p" data-a="obsClose">Cerrar</button></div></div>`;
+}
+Object.assign(A,{
+  obsTask(v){ S.task=v; S.log.push({ts:Date.now(),task:v,type:"inicio_tarea",what:v}); save(); render(); },
+  obsClose(){ obsOpen=false; render(); },
+  obsCopy(){ const t=$(".obs textarea"); t.select(); try{ navigator.clipboard.writeText(t.value).then(()=>toast("Registro copiado")); }catch(e){ document.execCommand("copy"); toast("Registro copiado"); } },
+  obsReset(){ if(confirm("¿Borrar datos y registro, y empezar de cero?")){ S=seed(); save(); obsOpen=false; stack=[]; sheet=null; tab="inicio"; render(); toast("Prototipo reiniciado"); } }
+});
+
+render();
+})();
+</script>
+</body>
+</html>

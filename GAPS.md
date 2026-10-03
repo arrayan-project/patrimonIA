@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D: bloque 1 (decisiones D-1 a D-7) ✅; siguiente: bloque 2 (prototipo). Implementación en la Fase E. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Siguiente: Fase E (implementación). | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
@@ -213,9 +213,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
   una propuesta de ajustes al flujo, antes de tocar pantallas.
 
-#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  ⬜ PENDIENTE (abierto 2026-09-29; decisiones D-1 a D-7 cerradas 2026-09-29)
+#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  ⬜ PENDIENTE (abierto 2026-09-29; Fase D cerrada 2026-10-02, decisiones D-1 a D-8)
 - **Fuente de verdad**: [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md)
-  (hallazgos HZ-1 a HZ-17, catálogo de 33 escenarios T1/T2/T3, plan por fases
+  (hallazgos HZ-1 a HZ-23, catálogo de 33 escenarios T1/T2/T3, plan por fases
   A–E + BUG-HOG). Continúa G32.
 - **Principio**: el dominio no cambia; se rediseña cómo se presentan y encadenan
   las operaciones. Lo que requiera dominio se decide acá.
@@ -223,7 +223,21 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (benchmark, [`Docs/usabilidad/BENCHMARK_S01.md`](Docs/usabilidad/BENCHMARK_S01.md)) ✅
   (2026-09-29). Fase D, bloque 1 (decisiones,
   [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md)) ✅ (2026-09-29).
-  Siguiente: Fase D, bloque 2 (prototipo). E espera, en el orden de su §4.
+  Fase D, bloque 2 (prototipo v5; Zoily completó 6 de 6) ✅ y Fase D cerrada
+  (2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md)).
+  Siguiente: Fase E, en el orden de su §5.
+- **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
+  [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
+  - `PROYECCIÓN` **HZ-18**: "Libre para gastar" resta el total de deudas por
+    plata de terceros (D-3) y avisa cuánta plata ajena hay en las cuentas.
+  - `PROYECCIÓN` **HZ-21**: "Entre [pareja] y tú" en Hogar (solicitudes D-7 y
+    transferencias entre miembros), solo lectura; no reabre M9/M7.
+  - `FLUJO` **HZ-20**: recuperar un ingreso mal clasificado anulándolo y
+    registrándolo con D-3 en una sola transacción.
+  - `UI` **HZ-19**: numeración sutil de los pasos de un formulario.
+  - `UI` **HZ-22**: la decisión que cambia el significado del registro va en el
+    paso 2.
+  - `UI` **HZ-23**: menú con una puerta por caso → resuelto con D-8.
 - **`DOMINIO` pendiente de implementar en la Fase E** (no antes; detalle en
   [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §1):
   - **HZ-11 / D-3 — invariante en la orquestación "Registrar plata de otra
@@ -263,6 +277,15 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     como "Frecuentes".
   - ✅ **D-7 — Solicitud de aporte** (M7): notificación con acción, tipo nuevo
     `SOLICITUD_APORTE`; comandos intactos.
+  - ✅ **D-8 — Dos puertas y "¿de quién es?"** (HZ-23; cierre de la Fase D,
+    2026-10-02, [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §4): el menú `+` tiene una
+    puerta por dirección de la plata y el paso 2 de Gasté y Recibí pregunta de
+    quién es (Mío · Compartido con el hogar · De otra persona / Mía · De
+    alguien del hogar · De otra persona). Reemplaza las puertas de D-3 y la de
+    "Gasto compartido". Sin dominio nuevo. **Riesgo aceptado (Juan):** no se
+    probó con una usuaria sin contacto previo; se valida en la app real con la
+    señal de la Fase E. **Reapertura:** si se suma un usuario nuevo, se repiten
+    con él las pruebas 4 y 6.
 - **Fuera de alcance: M9/M7 — atribución del gasto por persona.** El modelo ya
   hace cuadrar los saldos individuales y el total del hogar; en "Míos" el gasto
   completo aparece en quien pagó. **Reapertura:** solo si en la Fase E Zoily o
