@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) en rama, por probar; HZ-13 pasa al bloque 5. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; siguiente: bloque 5 (HZ-13). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email (el registro las pasa a minúsculas). Arreglo de una línea en el backend. | ⬜ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -238,8 +238,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   ✅ (2026-10-03). Bloque 2 (HZ-3 + HZ-17) ✅: rama `feat/G33-E2-listas`,
   probada por Juan y mergeada a `main` (2026-10-03). Bloque 3 (HZ-24) ✅: rama
   `feat/G33-E3-paso-actual`, probada por Juan y mergeada (2026-10-03).
-  Bloque 4 (rediseño visual): en rama, por probar en el teléfono.
-- **Bloque 4 de la Fase E — `UI` rediseño visual** (insertado el 2026-10-03;
+  Bloque 4 (rediseño visual) ✅: rama `feat/G33-E4-rediseno`, probada por Juan
+  y mergeada (2026-10-03). Siguiente: bloque 5 (HZ-13).
+- **Bloque 4 de la Fase E — `UI` rediseño visual (✅ mergeado, 2026-10-03)** (insertado el 2026-10-03;
   HZ-13 pasa al bloque 5 y los siguientes se corren uno): la referencia única
   es el prototipo [`Docs/usabilidad/prototipo/prototipo-fase-d-s01.html`](Docs/usabilidad/prototipo/prototipo-fase-d-s01.html).
   Se traducen su estructura, jerarquía y patrones a React Native (no sus
@@ -250,8 +251,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   → [`Docs/retirado/propuesta-rediseno-C-rimu.html`](Docs/retirado/propuesta-rediseno-C-rimu.html)):
   era clara visualmente pero poco comprensible; manda el prototipo, que Zoily
   sí completó (6 de 6).
-  **Implementado en la rama `feat/G33-E4-rediseno` (2026-10-03), falta la
-  prueba de Juan en el teléfono:** tokens y componentes (`AmountInput`,
+  **Implementado en la rama `feat/G33-E4-rediseno` y probado por Juan en el
+  teléfono (2026-10-03):** tokens y componentes (`AmountInput`,
   `AccountList`, `Question`, `Section`, `ListCard`) y una pantalla por commit
   (Registrar movimiento, Inicio, Movimientos, Planificar, Hogar, Agregar
   cuenta o bien, Notificaciones, Metas, Meta, Patrimonio del hogar,
@@ -350,7 +351,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     objetivo". Los comandos mantienen su nombre. **Implementada** en la Fase E,
     bloque 1 (2026-10-03); los sueltos existentes se ven como "Ahorro sin meta".
   - **Residuo de D-4: errores del backend sin código** (solo texto; la app no
-    los puede traducir). Pendientes para los bloques 6 o 7 de la Fase E:
+    los puede traducir). Pendientes para los bloques 7 u 8 de la Fase E:
     "Objetivo no encontrado", "El objetivo no es tuyo", "No puedes modificar
     este objetivo", "El objetivo no está compartido con un hogar", "El objetivo
     ya tiene ese estado", "Solo el dueño puede compartir/eliminar el objetivo",
