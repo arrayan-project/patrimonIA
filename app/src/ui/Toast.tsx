@@ -41,7 +41,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             styles.toast,
             {
               backgroundColor: msg.tono === 'error' ? c.danger : c.primary,
-              bottom: insets.bottom + 24,
+              // Arriba, bajo la barra: abajo tapaba el botón fijo de los formularios.
+              top: insets.top + 64,
               opacity: opacidad,
             },
           ]}

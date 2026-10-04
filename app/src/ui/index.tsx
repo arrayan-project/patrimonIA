@@ -906,7 +906,9 @@ export type Paso = number | { n: number; estado: EstadoPaso };
 export function contadorPasos(): (p?: { hecho?: boolean; opcional?: boolean }) => Paso {
   let n = 0;
   let hayActual = false;
-  return ({ hecho = false, opcional = false } = {}) => {
+  return (p) => {
+    const hecho = p?.hecho ?? false;
+    const opcional = p === undefined ? true : (p.opcional ?? false);
     n += 1;
     if (hayActual) return { n, estado: 'bloqueado' };
     if (opcional || hecho) return { n, estado: 'hecho' };
@@ -1059,7 +1061,22 @@ export function DateField({
     <BloquePaso paso={paso} style={styles.field}>
       <Question paso={paso}>{label}</Question>
       {Platform.OS === 'web' ? (
-        <DateTimePicker value={fecha} mode="date" display="default" onChange={alElegir} />
+        // DateTimePicker no tiene versión web: el campo de fecha del navegador.
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          style={{
+            borderRadius: radio.campo,
+            border: `1px solid ${error ? c.danger : c.mutedDim}`,
+            background: c.bg,
+            color: c.text,
+            padding: '13px 14px',
+            fontSize: 16,
+            fontFamily: 'inherit',
+          }}
+        />
       ) : (
         <>
           <Pressable
@@ -1081,6 +1098,51 @@ export function DateField({
       {optional && value ? <LinkButton title="Quitar fecha" onPress={() => onChange('')} /> : null}
     </BloquePaso>
   );
+}
+
+/**
+ * La fecha una vez (plantilla Formulario): Hoy por defecto, Ayer u Otra fecha
+ * (calendario). Para registrar algo que ya pasó; lo futuro usa `DateField`.
+ */
+export function Cuando({
+  label = '¿Cuándo?',
+  value,
+  onChange,
+  paso,
+}: {
+  label?: string;
+  value: string;
+  onChange: (iso: string) => void;
+  paso?: Paso;
+}) {
+  const styles = useEstilos();
+  const hoy = aISO(new Date());
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const ayer = aISO(d);
+  const [otra, setOtra] = useState(value !== '' && value !== hoy && value !== ayer);
+  const elegido = otra ? 'otra' : value === ayer ? 'ayer' : 'hoy';
+  return (
+    <BloquePaso paso={paso} style={styles.field}>
+      <Question paso={paso}>{label}</Question>
+      <View style={styles.chipsFila}>
+        <Chip label="Hoy" activo={elegido === 'hoy'} onPress={() => { setOtra(false); onChange(hoy); }} />
+        <Chip label="Ayer" activo={elegido === 'ayer'} onPress={() => { setOtra(false); onChange(ayer); }} />
+        <Chip label="Otra fecha" activo={elegido === 'otra'} onPress={() => setOtra(true)} />
+      </View>
+      {otra && <DateField label="¿Qué día?" value={value} onChange={onChange} />}
+    </BloquePaso>
+  );
+}
+
+/**
+ * Lo opcional, cerrado (plantilla Formulario): un enlace "+ …" que abre el
+ * campo solo si se usa. Con `abierto` (ya trae valor, p. ej. de una
+ * plantilla) se muestra abierto.
+ */
+export function Opcional({ titulo, abierto, children }: { titulo: string; abierto?: boolean; children: ReactNode }) {
+  const [ver, setVer] = useState(false);
+  return ver || abierto ? <>{children}</> : <LinkButton title={`+ ${titulo}`} onPress={() => setVer(true)} />;
 }
 
 /**
@@ -2255,6 +2317,7 @@ const crearEstilos = (c: Paleta) => {
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
     ordenar: { flexDirection: 'row', gap: 14, marginLeft: 8 },
+    chipsFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
     goalCard: {
       backgroundColor: c.bg,
