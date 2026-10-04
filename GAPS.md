@@ -252,7 +252,28 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
   mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes ✅ mergeada (2026-10-04).
-  Reglas de diseño R1 a R6 cerradas; sigue el bloque 8 (D-8).
+  Reglas de diseño R1 a R6 cerradas. Bloque 8 (D-8) en dos ramas: 8a backend
+  (`feat/G33-E8a-otra-persona`) registrado en rama; sigue 8b (app).
+- **Bloque 8a de la Fase E — `DOMINIO` D-3 (HZ-11) + `PROYECCIÓN` HZ-18 +
+  `FLUJO` HZ-20, backend (rama `feat/G33-E8a-otra-persona`, 2026-10-04)**:
+  plan aprobado por Juan: bloque 8 en dos ramas (8a backend, 8b app); en 8b,
+  Gasté ofrece Mío · De otra persona y Recibí Mía · De otra persona · De
+  alguien del hogar (solo lista lo que el miembro ya transfirió, sin crear
+  nada); "Compartido con el hogar" y "Avisarle a [miembro]" quedan para el
+  bloque 9 (D-7). Comando `RegistrarPlataDeOtraPersona` (`api/src/otra-persona/`,
+  #80 en `APPLICATION_SERVICES.md`): el saldo con una persona es una DEUDA y
+  un CREDITO `CUSTODIA_INFORMAL` por moneda; si falta, nace con pendiente 0
+  (HZ-11, solo ahí) y hereda `participa_consolidacion` de la cuenta (decisión
+  de Juan: si no, el patrimonio del hogar se infla con plata ajena); cruza de
+  signo en la misma transacción y reúsa los elementos en 0. HZ-20:
+  `anularIngresoId` (anula el ingreso y lo registra como plata de la persona)
+  o `registrarEntrada`, todo en una transacción. `GET /usuarios/me/personas`
+  (un saldo con signo por persona y moneda). HZ-18: `plataAjena` en
+  `patrimonio-individual` y `valorLibre` la resta (solo encargos y custodias,
+  no deudas financieras: decisión de Juan). Para eso, `registrarEventoEnTx`
+  lee los elementos con la transacción (el de la persona puede haber nacido
+  en ella) y `anularEvento` tiene variante `anularEventoEnTx`. Tests en
+  `api/test/plata-otra-persona.e2e-spec.ts`.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -481,7 +502,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   además anota la plata como INGRESO en su cuenta, los ingresos (y el
   patrimonio) de B y del hogar quedan duplicados en 50.000. El test lo deja
   como `it.fails`. Se corrige con D-8 (bloque 8): en Recibí, "De alguien del
-  hogar" no crea evento. Al corregirlo, pasar ese `it.fails` a `it`.
+  hogar" no crea evento. **Bloque 8a:** el `it.fails` se reemplazó por el
+  camino de D-8 (B ve la transferencia en su cuenta y nadie suma ingresos).
+  El backend **no bloquea** que B anote además un INGRESO: lo evita la app,
+  que deja de ofrecer ese camino (8b).
 - **Hallazgos del prototipo, pendientes para la Fase E** (detalle en
   [`Docs/usabilidad/CIERRE_FASE_D_S01.md`](Docs/usabilidad/CIERRE_FASE_D_S01.md) §3):
   - `PROYECCIÓN` **HZ-18**: "Libre para gastar" resta el total de deudas por
