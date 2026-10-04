@@ -77,6 +77,25 @@ describe('Disponibilidad + historial (e2e)', () => {
     const clp = p.body.porMoneda.find((m: { moneda: string }) => m.moneda === 'CLP');
     expect(clp.valorLiquido).toBe(1_000_000);
     expect(clp.valorReservado).toBe(300_000);
+    expect(clp.reservadoEnLiquidez).toBe(300_000);
+    expect(clp.valorLibre).toBe(700_000);
+  });
+
+  it('lo ahorrado en una cuenta que no es líquida no se resta de lo libre', async () => {
+    const ahorro = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'Cuenta de ahorro', tipo: 'cuenta', categoriaFuncional: 'RESERVA', valorInicial: 2_000_000, moneda: 'CLP' })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/CrearReserva'))
+      .send({ asignacionId, elementoOrigenId: ahorro, monto: 1_200_000 })
+      .expect(201);
+
+    const p = await auth(request(http).get('/usuarios/me/patrimonio-individual')).expect(200);
+    const clp = p.body.porMoneda.find((m: { moneda: string }) => m.moneda === 'CLP');
+    expect(clp.valorLiquido).toBe(1_000_000);
+    expect(clp.valorReservado).toBe(1_500_000);
+    expect(clp.reservadoEnLiquidez).toBe(300_000);
     expect(clp.valorLibre).toBe(700_000);
   });
 

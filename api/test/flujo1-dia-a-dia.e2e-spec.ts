@@ -97,6 +97,7 @@ describe('Flujo 1 — día a día financiero (e2e)', () => {
         patrimonio: 950_000,
         valorLiquido: 950_000,
         valorReservado: 0,
+        reservadoEnLiquidez: 0,
         plataAjena: 0,
         valorLibre: 950_000,
       },
