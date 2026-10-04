@@ -14,8 +14,10 @@ import { PrismaService } from './../src/prisma/prisma.service.js';
  *   (REQUISITES §8, §13; DDD §X.3 "Transferencias en las lecturas");
  * - solo la registra quien envía: el origen debe ser propio (D-8, Recibí →
  *   "De alguien del hogar" no crea evento).
- * Lo único que B puede registrar por su lado es un INGRESO, que duplica el
- * ingreso (no el gasto). Ese caso queda como `it.fails` hasta implementar D-8.
+ * Con D-8, en Recibí → "De alguien del hogar" B ve la transferencia que A ya
+ * registró hacia su cuenta y no crea nada. El backend no bloquea que B anote
+ * además un INGRESO (duplicaría el ingreso, no el gasto): lo evita la app,
+ * que ya no ofrece ese camino (GAPS G33, bloque 8).
  */
 describe('Transferencia entre miembros del hogar (e2e)', () => {
   let app: INestApplication<App>;
@@ -126,6 +128,15 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
     expect(hogar.movimientos.filter((m) => m.tipo === 'TRANSFERENCIA')).toHaveLength(1);
   });
 
+  it('D-8: B ve la transferencia de A en su cuenta sin registrar nada, y nadie suma ingresos', async () => {
+    const enCuentaB = (
+      await B(request(http).get(`/eventos-financieros?elemento=${cuentaB}`)).expect(200)
+    ).body as Array<{ tipo: string; monto: number }>;
+    expect(enCuentaB.filter((e) => e.tipo === 'TRANSFERENCIA').map((e) => e.monto)).toEqual([50_000]);
+    expect((await totales(B, 'mios')).ingresos).toBe(0);
+    expect((await totales(A, 'hogar')).ingresos).toBe(0);
+  });
+
   it('si B además la anota como INGRESO, los gastos de A, de B y del hogar siguen en 0', async () => {
     await B(request(http).post('/comandos/RegistrarEventoFinanciero'))
       .send({ tipo: 'INGRESO', monto: 50_000, moneda: 'CLP', elementoDestinoId: cuentaB, fecha: '2026-03-15' })
@@ -134,13 +145,5 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
     expect((await totales(B, 'mios')).gastos).toBe(0);
     expect((await totales(A, 'hogar')).gastos).toBe(0);
     expect(await gastosPresupuesto()).toBe(0);
-  });
-
-  // Defecto conocido (GAPS G33): el INGRESO de B duplica la plata que ya entró
-  // por la transferencia. Se corrige con D-8 (Recibí → "De alguien del hogar"
-  // no crea evento). Cuando quede corregido, este `it.fails` falla: pasarlo a `it`.
-  it.fails('el INGRESO de B no duplica los ingresos de B ni del hogar', async () => {
-    expect((await totales(B, 'mios')).ingresos).toBe(0);
-    expect((await totales(A, 'hogar')).ingresos).toBe(0);
   });
 });

@@ -8,7 +8,15 @@ export interface PatrimonioPorMoneda {
   valorLiquido: number;
   /** Σ reservas ACTIVAS sobre elementos del usuario en esta moneda (REQUISITES §H). */
   valorReservado: number;
-  /** valorLiquido − valorReservado = "lo que puedo usar sin tocar una meta". */
+  /**
+   * HZ-18 — Σ lo que debes en encargos o custodias (DEUDA CUSTODIA_INFORMAL,
+   * D-3): plata de otras personas que está en tus cuentas.
+   */
+  plataAjena: number;
+  /**
+   * valorLiquido − valorReservado − plataAjena = "lo que puedo usar sin tocar
+   * una meta ni la plata de otra persona" (Libre para gastar).
+   */
   valorLibre: number;
 }
 
@@ -40,12 +48,18 @@ export class ProyeccionesService {
 
     const acc = new Map<
       string,
-      { patrimonio: Prisma.Decimal; liquido: Prisma.Decimal; reservado: Prisma.Decimal }
+      {
+        patrimonio: Prisma.Decimal;
+        liquido: Prisma.Decimal;
+        reservado: Prisma.Decimal;
+        ajena: Prisma.Decimal;
+      }
     >();
     const nueva = () => ({
       patrimonio: new Prisma.Decimal(0),
       liquido: new Prisma.Decimal(0),
       reservado: new Prisma.Decimal(0),
+      ajena: new Prisma.Decimal(0),
     });
     for (const f of activos) {
       const el = f.elemento_patrimonial;
@@ -55,6 +69,9 @@ export class ProyeccionesService {
       const cur = acc.get(el.moneda) ?? nueva();
       cur.patrimonio = cur.patrimonio.plus(parte);
       if (el.participa_valor_liquido) cur.liquido = cur.liquido.plus(parte);
+      if (el.categoria_funcional === 'DEUDA' && el.naturaleza === 'CUSTODIA_INFORMAL') {
+        cur.ajena = cur.ajena.plus(parte.abs());
+      }
       acc.set(el.moneda, cur);
     }
 
@@ -83,7 +100,8 @@ export class ProyeccionesService {
           patrimonio: v.patrimonio.toNumber(),
           valorLiquido: v.liquido.toNumber(),
           valorReservado: v.reservado.toNumber(),
-          valorLibre: v.liquido.minus(v.reservado).toNumber(),
+          plataAjena: v.ajena.toNumber(),
+          valorLibre: v.liquido.minus(v.reservado).minus(v.ajena).toNumber(),
         }))
         .sort((a, b) => a.moneda.localeCompare(b.moneda)),
     };

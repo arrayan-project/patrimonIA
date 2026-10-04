@@ -105,6 +105,7 @@ describe('Flujo 3 — valorización de un activo (e2e)', () => {
         patrimonio: 130_000_000,
         valorLiquido: 0,
         valorReservado: 0,
+        plataAjena: 0,
         valorLibre: 0,
       },
     ]);

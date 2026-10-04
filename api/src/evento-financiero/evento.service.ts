@@ -66,7 +66,9 @@ export class EventoFinancieroService {
     const fecha = dto.fecha ? new Date(dto.fecha) : new Date();
     const monto = new Prisma.Decimal(dto.monto);
 
-    const plan = await this.planImpactos(actorId, dto, moneda, monto, fecha);
+    // Se lee con `tx`: una orquestación puede haber creado el elemento en esta
+    // misma transacción (RegistrarPlataDeOtraPersona, D-3).
+    const plan = await this.planImpactos(tx, actorId, dto, moneda, monto, fecha);
 
     // Política "Consumir reserva": si el evento se asocia a una asignación propia.
     const asignacion = dto.asignacionId
@@ -181,6 +183,24 @@ export class EventoFinancieroService {
    * Auditoría: Anulación — motivo, evento anulado.
    */
   async anularEvento(actorId: string, dto: AnularEventoDto): Promise<EventoFinancieroDTO> {
+    const { anulado, impactos } = await this.prisma.$transaction((tx) =>
+      this.anularEventoEnTx(tx, actorId, dto),
+    );
+    const etqs = (await this.etiquetas.deEventos([anulado.id])).get(anulado.id) ?? [];
+    return toEventoDTO(anulado, impactos, etqs);
+  }
+
+  /**
+   * Lo mismo que `anularEvento`, dentro de una transacción ajena: lo usa
+   * RegistrarPlataDeOtraPersona (HZ-20) para anular el ingreso mal anotado y
+   * registrarlo de nuevo en la misma transacción.
+   */
+  async anularEventoEnTx(
+    tx: Prisma.TransactionClient,
+    actorId: string,
+    dto: AnularEventoDto,
+    opts: { encadenadaDeId?: string } = {},
+  ) {
     const { evento, impactos } = await this.exigirAccesoEvento(dto.eventoId, actorId);
     if (evento.anulado) throw errorConCodigo(ConflictException, 'YA_ANULADO', 'El evento ya está anulado');
     if (evento.tipo === 'SALDO_INICIAL') {
@@ -192,7 +212,7 @@ export class EventoFinancieroService {
       throw new ConflictException('El evento tiene una corrección vigente — anúlala primero');
     }
 
-    const anulado = await this.prisma.$transaction(async (tx) => {
+    const anulado = await (async () => {
       for (const i of impactos) {
         const el = await tx.elemento_patrimonial.findUniqueOrThrow({ where: { id: i.elemento_id } });
         await tx.elemento_patrimonial.update({
@@ -216,6 +236,7 @@ export class EventoFinancieroService {
         usuarioId: actorId,
         entidadTipo: 'EVENTO_FINANCIERO',
         entidadId: evento.id,
+        encadenadaDeId: opts.encadenadaDeId,
         motivo: dto.motivo,
         valorAnterior: { anulado: false },
         valorPosterior: {
@@ -237,10 +258,9 @@ export class EventoFinancieroService {
       }
 
       return actualizado;
-    });
+    })();
 
-    const etqs = (await this.etiquetas.deEventos([anulado.id])).get(anulado.id) ?? [];
-    return toEventoDTO(anulado, impactos, etqs);
+    return { anulado, impactos };
   }
 
   /**
@@ -492,6 +512,7 @@ export class EventoFinancieroService {
   // ── Armado y validación del plan de impactos ──────────────────────────────
 
   private async planImpactos(
+    db: Prisma.TransactionClient,
     actorId: string,
     dto: RegistrarEventoDto,
     moneda: string,
@@ -499,7 +520,7 @@ export class EventoFinancieroService {
     fecha: Date,
   ): Promise<ImpactoPlan[]> {
     const cargar = async (id: string): Promise<ElementoRow> => {
-      const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id } });
+      const el = await db.elemento_patrimonial.findUnique({ where: { id } });
       if (!el) throw new NotFoundException('Elemento no encontrado');
       if (el.estado !== 'ACTIVO') throw new BadRequestException('El elemento no está activo');
       return el;
@@ -510,7 +531,7 @@ export class EventoFinancieroService {
         throw new BadRequestException('INGRESO requiere solo elementoDestinoId');
       }
       const destino = await cargar(dto.elementoDestinoId);
-      await this.exigirPropietario(destino.id, actorId);
+      await this.exigirPropietario(destino.id, actorId, db);
       this.exigirMoneda(destino, moneda);
       return [{ elemento: destino, monto }];
     }
@@ -520,7 +541,7 @@ export class EventoFinancieroService {
         throw new BadRequestException('GASTO requiere solo elementoOrigenId');
       }
       const origen = await cargar(dto.elementoOrigenId);
-      await this.exigirPropietario(origen.id, actorId);
+      await this.exigirPropietario(origen.id, actorId, db);
       this.exigirMoneda(origen, moneda);
       return [{ elemento: origen, monto: monto.negated() }];
     }
@@ -538,9 +559,9 @@ export class EventoFinancieroService {
     }
     const origen = await cargar(dto.elementoOrigenId);
     const destino = await cargar(dto.elementoDestinoId);
-    await this.exigirPropietario(origen.id, actorId); // solo mueves plata de lo tuyo
+    await this.exigirPropietario(origen.id, actorId, db); // solo mueves plata de lo tuyo
     this.exigirMoneda(origen, moneda); // el monto del evento va en la moneda del origen
-    if (!(await this.actorPuedeRecibirEn(destino, actorId))) {
+    if (!(await this.actorPuedeRecibirEn(destino, actorId, db))) {
       throw errorConCodigo(ForbiddenException, 'DESTINO_NO_PERMITIDO', 'No puedes mover fondos a ese elemento destino');
     }
 
@@ -578,16 +599,24 @@ export class EventoFinancieroService {
     }
   }
 
-  private async exigirPropietario(elementoId: string, actorId: string): Promise<void> {
-    const prop = await this.prisma.elemento_propietario.findFirst({
+  private async exigirPropietario(
+    elementoId: string,
+    actorId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    const prop = await db.elemento_propietario.findFirst({
       where: { elemento_id: elementoId, usuario_id: actorId },
     });
     if (!prop) throw new ForbiddenException('No eres propietario de ese elemento');
   }
 
   /** Destino de transferencia: propio, o de un co-miembro de hogar. Ver GAPS.md G6. */
-  private async actorPuedeRecibirEn(destino: ElementoRow, actorId: string): Promise<boolean> {
-    const propDestino = await this.prisma.elemento_propietario.findMany({
+  private async actorPuedeRecibirEn(
+    destino: ElementoRow,
+    actorId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    const propDestino = await db.elemento_propietario.findMany({
       where: { elemento_id: destino.id },
       select: { usuario_id: true },
     });
