@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api/client';
-import { useSession } from '../auth/AuthContext';
+import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import { Button, contadorPasos, DateField, ErrorText, Field, Nota, Screen } from '../ui';
@@ -34,10 +34,17 @@ export interface AccionFormParams {
   peligro?: boolean;
   /** Cuántas pantallas volver al terminar (2 si lo que se abría ya no existe). */
   volver?: number;
+  /** Teclado del campo (p. ej. un email para invitar). */
+  teclado?: 'email';
+  /** Cerrar la sesión al terminar (p. ej. desactivar la propia cuenta). */
+  cerrarSesion?: boolean;
+  /** Volver al Inicio al terminar (p. ej. tras eliminar el hogar). */
+  aInicio?: boolean;
 }
 
 export function AccionFormScreen() {
   const { token } = useSession();
+  const { cerrarSesion } = useAuth();
   const nav = useNav();
   const toast = useToast();
   const p = nav.route.params as unknown as AccionFormParams;
@@ -65,7 +72,9 @@ export function AccionFormScreen() {
         token,
       );
       toast.mostrar(p.aviso);
-      nav.back(p.volver ?? 1);
+      if (p.cerrarSesion) cerrarSesion();
+      else if (p.aInicio) nav.reset('Tabs');
+      else nav.back(p.volver ?? 1);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
@@ -93,7 +102,8 @@ export function AccionFormScreen() {
         value={texto}
         onChangeText={setTexto}
         placeholder={p.placeholder}
-        autoCapitalize="sentences"
+        autoCapitalize={p.teclado === 'email' ? 'none' : 'sentences'}
+        keyboardType={p.teclado === 'email' ? 'email-address' : 'default'}
         autoFocus
       />
       {p.fecha && <DateField label={p.fecha.pregunta} paso={paso()} value={fecha} onChange={setFecha} optional />}

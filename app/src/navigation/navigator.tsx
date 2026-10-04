@@ -48,7 +48,6 @@ export type RouteName =
   | 'Notificaciones'
   | 'TiposCambio'
   | 'Ajustes'
-  | 'AjustesNotificaciones'
   | 'AjustesVisualizacion'
   | 'PatrimonioSeccion'
   | 'Categorias'

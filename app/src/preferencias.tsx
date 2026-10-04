@@ -80,14 +80,21 @@ export function PreferenciasProvider({ children }: { children: ReactNode }) {
   const guardarPreferencias = useCallback(
     async (p: PreferenciasVisualizacion) => {
       if (!token) return;
-      // ActualizarDatosUsuario reemplaza el objeto completo: se parte del
-      // vigente para no pisar otras claves (p. ej. `notificaciones`).
-      const me = await api.get<UsuarioDTO>('/usuarios/me', token);
-      const base = (me.preferencias as Record<string, unknown> | null) ?? {};
-      await api.post('/comandos/ActualizarDatosUsuario', { preferencias: { ...base, visualizacion: p } }, token);
+      // Plantilla Ajustes (R5): se aplica al instante y, si falla, se revierte.
+      const anterior = preferencias;
       aplicar(p);
+      try {
+        // ActualizarDatosUsuario reemplaza el objeto completo: se parte del
+        // vigente para no pisar otras claves (p. ej. `notificaciones`).
+        const me = await api.get<UsuarioDTO>('/usuarios/me', token);
+        const base = (me.preferencias as Record<string, unknown> | null) ?? {};
+        await api.post('/comandos/ActualizarDatosUsuario', { preferencias: { ...base, visualizacion: p } }, token);
+      } catch (e) {
+        aplicar(anterior);
+        throw e;
+      }
     },
-    [token, aplicar],
+    [token, aplicar, preferencias],
   );
 
   const value = useMemo(() => ({ preferencias, guardarPreferencias }), [preferencias, guardarPreferencias]);

@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -25,6 +26,7 @@ import { HeaderHeightContext } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 import { etiqueta } from '../labels';
 import { CLARO, radio, tipografia, useC, type Paleta } from './tema';
+import { useToast } from './Toast';
 
 export type NombreIcono = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -1870,6 +1872,95 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
   );
 }
 
+/**
+ * Plantilla Ajustes: guarda al instante. Quien llama ya mostró el valor nuevo;
+ * si el comando falla, `revertir` vuelve al anterior y se avisa.
+ */
+export function useGuardarAlInstante() {
+  const toast = useToast();
+  return async (fn: () => Promise<unknown>, revertir: () => void, aviso = 'Guardado') => {
+    try {
+      await fn();
+      if (aviso) toast.mostrar(aviso);
+      return true;
+    } catch (e) {
+      revertir();
+      toast.mostrar(e instanceof Error && e.message ? e.message : 'No se pudo guardar', 'error');
+      return false;
+    }
+  };
+}
+
+/** Fila de Ajustes con interruptor: para todo lo que es sí o no. */
+export function Interruptor({
+  titulo,
+  sub,
+  value,
+  onChange,
+}: {
+  titulo: string;
+  sub?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={titulo}
+      style={styles.interruptor}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={styles.listItemTitle}>{titulo}</Text>
+        {sub ? <Text style={styles.nota}>{sub}</Text> : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: c.primary, false: c.faint }}
+        thumbColor={c.bg}
+        ios_backgroundColor={c.faint}
+      />
+    </Pressable>
+  );
+}
+
+/**
+ * Texto de Ajustes que se guarda al salir del campo (decisión de R1). Si
+ * queda vacío o igual, no se envía; si falla, vuelve al valor guardado y avisa.
+ */
+export function CampoAlSalir({
+  label,
+  value,
+  onGuardar,
+  ...props
+}: Omit<TextInputProps, 'value' | 'onChangeText' | 'onBlur'> & {
+  label: string;
+  value: string;
+  onGuardar: (v: string) => Promise<unknown>;
+}) {
+  const [texto, setTexto] = useState(value);
+  const guardar = useGuardarAlInstante();
+  useEffect(() => setTexto(value), [value]);
+  return (
+    <Field
+      label={label}
+      value={texto}
+      onChangeText={setTexto}
+      onBlur={() => {
+        const v = texto.trim();
+        if (!v) return setTexto(value);
+        if (v !== value) void guardar(() => onGuardar(v), () => setTexto(value));
+      }}
+      returnKeyType="done"
+      {...props}
+    />
+  );
+}
+
 /** ▲▼ para cambiar el orden de un catálogo en su Lista (`TxRow accesorio`). Sin handler, la flecha se atenúa. */
 export function Ordenar({ onSubir, onBajar }: { onSubir?: () => void; onBajar?: () => void }) {
   const c = useC();
@@ -2318,6 +2409,7 @@ const crearEstilos = (c: Paleta) => {
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
     ordenar: { flexDirection: 'row', gap: 14, marginLeft: 8 },
     chipsFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    interruptor: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
 
     goalCard: {
       backgroundColor: c.bg,
