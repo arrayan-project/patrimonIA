@@ -253,7 +253,44 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
   mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes ✅ mergeada (2026-10-04).
   Reglas de diseño R1 a R6 cerradas. Bloque 8 (D-8) en dos ramas: 8a backend
-  (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); sigue 8b (app).
+  (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); 8b app
+  (`feat/G33-E8b-dos-puertas`) registrado en rama, falta la prueba de Juan
+  en el teléfono.
+- **Bloque 8b de la Fase E — `UI` D-8 + HZ-23, las dos puertas y "¿de quién
+  es?" (rama `feat/G33-E8b-dos-puertas`, 2026-10-04)**: el menú `+` del
+  Inicio pasa a Gasté · Recibí · Moví plata · Ahorrar para una meta · Pagar
+  tarjeta (solo con tarjeta; con una sola, viene elegida) · Agregar cuenta;
+  las puertas abren Registrar movimiento con el tipo elegido y el título
+  dice qué se anota ("Gasté", "Recibí", "Moví plata"). Sale el selector de
+  tipo (decisión de Juan): en «Moví plata», si las dos cuentas tienen monedas
+  distintas, pasa solo a cambio de moneda. El menú es uno solo (`useAnotar`,
+  `HojaAcciones` en `app/src/ui`): lo abren el "+" del Inicio y de
+  Movimientos, el acceso rápido "Movimiento", el onboarding y los estados
+  vacíos que antes abrían el formulario sin tipo. Paso 2 (HZ-22):
+  "¿De quién es este gasto?" (Mío · De otra persona) y "¿De quién es esta
+  plata?" (Mía · De otra persona · De alguien del hogar, este último solo si
+  hay otro miembro). De otra persona: "¿Quién?" desde la lista de personas
+  con su saldo en palabras, o "+ Nueva persona"; sin categoría ni meta; si el
+  nombre es de un miembro, lo manda a «Moví plata»; resumen con el saldo que
+  queda ("Le debes 70.000 CLP a Nico") y botón "Registrar plata de otra
+  persona". En Gasté, con una persona sin saldo, "¿Te había pasado plata
+  antes?" (HZ-20): No, me la va a devolver · Sí, y la anoté como mía (elige
+  el ingreso de los últimos 90 días) · Sí, pero no la anoté. De alguien del
+  hogar no crea nada: lista lo que el miembro te transfirió en los últimos
+  30 días y, si falta, pide que lo anote en «Moví plata» (botón "Listo").
+  Sale el enlace "¿Te la van a devolver o es de otra persona?" de Ingreso.
+  **Libre para gastar cuadra (observación de Juan):** restaba lo ahorrado en
+  metas de *todas* las cuentas a la liquidez, aunque estuviera en una cuenta
+  de ahorro o una inversión (en los datos demo: 2.305.510 de liquidez −
+  1.200.000 de una meta en la Cuenta de ahorro). Ahora resta solo
+  `reservadoEnLiquidez` (lo de las metas en cuentas líquidas) y la plata
+  ajena (HZ-18). En el Inicio se muestra como una resta, sin texto: Liquidez
+  (la misma cifra de "Tu patrimonio") − Guardado para metas − De otras
+  personas = Libre para gastar; sin descuentos, una sola línea. Movimientos
+  usa el mismo desglose. En Ahorrar, lo libre por cuenta no puede restar la
+  plata ajena (la deuda no está ligada a una cuenta) y se avisa el total. Textos y cálculo del saldo
+  en `app/src/personas.ts` (con test; `node --test` necesita Node 22).
+  Capturas en `Docs/usabilidad/capturas-e8/`.
 - **Bloque 8a de la Fase E — `DOMINIO` D-3 (HZ-11) + `PROYECCIÓN` HZ-18 +
   `FLUJO` HZ-20, backend (✅ mergeado, 2026-10-04)**:
   plan aprobado por Juan: bloque 8 en dos ramas (8a backend, 8b app); en 8b,
