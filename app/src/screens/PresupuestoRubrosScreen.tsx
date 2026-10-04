@@ -14,7 +14,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, ErrorText, LinkButton, MoneyField, Screen, Panel, useC, tipoDe, type Paleta } from '../ui';
+import { Skeleton, Button, ErrorText, MoneyField, Screen, Panel, useC, tipoDe, type Paleta } from '../ui';
 
 /** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
 export function PresupuestoRubrosScreen() {
@@ -125,11 +125,18 @@ export function PresupuestoRubrosScreen() {
     );
 
   return (
-    <Screen onRefresh={cargar}>
-      <Text style={styles.muted}>
-        Fija cuánto esperas gastar o ingresar por categoría dentro del período del
-        presupuesto. Deja en blanco (o 0) los rubros que no quieras seguir.
-      </Text>
+    <Screen
+      onRefresh={cargar}
+      pie={
+        <Button
+          title="Guardar rubros"
+          onPress={guardar}
+          loading={busy}
+          disabled={cats.length === 0 && objetivos.length === 0}
+        />
+      }
+    >
+      <Text style={styles.muted}>Cuánto esperas por categoría en el período. Deja en blanco lo que no quieras seguir.</Text>
 
       {grupo('Gastos por rubro', gastos, total(gastos))}
       {grupo('Ingresos por rubro', ingresos, total(ingresos))}
@@ -166,13 +173,6 @@ export function PresupuestoRubrosScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button
-        title="Guardar rubros"
-        onPress={guardar}
-        loading={busy}
-        disabled={cats.length === 0 && objetivos.length === 0}
-      />
-      <LinkButton title="Cancelar" onPress={nav.back} />
     </Screen>
   );
 }

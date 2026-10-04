@@ -14,12 +14,14 @@ import { useToast } from '../ui/Toast';
 import { opcionesDeElementos } from '../opciones';
 import {
   AccionDestructiva,
+  AmountInput,
   Button,
   contadorPasos,
   Elegir,
   ErrorText,
   Field,
-  MoneyField,
+  Nota,
+  Opcional,
   Screen,
   Segmented,
   Skeleton,
@@ -180,39 +182,41 @@ export function PlantillaFormScreen() {
   return (
     <Screen
       pie={
-        <Button
-          title={actual ? 'Guardar plantilla' : 'Crear plantilla'}
-          onPress={guardar}
-          loading={busy}
-          disabled={!listo}
-        />
+        <>
+          <Nota>
+            {listo
+              ? `Aparece arriba al registrar un movimiento; lo que dejes en blanco lo eliges ahí.`
+              : 'Ponle un nombre a la plantilla.'}
+          </Nota>
+          <Button
+            title={actual ? 'Guardar plantilla' : 'Crear plantilla'}
+            onPress={guardar}
+            loading={busy}
+            disabled={!listo}
+          />
+        </>
       }
     >
+      <Segmented options={TIPOS} value={b.tipo} onChange={(tipo) => setB((x) => ({ ...x, tipo }))} />
       <Field
-        label="Nombre"
+        label="¿Cómo se llama?"
         paso={paso({ hecho: listo })}
         value={b.nombre}
         onChangeText={(nombre) => setB((x) => ({ ...x, nombre }))}
         autoCapitalize="sentences"
         placeholder="p. ej. Arriendo"
       />
-      <Segmented
-        label="Tipo"
-        paso={paso({ hecho: true })}
-        options={TIPOS}
-        value={b.tipo}
-        onChange={(tipo) => setB((x) => ({ ...x, tipo }))}
-      />
-      <MoneyField
-        label="Monto (opcional)"
+      <AmountInput
+        label="¿Cuánto? (opcional)"
         paso={paso()}
         value={b.monto}
         onChange={(monto) => setB((x) => ({ ...x, monto }))}
+        moneda={desde?.moneda ?? 'CLP'}
       />
 
       {necesitaOrigen && (
         <Elegir
-          label="Desde qué cuenta (opcional)"
+          label="¿Desde qué cuenta? (opcional)"
           paso={paso()}
           opcionNula="Sin definir"
           value={b.origenId}
@@ -225,7 +229,7 @@ export function PlantillaFormScreen() {
 
       {necesitaDestino && (
         <Elegir
-          label="A qué cuenta (opcional)"
+          label="¿A qué cuenta? (opcional)"
           paso={paso()}
           opcionNula="Sin definir"
           value={b.destinoId}
@@ -236,7 +240,7 @@ export function PlantillaFormScreen() {
 
       {b.tipo !== 'TRANSFERENCIA' && catAplicables.length > 0 && (
         <Elegir
-          label="Categoría (opcional)"
+          label="¿De qué tipo? (opcional)"
           paso={paso()}
           opcionNula="Sin categoría"
           value={b.categoriaId}
@@ -245,14 +249,15 @@ export function PlantillaFormScreen() {
         />
       )}
 
-      <Field
-        label="Detalle (opcional)"
-        paso={paso()}
-        value={b.glosa}
-        onChangeText={(glosa) => setB((x) => ({ ...x, glosa }))}
-        autoCapitalize="sentences"
-        maxLength={140}
-      />
+      <Opcional titulo="Agregar detalle" abierto={!!b.glosa}>
+        <Field
+          label="Detalle (opcional)"
+          value={b.glosa}
+          onChangeText={(glosa) => setB((x) => ({ ...x, glosa }))}
+          autoCapitalize="sentences"
+          maxLength={140}
+        />
+      </Opcional>
 
       <ErrorText>{error}</ErrorText>
       {actual ? <AccionDestructiva title="Eliminar plantilla" onPress={borrar} /> : null}

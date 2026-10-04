@@ -200,7 +200,19 @@ export function AhorrarScreen() {
   const pCuentaMeta = meta && !cuentaMeta && origenes.length > 1 ? paso({ hecho: !!destinoElegido }) : undefined;
 
   return (
-    <Screen>
+    <Screen
+      pie={
+        <>
+          <Nota>{resumen || 'Completa la meta, de dónde sale la plata y cuánto.'}</Nota>
+          <Button
+            title={total > 0 && meta ? `Ahorrar ${money(total, meta.moneda)}` : 'Ahorrar'}
+            onPress={onSubmit}
+            loading={loading}
+            disabled={!puedeEnviar}
+          />
+        </>
+      }
+    >
       <Elegir
         label="¿Para qué meta?"
         paso={pMeta}
@@ -301,17 +313,10 @@ export function AhorrarScreen() {
             />
           )}
 
-          {resumen ? <Nota>{resumen}</Nota> : null}
         </>
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button
-        title={total > 0 && meta ? `Ahorrar ${money(total, meta.moneda)}` : 'Ahorrar'}
-        onPress={onSubmit}
-        loading={loading}
-        disabled={!puedeEnviar}
-      />
     </Screen>
   );
 }

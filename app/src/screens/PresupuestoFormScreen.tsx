@@ -1,27 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { useEffect, useState } from 'react';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
+  AmountInput,
   Button,
   contadorPasos,
   DateField,
   ErrorText,
+  etiqueta,
   MoneyField,
+  Nota,
+  Opcional,
   Screen,
   Segmented,
   Select,
-  useC,
-  type Paleta,
-  tipoDe,
 } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — ${NOMBRE_MONEDA[m] ?? m}` }));
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
+const CADA = [...INTERVALOS, 'ESPECIFICO'] as const;
 
 /**
  * Formulario de un presupuesto (plantillas de pantalla, R2 y R3): sin
@@ -29,8 +30,6 @@ const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
  * puede cambiar de un presupuesto ya creado).
  */
 export function PresupuestoFormScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -112,52 +111,80 @@ export function PresupuestoFormScreen() {
   if (presupuestoId) {
     return (
       <Screen pie={<Button title="Guardar montos" onPress={guardarMontos} loading={busy} />}>
-        <MoneyField label="Ingresos esperados" paso={paso()} value={ingresos} onChange={setIngresos} moneda={moneda} />
-        <MoneyField label="Gastos esperados" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
-        <MoneyField label="Ahorro esperado" paso={paso()} value={ahorro} onChange={setAhorro} moneda={moneda} />
+        <AmountInput label="¿Cuánto esperas gastar?" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
+        <MoneyField label="¿Cuánto esperas ingresar? (opcional)" paso={paso()} value={ingresos} onChange={setIngresos} />
+        <MoneyField label="¿Cuánto esperas ahorrar? (opcional)" paso={paso()} value={ahorro} onChange={setAhorro} />
         <ErrorText>{error}</ErrorText>
       </Screen>
     );
   }
+
+  // Un solo "¿cada cuánto?": el intervalo, o fechas específicas.
+  const cada = periodicidad === 'ESPECIFICO' ? 'ESPECIFICO' : intervalo;
+  const elegirCada = (v: (typeof CADA)[number]) => {
+    if (v === 'ESPECIFICO') setPeriodicidad('ESPECIFICO');
+    else {
+      setPeriodicidad('PERIODICO');
+      setIntervalo(v);
+    }
+  };
+  const hayMonto = [gastos, ingresos, ahorro].some((x) => Number(x) > 0);
+  const listo = hayMonto && (tipo !== 'FAMILIAR' || !!hogarId);
+  const resumen = !hayMonto
+    ? 'Completa cuánto esperas gastar.'
+    : `${tipo === 'FAMILIAR' ? 'Del hogar' : 'Solo tuyo'}, ${
+        periodicidad === 'ESPECIFICO' ? 'entre las fechas que elijas' : `${etiqueta(intervalo).toLowerCase()}`
+      }. Te mostramos cómo vas contra lo real.`;
+
   return (
     <Screen
       pie={
-        <Button
-          title="Crear presupuesto"
-          onPress={crear}
-          loading={busy}
-          disabled={tipo === 'FAMILIAR' && !hogarId}
-        />
+        <>
+          <Nota>{resumen}</Nota>
+          <Button title="Crear presupuesto" onPress={crear} loading={busy} disabled={!listo} />
+        </>
       }
     >
-      <Segmented label="Tipo" options={['INDIVIDUAL', 'FAMILIAR'] as const} value={tipo} onChange={setTipo} paso={paso()} />
-      {tipo === 'FAMILIAR' && !hogarId && (
-        <Text style={styles.muted}>Necesitas pertenecer a un hogar para un presupuesto familiar.</Text>
+      <AmountInput
+        label="¿Cuánto esperas gastar?"
+        paso={paso({ hecho: hayMonto })}
+        value={gastos}
+        onChange={setGastos}
+        moneda={moneda}
+      />
+      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+      {hogarId && (
+        <Segmented
+          label="¿Es solo tuyo o del hogar?"
+          paso={paso({ hecho: true })}
+          options={['INDIVIDUAL', 'FAMILIAR'] as const}
+          value={tipo}
+          onChange={setTipo}
+          formatearOpcion={(v) => (v === 'INDIVIDUAL' ? 'Solo mío' : 'Del hogar')}
+        />
       )}
       <Segmented
-        label="Periodicidad"
-        paso={paso()}
-        options={['PERIODICO', 'ESPECIFICO'] as const}
-        value={periodicidad}
-        onChange={setPeriodicidad}
+        label="¿Cada cuánto?"
+        paso={paso({ hecho: true })}
+        options={CADA}
+        value={cada}
+        onChange={elegirCada}
+        formatearOpcion={(v) => (v === 'ESPECIFICO' ? 'Fechas específicas' : etiqueta(v))}
       />
-      {periodicidad === 'PERIODICO' ? (
-        <Segmented label="Intervalo" paso={paso()} options={INTERVALOS} value={intervalo} onChange={setIntervalo} />
-      ) : (
+      {periodicidad === 'ESPECIFICO' && (
         <>
-          <DateField label="Inicio (opcional)" paso={paso()} value={fechaInicio} onChange={setFechaInicio} optional />
-          <DateField label="Fin (opcional)" paso={paso()} value={fechaFin} onChange={setFechaFin} optional />
+          <DateField label="¿Desde cuándo? (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
+          <DateField label="¿Hasta cuándo? (opcional)" value={fechaFin} onChange={setFechaFin} optional />
         </>
       )}
-      <Select label="Moneda" paso={paso()} options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
-      <MoneyField label="Ingresos esperados" paso={paso()} value={ingresos} onChange={setIngresos} moneda={moneda} />
-      <MoneyField label="Gastos esperados" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
-      <MoneyField label="Ahorro esperado" paso={paso()} value={ahorro} onChange={setAhorro} />
+      <Opcional titulo="Agregar ingresos y ahorro esperados" abierto={!!ingresos || !!ahorro}>
+        <MoneyField label="¿Cuánto esperas ingresar? (opcional)" value={ingresos} onChange={setIngresos} />
+        <MoneyField label="¿Cuánto esperas ahorrar? (opcional)" value={ahorro} onChange={setAhorro} />
+      </Opcional>
+      <Opcional titulo="Usar otra moneda" abierto={moneda !== 'CLP'}>
+        <Select label="¿En qué moneda?" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+      </Opcional>
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  muted: tipoDe(c).nota,
-});

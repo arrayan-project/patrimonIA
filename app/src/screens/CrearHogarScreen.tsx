@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
-import { Ayuda, Button, ErrorText, Field, Paragraph, Screen, Select } from '../ui';
+import { Button, contadorPasos, ErrorText, Field, Nota, Screen, Select } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
@@ -20,7 +20,6 @@ export function CrearHogarScreen() {
   const [moneda, setMoneda] = useState('CLP');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intento, setIntento] = useState(false);
   const permitirSalida = useConfirmarDescarte(
     (nombre.trim().length > 0 || moneda !== 'CLP') && !loading,
   );
@@ -28,7 +27,6 @@ export function CrearHogarScreen() {
   const errMoneda = /^[A-Za-z]{3}$/.test(moneda.trim()) ? '' : 'Usa el código de 3 letras (CLP, USD…).';
 
   const onSubmit = async () => {
-    setIntento(true);
     if (errNombre || errMoneda) return;
     setError('');
     setLoading(true);
@@ -58,27 +56,35 @@ export function CrearHogarScreen() {
     }
   };
 
+  const paso = contadorPasos();
   return (
-    <Screen>
-      <Paragraph>Al crear el hogar quedas como su administrador.</Paragraph>
-
+    <Screen
+      pie={
+        <>
+          <Nota>Quedas como administrador del hogar y después puedes invitar a los demás.</Nota>
+          <Button title="Crear hogar" onPress={onSubmit} loading={loading} disabled={!!(errNombre || errMoneda)} />
+        </>
+      }
+    >
       <Field
-        label="Nombre del hogar"
+        label="¿Cómo se llama tu hogar?"
+        paso={paso({ hecho: !errNombre })}
         value={nombre}
         onChangeText={setNombre}
         placeholder="p. ej. Familia Pérez"
         autoCapitalize="sentences"
-        error={intento ? errNombre : undefined}
       />
-
-      <Select label="Moneda del hogar" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
-      <Ayuda>
-        En esta moneda se muestra el patrimonio consolidado del hogar. Se puede
-        cambiar después desde "Gestionar hogar".
-      </Ayuda>
+      <Select
+        label="¿En qué moneda ven el total del hogar?"
+        paso={paso({ hecho: !errMoneda })}
+        value={moneda}
+        options={OPC_MONEDA}
+        onChange={setMoneda}
+        permiteOtro
+      />
+      <Nota>Se puede cambiar después en Gestionar hogar.</Nota>
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Crear hogar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

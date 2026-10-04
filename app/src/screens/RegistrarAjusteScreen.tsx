@@ -9,15 +9,14 @@ import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
   aISO,
+  AmountInput,
   Ayuda,
   Button,
-  DateField,
+  Cuando,
   ErrorText,
   Field,
-  LinkButton,
   Migaja,
-  MoneyField,
-  Paragraph,
+  Nota,
   Screen,
   Segmented,
 } from '../ui';
@@ -43,7 +42,6 @@ export function RegistrarAjusteScreen() {
   const [motivo, setMotivo] = useState(motivoInicial);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intento, setIntento] = useState(false);
 
   const monto = (direccion === 'Menor' ? -1 : 1) * (Number(magnitud) || 0);
   const errMagnitud = Number(magnitud) > 0 ? '' : 'Ingresa la diferencia (mayor a 0).';
@@ -52,9 +50,10 @@ export function RegistrarAjusteScreen() {
     (Number(magnitud) > 0 || motivo.trim().length > 0) && !loading,
   );
 
+  const listo = !errMagnitud && !errMotivo;
+
   const onSubmit = async () => {
-    setIntento(true);
-    if (errMagnitud || errMotivo) return;
+    if (!listo) return;
     setError('');
     setLoading(true);
     try {
@@ -63,7 +62,7 @@ export function RegistrarAjusteScreen() {
         { elementoId, monto, motivo: motivo.trim(), fecha },
         token,
       );
-      toast.mostrar('Ajuste registrado');
+      toast.mostrar(modoInteres ? 'Interés registrado' : 'Ajuste registrado');
       permitirSalida();
       nav.back();
     } catch (e) {
@@ -78,52 +77,60 @@ export function RegistrarAjusteScreen() {
   const paso = contadorPasos();
   useTitulo(modoInteres ? 'Registrar interés' : undefined);
 
+  const resumen =
+    valorActual !== undefined && Number(magnitud) > 0
+      ? `El valor pasa de ${money(valorActual, moneda)} a ${money(valorActual + monto, moneda)}.`
+      : 'Completa la diferencia y el motivo.';
+
   return (
-    <Screen>
+    <Screen
+      pie={
+        <>
+          <Nota>{resumen}</Nota>
+          <Button
+            title={modoInteres ? 'Registrar interés' : 'Registrar ajuste'}
+            onPress={onSubmit}
+            loading={loading}
+            disabled={!listo}
+          />
+        </>
+      }
+    >
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      {valorActual !== undefined && (
-        <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
-      )}
       <Ayuda>
         {modoInteres
-          ? 'El interés de una deuda o crédito se registra como un ajuste que aumenta el saldo. El monto sugerido es saldo × tasa anual ÷ 12 — ajústalo al período real (mora, refinanciación, etc.).'
+          ? 'El interés aumenta el saldo. Sugerimos saldo × tasa anual ÷ 12; ajústalo al período real.'
           : GLOSARIO.ajuste}
       </Ayuda>
 
-      <MoneyField
-        label={`Diferencia (${moneda})`}
+      <AmountInput
+        label={modoInteres ? '¿Cuánto interés?' : '¿Cuánto es la diferencia?'}
         paso={paso({ hecho: !errMagnitud })}
         value={magnitud}
         onChange={setMagnitud}
         moneda={moneda}
-        error={intento ? errMagnitud : undefined}
       />
       {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
-      <Segmented
-        label="El valor real es…"
-        paso={paso({ hecho: true })}
-        options={['Menor', 'Mayor'] as const}
-        value={direccion}
-        onChange={setDireccion}
-      />
-      {valorActual !== undefined && Number(magnitud) > 0 && (
-        <Paragraph>
-          Nuevo valor: {money(valorActual + monto, moneda)}
-        </Paragraph>
+      {!modoInteres && (
+        <Segmented
+          label="¿El valor real es menor o mayor?"
+          paso={paso({ hecho: true })}
+          options={['Menor', 'Mayor'] as const}
+          value={direccion}
+          onChange={setDireccion}
+        />
       )}
-      <DateField label="Fecha" value={fecha} onChange={setFecha} paso={paso({ hecho: !!fecha })} />
       <Field
-        label="Motivo (obligatorio)"
+        label="¿Por qué hay una diferencia?"
         paso={paso({ hecho: !errMotivo })}
         value={motivo}
         onChangeText={setMotivo}
-        placeholder="Por qué hay una diferencia"
+        placeholder="p. ej. comisión que no anoté"
         autoCapitalize="sentences"
-        error={intento ? errMotivo : undefined}
       />
+      <Cuando value={fecha} onChange={setFecha} paso={paso({ hecho: !!fecha })} />
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar ajuste" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
 import {
   api,
   ApiError,
@@ -23,21 +24,20 @@ import {
   contadorPasos,
   AmountInput,
   Elegir,
+  ElegirVarios,
   BloquePaso,
-  Question,
   aISO,
   Button,
-  Chip,
-  DateField,
+  Cuando,
   ErrorText,
+  etiqueta,
   Field,
   LinkButton,
   Nota,
+  Opcional,
   Skeleton,
   Screen,
   Segmented,
-  useC,
-  type Paleta,
 } from '../ui';
 
 const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
@@ -70,8 +70,6 @@ function metasDeReservas(reservas: ReservaDeElementoDTO[]): MetaEnCuenta[] {
 }
 
 export function RegistrarMovimientoScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -107,7 +105,6 @@ export function RegistrarMovimientoScreen() {
   const [asignacionId, setAsignacionId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intento, setIntento] = useState(false);
 
   const sucio =
     Number(monto) > 0 ||
@@ -182,9 +179,6 @@ export function RegistrarMovimientoScreen() {
     if (cuentaId && tipo === 'INGRESO') setDestinoId((d) => d ?? cuentaId);
   }, [cuentaId, tipo]);
 
-  const toggleEtiqueta = (id: string) =>
-    setEtiquetaIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
-
   const aplicarPlantilla = (p: PlantillaMovimientoDTO) => {
     if (p.tipo === 'INGRESO' || p.tipo === 'GASTO' || p.tipo === 'TRANSFERENCIA') setTipo(p.tipo);
     if (p.monto != null) setMonto(String(p.monto));
@@ -251,7 +245,6 @@ export function RegistrarMovimientoScreen() {
   const cuentaOrigen = elementos?.find((e) => e.id === origenId);
 
   const onSubmit = async () => {
-    setIntento(true);
     if (errMonto || errMismo || !puedeEnviar) return;
     setError('');
     setLoading(true);
@@ -318,124 +311,79 @@ export function RegistrarMovimientoScreen() {
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId;
 
+  // Resumen fijo abajo: una frase dice qué va a pasar (plantilla Formulario).
+  const nombreDe = (id: string | null) =>
+    [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
+  const m = money(Number(monto) || 0, monedaEvento);
+  const resumen: ReactNode = !puedeEnviar
+    ? necesitaOrigen && necesitaDestino
+      ? 'Completa monto, origen y destino.'
+      : 'Completa monto y cuenta.'
+    : tipo === 'GASTO'
+      ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}.`
+      : tipo === 'INGRESO'
+        ? `Entran ${m} a ${nombreDe(destinoId)}.`
+        : tipo === 'TRANSFERENCIA'
+          ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
+          : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
+  const accion = {
+    GASTO: 'Registrar gasto',
+    INGRESO: 'Registrar ingreso',
+    TRANSFERENCIA: 'Registrar transferencia',
+    CONVERSION: 'Registrar cambio de moneda',
+  }[tipo];
+
   // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca
-  // el paso actual. Tipo y Fecha ya traen valor, así que cuentan como hechos.
+  // el paso actual. La fecha ya trae valor (hoy), así que cuenta como hecha.
   const paso = contadorPasos();
-  const pTipo = paso({ hecho: true });
   const pMonto = paso({ hecho: Number(monto) > 0 });
-  const pFecha = paso({ hecho: !!fecha });
-  const pDetalle = paso({ opcional: true });
-  const pCategoria = puedeCategorizar ? paso({ opcional: true }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
   const pMeta = tipo === 'GASTO' && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
-  const pEtiquetas = etiquetas.length > 0 ? paso({ opcional: true }) : undefined;
+  const pCategoria = puedeCategorizar ? paso({ opcional: true }) : undefined;
+  const pFecha = paso({ hecho: !!fecha });
   return (
-    <Screen>
-      {plantillas.length > 0 ? (
-        <View style={styles.group}>
-          <Elegir
-            label="Desde una plantilla"
-            placeholder="Elegir una plantilla"
-            value={null}
-            options={plantillas.map((p) => ({
-              value: p.id,
-              label: p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre,
-            }))}
-            onChange={(id) => {
-              const p = plantillas.find((x) => x.id === id);
-              if (p) aplicarPlantilla(p);
-            }}
-          />
-          <LinkButton title="Gestionar plantillas" onPress={() => nav.go('Plantillas')} />
-        </View>
-      ) : (
-        <LinkButton
-          title="¿Registras siempre lo mismo? Crea una plantilla"
-          onPress={() => nav.go('Plantillas')}
+    <Screen
+      pie={
+        <>
+          <Nota>{resumen}</Nota>
+          <Button title={accion} onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
+        </>
+      }
+    >
+      {plantillas.length > 0 && (
+        <Elegir
+          label="¿Usar una plantilla? (opcional)"
+          placeholder="Elegir una plantilla"
+          value={null}
+          options={plantillas.map((p) => ({
+            value: p.id,
+            label: p.nombre,
+            sub: p.monto != null ? money(p.monto, p.moneda ?? 'CLP') : undefined,
+          }))}
+          onChange={(id) => {
+            const p = plantillas.find((x) => x.id === id);
+            if (p) aplicarPlantilla(p);
+          }}
         />
       )}
 
-      <Segmented label="¿Qué quieres anotar?" options={TIPOS} value={tipo} onChange={setTipo} paso={pTipo} />
+      <Segmented
+        options={new Set(elementos.map((e) => e.moneda)).size > 1 || tipo === 'CONVERSION' ? TIPOS : TIPOS.slice(0, 3)}
+        value={tipo}
+        onChange={setTipo}
+      />
       {tipo === 'CONVERSION' && (
-        <Nota>
-          Cambio de moneda: el monto va en la moneda de la cuenta de salida; la de llegada
-          recibe el equivalente según el tipo de cambio vigente. Necesitas la tasa registrada.
-        </Nota>
+        <Nota>El monto va en la moneda de la cuenta de salida; la otra recibe el equivalente al tipo de cambio vigente.</Nota>
       )}
       {tipo === 'INGRESO' && (
-        <View style={styles.hint}>
-          <Nota>
-            ¿Te van a devolver este dinero, o es de un tercero para comprarle algo? No lo
-            registres como ingreso —se sumaría a tus ingresos del mes—. Créalo como un
-            Crédito (te deben) o una Deuda tipo "encargo".
-          </Nota>
-          <LinkButton
-            title="Crear un crédito o una deuda"
-            onPress={() => nav.go('AgregarElemento', { categoria: 'CREDITO' })}
-          />
-        </View>
+        <LinkButton
+          title="¿Te la van a devolver o es de otra persona? Anótala como crédito o deuda"
+          onPress={() => nav.go('AgregarElemento', { categoria: 'CREDITO' })}
+        />
       )}
-      {tipo === 'GASTO' && (
-        <Nota>
-          ¿Alguien más puso parte? Registra primero una transferencia desde su cuenta a la
-          tuya y luego este gasto por el total: así queda el rastro de quién aportó cuánto.
-        </Nota>
-      )}
-      <AmountInput
-        label="¿Cuánto?"
-        paso={pMonto}
-        value={monto}
-        onChange={setMonto}
-        moneda={monedaEvento}
-        error={intento ? errMonto : undefined}
-      />
-      <DateField label="¿Cuándo?" value={fecha} onChange={setFecha} paso={pFecha} />
-      <Field
-        label={`${tipo === 'GASTO' ? '¿En qué?' : tipo === 'INGRESO' ? '¿Qué fue?' : '¿Para qué?'} (opcional)`}
-        paso={pDetalle}
-        value={glosa}
-        onChangeText={setGlosa}
-        placeholder="p. ej. pago internet marzo"
-        autoCapitalize="sentences"
-        maxLength={140}
-      />
 
-      {puedeCategorizar && (
-        <BloquePaso paso={pCategoria} style={styles.group}>
-          <Elegir
-            label="Categoría (opcional)"
-            paso={pCategoria}
-            opcionNula="Sin categoría"
-            value={categoriaId}
-            options={categoriasAplicables.map((c) => ({
-              value: c.id,
-              label: c.categoriaPadreId ? `›  ${c.nombre}` : c.nombre,
-            }))}
-            onChange={setCategoriaId}
-          />
-          {crearCat ? (
-            <View style={{ gap: 8, marginTop: 8 }}>
-              <Field
-                label="Nombre de la categoría"
-                value={catNombre}
-                onChangeText={setCatNombre}
-                autoCapitalize="sentences"
-                placeholder="p. ej. Mascotas"
-              />
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <Button title="Crear" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
-                <LinkButton title="Cancelar" onPress={() => setCrearCat(false)} />
-              </View>
-            </View>
-          ) : (
-            <LinkButton
-              title="¿No encuentras la categoría? Crear una nueva"
-              onPress={() => setCrearCat(true)}
-            />
-          )}
-        </BloquePaso>
-      )}
+      <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
 
       {necesitaOrigen && (
         <Elegir
@@ -454,19 +402,20 @@ export function RegistrarMovimientoScreen() {
       {pMeta && (
         <BloquePaso paso={pMeta} style={styles.group}>
           <Elegir
-            label="¿Esta compra sale de una meta? (opcional)"
+            label="¿Sale de una meta? (opcional)"
             paso={pMeta}
             opcionNula="No, de la plata libre"
             value={asignacionId}
-            options={metasCuenta.map((m) => ({
-              value: m.asignacionId,
-              label: `${m.nombre} · ${money(m.monto, monedaEvento)}`,
+            options={metasCuenta.map((x) => ({
+              value: x.asignacionId,
+              label: x.nombre,
+              sub: money(x.monto, monedaEvento),
             }))}
             onChange={setAsignacionId}
           />
           {meta && Number(monto) > meta.monto ? (
             <Nota>
-              {`La meta ${meta.nombre} no cubre todo: en ${cuentaOrigen?.nombre ?? 'esta cuenta'} tiene ${money(meta.monto, monedaEvento)}. Se descontarán ${money(meta.monto, monedaEvento)} de la meta y ${money(Number(monto) - meta.monto, monedaEvento)} saldrán de lo libre de la cuenta. Si prefieres otra cosa, cambia la cuenta o el monto.`}
+              {`${meta.nombre} tiene ${money(meta.monto, monedaEvento)} en ${cuentaOrigen?.nombre ?? 'esta cuenta'}: se descuenta eso de la meta y ${money(Number(monto) - meta.monto, monedaEvento)} de lo libre.`}
             </Nota>
           ) : null}
         </BloquePaso>
@@ -483,32 +432,71 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      {etiquetas.length > 0 && (
-        <BloquePaso paso={pEtiquetas} style={styles.group}>
-          <Question paso={pEtiquetas}>Etiquetas (opcional)</Question>
-          <View style={styles.chips}>
-            {etiquetas.map((e) => (
-              <Chip
-                key={e.id}
-                label={e.nombre}
-                color={e.color}
-                activo={etiquetaIds.includes(e.id)}
-                onPress={() => toggleEtiqueta(e.id)}
+      {puedeCategorizar && (
+        <BloquePaso paso={pCategoria} style={styles.group}>
+          <Elegir
+            label="¿De qué tipo? (opcional)"
+            paso={pCategoria}
+            opcionNula="Sin categoría"
+            value={categoriaId}
+            options={categoriasAplicables.map((x) => ({
+              value: x.id,
+              label: x.categoriaPadreId ? `›  ${x.nombre}` : x.nombre,
+            }))}
+            onChange={setCategoriaId}
+          />
+          {crearCat ? (
+            <View style={styles.group}>
+              <Field
+                label=""
+                value={catNombre}
+                onChangeText={setCatNombre}
+                autoCapitalize="sentences"
+                placeholder={`Nueva categoría de ${etiqueta(tipo).toLowerCase()}`}
+                autoFocus
               />
-            ))}
-          </View>
+              <View style={styles.fila}>
+                <Button title="Crear" variant="secondary" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
+                <LinkButton title="Cancelar" onPress={() => setCrearCat(false)} />
+              </View>
+            </View>
+          ) : (
+            <LinkButton title="+ Nueva categoría" onPress={() => setCrearCat(true)} />
+          )}
         </BloquePaso>
       )}
 
-      {intento && errMismo ? <ErrorText>{errMismo}</ErrorText> : null}
+      <Cuando value={fecha} onChange={setFecha} paso={pFecha} />
+
+      <Opcional titulo="Agregar detalle" abierto={!!glosa}>
+        <Field
+          label="Detalle (opcional)"
+          value={glosa}
+          onChangeText={setGlosa}
+          placeholder="p. ej. pago internet marzo"
+          autoCapitalize="sentences"
+          maxLength={140}
+        />
+      </Opcional>
+
+      {etiquetas.length > 0 && (
+        <Opcional titulo="Agregar etiquetas" abierto={etiquetaIds.length > 0}>
+          <ElegirVarios
+            label="Etiquetas (opcional)"
+            values={etiquetaIds}
+            onChange={setEtiquetaIds}
+            options={etiquetas.map((e) => ({ value: e.id, label: e.nombre }))}
+          />
+        </Opcional>
+      )}
+
+      {errMismo ? <ErrorText>{errMismo}</ErrorText> : null}
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }
 
-const crearEstilos = (c: Paleta) => StyleSheet.create({
+const styles = StyleSheet.create({
   group: { gap: 8 },
-  hint: { gap: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });
