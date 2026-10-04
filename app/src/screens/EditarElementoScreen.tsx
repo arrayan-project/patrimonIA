@@ -9,46 +9,31 @@ import {
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
-import { confirmar } from '../ui/confirmar';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import {
-  Ayuda,
+  BloquePaso,
   Button,
+  contadorPasos,
   DateField,
-  Elegir,
   ErrorText,
   Field,
-  LinkButton,
   MoneyField,
   Nota,
-  Paragraph,
+  Opcional,
+  Question,
   Screen,
-  Segmented,
-  SectionTitle,
   Select,
-  SelectRow,
   Skeleton,
-  Panel,
   useC,
-  tipoDe,
   type Paleta,
 } from '../ui';
 import { etiqueta, TIPOS_ELEMENTO_SUGERIDOS } from '../labels';
-import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
 
 const OPC_TIPO_FALLBACK = TIPOS_ELEMENTO_SUGERIDOS.map((t) => ({
   value: etiqueta(t),
   label: etiqueta(t),
 }));
-
-const VIS = ['PRIVADA', 'COMPARTIDA', 'FAMILIAR'] as const;
-type Nivel = (typeof VIS)[number];
-const TIPOS_INFO = [
-  ['EXISTENCIA', 'Que existe'],
-  ['VALOR', 'El monto'],
-  ['MOVIMIENTOS', 'Los movimientos'],
-] as const;
 
 /** Solo dígitos, máx 2 decimales, en [0, 100]. */
 function limpiarPct(t: string): string {
@@ -59,6 +44,12 @@ function limpiarPct(t: string): string {
   return s;
 }
 
+/**
+ * Editar los datos de una cuenta o bien (plantillas de pantalla, R4b): nombre,
+ * tipo, detalle de una deuda o crédito y propietarios, con un solo botón.
+ * Lo que se comparte con el hogar vive en "Ajustes de la cuenta"
+ * (AjustesElemento) y desactivar o eliminar, al final del Detalle.
+ */
 export function EditarElementoScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
@@ -70,20 +61,7 @@ export function EditarElementoScreen() {
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
-  const [modoDato, setModoDato] = useState<'Actualización' | 'Corrección'>('Actualización');
   const [motivoDato, setMotivoDato] = useState('');
-  const [niveles, setNiveles] = useState<Record<string, Nivel>>({
-    EXISTENCIA: 'PRIVADA',
-    VALOR: 'PRIVADA',
-    MOVIMIENTOS: 'PRIVADA',
-  });
-  const [compartidoCon, setCompartidoCon] = useState<string[]>([]);
-  const [enConsolidacion, setEnConsolidacion] = useState<'No' | 'Sí'>('No');
-  // D-2: una pregunta con 4 niveles; el detalle por tipo queda en "Avanzado".
-  const [nivelHogar, setNivelHogar] = useState<NivelHogar | 'personalizado'>('personalizado');
-  const [avanzado, setAvanzado] = useState(false);
-  const [valoriza, setValoriza] = useState<'No' | 'Sí'>('No');
-  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -96,7 +74,6 @@ export function EditarElementoScreen() {
   const [contraparte, setContraparte] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaTermino, setFechaTermino] = useState('');
-  const [fechaBaja, setFechaBaja] = useState('');
   const [cuota, setCuota] = useState('');
   const [tasa, setTasa] = useState('');
   const [observaciones, setObservaciones] = useState('');
@@ -130,31 +107,10 @@ export function EditarElementoScreen() {
       detalleDto.observaciones = observaciones.trim();
   }
   const detalleCambiado = Object.keys(detalleDto).length > 0;
+  const datosCambiados = !!el && (nombre.trim() !== el.nombre || tipo.trim() !== el.tipo);
+  const corrigiendo = motivoDato.trim().length > 0;
 
-  const vptOrig = el
-    ? (el.visibilidadPorTipo ?? {
-        EXISTENCIA: el.visibilidad,
-        VALOR: el.visibilidad,
-        MOVIMIENTOS: el.visibilidad,
-      })
-    : null;
-  const visibilidadCambiada =
-    !!vptOrig &&
-    (TIPOS_INFO.some(([k]) => niveles[k] !== vptOrig[k]) ||
-      [...compartidoCon].sort().join() !== [...(el?.compartidoCon ?? [])].sort().join());
-
-  const sucio =
-    !!el &&
-    (nombre.trim() !== el.nombre ||
-      tipo.trim() !== el.tipo ||
-      nivelHogar !== nivelDe(el) ||
-      visibilidadCambiada ||
-      (enConsolidacion === 'Sí') !== el.participaConsolidacion ||
-      (valoriza === 'Sí') !== el.admiteValorizacion ||
-      repartoCambiado ||
-      detalleCambiado ||
-      motivoDato.trim().length > 0 ||
-      motivo.trim().length > 0);
+  const sucio = datosCambiados || repartoCambiado || detalleCambiado || corrigiendo;
   const permitirSalida = useConfirmarDescarte(sucio && !busy);
 
   useEffect(() => {
@@ -164,23 +120,7 @@ export function EditarElementoScreen() {
         setEl(e);
         setNombre(e.nombre);
         setTipo(e.tipo);
-        const vpt =
-          e.visibilidadPorTipo ??
-          { EXISTENCIA: e.visibilidad, VALOR: e.visibilidad, MOVIMIENTOS: e.visibilidad };
-        setNiveles({
-          EXISTENCIA: vpt.EXISTENCIA as Nivel,
-          VALOR: vpt.VALOR as Nivel,
-          MOVIMIENTOS: vpt.MOVIMIENTOS as Nivel,
-        });
-        setCompartidoCon(e.compartidoCon ?? []);
-        setEnConsolidacion(e.participaConsolidacion ? 'Sí' : 'No');
-        setNivelHogar(nivelDe(e));
-        setValoriza(e.admiteValorizacion ? 'Sí' : 'No');
-        setPcts(
-          Object.fromEntries(
-            e.propietarios.map((p) => [p.usuarioId, String(p.porcentaje)]),
-          ),
-        );
+        setPcts(Object.fromEntries(e.propietarios.map((p) => [p.usuarioId, String(p.porcentaje)])));
         setContraparte(e.contraparte ?? '');
         setFechaInicio(e.fechaInicio ?? '');
         setFechaTermino(e.fechaTermino ?? '');
@@ -218,21 +158,6 @@ export function EditarElementoScreen() {
       : base;
   }, [tiposCat, tipo]);
 
-  const run = async (fn: () => Promise<unknown>, aviso?: string) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (aviso) toast.mostrar(aviso);
-      permitirSalida();
-      nav.back();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   useTitulo(el ? `Editar ${el.nombre}` : undefined);
 
   if (!el) {
@@ -244,8 +169,6 @@ export function EditarElementoScreen() {
     );
   }
 
-  const activo = el.estado === 'ACTIVO';
-
   const personas = (() => {
     const map = new Map<string, string>();
     for (const p of el.propietarios) map.set(p.usuarioId, p.nombre ?? 'Propietario');
@@ -255,8 +178,6 @@ export function EditarElementoScreen() {
     return [...map.entries()].map(([usuarioId, nombre]) => ({ usuarioId, nombre }));
   })();
   const puedeEditarPropietarios = personas.length > 1;
-  const coMiembros = miembros.filter((m) => m.usuarioId !== usuario.id);
-  const pareja = coMiembros.length === 1 ? coMiembros[0].nombre : undefined;
   const totalPct = propsEditados.reduce((s, p) => s + p.porcentaje, 0);
   const errReparto =
     Math.abs(totalPct - 100) > 0.001
@@ -264,225 +185,99 @@ export function EditarElementoScreen() {
       : propsEditados.length === 0
         ? 'Asigna al menos un propietario.'
         : '';
+  const esDeuda = el.categoriaFuncional === 'DEUDA';
 
+  const listo =
+    (datosCambiados || detalleCambiado || repartoCambiado) &&
+    !!nombre.trim() &&
+    (!repartoCambiado || !errReparto) &&
+    (!corrigiendo || motivoDato.trim().length >= 3);
+
+  const guardar = async () => {
+    if (!listo) return;
+    setBusy(true);
+    setError('');
+    try {
+      if (datosCambiados) {
+        // Corrección: el dato estaba mal desde el principio (queda en el historial con su motivo).
+        if (corrigiendo)
+          await api.post(
+            '/comandos/CorregirDatosElementoPatrimonial',
+            { elementoId, nombre: nombre.trim(), tipo: tipo.trim(), motivo: motivoDato.trim() },
+            token,
+          );
+        else
+          await api.post(
+            '/comandos/ActualizarDatosElementoPatrimonial',
+            { elementoId, nombre: nombre.trim(), tipo: tipo.trim() },
+            token,
+          );
+      }
+      if (detalleCambiado)
+        await api.post('/comandos/ActualizarDatosElementoPatrimonial', { elementoId, ...detalleDto }, token);
+      if (repartoCambiado)
+        await api.post(
+          '/comandos/CambiarPropiedadElementoPatrimonial',
+          { elementoId, propietarios: propsEditados },
+          token,
+        );
+      toast.mostrar(corrigiendo && datosCambiados ? 'Corrección guardada' : 'Cambios guardados');
+      permitirSalida();
+      nav.back();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Los pasos se cuentan en el orden en que se muestran.
+  const paso = contadorPasos();
+  const pNombre = paso({ hecho: !!nombre.trim() });
+  const pTipo = paso({ hecho: !!tipo });
+  const pPropietarios = puedeEditarPropietarios ? paso({ hecho: !errReparto }) : undefined;
   return (
-    <Screen>
-      {activo && (
-        <Panel>
-          <Field label="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
-          <Select label="Tipo" value={tipo} options={opcTipo} onChange={setTipo} permiteOtro />
-          <Segmented
-            label="¿Por qué cambias esto?"
-            options={['Actualización', 'Corrección'] as const}
-            value={modoDato}
-            onChange={setModoDato}
-            formatearOpcion={(v) => v}
+    <Screen
+      pie={
+        <>
+          {repartoCambiado && errReparto ? <Nota>{errReparto}</Nota> : null}
+          <Button title="Guardar cambios" onPress={guardar} loading={busy} disabled={!listo} />
+        </>
+      }
+    >
+      <Field
+        label="¿Cómo se llama?"
+        paso={pNombre}
+        value={nombre}
+        onChangeText={setNombre}
+        autoCapitalize="sentences"
+      />
+      <Select label="¿Qué tipo es?" paso={pTipo} value={tipo} options={opcTipo} onChange={setTipo} permiteOtro />
+
+      {esDeudaOCredito && (
+        <Opcional
+          titulo={esDeuda ? 'Agregar detalle de la deuda' : 'Agregar detalle del crédito'}
+          abierto={!!(el.contraparte || el.fechaInicio || el.fechaTermino || el.cuotaMonto != null || el.tasaInteres != null || el.observaciones)}
+        >
+          <Nota>Todo opcional. Sirve para seguir un crédito real (hipotecario, préstamo).</Nota>
+          <Field
+            label={esDeuda ? '¿A quién le debes? (opcional)' : '¿Quién te debe? (opcional)'}
+            value={contraparte}
+            onChangeText={setContraparte}
+            autoCapitalize="sentences"
           />
-          <Ayuda>
-            {modoDato === 'Actualización'
-              ? 'Actualización: el dato cambió en la realidad (le pusiste otro nombre, cambió de tipo).'
-              : 'Corrección: el dato estaba mal registrado desde el principio. Queda constancia en el historial de que fue una corrección y por qué.'}
-          </Ayuda>
-          {modoDato === 'Corrección' && (
-            <Field
-              label="Motivo de la corrección"
-              value={motivoDato}
-              onChangeText={setMotivoDato}
-              autoCapitalize="sentences"
-              placeholder="Estaba mal escrito el nombre del banco"
-            />
-          )}
-          <Button
-            title={modoDato === 'Corrección' ? 'Guardar corrección' : 'Guardar datos'}
-            loading={busy}
-            disabled={modoDato === 'Corrección' && motivoDato.trim().length < 3}
-            onPress={() =>
-              run(
-                () =>
-                  modoDato === 'Corrección'
-                    ? api.post(
-                        '/comandos/CorregirDatosElementoPatrimonial',
-                        {
-                          elementoId,
-                          nombre: nombre.trim(),
-                          tipo: tipo.trim(),
-                          motivo: motivoDato.trim(),
-                        },
-                        token,
-                      )
-                    : api.post(
-                        '/comandos/ActualizarDatosElementoPatrimonial',
-                        { elementoId, nombre: nombre.trim(), tipo: tipo.trim() },
-                        token,
-                      ),
-                modoDato === 'Corrección' ? 'Corrección guardada' : undefined,
-              )
-            }
-          />
-        </Panel>
+          <DateField label="¿Desde cuándo? (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
+          <DateField label="¿Hasta cuándo? (opcional)" value={fechaTermino} onChange={setFechaTermino} optional />
+          <MoneyField label="¿De cuánto es la cuota? (opcional)" value={cuota} onChange={setCuota} />
+          <Field label="¿Qué tasa anual tiene? (%, opcional)" value={tasa} onChangeText={setTasa} keyboardType="numeric" />
+          <Field label="Notas (opcional)" value={observaciones} onChangeText={setObservaciones} autoCapitalize="sentences" />
+        </Opcional>
       )}
 
-      {activo && (
-        <Panel>
-          <SectionTitle>Compartir con el hogar</SectionTitle>
-          <Elegir
-            label={`¿Qué compartes de ${el.nombre} con ${pareja ?? 'el hogar'}?`}
-            value={nivelHogar}
-            options={[
-              ...opcionesNivel(pareja),
-              ...(nivelDe(el) === 'personalizado'
-                ? [
-                    {
-                      value: 'personalizado',
-                      label: 'Personalizado',
-                      sub: 'Una combinación hecha en Avanzado.',
-                      deshabilitada: true,
-                    },
-                  ]
-                : []),
-            ]}
-            onChange={(v) => v && setNivelHogar(v as NivelHogar)}
-          />
-          <Button
-            title="Guardar"
-            variant="secondary"
-            loading={busy}
-            disabled={nivelHogar === 'personalizado' || nivelHogar === nivelDe(el)}
-            onPress={() =>
-              nivelHogar !== 'personalizado' &&
-              run(() => aplicarNivel(token, elementoId, nivelHogar, el.participaConsolidacion), 'Guardado')
-            }
-          />
-          <LinkButton
-            title={avanzado ? 'Ocultar avanzado' : 'Avanzado (cada dato por separado)'}
-            onPress={() => setAvanzado((x) => !x)}
-          />
-        </Panel>
-      )}
-
-      {activo && avanzado && (
-        <Panel>
-          <SectionTitle>Visibilidad</SectionTitle>
-          <Ayuda>
-            Elige, para cada dato, quién puede verlo. Privada: solo tú. Familiar:
-            todos los miembros del hogar. Compartida: solo las personas que elijas.
-          </Ayuda>
-          {TIPOS_INFO.map(([k, etiq]) => (
-            <Segmented
-              key={k}
-              label={etiq}
-              options={VIS}
-              value={niveles[k]}
-              onChange={(v) => setNiveles((n) => ({ ...n, [k]: v }))}
-            />
-          ))}
-          {coMiembros.length > 0 && Object.values(niveles).includes('COMPARTIDA') && (
-            <>
-              <Text style={styles.sectionTitle}>Compartir con</Text>
-              {coMiembros.map((m) => (
-                <SelectRow
-                  key={m.usuarioId}
-                  label={m.nombre}
-                  selected={compartidoCon.includes(m.usuarioId)}
-                  onPress={() =>
-                    setCompartidoCon((xs) =>
-                      xs.includes(m.usuarioId)
-                        ? xs.filter((x) => x !== m.usuarioId)
-                        : [...xs, m.usuarioId],
-                    )
-                  }
-                />
-              ))}
-            </>
-          )}
-          <Button
-            title="Guardar visibilidad"
-            variant="secondary"
-            loading={busy}
-            disabled={!visibilidadCambiada}
-            onPress={() =>
-              run(
-                () =>
-                  api.post(
-                    '/comandos/DefinirVisibilidadElementoPatrimonial',
-                    { elementoId, niveles, compartidoCon },
-                    token,
-                  ),
-                'Visibilidad actualizada',
-              )
-            }
-          />
-        </Panel>
-      )}
-
-      {activo && avanzado && (
-        <Panel>
-          <Segmented
-            label="¿Cuenta en el patrimonio del hogar?"
-            options={['No', 'Sí'] as const}
-            value={enConsolidacion}
-            onChange={setEnConsolidacion}
-          />
-          <Ayuda>
-            Si está en "Sí", esto suma en "Patrimonio del hogar" (la vista
-            consolidada de todos los miembros).
-          </Ayuda>
-          <Button
-            title="Guardar"
-            variant="secondary"
-            loading={busy}
-            onPress={() =>
-              run(() =>
-                api.post(
-                  '/comandos/CambiarParticipacionEnConsolidacion',
-                  { elementoId, participa: enConsolidacion === 'Sí' },
-                  token,
-                ),
-              )
-            }
-          />
-        </Panel>
-      )}
-
-      {activo && !esDeudaOCredito && (
-        <Panel>
-          <Segmented
-            label="¿Se valoriza en el tiempo?"
-            options={['No', 'Sí'] as const}
-            value={valoriza}
-            onChange={setValoriza}
-          />
-          <Ayuda>
-            Actívalo para bienes o inversiones cuyo valor de mercado cambia
-            (inmuebles, fondos). Habilita "Registrar valorización" en el detalle.
-          </Ayuda>
-          <Button
-            title="Guardar"
-            variant="secondary"
-            loading={busy}
-            disabled={(valoriza === 'Sí') === el.admiteValorizacion}
-            onPress={() =>
-              run(
-                () =>
-                  api.post(
-                    '/comandos/CambiarAdmiteValorizacion',
-                    { elementoId, admite: valoriza === 'Sí' },
-                    token,
-                  ),
-                'Guardado',
-              )
-            }
-          />
-        </Panel>
-      )}
-
-      {activo && puedeEditarPropietarios && (
-        <Panel>
-          <Text style={styles.sectionTitle}>Propietarios</Text>
-          <Ayuda>
-            Reparte el 100% entre los propietarios. Quien quede en 0% deja de ser
-            propietario. Cada uno ve su parte en su patrimonio.
-          </Ayuda>
+      {pPropietarios && (
+        <BloquePaso paso={pPropietarios} style={styles.grupo}>
+          <Question paso={pPropietarios}>¿De quién es?</Question>
+          <Nota>Reparte el 100%. Quien quede en 0% deja de ser propietario.</Nota>
           {personas.map((p) => (
             <View key={p.usuarioId} style={styles.filaPct}>
               <Text style={styles.filaNombre} numberOfLines={1}>
@@ -503,142 +298,20 @@ export function EditarElementoScreen() {
           <Text style={[styles.total, Math.abs(totalPct - 100) < 0.001 && styles.totalOk]}>
             Total: {Math.round(totalPct * 100) / 100}%
           </Text>
-          {repartoCambiado && errReparto ? <ErrorText>{errReparto}</ErrorText> : null}
-          <Button
-            title="Cambiar propietarios"
-            variant="secondary"
-            loading={busy}
-            disabled={!repartoCambiado || !!errReparto}
-            onPress={() =>
-              run(
-                () =>
-                  api.post(
-                    '/comandos/CambiarPropiedadElementoPatrimonial',
-                    { elementoId, propietarios: propsEditados },
-                    token,
-                  ),
-                'Propietarios actualizados',
-              )
-            }
-          />
-        </Panel>
+        </BloquePaso>
       )}
 
-      {activo && esDeudaOCredito && (
-        <Panel>
-          <SectionTitle>
-            Detalle {el.categoriaFuncional === 'DEUDA' ? 'de la deuda' : 'del crédito'}
-          </SectionTitle>
-          <Nota>Todo opcional. Sirve para seguir un crédito real (hipotecario, préstamo).</Nota>
+      {datosCambiados && (
+        <Opcional titulo="¿Estaba mal registrado? Márcalo como corrección" abierto={corrigiendo}>
           <Field
-            label={el.categoriaFuncional === 'DEUDA' ? 'Acreedor (a quién le debes)' : 'Deudor (quién te debe)'}
-            value={contraparte}
-            onChangeText={setContraparte}
+            label="¿Qué estaba mal? (opcional)"
+            value={motivoDato}
+            onChangeText={setMotivoDato}
             autoCapitalize="sentences"
+            placeholder="p. ej. estaba mal escrito el nombre del banco"
           />
-          <DateField label="Fecha de inicio" value={fechaInicio} onChange={setFechaInicio} optional />
-          <DateField label="Fecha de término" value={fechaTermino} onChange={setFechaTermino} optional />
-          <MoneyField label="Cuota" value={cuota} onChange={setCuota} moneda={el.moneda} />
-          <Field label="Tasa de interés anual (%)" value={tasa} onChangeText={setTasa} keyboardType="numeric" />
-          <Field
-            label="Observaciones"
-            value={observaciones}
-            onChangeText={setObservaciones}
-            autoCapitalize="sentences"
-          />
-          <Button
-            title="Guardar detalle"
-            variant="secondary"
-            loading={busy}
-            disabled={!detalleCambiado}
-            onPress={() =>
-              run(
-                () =>
-                  api.post(
-                    '/comandos/ActualizarDatosElementoPatrimonial',
-                    { elementoId, ...detalleDto },
-                    token,
-                  ),
-                'Detalle guardado',
-              )
-            }
-          />
-        </Panel>
+        </Opcional>
       )}
-
-      <Panel>
-        <Text style={styles.sectionTitle}>Estado</Text>
-        <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" placeholder="Requerido para reactivar/eliminar" />
-        {activo ? (
-          <>
-            <DateField
-              label="Fecha de salida (opcional)"
-              value={fechaBaja}
-              onChange={setFechaBaja}
-              optional
-            />
-            <Button
-              title="Desactivar"
-              variant="danger"
-              loading={busy}
-              onPress={async () => {
-                if (!(await confirmar('Desactivar', 'Deja de contar en tu patrimonio. Se puede reactivar después.', 'Desactivar')))
-                  return;
-                await run(
-                  () =>
-                    api.post(
-                      '/comandos/DesactivarElementoPatrimonial',
-                      {
-                        elementoId,
-                        ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
-                        ...(fechaBaja.trim() ? { fechaBaja: fechaBaja.trim() } : {}),
-                      },
-                      token,
-                    ),
-                  'Desactivado',
-                );
-              }}
-            />
-            <Paragraph>
-              Eliminar solo si nunca tuvo movimientos ni valorizaciones.
-            </Paragraph>
-            <Button
-              title="Eliminar"
-              variant="danger"
-              loading={busy}
-              disabled={motivo.trim().length < 3}
-              onPress={async () => {
-                if (!(await confirmar('Eliminar', 'Borrado definitivo. Solo si nunca tuvo movimientos ni valorizaciones.', 'Eliminar')))
-                  return;
-                await run(
-                  () =>
-                    api.post(
-                      '/comandos/EliminarElementoPatrimonial',
-                      { elementoId, justificacion: motivo.trim() },
-                      token,
-                    ),
-                  'Eliminado',
-                );
-              }}
-            />
-          </>
-        ) : (
-          <Button
-            title="Reactivar"
-            loading={busy}
-            disabled={motivo.trim().length < 3}
-            onPress={() =>
-              run(() =>
-                api.post(
-                  '/comandos/ReactivarElementoPatrimonial',
-                  { elementoId, motivo: motivo.trim() },
-                  token,
-                ),
-              )
-            }
-          />
-        )}
-      </Panel>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
@@ -646,7 +319,7 @@ export function EditarElementoScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  sectionTitle: tipoDe(c).seccion,
+  grupo: { gap: 8 },
   filaPct: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   filaNombre: { flex: 1, fontSize: 14, color: c.text },
   pctInput: { width: 76 },

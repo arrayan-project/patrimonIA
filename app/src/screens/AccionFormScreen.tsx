@@ -3,7 +3,7 @@ import { api, ApiError } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Button, contadorPasos, ErrorText, Field, Nota, Screen } from '../ui';
+import { Button, contadorPasos, DateField, ErrorText, Field, Nota, Screen } from '../ui';
 
 /**
  * Formulario de una sola pregunta de texto que ejecuta un comando (plantillas
@@ -26,8 +26,10 @@ export interface AccionFormParams {
   body: Record<string, unknown>;
   /** Clave del texto en el cuerpo (por defecto `motivo`). */
   campo?: string;
-  /** Largo mínimo del texto (por defecto 3, lo que pide el backend para un motivo). */
+  /** Largo mínimo del texto (por defecto 3, lo que pide el backend para un motivo). Con 0 es opcional y, vacío, no se envía. */
   minimo?: number;
+  /** Fecha opcional (p. ej. la de salida del patrimonio): clave en el cuerpo y la pregunta. Vacía, no se envía. */
+  fecha?: { campo: string; pregunta: string };
   aviso: string;
   peligro?: boolean;
   /** Cuántas pantallas volver al terminar (2 si lo que se abría ya no existe). */
@@ -40,6 +42,7 @@ export function AccionFormScreen() {
   const toast = useToast();
   const p = nav.route.params as unknown as AccionFormParams;
   const [texto, setTexto] = useState('');
+  const [fecha, setFecha] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -52,7 +55,15 @@ export function AccionFormScreen() {
     setBusy(true);
     setError('');
     try {
-      await api.post(`/comandos/${p.comando}`, { ...p.body, [p.campo ?? 'motivo']: texto.trim() }, token);
+      await api.post(
+        `/comandos/${p.comando}`,
+        {
+          ...p.body,
+          ...(texto.trim() ? { [p.campo ?? 'motivo']: texto.trim() } : {}),
+          ...(p.fecha && fecha ? { [p.fecha.campo]: fecha } : {}),
+        },
+        token,
+      );
       toast.mostrar(p.aviso);
       nav.back(p.volver ?? 1);
     } catch (e) {
@@ -78,13 +89,14 @@ export function AccionFormScreen() {
       {p.explicacion ? <Nota>{p.explicacion}</Nota> : null}
       <Field
         label={p.pregunta}
-        paso={paso({ hecho: listo })}
+        paso={p.minimo === 0 ? paso() : paso({ hecho: listo })}
         value={texto}
         onChangeText={setTexto}
         placeholder={p.placeholder}
         autoCapitalize="sentences"
         autoFocus
       />
+      {p.fecha && <DateField label={p.fecha.pregunta} paso={paso()} value={fecha} onChange={setFecha} optional />}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

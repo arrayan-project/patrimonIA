@@ -251,7 +251,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
   partes: R4a ✅ mergeada (2026-10-04), R4b (Editar y Agregar cuenta o
-  bien, Acceso) después; siguen R5 Ajustes y R6 Resúmenes.
+  bien, Acceso) en rama `feat/G33-R4b-formularios`; siguen R5 Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -265,6 +265,25 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
+- **Reglas de diseño, R4b — Editar y Agregar cuenta o bien, Acceso (en rama,
+  2026-10-04)**: Editar cuenta o bien tenía 8 paneles con su propio Guardar y
+  mezclaba datos, ajustes y estado; se separa (decisión de Juan). `EditarElemento`
+  queda como Formulario de datos con un solo "Guardar cambios": nombre, tipo,
+  detalle de la deuda o crédito (cerrado) y "¿De quién es?" (los porcentajes
+  necesitan validar el 100%); la corrección pasa a un "¿Estaba mal
+  registrado?" opcional que, con motivo, usa `CorregirDatosElementoPatrimonial`.
+  Pantalla nueva `AjustesElemento` (plantilla Ajustes, se guarda al tocar y se
+  revierte con aviso si falla): qué se comparte con el hogar (D-2), si el valor
+  cambia con el tiempo y, cerrado, la visibilidad por dato, con quiénes
+  (`ElegirVarios` en vez de `SelectRow` apilados) y si suma al hogar; se entra
+  desde una fila del Detalle. Desactivar (motivo y fecha de salida opcionales)
+  y Eliminar (solo si nunca tuvo movimientos ni valorizaciones) quedan al final
+  del Detalle vía `AccionForm` (que ahora acepta texto opcional y una fecha
+  opcional); Reactivar es la acción principal de una cuenta inactiva. Agregar
+  cuenta o bien: preguntas, botón fijo con la acción ("Agregar deuda") y el
+  paso 2 (D-2) con sus botones fijos; el asistente no cambia. Acceso ya usa las
+  mismas piezas sin numeración y no cambia (el pie no suma el margen inferior
+  en pantallas sin barra). El mapa de la plantilla queda en 58 pantallas.
 - **Reglas de diseño, R4a — Formularios de registro y planificación (✅
   mergeado, 2026-10-04)**: criterio de Juan, "lo más limpio, claro y simple para los
   usuarios". Piezas: `Cuando` (Hoy por defecto, Ayer u Otra fecha; para lo que

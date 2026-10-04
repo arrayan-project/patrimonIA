@@ -65,7 +65,8 @@ export type RouteName =
   | 'CorregirMovimiento'
   | 'ProgramadoForm'
   | 'SacarPlata'
-  | 'ValorEnFecha';
+  | 'ValorEnFecha'
+  | 'AjustesElemento';
 
 export interface Route {
   name: string;
