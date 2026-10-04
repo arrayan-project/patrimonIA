@@ -251,7 +251,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
-  mergeadas (2026-10-04); R5 Ajustes en rama `feat/G33-R5-ajustes`; sigue R6
+  mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); sigue R6
   Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
@@ -266,7 +266,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
-- **Reglas de diseño, R5 — Ajustes (en rama, 2026-10-04)**: sin botón Guardar;
+- **Reglas de diseño, R5 — Ajustes (✅ mergeado, 2026-10-04)**: sin botón Guardar;
   todo se guarda al tocarlo y se revierte con aviso si falla
   (`useGuardarAlInstante`; las preferencias de visualización también se
   aplican antes de guardar). Piezas: `Interruptor` (fila con el interruptor del
