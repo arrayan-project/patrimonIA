@@ -251,8 +251,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
-  mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes en rama
-  `feat/G33-R6-resumenes`; después, el bloque 8.
+  mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes ✅ mergeada (2026-10-04).
+  Reglas de diseño R1 a R6 cerradas; sigue el bloque 8 (D-8).
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -266,7 +266,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
-- **Reglas de diseño, R6 — Resúmenes (en rama, 2026-10-04)**: criterio de Juan:
+- **Reglas de diseño, R6 — Resúmenes (✅ mergeado, 2026-10-04)**: criterio de Juan:
   más que lo validado, la información tiene que ser clara, simple y directa;
   la persona entiende qué mira y qué significa para ella. La cifra principal
   dice qué es en palabras simples ("Tu patrimonio", "Plata del hogar",
