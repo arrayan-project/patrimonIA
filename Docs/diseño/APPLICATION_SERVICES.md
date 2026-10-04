@@ -556,6 +556,17 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 - Auditoría: entrada raíz `AhorrarParaObjetivo` (destino, total, orígenes); las de la parte creada, las transferencias y la reserva quedan encadenadas a ella (`encadenada_de_id`).
 - Lectura asociada: `GET /usuarios/me/disponibilidad` → libre para ahorrar por cuenta propia.
 
+## Plata de otra persona — G33 D-3 / D-8
+
+### 80. RegistrarPlataDeOtraPersona
+
+- Input: direccion (`ENTRA` = Recibí, `SALE` = Gasté), cuentaId, monto, persona (nombre), fecha (opcional), glosa (opcional), anularIngresoId (opcional, solo `SALE`), registrarEntrada (opcional, solo `SALE`; excluyente con anularIngresoId).
+- Validaciones: la cuenta es propia, activa y no es un bien, un CREDITO ni el saldo con una persona (`CUENTA_NO_VALIDA`) · anularIngresoId y registrarEntrada solo con `SALE` y no juntos (`PREVIO_NO_VALIDO`) · el ingreso a anular es un INGRESO vigente, en una cuenta propia y en la moneda de la cuenta (`MONEDA_DISTINTA`).
+- Orquestación (una transacción): el saldo con la persona es una DEUDA (le debes) y un CREDITO (te debe) de naturaleza `CUSTODIA_INFORMAL`, propios y en la moneda de la cuenta; la persona se reconoce por `contraparte`, sin distinguir mayúsculas ni espacios · si falta el elemento que se necesita, nace con **pendiente 0** (HZ-11: única excepción a `valorPendiente > 0` de #1), `participa_consolidacion` igual al de la cuenta · `ENTRA`: TRANSFERENCIA (#10) desde el CREDITO hasta saldarlo y el resto desde la DEUDA; `SALE`: hacia la DEUDA hasta saldarla y el resto hacia el CREDITO (borde de D-3: se salda a 0 y se abre o aumenta el opuesto) · los elementos en 0 no se desactivan · HZ-20: con anularIngresoId, antes anula ese ingreso (#11) y lo registra como `ENTRA` en su cuenta, con su monto y fecha; con registrarEntrada, antes registra un `ENTRA` por el mismo monto en la misma cuenta.
+- Output: persona, moneda, saldo (con signo: + te debe, − le debes), deudaId, creditoId, eventoIds[], anuladoId.
+- Auditoría: entrada raíz `RegistrarPlataDeOtraPersona` (dirección, persona, monto, moneda, fecha, previo); las del elemento creado, la anulación y las transferencias quedan encadenadas a ella (`encadenada_de_id`).
+- Lectura asociada: `GET /usuarios/me/personas` → un saldo con signo por persona y moneda; los que están en 0 se ocultan salvo con `?todas=true`. `GET /usuarios/me/patrimonio-individual` entrega `plataAjena` (Σ DEUDA `CUSTODIA_INFORMAL`) y `valorLibre` la resta (HZ-18).
+
 ## Cambios en comandos existentes
 
 - **#1 RegistrarElementoPatrimonial**: acepta `visibilidadExistencia` / `visibilidadValor` (dos controles independientes); `naturaleza` (obligatorio para DEUDA/CREDITO); `fechaAlta`. Si categoría ∈ {LIQUIDEZ, RESERVA} y `valorInicial > 0` → emite además un evento `SALDO_INICIAL` + impacto de apertura. Auditoría: + naturaleza (solo DEUDA/CREDITO), + saldo_inicial_evento_id.
@@ -568,6 +579,6 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 
 # Resumen de cobertura
 
-Total: **52 casos de uso de Fase 0 + 27 añadidos (Fases 13–52 y G33) = 79** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
+Total: **52 casos de uso de Fase 0 + 28 añadidos (Fases 13–52 y G33) = 80** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
 
 *Nota de reconciliación: la cifra previa de “~44 comandos” mencionada al iniciar este bloque correspondía a un conteo aproximado. El conteo exacto contra la Sección T, comando por comando, da 52. La diferencia son comandos que existen en la tabla pero no se habían sumado en el estimado inicial (p. ej. ActualizarDatosUsuario, ActualizarDatosHogar, ActualizarDatosPresupuesto, ActualizarDatosAsignacion, ActualizarDatosObjetivoFinanciero, ActualizarMovimientoProgramado, RechazarInvitacion). Este documento es la fuente de verdad del conteo, no la cifra estimada al inicio.
