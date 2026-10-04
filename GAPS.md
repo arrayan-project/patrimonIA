@@ -250,7 +250,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
-  partes: R4a en rama `feat/G33-R4a-formularios`, R4b (Editar y Agregar cuenta o
+  partes: R4a ✅ mergeada (2026-10-04), R4b (Editar y Agregar cuenta o
   bien, Acceso) después; siguen R5 Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
@@ -265,8 +265,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
-- **Reglas de diseño, R4a — Formularios de registro y planificación (en rama,
-  2026-10-03)**: criterio de Juan, "lo más limpio, claro y simple para los
+- **Reglas de diseño, R4a — Formularios de registro y planificación (✅
+  mergeado, 2026-10-04)**: criterio de Juan, "lo más limpio, claro y simple para los
   usuarios". Piezas: `Cuando` (Hoy por defecto, Ayer u Otra fecha; para lo que
   ya pasó), `Opcional` ("+ Agregar detalle": lo opcional cerrado), el aviso
   sube bajo la barra (tapaba el botón fijo), `DateField` usa el campo de fecha
