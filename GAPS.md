@@ -249,7 +249,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (2026-10-03). Reglas de diseño
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
-  + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); siguen R4 Formularios, R5 Ajustes y R6 Resúmenes.
+  + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
+  partes: R4a en rama `feat/G33-R4a-formularios`, R4b (Editar y Agregar cuenta o
+  bien, Acceso) después; siguen R5 Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -263,6 +265,23 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
+- **Reglas de diseño, R4a — Formularios de registro y planificación (en rama,
+  2026-10-03)**: criterio de Juan, "lo más limpio, claro y simple para los
+  usuarios". Piezas: `Cuando` (Hoy por defecto, Ayer u Otra fecha; para lo que
+  ya pasó), `Opcional` ("+ Agregar detalle": lo opcional cerrado), el aviso
+  sube bajo la barra (tapaba el botón fijo), `DateField` usa el campo de fecha
+  del navegador en web y `contadorPasos()` sin argumentos trata la pregunta
+  como opcional (como dice su doc; antes la marcaba como paso actual).
+  Registrar movimiento: tipo arriba sin número, monto primero, cuenta antes que
+  categoría, fecha con `Cuando`, detalle y etiquetas cerrados, Conversión de
+  moneda solo con cuentas en más de una moneda, y resumen + botón con la acción
+  completa ("Registrar gasto") fijos abajo; el aviso de Gasto ("¿alguien más
+  puso parte?") sale (lo resuelve D-8) y el de Ingreso queda en una línea.
+  Registrar ajuste, Valorizar, Ahorrar, Crear hogar, Presupuesto por rubro,
+  Presupuesto (un solo "¿cada cuánto?", ingresos/ahorro y otra moneda
+  cerrados), Programar, Plantilla, Confirmar pago y Corregir movimiento:
+  preguntas, monto primero y resumen + botón fijos abajo, deshabilitado hasta
+  completar.
 - **Reglas de diseño, R3 — Detalles (✅ mergeado, 2026-10-03)**: los 8 Detalles
   quedan sin campos editables: estado arriba (`Hero`), datos en pares
   (`Datos`/`Dato`), una acción principal fija abajo (`pie`, a lo más una

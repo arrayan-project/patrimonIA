@@ -7,11 +7,12 @@ import {
   AmountInput,
   Button,
   contadorPasos,
-  DateField,
+  Cuando,
   ElegirVarios,
   ErrorText,
   Field,
   Nota,
+  Opcional,
   Screen,
 } from '../ui';
 
@@ -89,14 +90,10 @@ export function CorregirMovimientoScreen() {
             enlazada al original.
           </Nota>
           <AmountInput label="¿Cuánto fue?" paso={paso({ hecho: Number(monto) > 0 })} value={monto} onChange={setMonto} moneda={p.moneda} />
-          <DateField label="¿Cuándo?" paso={paso({ hecho: true })} value={fecha} onChange={setFecha} />
-          <Field
-            label="Detalle (opcional)"
-            paso={paso()}
-            value={glosa}
-            onChangeText={setGlosa}
-            autoCapitalize="sentences"
-          />
+          <Cuando paso={paso({ hecho: true })} value={fecha} onChange={setFecha} />
+          <Opcional titulo="Agregar detalle" abierto={!!glosa}>
+            <Field label="Detalle (opcional)" value={glosa} onChangeText={setGlosa} autoCapitalize="sentences" />
+          </Opcional>
         </>
       ) : (
         <Nota>Este movimiento ya no se puede corregir (es una corrección o ya fue corregido). Puedes cambiar sus etiquetas.</Nota>

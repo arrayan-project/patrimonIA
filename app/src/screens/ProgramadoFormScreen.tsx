@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { AmountInput, Button, contadorPasos, DateField, ErrorText, Nota, Screen } from '../ui';
+import { aISO, AmountInput, Button, contadorPasos, Cuando, DateField, ErrorText, Nota, Screen } from '../ui';
 
 /**
  * Editar un movimiento programado o confirmar su pago (plantillas de pantalla,
@@ -22,8 +22,8 @@ export function ProgramadoFormScreen() {
   const confirmar = modo === 'confirmar';
 
   const [monto, setMonto] = useState(String(planificado));
-  // Al confirmar, la fecha por defecto es la programada (puede ser otra si se pagó antes o después).
-  const [fecha, setFecha] = useState((nav.route.params?.fecha as string).slice(0, 10));
+  // Al confirmar, lo normal es que se pagó hoy; al editar, se parte de la fecha programada.
+  const [fecha, setFecha] = useState(confirmar ? aISO(new Date()) : (nav.route.params?.fecha as string).slice(0, 10));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -82,12 +82,11 @@ export function ProgramadoFormScreen() {
         onChange={setMonto}
         moneda={moneda}
       />
-      <DateField
-        label={confirmar ? '¿Cuándo se pagó?' : '¿Para cuándo?'}
-        paso={paso({ hecho: fechaOk })}
-        value={fecha}
-        onChange={setFecha}
-      />
+      {confirmar ? (
+        <Cuando label="¿Cuándo se pagó?" paso={paso({ hecho: fechaOk })} value={fecha} onChange={setFecha} />
+      ) : (
+        <DateField label="¿Para cuándo?" paso={paso({ hecho: fechaOk })} value={fecha} onChange={setFecha} />
+      )}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

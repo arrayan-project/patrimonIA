@@ -6,7 +6,7 @@ import { money } from '../format';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
 import { GLOSARIO } from '../labels';
-import { Ayuda, Button, DateField, ErrorText, Migaja, MoneyField, Paragraph, Screen } from '../ui';
+import { aISO, AmountInput, Ayuda, Button, contadorPasos, Cuando, ErrorText, Migaja, Nota, Screen } from '../ui';
 
 export function ValorizarScreen() {
   const { token } = useSession();
@@ -18,29 +18,20 @@ export function ValorizarScreen() {
   const contexto = nav.route.params?.contexto as string | undefined;
 
   const [valorNuevo, setValorNuevo] = useState('');
-  const [fecha, setFecha] = useState('');
+  const [fecha, setFecha] = useState(aISO(new Date()));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intento, setIntento] = useState(false);
-  const permitirSalida = useConfirmarDescarte(
-    (valorNuevo.trim() !== '' || fecha.trim() !== '') && !loading,
-  );
-  const errValor =
-    valorNuevo.trim() !== '' && Number(valorNuevo) >= 0 ? '' : 'Ingresa el nuevo valor (0 o más).';
+  const permitirSalida = useConfirmarDescarte(valorNuevo.trim() !== '' && !loading);
+  const listo = valorNuevo.trim() !== '' && Number(valorNuevo) >= 0;
 
   const onSubmit = async () => {
-    setIntento(true);
-    if (errValor) return;
+    if (!listo) return;
     setError('');
     setLoading(true);
     try {
       await api.post<ValorizacionDTO>(
         '/comandos/RegistrarValorizacion',
-        {
-          elementoId,
-          valorNuevo: Number(valorNuevo),
-          ...(fecha.trim() ? { fecha } : {}),
-        },
+        { elementoId, valorNuevo: Number(valorNuevo), fecha },
         token,
       );
       toast.mostrar('Valorización registrada');
@@ -53,25 +44,25 @@ export function ValorizarScreen() {
     }
   };
 
+  const paso = contadorPasos();
   return (
-    <Screen>
+    <Screen
+      pie={
+        <>
+          <Nota>
+            {listo && valorActual !== undefined
+              ? `Pasa de ${money(valorActual, moneda)} a ${money(Number(valorNuevo), moneda)}. No es un movimiento de plata.`
+              : 'Completa el valor.'}
+          </Nota>
+          <Button title="Registrar valorización" onPress={onSubmit} loading={loading} disabled={!listo} />
+        </>
+      }
+    >
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      {valorActual !== undefined && (
-        <Paragraph>Valor vigente: {money(valorActual, moneda)}</Paragraph>
-      )}
       <Ayuda>{GLOSARIO.valorizar}</Ayuda>
-
-      <MoneyField
-        label="Nuevo valor"
-        value={valorNuevo}
-        onChange={setValorNuevo}
-        moneda={moneda}
-        error={intento ? errValor : undefined}
-      />
-      <DateField label="Fecha (opcional, por defecto hoy)" value={fecha} onChange={setFecha} optional />
-
+      <AmountInput label="¿Cuánto vale?" paso={paso({ hecho: listo })} value={valorNuevo} onChange={setValorNuevo} moneda={moneda} />
+      <Cuando label="¿A qué fecha?" value={fecha} onChange={setFecha} paso={paso({ hecho: !!fecha })} />
       <ErrorText>{error}</ErrorText>
-      <Button title="Registrar valorización" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }
