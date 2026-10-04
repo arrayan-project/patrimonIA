@@ -1,20 +1,15 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useAccionHeader, useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
-import { Migaja, Skeleton, Button, ErrorText, Field, fechaLegible, LinkButton, MoneyField, Row, Screen, Panel, useC, type Paleta } from '../ui';
+import { irAAccion } from './AccionFormScreen';
+import { AccionDestructiva, Dato, Datos, ErrorText, fechaLegible, Hero, Migaja, Nota, Screen, Skeleton } from '../ui';
 
 export function ValorizacionDetalleScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
   const valorizacionId = nav.route.params?.valorizacionId as string;
   const elementoId = nav.route.params?.elementoId as string;
   const moneda = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
@@ -25,11 +20,6 @@ export function ValorizacionDetalleScreen() {
   const [corregida, setCorregida] = useState(false);
   const [error, setError] = useState('');
 
-  const [modo, setModo] = useState<null | 'corregir' | 'anular'>(null);
-  const [valorCorrecto, setValorCorrecto] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [enviando, setEnviando] = useState(false);
-
   const cargar = useCallback(async () => {
     setError('');
     try {
@@ -37,9 +27,7 @@ export function ValorizacionDetalleScreen() {
         `/elementos-patrimoniales/${elementoId}/valorizaciones`,
         token,
       );
-      const v = lista.find((x) => x.id === valorizacionId) ?? null;
-      setVal(v);
-      if (v) setValorCorrecto(String(v.valorNuevo));
+      setVal(lista.find((x) => x.id === valorizacionId) ?? null);
       setEsUltimaVigente(lista.filter((x) => !x.anulada)[0]?.id === valorizacionId);
       setCorregida(lista.some((x) => !x.anulada && x.correccionDeId === valorizacionId));
     } catch (e) {
@@ -49,39 +37,16 @@ export function ValorizacionDetalleScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const ejecutar = async () => {
-    setEnviando(true);
-    setError('');
-    try {
-      if (modo === 'corregir') {
-        await api.post(
-          '/comandos/CorregirValorizacion',
-          { valorizacionId, valorCorrecto: Number(valorCorrecto), motivo: motivo.trim() },
-          token,
-        );
-        toast.mostrar('Valorización corregida');
-      } else {
-        const efecto = esUltimaVigente
-          ? 'El valor del elemento se descuenta en lo que subió o bajó con esta valorización.'
-          : 'El valor actual no cambia (lo fija una valorización posterior); se recalcula el historial entre ambas.';
-        if (!(await confirmar('Eliminar valorización', efecto, 'Eliminar'))) {
-          setEnviando(false);
-          return;
-        }
-        await api.post(
-          '/comandos/AnularValorizacion',
-          { valorizacionId, motivo: motivo.trim() },
-          token,
-        );
-        toast.mostrar('Valorización eliminada');
-      }
-      nav.back();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setEnviando(false);
-    }
-  };
+  // G11: cualquier valorización vigente, no solo la última; si ya tiene una
+  // corrección vigente, se actúa sobre la corrección.
+  const accionable = !!val && !val.anulada && val.correccionDeId === null && !corregida;
+
+  useAccionHeader(
+    'Corregir',
+    accionable && val
+      ? () => nav.go('CorreccionForm', { tipo: 'valorizacion', id: valorizacionId, montoActual: val.valorNuevo, moneda })
+      : undefined,
+  );
 
   if (!val) {
     return (
@@ -92,63 +57,41 @@ export function ValorizacionDetalleScreen() {
     );
   }
 
-  // G11: cualquier valorización vigente, no solo la última; si ya tiene una
-  // corrección vigente, se actúa sobre la corrección.
-  const accionable = !val.anulada && val.correccionDeId === null && !corregida;
-
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Text style={styles.valor}>
-        {money(val.valorAnterior, moneda)} → {money(val.valorNuevo, moneda)}
-      </Text>
-
-      <Panel>
-        <Row left="Fecha" right={fechaLegible(val.fecha)} />
-        <Row left="Estado" right={val.anulada ? 'Eliminada' : 'Vigente'} />
-        {val.correccionDeId && (
-          <Text style={styles.nota}>Es la corrección de una valorización anterior.</Text>
-        )}
-        {corregida && !val.anulada && (
-          <Text style={styles.nota}>Esta valorización ya fue corregida.</Text>
-        )}
-      </Panel>
-
-      {accionable && modo === null && (
-        <View style={{ gap: 8 }}>
-          <Button title="Corregir valor" onPress={() => setModo('corregir')} />
-          <Button title="Eliminar valorización" variant="danger" onPress={() => setModo('anular')} />
-        </View>
+      <Hero
+        label={val.anulada ? 'Valorización eliminada' : 'Nuevo valor'}
+        value={money(val.valorNuevo, moneda)}
+        substats={[{ label: 'Antes', value: money(val.valorAnterior, moneda) }]}
+      />
+      <Datos>
+        <Dato etiqueta="Fecha" valor={fechaLegible(val.fecha)} />
+        <Dato etiqueta="Estado" valor={val.anulada ? 'Eliminada' : 'Vigente'} />
+      </Datos>
+      {val.correccionDeId && <Nota>Es la corrección de una valorización anterior.</Nota>}
+      {corregida && !val.anulada && <Nota>Esta valorización ya fue corregida.</Nota>}
+      <ErrorText>{error}</ErrorText>
+      {accionable && (
+        <AccionDestructiva
+          title="Eliminar valorización"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Eliminar valorización',
+              explicacion: esUltimaVigente
+                ? 'El valor del elemento se descuenta en lo que subió o bajó con esta valorización.'
+                : 'El valor actual no cambia (lo fija una valorización posterior); se recalcula el historial entre ambas.',
+              pregunta: '¿Por qué la eliminas?',
+              boton: 'Eliminar valorización',
+              comando: 'AnularValorizacion',
+              body: { valorizacionId },
+              aviso: 'Valorización eliminada',
+              peligro: true,
+              volver: 2,
+            })
+          }
+        />
       )}
-
-      {modo === 'corregir' && (
-        <Panel>
-          <Text style={styles.formTitle}>Corregir valor</Text>
-          <MoneyField label="Valor correcto" value={valorCorrecto} onChange={setValorCorrecto} moneda={moneda} />
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-          <ErrorText>{error}</ErrorText>
-          <Button title="Guardar corrección" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
-      )}
-
-      {modo === 'anular' && (
-        <Panel>
-          <Text style={styles.formTitle}>Eliminar valorización</Text>
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-          <ErrorText>{error}</ErrorText>
-          <Button title="Eliminar" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
-      )}
-
-      {modo === null && <ErrorText>{error}</ErrorText>}
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  valor: { fontSize: 20, fontWeight: '800', color: c.text },
-  formTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-  nota: { fontSize: 13, color: c.muted, fontStyle: 'italic' },
-});

@@ -1,5 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -11,43 +10,33 @@ import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { GLOSARIO } from '../labels';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
-import { opcionesDeElementos } from '../opciones';
+import { irAAccion } from './AccionFormScreen';
+import type { ReservaParaSacar } from './SacarPlataScreen';
 import {
-  Elegir,
+  AccionDestructiva,
   Ayuda,
   Button,
+  Dato,
+  Datos,
   ErrorText,
-  Field,
-  LinkButton,
+  Hero,
+  MenuList,
   Migaja,
-  MoneyField,
-  Row,
+  Nota,
   Screen,
+  Section,
   Skeleton,
-  Panel,
-  useC,
-  type Paleta,
-  tipoDe,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
   const asignacionId = nav.route.params?.asignacionId as string;
   const contexto = nav.route.params?.contexto as string | undefined;
 
   const [asg, setAsg] = useState<AsignacionDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
-  const [origenId, setOrigenId] = useState<string | null>(null);
-  const [monto, setMonto] = useState('');
-  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -62,20 +51,6 @@ export function AsignacionDetalleScreen() {
   }, [asignacionId, token]);
 
   useCargaAlEnfocar(cargar);
-
-  const run = async (fn: () => Promise<unknown>, salir = false) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (salir) nav.back();
-      else await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   useTitulo(asg?.nombre);
 
@@ -92,123 +67,74 @@ export function AsignacionDetalleScreen() {
   const reservasActivas = (asg.reservas ?? []).filter((r) => r.estado === 'ACTIVA');
   // D-4: un ahorro sin meta ya no recibe plata nueva; solo se saca o se elimina.
   const deUnaMeta = !!asg.objetivoId;
+  const paraSacar: ReservaParaSacar[] = reservasActivas.map((r) => ({
+    id: r.id,
+    cuenta: nombrePorId.get(r.elementoOrigenId) ?? 'Cuenta',
+    monto: r.monto,
+  }));
+  const sacar =
+    paraSacar.length > 0
+      ? () => nav.go('SacarPlata', { reservas: paraSacar, moneda: asg.moneda, deUnaMeta })
+      : undefined;
 
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      pie={
+        deUnaMeta ? (
+          <>
+            <Button title="Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId: asg.objetivoId, asignacionId })} />
+            {sacar && <Button title="Sacar de la meta" variant="secondary" onPress={sacar} />}
+          </>
+        ) : sacar ? (
+          <Button title="Sacar" onPress={sacar} />
+        ) : undefined
+      }
+    >
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Text style={styles.muted}>Ahorrado: {money(asg.totalReservado, asg.moneda)}</Text>
-
+      <Hero label="Ahorrado" value={money(asg.totalReservado, asg.moneda)} />
       <Ayuda>{GLOSARIO.apartado}</Ayuda>
 
-      <Panel>
-        <Text style={styles.sectionTitle}>En qué cuentas está</Text>
+      <Section title="En qué cuentas está">
         {reservasActivas.length === 0 ? (
-          <Text style={styles.muted}>Aún no ahorras aquí.</Text>
+          <Nota>Aún no ahorras aquí.</Nota>
         ) : (
-          reservasActivas.map((r) => (
-            <View key={r.id} style={styles.reserva}>
-              <Row
-                left={nombrePorId.get(r.elementoOrigenId) ?? 'Cuenta'}
-                right={money(r.monto, asg.moneda)}
-              />
-              <Button
-                title={deUnaMeta ? 'Sacar de la meta' : 'Sacar'}
-                variant="secondary"
-                loading={busy}
-                disabled={motivo.trim().length < 3}
-                onPress={() =>
-                  run(() =>
-                    api.post(
-                      '/comandos/LiberarReserva',
-                      { reservaId: r.id, motivo: motivo.trim() },
-                      token,
-                    ),
-                  )
-                }
-              />
-            </View>
-          ))
+          <Datos>
+            {paraSacar.map((r) => (
+              <Dato key={r.id} etiqueta={r.cuenta} valor={money(r.monto, asg.moneda)} />
+            ))}
+          </Datos>
         )}
-      </Panel>
+      </Section>
 
-      {deUnaMeta && (
-      <Panel>
-        <Text style={styles.sectionTitle}>Ahorrar más</Text>
-        <Elegir
-          label="Desde qué cuenta"
-          placeholder="Elegir cuenta"
-          value={origenId}
-          options={opcionesDeElementos(elementos)}
-          onChange={setOrigenId}
-        />
-        <MoneyField label="¿Cuánto?" value={monto} onChange={setMonto} />
-        <Button
-          title="Ahorrar"
-          loading={busy}
-          disabled={!origenId || !(Number(monto) > 0)}
-          onPress={() =>
-            run(async () => {
-              await api.post(
-                '/comandos/CrearReserva',
-                { asignacionId, elementoOrigenId: origenId, monto: Number(monto) },
-                token,
-              );
-              toast.mostrar('Ahorro registrado');
-              setMonto('');
-              setOrigenId(null);
-            })
-          }
-        />
-      </Panel>
-      )}
-
-      <Panel>
-        <Field label="Motivo (para sacar o eliminar)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-        <Button
-          title={deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro'}
-          variant="danger"
-          loading={busy}
-          disabled={motivo.trim().length < 3}
-          onPress={async () => {
-            if (
-              !(await confirmar(
-                deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro',
-                'Toda la plata ahorrada aquí vuelve a quedar libre para gastar. No sale de tus cuentas.',
-                'Eliminar',
-              ))
-            )
-              return;
-            await run(async () => {
-              await api.post(
-                '/comandos/EliminarAsignacion',
-                { asignacionId, motivo: motivo.trim() },
-                token,
-              );
-              toast.mostrar('Ahorro eliminado');
-            }, true);
-          }}
-        />
-      </Panel>
-
-      <Button
-        title="Historial de cambios"
-        variant="secondary"
-        onPress={() =>
-          nav.go('Historial', {
-            entidadTipo: 'ASIGNACION',
-            entidadId: asignacionId,
-            contexto: asg.nombre,
-          })
-        }
+      <MenuList
+        items={[
+          {
+            title: 'Historial de cambios',
+            icon: 'time-outline',
+            onPress: () =>
+              nav.go('Historial', { entidadTipo: 'ASIGNACION', entidadId: asignacionId, contexto: asg.nombre }),
+          },
+        ]}
       />
 
       <ErrorText>{error}</ErrorText>
+      <AccionDestructiva
+        title={deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro'}
+        onPress={() =>
+          irAAccion(nav, {
+            titulo: deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro',
+            explicacion: 'Toda la plata ahorrada aquí vuelve a quedar libre para gastar. No sale de tus cuentas.',
+            pregunta: '¿Por qué lo eliminas?',
+            boton: deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro',
+            comando: 'EliminarAsignacion',
+            body: { asignacionId },
+            aviso: 'Ahorro eliminado',
+            peligro: true,
+            volver: 2,
+          })
+        }
+      />
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  sectionTitle: tipoDe(c).seccion,
-  reserva: { gap: 6, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
-  muted: tipoDe(c).nota,
-});

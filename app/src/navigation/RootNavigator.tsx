@@ -56,10 +56,16 @@ import { AjustesVisualizacionScreen } from '../screens/AjustesVisualizacionScree
 import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 import { CatalogoFormScreen } from '../screens/CatalogoFormScreen';
-import { NuevaMetaScreen } from '../screens/NuevaMetaScreen';
-import { NuevoPresupuestoScreen } from '../screens/NuevoPresupuestoScreen';
+import { MetaFormScreen } from '../screens/MetaFormScreen';
+import { PresupuestoFormScreen } from '../screens/PresupuestoFormScreen';
 import { NuevoProgramadoScreen } from '../screens/NuevoProgramadoScreen';
 import { PlantillaFormScreen } from '../screens/PlantillaFormScreen';
+import { AccionFormScreen } from '../screens/AccionFormScreen';
+import { CorreccionFormScreen } from '../screens/CorreccionFormScreen';
+import { CorregirMovimientoScreen } from '../screens/CorregirMovimientoScreen';
+import { ProgramadoFormScreen } from '../screens/ProgramadoFormScreen';
+import { SacarPlataScreen } from '../screens/SacarPlataScreen';
+import { ValorEnFechaScreen } from '../screens/ValorEnFechaScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 import { AgrupacionesScreen } from '../screens/AgrupacionesScreen';
@@ -164,10 +170,17 @@ const TITULOS: Record<string, string> = {
   Agrupaciones: 'Agrupaciones',
   // CatalogoForm y PlantillaForm ponen su título con useTitulo (crear o editar).
   CatalogoForm: 'Nuevo',
-  NuevaMeta: 'Nueva meta',
-  NuevoPresupuesto: 'Nuevo presupuesto',
+  MetaForm: 'Nueva meta',
+  PresupuestoForm: 'Nuevo presupuesto',
   NuevoProgramado: 'Programar movimiento',
   PlantillaForm: 'Nueva plantilla',
+  // AccionForm, CorreccionForm, ProgramadoForm y SacarPlata ponen su título con useTitulo.
+  AccionForm: 'Confirmar',
+  CorreccionForm: 'Corregir',
+  CorregirMovimiento: 'Editar movimiento',
+  ProgramadoForm: 'Editar programado',
+  SacarPlata: 'Sacar',
+  ValorEnFecha: 'Valor en otra fecha',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -211,10 +224,16 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Etiquetas', EtiquetasScreen],
   ['Agrupaciones', AgrupacionesScreen],
   ['CatalogoForm', CatalogoFormScreen],
-  ['NuevaMeta', NuevaMetaScreen],
-  ['NuevoPresupuesto', NuevoPresupuestoScreen],
+  ['MetaForm', MetaFormScreen],
+  ['PresupuestoForm', PresupuestoFormScreen],
   ['NuevoProgramado', NuevoProgramadoScreen],
   ['PlantillaForm', PlantillaFormScreen],
+  ['AccionForm', AccionFormScreen],
+  ['CorreccionForm', CorreccionFormScreen],
+  ['CorregirMovimiento', CorregirMovimientoScreen],
+  ['ProgramadoForm', ProgramadoFormScreen],
+  ['SacarPlata', SacarPlataScreen],
+  ['ValorEnFecha', ValorEnFechaScreen],
 ];
 
 export function RootNavigator() {

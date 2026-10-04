@@ -35,7 +35,7 @@ export function PresupuestosScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const nuevo = () => nav.go('NuevoPresupuesto');
+  const nuevo = () => nav.go('PresupuestoForm');
   const hay = (lista?.length ?? 0) > 0;
 
   const contexto = (p: PresupuestoDTO) => {

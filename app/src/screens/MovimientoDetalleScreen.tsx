@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -12,38 +12,31 @@ import {
   type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav, useTitulo } from '../navigation/navigator';
+import { useAccionHeader, useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
-import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
+import { irAAccion } from './AccionFormScreen';
+import type { DesdeMovimiento } from './PlantillaFormScreen';
 import {
   aISO,
-  Ayuda,
+  AccionDestructiva,
   Button,
   Chip,
-  DateField,
+  Dato,
+  Datos,
   ErrorText,
   etiqueta,
-  Field,
   fechaLegible,
+  Hero,
   LinkButton,
-  MoneyField,
   Migaja,
-  Panel,
-  Row,
+  Nota,
   Screen,
-  Stat,
   Skeleton,
-  useC,
-  type Paleta,
 } from '../ui';
 
 export function MovimientoDetalleScreen() {
-  const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
-  const toast = useToast();
   const eventoId = nav.route.params?.eventoId as string;
   const elementoId = nav.route.params?.elementoId as string | undefined;
   const contexto = nav.route.params?.contexto as string | undefined;
@@ -56,15 +49,6 @@ export function MovimientoDetalleScreen() {
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
-
-  const [modo, setModo] = useState<null | 'corregir' | 'anular' | 'plantilla' | 'etiquetas'>(null);
-  const [nuevoMonto, setNuevoMonto] = useState('');
-  const [nuevaFecha, setNuevaFecha] = useState(aISO(new Date()));
-  const [nuevaGlosa, setNuevaGlosa] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [nombrePlantilla, setNombrePlantilla] = useState('');
-  const [etiquetaIds, setEtiquetaIds] = useState<string[]>([]);
-  const [enviando, setEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -90,10 +74,6 @@ export function MovimientoDetalleScreen() {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token).catch(() => []);
         setPresupuesto(presus.find((x) => x.vigente && x.estado !== 'CERRADO') ?? null);
       }
-      setNuevoMonto(String(ev.monto));
-      setNuevaFecha(ev.fecha);
-      setNuevaGlosa(ev.glosa ?? '');
-      setEtiquetaIds(ev.etiquetaIds);
       if (etiquetas.length === 0) {
         setEtiquetas(await api.get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token).catch(() => []));
       }
@@ -122,39 +102,22 @@ export function MovimientoDetalleScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  const ejecutar = async () => {
-    if (!evento) return;
-    setEnviando(true);
-    setError('');
-    try {
-      if (modo === 'corregir') {
-        const body: Record<string, unknown> = { eventoId, motivo: motivo.trim() };
-        if (Number(nuevoMonto) !== evento.monto) body.nuevoMonto = Number(nuevoMonto);
-        if (nuevaFecha !== evento.fecha) body.nuevaFecha = nuevaFecha;
-        if (nuevaGlosa.trim() !== (evento.glosa ?? '')) body.nuevaGlosa = nuevaGlosa.trim();
-        await api.post('/comandos/CorregirEventoFinanciero', body, token);
-        toast.mostrar('Movimiento corregido');
-      } else {
-        if (!(await confirmar('Eliminar movimiento', 'Se revierte su efecto sobre el saldo. Queda en el historial marcado como eliminado.', 'Eliminar'))) {
-          setEnviando(false);
-          return;
-        }
-        await api.post(
-          '/comandos/AnularEventoFinanciero',
-          { eventoId, motivo: motivo.trim() },
-          token,
-        );
-        toast.mostrar('Movimiento eliminado');
-      }
-      nav.back();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setEnviando(false);
-    }
-  };
-
   useTitulo(evento ? evento.glosa || etiqueta(evento.tipo) : undefined);
+  useAccionHeader(
+    'Editar',
+    evento && !evento.anulado
+      ? () =>
+          nav.go('CorregirMovimiento', {
+            eventoId,
+            monto: evento.monto,
+            fecha: evento.fecha,
+            glosa: evento.glosa,
+            moneda: evento.moneda,
+            corregible: evento.correccionDeId === null && !tieneCorreccion,
+            etiquetaIds: evento.etiquetaIds,
+          })
+      : undefined,
+  );
 
   if (!evento) {
     return (
@@ -186,72 +149,50 @@ export function MovimientoDetalleScreen() {
   const destino = esInterno ? evento.impactos.find((i) => i.monto > 0) : undefined;
   const esCorreccion = evento.correccionDeId !== null;
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
-  const puedePlantilla = !evento.anulado && evento.tipo !== 'CONVERSION';
+  const puedePlantilla =
+    !evento.anulado && (evento.tipo === 'GASTO' || evento.tipo === 'INGRESO' || evento.tipo === 'TRANSFERENCIA');
 
-  const guardarEtiquetas = async () => {
-    setEnviando(true);
-    setError('');
-    try {
-      await api.post('/comandos/EtiquetarEvento', { eventoId, etiquetaIds }, token);
-      toast.mostrar('Etiquetas actualizadas');
-      setModo(null);
-      await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setEnviando(false);
-    }
-  };
 
-  const guardarPlantilla = async () => {
-    setEnviando(true);
-    setError('');
-    try {
-      await api.post(
-        '/comandos/CrearPlantillaMovimiento',
-        {
-          nombre: nombrePlantilla.trim(),
-          tipo: evento.tipo,
-          monto: evento.monto,
-          moneda: evento.moneda,
-          elementoOrigenId: evento.impactos.find((i) => Number(i.monto) < 0)?.elementoId,
-          elementoDestinoId: evento.impactos.find((i) => Number(i.monto) > 0)?.elementoId,
-          ...(evento.categoriaId ? { categoriaId: evento.categoriaId } : {}),
-          ...(evento.glosa ? { glosa: evento.glosa } : {}),
-        },
-        token,
-      );
-      toast.mostrar('Plantilla creada');
-      setModo(null);
-      setNombrePlantilla('');
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setEnviando(false);
-    }
+  const guardarComoPlantilla = () => {
+    const desde: DesdeMovimiento = {
+      nombre: evento.glosa ?? '',
+      tipo: evento.tipo as DesdeMovimiento['tipo'],
+      monto: evento.monto,
+      moneda: evento.moneda,
+      origenId: evento.impactos.find((i) => Number(i.monto) < 0)?.elementoId ?? null,
+      destinoId: evento.impactos.find((i) => Number(i.monto) > 0)?.elementoId ?? null,
+      categoriaId: evento.categoriaId,
+      glosa: evento.glosa ?? '',
+    };
+    nav.go('PlantillaForm', { desde });
   };
 
   return (
-    <Screen onRefresh={cargar}>
+    <Screen
+      onRefresh={cargar}
+      pie={puedePlantilla ? <Button title="Guardar como plantilla" variant="secondary" onPress={guardarComoPlantilla} /> : undefined}
+    >
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Stat label={etiqueta(evento.tipo)} value={money(evento.monto, evento.moneda)} />
+      <Hero
+        label={evento.anulado ? `${etiqueta(evento.tipo)} · eliminado` : etiqueta(evento.tipo)}
+        value={money(evento.monto, evento.moneda)}
+      />
 
-
-      <Panel>
-        <Row left="Fecha" right={fechaLegible(evento.fecha)} />
+      <Datos>
+        <Dato etiqueta="Fecha" valor={fechaLegible(evento.fecha)} />
         {esInterno ? (
           <>
-            <Row left="Desde" right={enlaceCuenta(origen?.elementoId)} />
-            <Row left="Hacia" right={enlaceCuenta(destino?.elementoId)} />
+            <Dato etiqueta="Desde" valor={enlaceCuenta(origen?.elementoId)} />
+            <Dato etiqueta="Hacia" valor={enlaceCuenta(destino?.elementoId)} />
           </>
         ) : evento.impactos[0] ? (
-          <Row left="Cuenta" right={enlaceCuenta(evento.impactos[0].elementoId)} />
+          <Dato etiqueta="Cuenta" valor={enlaceCuenta(evento.impactos[0].elementoId)} />
         ) : null}
-        {evento.glosa ? <Row left="Detalle" right={evento.glosa} /> : null}
+        {evento.glosa ? <Dato etiqueta="Detalle" valor={evento.glosa} /> : null}
         {evento.categoriaId ? (
-          <Row
-            left="Categoría"
-            right={
+          <Dato
+            etiqueta="Categoría"
+            valor={
               <LinkButton
                 title={`${nombreCategoria} ›`}
                 onPress={() =>
@@ -266,9 +207,9 @@ export function MovimientoDetalleScreen() {
           />
         ) : null}
         {presupuesto ? (
-          <Row
-            left="Presupuesto"
-            right={
+          <Dato
+            etiqueta="Presupuesto"
+            valor={
               <LinkButton
                 title="Ver el del mes ›"
                 onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
@@ -276,155 +217,44 @@ export function MovimientoDetalleScreen() {
             }
           />
         ) : null}
-        {impacto && (
-          <Row left="Efecto en esta cuenta" right={money(impacto.monto, evento.moneda)} />
-        )}
-        <Row left="Estado" right={evento.anulado ? 'Eliminado' : 'Vigente'} />
-        {evento.etiquetaIds.length > 0 && (
-          <View style={styles.chips}>
-            {evento.etiquetaIds.map((id) => {
-              const e = etiquetas.find((x) => x.id === id);
-              return <Chip key={id} label={e?.nombre ?? '—'} color={e?.color} activo />;
-            })}
-          </View>
-        )}
-        {esCorreccion && <Text style={styles.nota}>Es la corrección de un movimiento anterior.</Text>}
-        {tieneCorreccion && (
-          <Text style={styles.nota}>Este movimiento ya fue corregido — corrige o anula esa corrección.</Text>
-        )}
-      </Panel>
-
-      {modo === null && accionable && (
-        <Ayuda>
-          Corregir: el movimiento ocurrió pero con otro monto, fecha o detalle. Se
-          registra la diferencia y el original queda enlazado a su corrección. Eliminar:
-          el movimiento no ocurrió — se revierte su efecto por completo y queda en el historial.
-        </Ayuda>
-      )}
-
-      {modo === null && (
-        <View style={{ gap: 8 }}>
-          {accionable && <Button title="Corregir" onPress={() => setModo('corregir')} />}
-          {puedePlantilla && (
-            <Button
-              title="Guardar como plantilla"
-              variant="secondary"
-              onPress={() => {
-                setNombrePlantilla(evento.glosa ?? '');
-                setModo('plantilla');
-              }}
-            />
-          )}
-          {!evento.anulado && etiquetas.length > 0 && (
-            <Button
-              title="Editar etiquetas"
-              variant="secondary"
-              onPress={() => {
-                setEtiquetaIds(evento.etiquetaIds);
-                setModo('etiquetas');
-              }}
-            />
-          )}
-          {accionable && (
-            <Button title="Eliminar movimiento" variant="danger" onPress={() => setModo('anular')} />
-          )}
+        {impacto && <Dato etiqueta="Efecto en esta cuenta" valor={money(impacto.monto, evento.moneda)} />}
+        <Dato etiqueta="Estado" valor={evento.anulado ? 'Eliminado' : 'Vigente'} />
+      </Datos>
+      {evento.etiquetaIds.length > 0 && (
+        <View style={styles.chips}>
+          {evento.etiquetaIds.map((id) => {
+            const e = etiquetas.find((x) => x.id === id);
+            return <Chip key={id} label={e?.nombre ?? '—'} color={e?.color} activo />;
+          })}
         </View>
       )}
+      {esCorreccion && <Nota>Es la corrección de un movimiento anterior.</Nota>}
+      {tieneCorreccion && <Nota>Este movimiento ya fue corregido: corrige o elimina esa corrección.</Nota>}
 
-      {modo === 'etiquetas' && (
-        <Panel>
-          <Text style={styles.formTitle}>Etiquetas</Text>
-          <View style={styles.chips}>
-            {etiquetas.map((e) => (
-              <Chip
-                key={e.id}
-                label={e.nombre}
-                color={e.color}
-                activo={etiquetaIds.includes(e.id)}
-                onPress={() =>
-                  setEtiquetaIds((xs) =>
-                    xs.includes(e.id) ? xs.filter((x) => x !== e.id) : [...xs, e.id],
-                  )
-                }
-              />
-            ))}
-          </View>
-          <ErrorText>{error}</ErrorText>
-          <Button title="Guardar" onPress={guardarEtiquetas} loading={enviando} />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
+      <ErrorText>{error}</ErrorText>
+      {accionable && (
+        <AccionDestructiva
+          title="Eliminar movimiento"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Eliminar movimiento',
+              explicacion:
+                'Úsalo si el movimiento no ocurrió: se revierte su efecto sobre el saldo y queda en el historial como eliminado. Si ocurrió con otro monto o fecha, mejor corrígelo con Editar.',
+              pregunta: '¿Por qué lo eliminas?',
+              boton: 'Eliminar movimiento',
+              comando: 'AnularEventoFinanciero',
+              body: { eventoId },
+              aviso: 'Movimiento eliminado',
+              peligro: true,
+              volver: 2,
+            })
+          }
+        />
       )}
-
-      {modo === 'plantilla' && (
-        <Panel>
-          <Text style={styles.formTitle}>Guardar como plantilla</Text>
-          <Text style={styles.nota}>
-            Se guarda el tipo, el monto, las cuentas, la categoría y el detalle para
-            reutilizarlos.
-          </Text>
-          <Field
-            label="Nombre de la plantilla"
-            value={nombrePlantilla}
-            onChangeText={setNombrePlantilla}
-            autoCapitalize="sentences"
-            placeholder="p. ej. Arriendo"
-          />
-          <ErrorText>{error}</ErrorText>
-          <Button
-            title="Guardar plantilla"
-            onPress={guardarPlantilla}
-            loading={enviando}
-            disabled={!nombrePlantilla.trim()}
-          />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
-      )}
-
-      {modo === 'corregir' && (
-        <Panel>
-          <Text style={styles.formTitle}>Corregir movimiento</Text>
-          <Ayuda>
-            El movimiento ocurrió, pero con otro monto, fecha o detalle. Se registra una
-            corrección enlazada; el original queda intacto. Para cambiar el tipo o los
-            elementos, elimínalo y regístralo de nuevo.
-          </Ayuda>
-          <MoneyField label="Monto correcto" value={nuevoMonto} onChange={setNuevoMonto} moneda={evento.moneda} />
-          <DateField label="Fecha correcta" value={nuevaFecha} onChange={setNuevaFecha} />
-          <Field label="Detalle" value={nuevaGlosa} onChangeText={setNuevaGlosa} placeholder="Glosa del movimiento" autoCapitalize="sentences" />
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se corrige" autoCapitalize="sentences" />
-          <ErrorText>{error}</ErrorText>
-          <Button
-            title="Guardar corrección"
-            onPress={ejecutar}
-            loading={enviando}
-            disabled={
-              motivo.trim().length < 3 ||
-              (Number(nuevoMonto) === evento.monto &&
-                nuevaFecha === evento.fecha &&
-                nuevaGlosa.trim() === (evento.glosa ?? ''))
-            }
-          />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
-      )}
-
-      {modo === 'anular' && (
-        <Panel>
-          <Text style={styles.formTitle}>Eliminar movimiento</Text>
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se elimina" autoCapitalize="sentences" />
-          <ErrorText>{error}</ErrorText>
-          <Button title="Eliminar" onPress={ejecutar} loading={enviando} disabled={motivo.trim().length < 3} />
-          <LinkButton title="Cancelar" onPress={() => setModo(null)} />
-        </Panel>
-      )}
-
-      {modo === null && <ErrorText>{error}</ErrorText>}
     </Screen>
   );
 }
 
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  formTitle: { fontSize: 16, fontWeight: '700', color: c.text },
-  nota: { fontSize: 13, color: c.muted, fontStyle: 'italic' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+const styles = StyleSheet.create({
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
