@@ -317,7 +317,14 @@ export function AgregarElementoScreen() {
     const pareja = otros.length === 1 ? otros[0].nombre : undefined;
     const valor = creado.valorPendiente ?? creado.valorVigente;
     return (
-      <Screen>
+      <Screen
+        pie={
+          <>
+            <Button title="Guardar" onPress={guardarNivel} loading={loading} />
+            <Button title="Ahora no" variant="secondary" onPress={() => nav.back()} />
+          </>
+        }
+      >
         <Panel>
           <Text style={styles.listo}>✓ {creado.nombre} quedó agregada</Text>
           <Text style={styles.muted}>
@@ -333,10 +340,6 @@ export function AgregarElementoScreen() {
         />
         <Nota>Puedes cambiarlo cuando quieras desde la cuenta.</Nota>
         <ErrorText>{error}</ErrorText>
-        <View style={styles.pie}>
-          <Button title="Guardar" onPress={guardarNivel} loading={loading} />
-          <Button title="Ahora no" variant="secondary" onPress={() => nav.back()} />
-        </View>
       </Screen>
     );
   }
@@ -351,8 +354,14 @@ export function AgregarElementoScreen() {
   const pTipo = paso({ hecho: !!tipo.trim() });
   const pMonto = paso({ hecho: !errMonto });
 
+  const agregar =
+    categoria === 'DEUDA' ? 'Agregar deuda' : categoria === 'CREDITO' ? 'Agregar crédito' : categoria === 'ACTIVO' ? 'Agregar bien' : 'Agregar cuenta';
   return (
-    <Screen>
+    <Screen
+      pie={
+        <Button title={agregar} onPress={onSubmit} loading={loading} disabled={!!(errNombre || errTipo || errMonto)} />
+      }
+    >
       {mensaje ? <Ayuda>{mensaje}</Ayuda> : null}
 
       <Field
@@ -412,12 +421,12 @@ export function AgregarElementoScreen() {
       <AmountInput
         label={
           categoria === 'DEUDA'
-            ? 'Lo que debes hoy'
+            ? '¿Cuánto debes hoy?'
             : categoria === 'CREDITO'
-              ? 'Lo que te deben hoy'
+              ? '¿Cuánto te deben hoy?'
               : categoria === 'ACTIVO'
-                ? 'Valor actual'
-                : 'Saldo actual'
+                ? '¿Cuánto vale hoy?'
+                : '¿Cuánto tiene hoy?'
         }
         paso={pMonto}
         value={monto}
@@ -470,14 +479,14 @@ export function AgregarElementoScreen() {
           {esDeudaOCredito ? (
             <>
               <Field
-                label={categoria === 'DEUDA' ? 'Acreedor (opcional)' : 'Deudor (opcional)'}
+                label={categoria === 'DEUDA' ? '¿A quién le debes? (opcional)' : '¿Quién te debe? (opcional)'}
                 value={contraparte}
                 onChangeText={setContraparte}
                 autoCapitalize="sentences"
                 placeholder={categoria === 'DEUDA' ? 'Banco, persona…' : 'A quién le prestaste'}
               />
-              <DateField label="Fecha de término (opcional)" value={fechaTermino} onChange={setFechaTermino} optional />
-              <MoneyField label="Cuota (opcional)" value={cuota} onChange={setCuota} moneda={monedaVista} />
+              <DateField label="¿Hasta cuándo? (opcional)" value={fechaTermino} onChange={setFechaTermino} optional />
+              <MoneyField label="¿De cuánto es la cuota? (opcional)" value={cuota} onChange={setCuota} />
             </>
           ) : (
             <Segmented
@@ -532,7 +541,6 @@ export function AgregarElementoScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
-      <Button title="Agregar" onPress={onSubmit} loading={loading} />
     </Screen>
   );
 }
@@ -547,5 +555,4 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   pctSigno: { fontSize: 15, color: c.muted, fontWeight: '600' },
   total: { fontSize: 13, fontWeight: '700', color: c.muted, textAlign: 'right' },
   totalOk: { color: c.primary },
-  pie: { gap: 10 },
 });

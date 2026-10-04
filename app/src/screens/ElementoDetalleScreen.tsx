@@ -104,7 +104,7 @@ export function ElementoDetalleScreen() {
   useTitulo(elemento?.nombre);
   useAccionHeader(
     'Editar',
-    elemento && esPropietario
+    elemento && esPropietario && elemento.estado !== 'INACTIVO'
       ? () => nav.go('EditarElemento', { elementoId, contexto: elemento.nombre })
       : undefined,
   );
@@ -158,7 +158,22 @@ export function ElementoDetalleScreen() {
     <Screen
       onRefresh={cargar}
       pie={
-        activo ? (
+        esPropietario && el.estado === 'INACTIVO' ? (
+          <Button
+            title="Reactivar"
+            onPress={() =>
+              irAAccion(nav, {
+                titulo: 'Reactivar',
+                explicacion: 'Vuelve a contar en tu patrimonio.',
+                pregunta: '¿Por qué la reactivas?',
+                boton: 'Reactivar',
+                comando: 'ReactivarElementoPatrimonial',
+                body: { elementoId },
+                aviso: 'Reactivada',
+              })
+            }
+          />
+        ) : activo ? (
           <>
             {/* G32 H-07 — registrar con esta cuenta ya elegida (pagar una deuda = transferir hacia ella). */}
             <Button
@@ -366,6 +381,16 @@ export function ElementoDetalleScreen() {
       {esPropietario && (
         <MenuList
           items={[
+            ...(activo
+              ? [
+                  {
+                    title: 'Ajustes de la cuenta',
+                    subtitle: `Con el hogar: ${etiquetaNivel(el).toLowerCase()}`,
+                    icon: 'options-outline' as const,
+                    onPress: () => nav.go('AjustesElemento', { elementoId }),
+                  },
+                ]
+              : []),
             {
               title: '¿Cuánto valía en otra fecha?',
               icon: 'calendar-outline',
@@ -382,6 +407,45 @@ export function ElementoDetalleScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
+      {activo && (
+        <AccionDestructiva
+          title="Desactivar"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Desactivar',
+              explicacion: 'Deja de contar en tu patrimonio desde la fecha de salida. Se puede reactivar después.',
+              pregunta: '¿Por qué? (opcional)',
+              minimo: 0,
+              fecha: { campo: 'fechaBaja', pregunta: '¿Desde cuándo? (opcional, por defecto hoy)' },
+              boton: 'Desactivar',
+              comando: 'DesactivarElementoPatrimonial',
+              body: { elementoId },
+              aviso: 'Desactivada',
+              peligro: true,
+            })
+          }
+        />
+      )}
+      {/* Eliminar solo si nunca tuvo movimientos ni valorizaciones; si no, se desactiva. */}
+      {esPropietario && eventos.length === 0 && valorizaciones.length === 0 && (
+        <AccionDestructiva
+          title="Eliminar"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Eliminar',
+              explicacion: 'Se borra para siempre. Solo es posible porque nunca tuvo movimientos ni valorizaciones.',
+              pregunta: '¿Por qué la eliminas?',
+              boton: 'Eliminar',
+              comando: 'EliminarElementoPatrimonial',
+              body: { elementoId },
+              campo: 'justificacion',
+              aviso: 'Eliminada',
+              peligro: true,
+              volver: 2,
+            })
+          }
+        />
+      )}
       {esPropietario && (esDeuda || esCredito) && pendiente > 0 && (
         <AccionDestructiva
           title={esDeuda ? 'Condonar deuda' : 'Declarar incobrable'}

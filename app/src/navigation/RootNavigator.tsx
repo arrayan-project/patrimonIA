@@ -66,6 +66,7 @@ import { CorregirMovimientoScreen } from '../screens/CorregirMovimientoScreen';
 import { ProgramadoFormScreen } from '../screens/ProgramadoFormScreen';
 import { SacarPlataScreen } from '../screens/SacarPlataScreen';
 import { ValorEnFechaScreen } from '../screens/ValorEnFechaScreen';
+import { AjustesElementoScreen } from '../screens/AjustesElementoScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 import { AgrupacionesScreen } from '../screens/AgrupacionesScreen';
@@ -181,6 +182,7 @@ const TITULOS: Record<string, string> = {
   ProgramadoForm: 'Editar programado',
   SacarPlata: 'Sacar',
   ValorEnFecha: 'Valor en otra fecha',
+  AjustesElemento: 'Ajustes de la cuenta',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -234,6 +236,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['ProgramadoForm', ProgramadoFormScreen],
   ['SacarPlata', SacarPlataScreen],
   ['ValorEnFecha', ValorEnFechaScreen],
+  ['AjustesElemento', AjustesElementoScreen],
 ];
 
 export function RootNavigator() {
