@@ -531,18 +531,29 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Presupuestos no cambia (todo trae valor o es opcional). Contraste: el
      borde de los campos editables pasa a `mutedDim`. El botón final no se
      bloquea (sigue mostrando los errores al tocarlo). Validar con Zoily.
-  4. Rediseño visual con el prototipo como referencia única (insertado el
-     2026-10-03; ver `GAPS.md`, G33). Implementado en la rama
-     `feat/G33-E4-rediseno`, falta la prueba de Juan en el teléfono (tema
-     oscuro y claro). Capturas en `capturas-e4/`.
-  5. HZ-13: gastar desde la meta (A5).
-  6. C1 + D-2: alta de cuenta y compartir con el hogar.
-  7. D-1: Ahorrar (A1/A2).
-  8. D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
+  4. ✅ Rediseño visual con el prototipo como referencia única (insertado el
+     2026-10-03; ver `GAPS.md`, G33). Rama `feat/G33-E4-rediseno`, probada
+     por Juan en el teléfono y mergeada (2026-10-03). Capturas en `capturas-e4/`.
+  5. ✅ HZ-13: gastar desde la meta (A5). Rama `feat/G33-E5-gastar-meta`,
+     probada por Juan y mergeada (2026-10-03). Capturas en `capturas-e5/`.
+  6. ✅ C1 + D-2: alta de cuenta y compartir con el hogar. Rama
+     `feat/G33-E6-alta-cuenta`, probada por Juan y mergeada (2026-10-03).
+     Capturas en `capturas-e6/`.
+  7. ✅ D-1: Ahorrar (A1/A2), más los errores del backend con código (residuo
+     de D-4). Rama `feat/G33-E7-ahorrar`, mergeada (2026-10-03). Capturas en
+     `capturas-e7/`.
+     - ✅ Reglas de diseño (`prototipo/plantillas-pantalla-s01.html`),
+       insertadas antes del 8 en los bloques R1 a R6, una rama cada uno,
+       mergeadas (2026-10-03 y 2026-10-04).
+  8. ✅ D-8 + D-3 (incluye HZ-11) + HZ-18 + HZ-20: el paso 2 "¿de quién es?" en
      Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
-     y recuperación.
-  9. D-7 + HZ-21: solicitud de aporte, "De alguien del hogar" en Recibí y
-     "Entre [miembro] y tú".
+     y recuperación. En dos ramas: `feat/G33-E8a-otra-persona` (backend) y
+     `feat/G33-E8b-dos-puertas` (app), probadas por Juan y mergeadas
+     (2026-10-04). Capturas en `capturas-e8/`. "Compartido con el hogar" y
+     "Avisarle a [miembro]" pasan al 9.
+  9. D-7 + HZ-21: solicitud de aporte ("Compartido con el hogar" en Gasté),
+     "Avisarle a [miembro]" en Recibí → De alguien del hogar y "Entre
+     [miembro] y tú".
   10. D-5 + D-6: recurrencia y destino de otro miembro.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.
