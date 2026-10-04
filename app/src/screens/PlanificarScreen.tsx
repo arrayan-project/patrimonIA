@@ -19,7 +19,9 @@ import {
   IconButton,
   ListCard,
   MenuList,
-  PillDate,
+  Hero,
+  Nota,
+  ProgressBar,
   Screen,
   Section,
   Skeleton,
@@ -95,6 +97,18 @@ export function PlanificarScreen() {
   useCargaAlEnfocar(cargar);
 
   const enProgreso = (objetivos ?? []).filter((o) => o.estado === 'EN_PROGRESO');
+  // Una cifra por moneda (no se convierten); arriba la que tiene más metas.
+  const porMoneda = [...new Set(enProgreso.map((o) => o.moneda))]
+    .map((moneda) => {
+      const de = enProgreso.filter((o) => o.moneda === moneda);
+      return {
+        moneda,
+        n: de.length,
+        llevas: de.reduce((s, o) => s + o.progreso, 0),
+        meta: de.reduce((s, o) => s + o.montoObjetivo, 0),
+      };
+    })
+    .sort((a, b) => b.n - a.n);
   const completados = (objetivos ?? []).filter((o) => o.estado === 'COMPLETADO').length;
   const monedasUnicas = new Set(enProgreso.map((o) => o.moneda));
   const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
@@ -126,10 +140,21 @@ export function PlanificarScreen() {
           </>
         }
       />
-      <PillDate icon="flag-outline">
-        {`${enProgreso.length} ${enProgreso.length === 1 ? 'meta activa' : 'metas activas'}`}
-        {completados > 0 ? ` · ${completados} ${completados === 1 ? 'cumplida' : 'cumplidas'}` : ''}
-      </PillDate>
+      {/* Plantilla Resumen: una cifra — cuánto llevas ahorrado en tus metas activas. */}
+      {porMoneda.length > 0 && (
+        <>
+          <Hero label="Ahorrado en tus metas" value={money(porMoneda[0].llevas, porMoneda[0].moneda)}>
+            <ProgressBar pct={porMoneda[0].meta > 0 ? (porMoneda[0].llevas / porMoneda[0].meta) * 100 : 0} />
+          </Hero>
+          <Nota>
+            {`De ${money(porMoneda[0].meta, porMoneda[0].moneda)} que quieres juntar en ${enProgreso.filter((o) => o.moneda === porMoneda[0].moneda).length === 1 ? '1 meta' : `${enProgreso.filter((o) => o.moneda === porMoneda[0].moneda).length} metas`}.`}
+            {porMoneda.length > 1
+              ? ` Además: ${porMoneda.slice(1).map((m) => `${money(m.llevas, m.moneda)} de ${money(m.meta, m.moneda)}`).join(', ')}.`
+              : ''}
+            {completados > 0 ? ` Ya cumpliste ${completados}.` : ''}
+          </Nota>
+        </>
+      )}
 
       {objetivos === null ? (
         <Skeleton filas={2} />

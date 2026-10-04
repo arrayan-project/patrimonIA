@@ -68,12 +68,19 @@ export function HogarConsolidadoScreen() {
   return (
     <Screen onRefresh={cargar}>
       <Hero
-        label={`Total del hogar (${cons.monedaConsolidacion})`}
+        label="Plata del hogar"
         value={cons.total != null ? money(cons.total, cons.monedaConsolidacion) : '—'}
-        substats={[
-          { label: 'Elementos', value: String(cons.elementos) },
-          { label: 'Miembros', value: String(cons.miembros) },
-        ]}
+        substats={
+          // Tienen − Deben = total; solo si cuadra (una moneda, la del hogar).
+          cons.porMoneda.length === 1 &&
+          cons.porMoneda[0].moneda === cons.monedaConsolidacion &&
+          Math.abs(cons.porMoneda[0].activos - Math.abs(cons.porMoneda[0].pasivos) - cons.porMoneda[0].patrimonioNeto) < 1
+            ? [
+                { label: 'Tienen', value: money(cons.porMoneda[0].activos, cons.monedaConsolidacion) },
+                { label: 'Deben', value: money(Math.abs(cons.porMoneda[0].pasivos), cons.monedaConsolidacion) },
+              ]
+            : undefined
+        }
       />
       {cons.total == null && (
         <Nota>
@@ -85,28 +92,30 @@ export function HogarConsolidadoScreen() {
       {cons.porMoneda.map((pm) => {
         const metricas = met.porMoneda.find((x) => x.moneda === pm.moneda);
         return (
-          <Section key={pm.moneda} title={`En ${pm.moneda}`}>
+          <Section key={pm.moneda} title={cons.porMoneda.length > 1 ? `En ${pm.moneda}` : 'Cómo se compone'}>
             <Panel>
+              {/* Con una sola moneda, total, tienen y deben ya están arriba. */}
+              {cons.porMoneda.length > 1 && (
+                <>
+                  <Row
+                    left="Total"
+                    right={<MoneyText monto={pm.patrimonioNeto} moneda={pm.moneda} style={styles.montoRow} />}
+                  />
+                  <Row left="Tienen" right={money(pm.activos, pm.moneda)} />
+                  <Row left="Deben" right={money(Math.abs(pm.pasivos), pm.moneda)} />
+                </>
+              )}
               <Row
-                left="Patrimonio neto"
-                right={<MoneyText monto={pm.patrimonioNeto} moneda={pm.moneda} style={styles.montoRow} />}
-              />
-              <Row left="Activos" right={money(pm.activos, pm.moneda)} />
-              <Row
-                left="Pasivos"
-                right={<MoneyText monto={pm.pasivos} moneda={pm.moneda} style={styles.montoRow} />}
-              />
-              <Row
-                left="Valor líquido"
+                left="Disponible en cuentas"
                 right={<MoneyText monto={pm.valorLiquido} moneda={pm.moneda} style={styles.montoRow} />}
               />
               {metricas?.liquidez != null && (
-                <Row left="Liquidez" right={`${Math.round(metricas.liquidez * 100)}%`} />
+                <Row left="Parte que está en cuentas" right={`${Math.round(metricas.liquidez * 100)}%`} />
               )}
 
               {metricas && metricas.distribucionPorActivo.length > 0 && (
                 <>
-                  <Text style={styles.subTitle}>Distribución de activos</Text>
+                  <Text style={styles.subTitle}>En qué está lo que tienen</Text>
                   <Dona
                     segmentos={metricas.distribucionPorActivo.map((d, i) => ({
                       label: etiqueta(d.categoria),
@@ -120,7 +129,7 @@ export function HogarConsolidadoScreen() {
               )}
               {metricas && metricas.distribucionPorPasivo.length > 0 && (
                 <>
-                  <Text style={styles.subTitle}>Distribución de pasivos</Text>
+                  <Text style={styles.subTitle}>Qué deben</Text>
                   {metricas.distribucionPorPasivo.map((d) => (
                     <Row
                       key={d.categoria}

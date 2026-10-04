@@ -48,6 +48,8 @@ import {
   type NombreIcono,
   type Paleta,
   tipoDe,
+  Dato,
+  Datos,
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 
@@ -243,6 +245,30 @@ export function DashboardScreen() {
     : money(principal?.patrimonio ?? 0, monedaPrin);
   const metricasHogar = metricas?.porMoneda.find((m) => m.moneda === monedaPrin);
   const v = principal ? variacion?.porMoneda.find((x) => x.moneda === principal.moneda) : undefined;
+
+  // Plantilla Resumen: las dos cifras bajo la principal la explican — Tienes
+  // menos Debes da el total. Se muestran solo si cuadran exactamente.
+  const tienesDebes = (() => {
+    if (alcance === 'hogar') {
+      const pm = consolidado?.porMoneda;
+      if (!pm || pm.length !== 1 || hh?.tipo === 'error' || pm[0].moneda !== monedaPrin) return null;
+      const debes = Math.abs(pm[0].pasivos);
+      return Math.abs(pm[0].activos - debes - pm[0].patrimonioNeto) < 1
+        ? { tienes: pm[0].activos, debes, moneda: pm[0].moneda }
+        : null;
+    }
+    if (!principal) return null;
+    let tienes = 0;
+    let debes = 0;
+    for (const e of elementos) {
+      if (e.moneda !== principal.moneda || e.estado === 'INACTIVO') continue;
+      const pct = (e.propietarios.find((p) => p.usuarioId === usuario.id)?.porcentaje ?? 100) / 100;
+      const valor = e.valorVigente * pct;
+      if (valor < 0) debes += -valor;
+      else tienes += valor;
+    }
+    return Math.abs(tienes - debes - principal.patrimonio) < 1 ? { tienes, debes, moneda: principal.moneda } : null;
+  })();
   const puntos = principal
     ? (serie?.puntos ?? []).map((pt) => pt.porMoneda.find((m) => m.moneda === principal.moneda)?.patrimonio ?? 0)
     : [];
@@ -261,9 +287,13 @@ export function DashboardScreen() {
     for (const cat of CATS) {
       const delCat = elementos.filter((e) => e.categoriaFuncional === cat);
       if (delCat.length === 0) continue;
+      // Tu parte de cada cuenta o bien, como la cifra de arriba.
       const valor = delCat
-        .filter((e) => e.moneda === monedaPrin)
-        .reduce((s, e) => s + e.valorVigente, 0);
+        .filter((e) => e.moneda === monedaPrin && e.estado !== 'INACTIVO')
+        .reduce(
+          (s, e) => s + (e.valorVigente * (e.propietarios.find((p) => p.usuarioId === usuario.id)?.porcentaje ?? 100)) / 100,
+          0,
+        );
       composicion.push({ cat, valor, sub: `${delCat.length} ${delCat.length === 1 ? 'elemento' : 'elementos'}` });
     }
   }
@@ -356,7 +386,7 @@ export function DashboardScreen() {
               accessibilityRole="button"
               style={({ pressed }) => [styles.alerta, pressed && { opacity: 0.6 }]}
             >
-              <View style={[styles.alertaPunto, { backgroundColor: a.danger ? c.danger : c.muted }]} />
+              <View style={[styles.alertaPunto, { backgroundColor: c.muted }]} />
               <Text style={styles.alertaTxt}>{a.texto}</Text>
               <Text style={styles.alertaChev}>›</Text>
             </Pressable>
@@ -375,7 +405,7 @@ export function DashboardScreen() {
         accessibilityLabel="Ver mi patrimonio completo"
       >
         <Hero
-          label={alcance === 'hogar' ? `${hogar.nombre} · patrimonio` : 'Patrimonio neto'}
+          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu patrimonio'}
           value={heroValor}
           change={
             alcance === 'mios' && v && v.variacion !== 0
@@ -388,10 +418,10 @@ export function DashboardScreen() {
           }
           changeDir={v && v.variacion < 0 ? 'neg' : 'pos'}
           substats={
-            ver.disponibilidad && alcance === 'mios' && principal
+            tienesDebes
               ? [
-                  { label: 'Libre para gastar', value: money(principal.valorLibre, principal.moneda) },
-                  { label: 'En metas', value: money(principal.valorReservado, principal.moneda) },
+                  { label: alcance === 'hogar' ? 'Tienen' : 'Tienes', value: money(tienesDebes.tienes, tienesDebes.moneda) },
+                  { label: alcance === 'hogar' ? 'Deben' : 'Debes', value: money(tienesDebes.debes, tienesDebes.moneda) },
                 ]
               : undefined
           }
@@ -400,7 +430,13 @@ export function DashboardScreen() {
         </Hero>
       </Pressable>
       {ver.disponibilidad && alcance === 'mios' && principal ? (
-        <Nota>“En metas” es plata que ahorraste para tus metas: sigue en la cuenta, pero no es libre para gastar.</Nota>
+        <>
+          <Datos>
+            <Dato etiqueta="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} />
+            <Dato etiqueta="Ahorrado en metas" valor={money(principal.valorReservado, principal.moneda)} />
+          </Datos>
+          <Nota>Libre para gastar es lo de tus cuentas que no está guardado para una meta.</Nota>
+        </>
       ) : null}
 
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
@@ -456,7 +492,7 @@ export function DashboardScreen() {
             </Panel>
           ) : (
             <ListCard>
-              {composicion.map((x) => (
+              {composicion.slice(0, 4).map((x) => (
                 <TxRow
                   key={x.cat}
                   title={etiqueta(x.cat)}

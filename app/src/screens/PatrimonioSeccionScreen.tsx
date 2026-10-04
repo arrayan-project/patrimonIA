@@ -49,7 +49,7 @@ function icono(categoria: string): NombreIcono {
  */
 export function PatrimonioSeccionScreen() {
   const c = useC();
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const categoria = nav.route.params?.categoria as string | undefined;
   const alcance = (nav.route.params?.alcance as 'mios' | 'hogar' | undefined) ?? 'mios';
@@ -92,17 +92,26 @@ export function PatrimonioSeccionScreen() {
     );
   }
 
-  const subtotal = elementos
-    .filter((e) => e.moneda === monedaPrin)
-    .reduce((s, e) => s + e.valorVigente, 0);
+  // Lo tuyo es tu parte de cada cuenta o bien (como en Inicio); en el hogar, el valor completo.
+  const pctDe = (e: ElementoPatrimonialDTO) =>
+    alcance === 'mios' ? (e.propietarios.find((p) => p.usuarioId === usuario.id)?.porcentaje ?? 100) : 100;
+  const parte = (e: ElementoPatrimonialDTO) => (e.valorVigente * pctDe(e)) / 100;
+  const enMoneda = elementos.filter((e) => e.moneda === monedaPrin && e.estado !== 'INACTIVO');
+  const subtotal = enMoneda.reduce((s, e) => s + parte(e), 0);
+  const tienes = enMoneda.reduce((s, e) => s + Math.max(parte(e), 0), 0);
+  const debes = enMoneda.reduce((s, e) => s + Math.max(-parte(e), 0), 0);
   const otrasMonedas = [...new Set(elementos.filter((e) => e.moneda !== monedaPrin).map((e) => e.moneda))];
 
   const fila = (el: ElementoPatrimonialDTO) => (
     <TxRow
       key={el.id}
       title={el.nombre}
-      subtitle={etiqueta(el.tipo) + (el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : '')}
-      amount={el.valorOculto ? '—' : money(el.valorVigente, el.moneda)}
+      subtitle={
+        etiqueta(el.tipo) +
+        (el.estadoOperativo ? ` · ${etiqueta(el.estadoOperativo)}` : '') +
+        (pctDe(el) < 100 ? ` · tuyo el ${pctDe(el)}% de ${money(el.valorVigente, el.moneda)}` : '')
+      }
+      amount={el.valorOculto ? '—' : money(parte(el), el.moneda)}
       negativo={!el.valorOculto && el.valorVigente < 0}
       logo={{ icon: icono(el.categoriaFuncional) }}
       onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
@@ -116,7 +125,14 @@ export function PatrimonioSeccionScreen() {
     }));
     return (
       <Screen onRefresh={cargar}>
-        <Hero label={alcance === 'hogar' ? 'Patrimonio del hogar' : 'Patrimonio neto'} value={money(subtotal, monedaPrin)} />
+        <Hero
+          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu patrimonio'}
+          value={money(subtotal, monedaPrin)}
+          substats={[
+            { label: alcance === 'hogar' ? 'Tienen' : 'Tienes', value: money(tienes, monedaPrin) },
+            { label: alcance === 'hogar' ? 'Deben' : 'Debes', value: money(debes, monedaPrin) },
+          ]}
+        />
         {otrasMonedas.length > 0 && <Nota>También hay elementos en {otrasMonedas.join(', ')}.</Nota>}
 
         {puntos.length >= 2 && (
@@ -147,7 +163,7 @@ export function PatrimonioSeccionScreen() {
             if (delCat.length === 0) return null;
             const sub = delCat
               .filter((e) => e.moneda === monedaPrin)
-              .reduce((s, e) => s + e.valorVigente, 0);
+              .reduce((s, e) => s + parte(e), 0);
             return (
               <View key={cat} style={{ gap: 8 }}>
                 <GroupLabel right={<Text style={{ color: c.muted, fontWeight: '600' }}>{money(sub, monedaPrin)}</Text>}>
