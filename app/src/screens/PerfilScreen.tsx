@@ -1,117 +1,66 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError, type UsuarioDTO } from '../api/client';
-import { useAuth, useSession } from '../auth/AuthContext';
+import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { confirmar } from '../ui/confirmar';
-import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
-import { useToast } from '../ui/Toast';
-import { Button, ErrorText, Field, MenuLink, Paragraph, Row, Screen, Panel, SectionTitle } from '../ui';
+import { irAAccion } from './AccionFormScreen';
+import { AccionDestructiva, CampoAlSalir, Dato, Datos, ErrorText, Nota, Screen, Skeleton } from '../ui';
 
+/** Mi perfil (plantilla Ajustes, R5): el nombre se guarda al salir del campo. */
 export function PerfilScreen() {
   const { token } = useSession();
-  const { cerrarSesion } = useAuth();
-  const toast = useToast();
   const nav = useNav();
-
   const [me, setMe] = useState<UsuarioDTO | null>(null);
-  const [nombre, setNombre] = useState('');
-  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [intento, setIntento] = useState(false);
-
-  const sucio = (!!me && nombre.trim() !== me.nombre) || motivo.trim().length > 0;
-  const permitirSalida = useConfirmarDescarte(sucio && !busy);
-  const errNombre = nombre.trim() ? '' : 'El nombre no puede quedar vacío.';
 
   useEffect(() => {
     api
       .get<UsuarioDTO>('/usuarios/me', token)
-      .then((u) => {
-        setMe(u);
-        setNombre(u.nombre);
-      })
+      .then(setMe)
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : 'Error'));
   }, [token]);
 
-  const guardar = async () => {
-    setIntento(true);
-    if (errNombre) return;
-    setBusy(true);
-    setError('');
-    try {
-      await api.post('/comandos/ActualizarDatosUsuario', { nombre: nombre.trim() }, token);
-      toast.mostrar('Perfil actualizado');
-      permitirSalida();
-      nav.back();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const desactivar = async () => {
-    if (
-      !(await confirmar(
-        'Desactivar mi cuenta',
-        'No podrás volver a iniciar sesión. Se cerrará la sesión ahora.',
-        'Desactivar',
-      ))
-    )
-      return;
-    setBusy(true);
-    setError('');
-    try {
-      await api.post('/comandos/DesactivarUsuario', { motivo: motivo.trim() }, token);
-      permitirSalida();
-      cerrarSesion();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-      setBusy(false);
-    }
-  };
+  if (!me) {
+    return (
+      <Screen>
+        <ErrorText>{error}</ErrorText>
+        {!error && <Skeleton filas={2} />}
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
-      {me && (
-        <Panel>
-          <Row left="Email" right={me.email} />
-          <Field
-            label="Nombre"
-            value={nombre}
-            onChangeText={setNombre}
-            autoCapitalize="sentences"
-            error={intento ? errNombre : undefined}
-          />
-          <Button title="Guardar" onPress={guardar} loading={busy} />
-        </Panel>
-      )}
-
-      <MenuLink
-        icon="notifications-outline"
-        title="Notificaciones"
-        subtitle="Qué avisos recibir, en la app y como push"
-        onPress={() => nav.go('AjustesNotificaciones')}
+      <CampoAlSalir
+        label="Nombre"
+        value={me.nombre}
+        autoCapitalize="words"
+        onGuardar={async (nombre) => {
+          await api.post('/comandos/ActualizarDatosUsuario', { nombre }, token);
+          setMe({ ...me, nombre });
+        }}
       />
-
-      <Panel>
-        <SectionTitle>Desactivar cuenta</SectionTitle>
-        <Paragraph>
-          Tus elementos patrimoniales y membresías históricas se conservan, pero no podrás
-          volver a iniciar sesión.
-        </Paragraph>
-        <Field label="Motivo" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-        <Button
-          title="Desactivar mi cuenta"
-          variant="danger"
-          onPress={desactivar}
-          loading={busy}
-          disabled={motivo.trim().length < 3}
-        />
-      </Panel>
-
+      <Datos>
+        <Dato etiqueta="Correo" valor={me.email} />
+      </Datos>
+      <Nota>Los cambios se guardan solos.</Nota>
       <ErrorText>{error}</ErrorText>
+      <AccionDestructiva
+        title="Desactivar mi cuenta"
+        onPress={() =>
+          irAAccion(nav, {
+            titulo: 'Desactivar mi cuenta',
+            explicacion:
+              'No podrás volver a iniciar sesión. Tus cuentas, bienes y membresías pasadas se conservan. Se cierra la sesión ahora.',
+            pregunta: '¿Por qué te vas?',
+            boton: 'Desactivar mi cuenta',
+            comando: 'DesactivarUsuario',
+            body: {},
+            aviso: 'Cuenta desactivada',
+            peligro: true,
+            cerrarSesion: true,
+          })
+        }
+      />
     </Screen>
   );
 }

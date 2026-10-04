@@ -1,65 +1,62 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO } from '../api/client';
-import { useAuth, useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useSession } from '../auth/AuthContext';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
-import { useToast } from '../ui/Toast';
-import { Ayuda, Skeleton, Button, ErrorText, etiqueta, Field, LinkButton, Row, Screen, Select, Panel, useC, type Paleta, tipoDe } from '../ui';
+import { irAAccion } from './AccionFormScreen';
+import {
+  AccionDestructiva,
+  CampoAlSalir,
+  Elegir,
+  ErrorText,
+  etiqueta,
+  LinkButton,
+  ListCard,
+  MenuList,
+  Nota,
+  Screen,
+  Section,
+  Segmented,
+  Skeleton,
+  useC,
+  useGuardarAlInstante,
+} from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
   value: m,
   label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
 }));
+const ROLES = ['MIEMBRO', 'ADMINISTRADOR'] as const;
 
+/**
+ * Gestionar hogar (plantilla Ajustes, R5): nombre y moneda se guardan al
+ * tocarlos; el rol de cada miembro se cambia en su fila; remover, invitar y
+ * eliminar piden lo suyo en un Formulario. Sin botón Guardar.
+ */
 export function GestionHogarScreen() {
   const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
-  const { cerrarSesion } = useAuth();
-  const toast = useToast();
   const nav = useNav();
+  const guardar = useGuardarAlInstante();
   const hogarId = nav.route.params?.hogarId as string;
 
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
-  const [nombre, setNombre] = useState('');
-  const [moneda, setMoneda] = useState('CLP');
-  const [motivo, setMotivo] = useState('');
-  const [email, setEmail] = useState('');
-  const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [intentoInv, setIntentoInv] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const h = await api.get<HogarDTO>(`/hogares/${hogarId}`, token);
-      setHogar(h);
-      setNombre(h.nombre);
-      setMoneda(h.monedaConsolidacion);
+      setHogar(await api.get<HogarDTO>(`/hogares/${hogarId}`, token));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }
   }, [hogarId, token]);
 
   useCargaAlEnfocar(cargar);
-
-  const run = async (fn: () => Promise<unknown>, salir = false) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-      if (salir) nav.reset('Tabs');
-      else await cargar();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
+  useTitulo(hogar?.nombre);
 
   if (!hogar) {
     return (
@@ -70,181 +67,158 @@ export function GestionHogarScreen() {
     );
   }
 
-  const soyAdmin = hogar.miembros?.some(
-    (m) => m.usuarioId === usuario.id && m.rol === 'ADMINISTRADOR',
-  );
+  const soyAdmin = hogar.miembros?.some((m) => m.usuarioId === usuario.id && m.rol === 'ADMINISTRADOR');
+
+  /** Muestra el cambio al instante y, si falla, vuelve a lo que había. */
+  const cambiar = (optimista: HogarDTO, fn: () => Promise<unknown>) => {
+    const antes = hogar;
+    setHogar(optimista);
+    void guardar(fn, () => setHogar(antes)).then((ok) => {
+      if (ok) void cargar();
+    });
+  };
+
+  const salir = async () => {
+    if (!(await confirmar('Salir del hogar', 'Dejarás de ver la consolidación y las metas del hogar. Tus cuentas siguen siendo tuyas.', 'Salir')))
+      return;
+    try {
+      await api.post('/comandos/SalirDeHogar', { hogarId }, token);
+      nav.reset('Tabs');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    }
+  };
 
   return (
     <Screen onRefresh={cargar}>
       {soyAdmin && (
-        <Panel>
-          <Field label="Nombre del hogar" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
-          <Button
-            title="Guardar nombre"
-            loading={busy}
-            onPress={() =>
-              run(async () => {
-                await api.post(
-                  '/comandos/ActualizarDatosHogar',
-                  { hogarId, nombre: nombre.trim() },
-                  token,
-                );
-                toast.mostrar('Hogar actualizado');
-              })
+        <Section title="El hogar">
+          <CampoAlSalir
+            label="Nombre"
+            value={hogar.nombre}
+            autoCapitalize="sentences"
+            onGuardar={async (nombre) => {
+              await api.post('/comandos/ActualizarDatosHogar', { hogarId, nombre }, token);
+              setHogar({ ...hogar, nombre });
+            }}
+          />
+          <Elegir
+            label="¿En qué moneda ven el total del hogar?"
+            value={hogar.monedaConsolidacion}
+            options={OPC_MONEDA}
+            onChange={(m) =>
+              m &&
+              m !== hogar.monedaConsolidacion &&
+              cambiar({ ...hogar, monedaConsolidacion: m }, () =>
+                api.post('/comandos/CambiarMonedaConsolidacion', { hogarId, moneda: m }, token),
+              )
             }
           />
-        </Panel>
+          <Nota>Cambiarla no recalcula lo ya mostrado con la moneda anterior.</Nota>
+        </Section>
       )}
 
-      {soyAdmin && (
-        <Panel>
-          <Text style={styles.sectionTitle}>Moneda del hogar</Text>
-          <Select label="Moneda de consolidación" value={moneda} options={OPC_MONEDA} onChange={setMoneda} permiteOtro />
-          <Ayuda>
-            En esta moneda se muestra el patrimonio consolidado. Cambiarla no
-            recalcula lo ya mostrado con la moneda anterior.
-          </Ayuda>
-          <Button
-            title="Cambiar moneda"
-            variant="secondary"
-            loading={busy}
-            disabled={moneda.trim().toUpperCase() === hogar.monedaConsolidacion}
-            onPress={() =>
-              run(async () => {
-                await api.post(
-                  '/comandos/CambiarMonedaConsolidacion',
-                  { hogarId, moneda: moneda.trim().toUpperCase() },
-                  token,
-                );
-                toast.mostrar('Moneda actualizada');
-              })
-            }
-          />
-        </Panel>
-      )}
-
-      <Panel>
-        <Text style={styles.sectionTitle}>Miembros</Text>
-        {hogar.miembros?.map((m) => (
-          <View key={m.usuarioId} style={styles.miembro}>
-            <Row left={m.nombre} right={etiqueta(m.rol)} />
-            {soyAdmin && m.usuarioId !== usuario.id && (
-              <View style={styles.acciones}>
-                <Button
-                  title={m.rol === 'ADMINISTRADOR' ? 'Hacer miembro' : 'Hacer admin'}
-                  variant="secondary"
-                  loading={busy}
-                  onPress={() =>
-                    run(() =>
-                      api.post(
-                        '/comandos/AsignarRol',
-                        {
-                          hogarId,
-                          usuarioId: m.usuarioId,
-                          rol: m.rol === 'ADMINISTRADOR' ? 'MIEMBRO' : 'ADMINISTRADOR',
-                        },
-                        token,
-                      ),
-                    )
-                  }
-                />
-                <Button
-                  title="Remover"
-                  variant="secondary"
-                  loading={busy}
-                  disabled={motivo.trim().length < 3}
-                  onPress={() =>
-                    run(() =>
-                      api.post(
-                        '/comandos/RemoverMiembro',
-                        { hogarId, usuarioId: m.usuarioId, motivo: motivo.trim() },
-                        token,
-                      ),
-                    )
-                  }
-                />
+      <Section title="Miembros">
+        <ListCard>
+          {hogar.miembros?.map((m) => {
+            const yo = m.usuarioId === usuario.id;
+            const editable = soyAdmin && !yo;
+            return (
+              <View key={m.usuarioId} style={[styles.miembro, { borderBottomColor: c.border }]}>
+                <View style={styles.fila}>
+                  <Text style={[styles.nombre, { color: c.text }]} numberOfLines={1}>
+                    {yo ? `${m.nombre} (tú)` : m.nombre}
+                  </Text>
+                  {!editable && <Text style={{ color: c.muted }}>{etiqueta(m.rol)}</Text>}
+                </View>
+                {editable && (
+                  <View style={styles.fila}>
+                    <Segmented
+                      options={ROLES}
+                      value={m.rol as (typeof ROLES)[number]}
+                      formatearOpcion={(v) => (v === 'ADMINISTRADOR' ? 'Admin' : 'Miembro')}
+                      onChange={(rol) =>
+                        cambiar(
+                          { ...hogar, miembros: hogar.miembros?.map((x) => (x.usuarioId === m.usuarioId ? { ...x, rol } : x)) },
+                          () => api.post('/comandos/AsignarRol', { hogarId, usuarioId: m.usuarioId, rol }, token),
+                        )
+                      }
+                    />
+                    <LinkButton
+                      title="Remover"
+                      onPress={() =>
+                        irAAccion(nav, {
+                          titulo: `Remover a ${m.nombre}`,
+                          explicacion: 'Deja de ver el hogar. Sus cuentas siguen siendo suyas.',
+                          pregunta: '¿Por qué?',
+                          boton: `Remover a ${m.nombre}`,
+                          comando: 'RemoverMiembro',
+                          body: { hogarId, usuarioId: m.usuarioId },
+                          aviso: 'Miembro removido',
+                          peligro: true,
+                        })
+                      }
+                    />
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-        ))}
+            );
+          })}
+        </ListCard>
         {soyAdmin && (
-          <Field label="Motivo (para remover)" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
-        )}
-      </Panel>
-
-      {soyAdmin && (
-        <Panel>
-          <Text style={styles.sectionTitle}>Invitar a alguien</Text>
-          <Field
-            label="Email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="persona@email.cl"
-            error={intentoInv && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? 'Escribe un email válido.' : undefined}
-          />
-          {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
-          <Button
-            title="Enviar invitación"
-            loading={busy}
-            onPress={() => {
-              setIntentoInv(true);
-              if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return;
-              run(async () => {
-                await api.post(
-                  '/comandos/InvitarMiembro',
-                  { hogarId, emailInvitado: email.trim() },
-                  token,
-                );
-                setAviso(`Invitación enviada a ${email.trim()}`);
-                setEmail('');
-                setIntentoInv(false);
-              });
-            }}
-          />
-        </Panel>
-      )}
-
-      <Panel>
-        <Text style={styles.sectionTitle}>Salir</Text>
-        <Button
-          title="Salir del hogar"
-          variant="danger"
-          loading={busy}
-          onPress={async () => {
-            if (!(await confirmar('Salir del hogar', 'Dejarás de ver la consolidación y las metas del hogar. Tus elementos siguen siendo tuyos.', 'Salir')))
-              return;
-            await run(() => api.post('/comandos/SalirDeHogar', { hogarId }, token), true);
-          }}
-        />
-        {soyAdmin && (
-          <Button
-            title="Eliminar hogar"
-            variant="danger"
-            loading={busy}
-            disabled={motivo.trim().length < 3}
-            onPress={async () => {
-              if (!(await confirmar('Eliminar hogar', 'Se elimina el hogar y todas sus membresías. Los elementos patrimoniales de cada miembro sobreviven.', 'Eliminar')))
-                return;
-              await run(
-                () => api.post('/comandos/EliminarHogar', { hogarId, motivo: motivo.trim() }, token),
-                true,
-              );
-            }}
+          <MenuList
+            items={[
+              {
+                title: 'Invitar a alguien',
+                subtitle: 'Le llega un correo para unirse',
+                icon: 'person-add-outline',
+                onPress: () =>
+                  irAAccion(nav, {
+                    titulo: 'Invitar a alguien',
+                    explicacion: 'Le llega una invitación para unirse al hogar.',
+                    pregunta: '¿Cuál es su correo?',
+                    placeholder: 'persona@email.cl',
+                    teclado: 'email',
+                    boton: 'Enviar invitación',
+                    comando: 'InvitarMiembro',
+                    body: { hogarId },
+                    campo: 'emailInvitado',
+                    minimo: 5,
+                    aviso: 'Invitación enviada',
+                  }),
+              },
+            ]}
           />
         )}
-      </Panel>
+      </Section>
 
+      {soyAdmin && <Nota>Los cambios se guardan solos.</Nota>}
       <ErrorText>{error}</ErrorText>
-      <LinkButton title="Cerrar sesión" onPress={cerrarSesion} />
+      <AccionDestructiva title="Salir del hogar" onPress={salir} />
+      {soyAdmin && (
+        <AccionDestructiva
+          title="Eliminar hogar"
+          onPress={() =>
+            irAAccion(nav, {
+              titulo: 'Eliminar hogar',
+              explicacion: 'Se elimina el hogar y todas sus membresías. Las cuentas de cada miembro siguen siendo suyas.',
+              pregunta: '¿Por qué lo eliminas?',
+              boton: 'Eliminar hogar',
+              comando: 'EliminarHogar',
+              body: { hogarId },
+              aviso: 'Hogar eliminado',
+              peligro: true,
+              aInicio: true,
+            })
+          }
+        />
+      )}
     </Screen>
   );
 }
 
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  sectionTitle: tipoDe(c).seccion,
-  miembro: { gap: 6, borderTopWidth: 1, borderTopColor: c.faint, paddingTop: 8 },
-  acciones: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  aviso: { color: c.primary, fontSize: 14 },
+const styles = StyleSheet.create({
+  miembro: { gap: 8, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  nombre: { flex: 1, fontSize: 15, fontWeight: '600' },
 });

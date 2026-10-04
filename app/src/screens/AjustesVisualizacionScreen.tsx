@@ -1,84 +1,30 @@
-import { useState } from 'react';
-import { ApiError } from '../api/client';
-import { MONEDAS_FRECUENTES } from '../labels';
-import { useNav } from '../navigation/navigator';
 import { PREFERENCIAS_DEFAULT, SECCIONES_DASHBOARD, usePreferencias } from '../preferencias';
-import { useToast } from '../ui/Toast';
-import { Ayuda, Button, ErrorText, GroupLabel, Screen, Segmented, Select, type FormatoFecha } from '../ui';
+import { Interruptor, LinkButton, ListCard, Nota, Screen, useGuardarAlInstante } from '../ui';
 
-const OPC_FECHA: FormatoFecha[] = ['legible', 'numerico'];
-const ETIQUETA_FECHA: Record<FormatoFecha, string> = { legible: '15 mar 2026', numerico: '15-03-2026' };
-const SIN_PREFERENCIA = '';
-const OPC_MONEDA = [
-  { value: SIN_PREFERENCIA, label: 'La primera que tenga' },
-  ...MONEDAS_FRECUENTES.map((m) => ({ value: m, label: m })),
-];
-
-/** Preferencias personales de visualización (GAPS.md G25). Vive en Ajustes › Apariencia. */
+/**
+ * Qué secciones muestra el Inicio (GAPS.md G25; plantilla Ajustes, R5): cada
+ * interruptor se guarda al tocarlo. Tema, fechas y moneda viven en Ajustes.
+ */
 export function AjustesVisualizacionScreen() {
-  const nav = useNav();
-  const toast = useToast();
   const { preferencias, guardarPreferencias } = usePreferencias();
-  const [p, setP] = useState(preferencias);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const sucio = JSON.stringify(p) !== JSON.stringify(preferencias);
-
-  const guardar = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      await guardarPreferencias(p);
-      toast.mostrar('Preferencias guardadas');
-      nav.back();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error inesperado');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const guardar = useGuardarAlInstante();
+  const cambiar = (dashboard: typeof preferencias.dashboard) =>
+    void guardar(() => guardarPreferencias({ ...preferencias, dashboard }), () => undefined);
 
   return (
     <Screen>
-      <Ayuda>Cómo ves la app. Se guarda en tu cuenta: aplica en todos tus dispositivos.</Ayuda>
-
-      <Segmented
-        label="Formato de fecha"
-        options={OPC_FECHA}
-        value={p.formatoFecha}
-        onChange={(formatoFecha) => setP({ ...p, formatoFecha })}
-        formatearOpcion={(v) => ETIQUETA_FECHA[v]}
-      />
-
-      <Select
-        label="Moneda principal en Inicio"
-        value={p.monedaPreferida ?? SIN_PREFERENCIA}
-        options={OPC_MONEDA}
-        onChange={(v) => setP({ ...p, monedaPreferida: v.trim().toUpperCase() || null })}
-        permiteOtro
-      />
-      <Ayuda>Si tienes cuentas en varias monedas, cuál mostrar primero. No convierte montos.</Ayuda>
-
-      <GroupLabel>Secciones del Inicio</GroupLabel>
-      {SECCIONES_DASHBOARD.map(([k, etiq]) => (
-        <Segmented
-          key={k}
-          label={etiq}
-          options={['Mostrar', 'Ocultar'] as const}
-          value={p.dashboard[k] ? 'Mostrar' : 'Ocultar'}
-          onChange={(v) => setP({ ...p, dashboard: { ...p.dashboard, [k]: v === 'Mostrar' } })}
-          formatearOpcion={(v) => v}
-        />
-      ))}
-
-      <ErrorText>{error}</ErrorText>
-      <Button title="Guardar preferencias" onPress={guardar} loading={busy} disabled={!sucio} />
-      <Button
-        title="Volver a los valores por defecto"
-        variant="secondary"
-        onPress={() => setP(PREFERENCIAS_DEFAULT)}
-      />
+      <Nota>Se guarda en tu cuenta: aplica en todos tus dispositivos.</Nota>
+      <ListCard>
+        {SECCIONES_DASHBOARD.map(([k, etiq]) => (
+          <Interruptor
+            key={k}
+            titulo={etiq}
+            value={preferencias.dashboard[k]}
+            onChange={(v) => cambiar({ ...preferencias.dashboard, [k]: v })}
+          />
+        ))}
+      </ListCard>
+      <LinkButton title="Mostrar todas" onPress={() => cambiar(PREFERENCIAS_DEFAULT.dashboard)} />
     </Screen>
   );
 }

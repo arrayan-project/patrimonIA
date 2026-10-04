@@ -251,7 +251,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
-  mergeadas (2026-10-04); siguen R5 Ajustes y R6 Resúmenes.
+  mergeadas (2026-10-04); R5 Ajustes en rama `feat/G33-R5-ajustes`; sigue R6
+  Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -265,6 +266,24 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
+- **Reglas de diseño, R5 — Ajustes (en rama, 2026-10-04)**: sin botón Guardar;
+  todo se guarda al tocarlo y se revierte con aviso si falla
+  (`useGuardarAlInstante`; las preferencias de visualización también se
+  aplican antes de guardar). Piezas: `Interruptor` (fila con el interruptor del
+  teléfono para todo lo que es sí o no) y `CampoAlSalir` (texto que se guarda
+  al salir del campo, decisión de R1). Ajustes queda en los grupos de la
+  plantilla: Tu cuenta, Hogar (Gestionar hogar con cuántas personas e
+  Invitaciones con lo pendiente marcado en la fila), Cómo se ve (tema, fechas,
+  moneda principal y Secciones del Inicio), Avisos (3 interruptores) y Tus
+  datos, con Cerrar sesión al final en rojo. Decisiones de Juan: Notificaciones
+  deja de ser pantalla (sus 3 avisos viven en Ajustes) y Visualización queda
+  solo con las secciones del Inicio; en Gestionar hogar el rol se cambia con
+  chips en la fila de cada miembro y "Remover" pide su motivo en `AccionForm`
+  (se va el campo de motivo compartido). Perfil: nombre al salir del campo y
+  Desactivar mi cuenta vía `AccionForm` (que ahora puede cerrar la sesión,
+  volver al Inicio y usar teclado de email). Gestionar hogar: nombre y moneda
+  al instante, Invitar con `AccionForm`, Salir y Eliminar hogar al final; sale
+  el Cerrar sesión repetido. El mapa de la plantilla queda en 57 pantallas.
 - **Reglas de diseño, R4b — Editar y Agregar cuenta o bien, Acceso (✅
   mergeado, 2026-10-04)**: Editar cuenta o bien tenía 8 paneles con su propio Guardar y
   mezclaba datos, ajustes y estado; se separa (decisión de Juan). `EditarElemento`

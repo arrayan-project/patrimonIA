@@ -3,8 +3,7 @@ import { api, ApiError, type ElementoPatrimonialDTO, type HogarDTO, type Miembro
 import { useSession } from '../auth/AuthContext';
 import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
 import { useNav, useTitulo } from '../navigation/navigator';
-import { useToast } from '../ui/Toast';
-import { Elegir, ElegirVarios, ErrorText, Nota, Opcional, Screen, Section, Segmented, Skeleton } from '../ui';
+import { Elegir, ElegirVarios, ErrorText, Nota, Opcional, Screen, Section, Segmented, Skeleton, useGuardarAlInstante } from '../ui';
 
 const VIS = ['PRIVADA', 'FAMILIAR', 'COMPARTIDA'] as const;
 type Nivel = (typeof VIS)[number];
@@ -23,7 +22,7 @@ const NOMBRE_VIS: Record<Nivel, string> = { PRIVADA: 'Solo tú', FAMILIAR: 'El h
 export function AjustesElementoScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
-  const toast = useToast();
+  const guardar = useGuardarAlInstante();
   const elementoId = nav.route.params?.elementoId as string;
 
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
@@ -53,14 +52,7 @@ export function AjustesElementoScreen() {
   const aplicar = async (optimista: ElementoPatrimonialDTO, fn: () => Promise<unknown>) => {
     const antes = el;
     setEl(optimista);
-    try {
-      await fn();
-      toast.mostrar('Guardado');
-      await cargar();
-    } catch (e) {
-      setEl(antes);
-      toast.mostrar(e instanceof ApiError ? e.message : 'No se pudo guardar', 'error');
-    }
+    if (await guardar(fn, () => setEl(antes))) await cargar();
   };
 
   if (!el) {
