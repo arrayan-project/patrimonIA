@@ -253,9 +253,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
   mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes ✅ mergeada (2026-10-04).
   Reglas de diseño R1 a R6 cerradas. Bloque 8 (D-8) en dos ramas: 8a backend
-  (`feat/G33-E8a-otra-persona`) registrado en rama; sigue 8b (app).
+  (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); sigue 8b (app).
 - **Bloque 8a de la Fase E — `DOMINIO` D-3 (HZ-11) + `PROYECCIÓN` HZ-18 +
-  `FLUJO` HZ-20, backend (rama `feat/G33-E8a-otra-persona`, 2026-10-04)**:
+  `FLUJO` HZ-20, backend (✅ mergeado, 2026-10-04)**:
   plan aprobado por Juan: bloque 8 en dos ramas (8a backend, 8b app); en 8b,
   Gasté ofrece Mío · De otra persona y Recibí Mía · De otra persona · De
   alguien del hogar (solo lista lo que el miembro ya transfirió, sin crear
