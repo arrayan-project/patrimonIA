@@ -250,8 +250,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   ([`Docs/usabilidad/prototipo/plantillas-pantalla-s01.html`](Docs/usabilidad/prototipo/plantillas-pantalla-s01.html))
   antes del bloque 8, en bloques R1 a R6 (una rama cada uno): R1 (documentos
   + piezas comunes) ✅ y R2 Listas ✅ y R3 Detalles ✅, mergeadas (2026-10-03); R4 Formularios en dos
-  partes: R4a ✅ mergeada (2026-10-04), R4b (Editar y Agregar cuenta o
-  bien, Acceso) en rama `feat/G33-R4b-formularios`; siguen R5 Ajustes y R6 Resúmenes.
+  partes: R4a ✅ y R4b ✅ (Editar y Agregar cuenta o bien, Acceso),
+  mergeadas (2026-10-04); siguen R5 Ajustes y R6 Resúmenes.
 - **Reglas de diseño, R1 — piezas comunes (✅ mergeado, 2026-10-03)**: la
   plantilla entra al repo con `Ahorrar` en Formulario (paso 0: el mapa calza
   con las 46 pantallas). En `app/src/ui`: `Screen` acepta `pie` (resumen y
@@ -265,8 +265,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Presupuestos, Programados y Plantillas tienen el suyo. En Ajustes, los
   textos (nombre en Perfil y Hogar) se guardan al salir del campo y se
   revierten con aviso si falla.
-- **Reglas de diseño, R4b — Editar y Agregar cuenta o bien, Acceso (en rama,
-  2026-10-04)**: Editar cuenta o bien tenía 8 paneles con su propio Guardar y
+- **Reglas de diseño, R4b — Editar y Agregar cuenta o bien, Acceso (✅
+  mergeado, 2026-10-04)**: Editar cuenta o bien tenía 8 paneles con su propio Guardar y
   mezclaba datos, ajustes y estado; se separa (decisión de Juan). `EditarElemento`
   queda como Formulario de datos con un solo "Guardar cambios": nombre, tipo,
   detalle de la deuda o crédito (cerrado) y "¿De quién es?" (los porcentajes
