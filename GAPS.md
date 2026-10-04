@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; siguiente: reglas de diseño, luego bloque 8. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -254,10 +254,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   mergeadas (2026-10-04); R5 Ajustes ✅ mergeada (2026-10-04); R6 Resúmenes ✅ mergeada (2026-10-04).
   Reglas de diseño R1 a R6 cerradas. Bloque 8 (D-8) en dos ramas: 8a backend
   (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); 8b app
-  (`feat/G33-E8b-dos-puertas`) registrado en rama, falta la prueba de Juan
-  en el teléfono.
+  (`feat/G33-E8b-dos-puertas`) ✅ probada por Juan y mergeada (2026-10-04).
+  Bloque 8 cerrado; sigue el bloque 9 (D-7 + HZ-21).
 - **Bloque 8b de la Fase E — `UI` D-8 + HZ-23, las dos puertas y "¿de quién
-  es?" (rama `feat/G33-E8b-dos-puertas`, 2026-10-04)**: el menú `+` del
+  es?" (✅ mergeado, 2026-10-04)**: el menú `+` del
   Inicio pasa a Gasté · Recibí · Moví plata · Ahorrar para una meta · Pagar
   tarjeta (solo con tarjeta; con una sola, viene elegida) · Agregar cuenta;
   las puertas abren Registrar movimiento con el tipo elegido y el título
