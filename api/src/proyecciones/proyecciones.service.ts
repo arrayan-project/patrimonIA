@@ -9,13 +9,19 @@ export interface PatrimonioPorMoneda {
   /** Σ reservas ACTIVAS sobre elementos del usuario en esta moneda (REQUISITES §H). */
   valorReservado: number;
   /**
+   * La parte de valorReservado que está en elementos líquidos: es la única que
+   * se resta de la liquidez (la plata de una meta en una cuenta de ahorro o una
+   * inversión no estaba en valorLiquido).
+   */
+  reservadoEnLiquidez: number;
+  /**
    * HZ-18 — Σ lo que debes en encargos o custodias (DEUDA CUSTODIA_INFORMAL,
    * D-3): plata de otras personas que está en tus cuentas.
    */
   plataAjena: number;
   /**
-   * valorLiquido − valorReservado − plataAjena = "lo que puedo usar sin tocar
-   * una meta ni la plata de otra persona" (Libre para gastar).
+   * valorLiquido − reservadoEnLiquidez − plataAjena = "lo que puedo usar sin
+   * tocar una meta ni la plata de otra persona" (Libre para gastar).
    */
   valorLibre: number;
 }
@@ -52,6 +58,7 @@ export class ProyeccionesService {
         patrimonio: Prisma.Decimal;
         liquido: Prisma.Decimal;
         reservado: Prisma.Decimal;
+        reservadoLiquido: Prisma.Decimal;
         ajena: Prisma.Decimal;
       }
     >();
@@ -59,6 +66,7 @@ export class ProyeccionesService {
       patrimonio: new Prisma.Decimal(0),
       liquido: new Prisma.Decimal(0),
       reservado: new Prisma.Decimal(0),
+      reservadoLiquido: new Prisma.Decimal(0),
       ajena: new Prisma.Decimal(0),
     });
     for (const f of activos) {
@@ -79,6 +87,9 @@ export class ProyeccionesService {
     // usuario (el monto de la reserva no se pondera por % de copropiedad — la
     // validación de disponibilidad tampoco lo hace; ver GAPS.md G6).
     const monedaPorElemento = new Map(activos.map((f) => [f.elemento_id, f.elemento_patrimonial.moneda]));
+    const liquidos = new Set(
+      activos.filter((f) => f.elemento_patrimonial.participa_valor_liquido).map((f) => f.elemento_id),
+    );
     const reservas = await this.prisma.reserva.findMany({
       where: { elemento_origen_id: { in: [...monedaPorElemento.keys()] }, estado: 'ACTIVA' },
       select: { monto: true, elemento_origen_id: true },
@@ -88,6 +99,7 @@ export class ProyeccionesService {
       if (!moneda) continue;
       const cur = acc.get(moneda) ?? nueva();
       cur.reservado = cur.reservado.plus(r.monto);
+      if (liquidos.has(r.elemento_origen_id)) cur.reservadoLiquido = cur.reservadoLiquido.plus(r.monto);
       acc.set(moneda, cur);
     }
 
@@ -100,8 +112,9 @@ export class ProyeccionesService {
           patrimonio: v.patrimonio.toNumber(),
           valorLiquido: v.liquido.toNumber(),
           valorReservado: v.reservado.toNumber(),
+          reservadoEnLiquidez: v.reservadoLiquido.toNumber(),
           plataAjena: v.ajena.toNumber(),
-          valorLibre: v.liquido.minus(v.reservado).minus(v.ajena).toNumber(),
+          valorLibre: v.liquido.minus(v.reservadoLiquido).minus(v.ajena).toNumber(),
         }))
         .sort((a, b) => a.moneda.localeCompare(b.moneda)),
     };

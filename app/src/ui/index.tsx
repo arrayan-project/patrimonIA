@@ -234,18 +234,64 @@ export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void 
   );
 }
 
+export type AccionHoja = { icon: NombreIcono; label: string; subtitle?: string; onPress: () => void };
+
+/**
+ * Hoja con varias acciones (la del "+", p. ej. "¿Qué quieres anotar?"). La usa
+ * `FabMenu` y cualquier botón que deba abrir el mismo menú.
+ */
+export function HojaAcciones({
+  visible,
+  onClose,
+  titulo,
+  actions,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  /** Pregunta arriba de la hoja (p. ej. "¿Qué quieres anotar?"). */
+  titulo?: string;
+  actions: AccionHoja[];
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalFondo} onPress={onClose}>
+        <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+          <View style={styles.agarre} />
+          {titulo ? <Text style={styles.modalTitulo}>{titulo}</Text> : null}
+          {actions.map((a) => (
+            <Pressable
+              key={a.label}
+              accessibilityRole="button"
+              accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
+              style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.bg }]}
+              onPress={() => {
+                onClose();
+                a.onPress();
+              }}
+            >
+              <View style={styles.fabActionIc}>
+                <Ionicons name={a.icon} size={20} color={c.text} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fabActionTxt}>{a.label}</Text>
+                {a.subtitle ? <Text style={styles.fabActionSub}>{a.subtitle}</Text> : null}
+              </View>
+            </Pressable>
+          ))}
+          <LinkButton title="Cancelar" onPress={onClose} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 /**
  * FAB que abre una hoja con varias acciones. Para cuando el "+" no es una sola
  * cosa (registrar un movimiento — frecuente — vs. agregar una cuenta — raro).
  */
-export function FabMenu({
-  titulo,
-  actions,
-}: {
-  /** Pregunta arriba de la hoja (p. ej. "¿Qué quieres anotar?"). */
-  titulo?: string;
-  actions: { icon: NombreIcono; label: string; subtitle?: string; onPress: () => void }[];
-}) {
+export function FabMenu({ titulo, actions }: { titulo?: string; actions: AccionHoja[] }) {
   const c = useC();
   const styles = useEstilos();
   const [abierto, setAbierto] = useState(false);
@@ -259,35 +305,7 @@ export function FabMenu({
       >
         <Ionicons name="add" size={28} color={c.primaryText} />
       </Pressable>
-      <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
-        <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
-            <View style={styles.agarre} />
-            {titulo ? <Text style={styles.modalTitulo}>{titulo}</Text> : null}
-            {actions.map((a) => (
-              <Pressable
-                key={a.label}
-                accessibilityRole="button"
-                accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
-                style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.bg }]}
-                onPress={() => {
-                  setAbierto(false);
-                  a.onPress();
-                }}
-              >
-                <View style={styles.fabActionIc}>
-                  <Ionicons name={a.icon} size={20} color={c.text} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fabActionTxt}>{a.label}</Text>
-                  {a.subtitle ? <Text style={styles.fabActionSub}>{a.subtitle}</Text> : null}
-                </View>
-              </Pressable>
-            ))}
-            <LinkButton title="Cancelar" onPress={() => setAbierto(false)} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <HojaAcciones visible={abierto} onClose={() => setAbierto(false)} titulo={titulo} actions={actions} />
     </>
   );
 }

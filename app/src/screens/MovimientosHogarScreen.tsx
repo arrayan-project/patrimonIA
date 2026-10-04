@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
+import { useAnotar } from '../hooks/useAnotar';
 import { api, ApiError, type EventoConsolidadoDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
@@ -39,6 +40,7 @@ const iconoTipo = (tipo: string) =>
 export function MovimientosHogarScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const anotar = useAnotar();
   const paramHogar = nav.route.params?.hogarId as string | undefined;
 
   const [hogarId, setHogarId] = useState<string | null>(paramHogar ?? null);
@@ -88,7 +90,7 @@ export function MovimientosHogarScreen() {
           titulo="Sin movimientos del hogar"
           descripcion="Aquí aparece lo que se registre en las cuentas del hogar."
           accion="Registrar movimiento"
-          onAccion={() => nav.go('RegistrarMovimiento')}
+          onAccion={anotar.abrir}
         />
       ) : (
         porMes.map(([mes, lista]) => {
@@ -123,6 +125,7 @@ export function MovimientosHogarScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
+      {anotar.hoja}
     </Screen>
   );
 }

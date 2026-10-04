@@ -266,6 +266,11 @@ export interface PatrimonioIndividualDTO {
     patrimonio: number;
     valorLiquido: number;
     valorReservado: number;
+    /** La parte de valorReservado que está en cuentas líquidas: la única que se resta de la liquidez. */
+    reservadoEnLiquidez: number;
+    /** HZ-18: lo que debes en encargos o custodias (plata de otras personas en tus cuentas). */
+    plataAjena: number;
+    /** valorLiquido − reservadoEnLiquidez − plataAjena. */
     valorLibre: number;
   }[];
 }

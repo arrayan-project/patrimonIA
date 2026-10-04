@@ -6,6 +6,7 @@ import {
   type AsignacionDTO,
   type ElementoPatrimonialDTO,
   type ObjetivoFinancieroDTO,
+  type PatrimonioIndividualDTO,
   type ReservaDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -53,6 +54,8 @@ export function AhorrarScreen() {
   const [metas, setMetas] = useState<ObjetivoFinancieroDTO[] | null>(null);
   const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[]>([]);
   const [libre, setLibre] = useState<Record<string, number>>({});
+  // HZ-18: plata de otras personas en tus cuentas, por moneda.
+  const [ajena, setAjena] = useState<Record<string, number>>({});
   const [objetivoId, setObjetivoId] = useState<string | null>(
     (nav.route.params?.objetivoId as string | undefined) ?? null,
   );
@@ -91,6 +94,10 @@ export function AhorrarScreen() {
         setMetas([]);
         setError(e instanceof ApiError ? e.message : 'Error inesperado');
       });
+    api
+      .get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token)
+      .then((p) => setAjena(Object.fromEntries(p.porMoneda.map((m) => [m.moneda, m.plataAjena]))))
+      .catch(() => setAjena({}));
   }, [token]);
 
   // Al elegir la meta: sus partes y la cuenta donde ya está su plata.
@@ -254,6 +261,12 @@ export function AhorrarScreen() {
               onChange={setDestinoElegido}
             />
           )}
+
+          {meta && (ajena[meta.moneda] ?? 0) > 0 ? (
+            <Nota>
+              {`En tus cuentas hay ${money(ajena[meta.moneda], meta.moneda)} de otras personas. Lo libre de cada cuenta no lo descuenta: no ahorres esa plata.`}
+            </Nota>
+          ) : null}
 
           {origenes.map((o, i) => {
             const pOrigen = paso({ hecho: !!o.cuentaId });
