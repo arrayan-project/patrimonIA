@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
+import { TITULO_ANOTAR, useAnotar } from '../hooks/useAnotar';
 import {
   api,
   ApiError,
@@ -20,7 +21,7 @@ import {
   EmptyState,
   ErrorText,
   etiqueta,
-  FAB,
+  FabMenu,
   Field,
   fechaLegible,
   Hero,
@@ -67,6 +68,7 @@ export function MovimientosScreen() {
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
+  const anotar = useAnotar();
   const { alcance, setAlcance } = useAlcance();
 
   const hoy = useMemo(() => new Date(), []);
@@ -227,7 +229,7 @@ export function MovimientosScreen() {
   const dispLiquido = disponible?.porMoneda.find((m) => m.moneda === monedaPrincipal) ?? disponible?.porMoneda[0];
 
   return (
-    <Screen onRefresh={cargar} fab={<FAB icon="add" onPress={() => nav.go('RegistrarMovimiento')} />}>
+    <Screen onRefresh={cargar} fab={<FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
       <TopRow
         left={<Title>Movimientos</Title>}
         right={
@@ -302,8 +304,12 @@ export function MovimientosScreen() {
           {alcance === 'mios' && dispLiquido && (
             <Text style={styles.disp}>
               Libre para gastar · <Text style={styles.dispB}>{money(dispLiquido.valorLibre, dispLiquido.moneda)}</Text>
-              {dispLiquido.valorReservado > 0
-                ? `  (${money(dispLiquido.valorLiquido, dispLiquido.moneda)} líquido − ${money(dispLiquido.valorReservado, dispLiquido.moneda)} en metas)`
+              {dispLiquido.reservadoEnLiquidez > 0 || dispLiquido.plataAjena > 0
+                ? `  (${[
+                    `${money(dispLiquido.valorLiquido, dispLiquido.moneda)} de liquidez`,
+                    ...(dispLiquido.reservadoEnLiquidez > 0 ? [`${money(dispLiquido.reservadoEnLiquidez, dispLiquido.moneda)} en metas`] : []),
+                    ...(dispLiquido.plataAjena > 0 ? [`${money(dispLiquido.plataAjena, dispLiquido.moneda)} de otras personas`] : []),
+                  ].join(' − ')})`
                 : ''}
             </Text>
           )}
@@ -359,7 +365,7 @@ export function MovimientosScreen() {
               titulo={movimientos.length === 0 ? `Sin movimientos en ${etiquetaPeriodo}` : 'Nada coincide con el filtro'}
               descripcion={movimientos.length === 0 ? 'Registra un ingreso o gasto para verlo acá.' : undefined}
               accion={movimientos.length === 0 ? 'Registrar movimiento' : undefined}
-              onAccion={() => nav.go('RegistrarMovimiento')}
+              onAccion={anotar.abrir}
             />
           ) : (
             <ListCard>
@@ -383,6 +389,7 @@ export function MovimientosScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
+      {anotar.hoja}
     </Screen>
   );
 }

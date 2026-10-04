@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
+import { TITULO_ANOTAR, useAnotar } from '../hooks/useAnotar';
 import {
   api,
   ApiError,
@@ -74,6 +75,7 @@ export function DashboardScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token, usuario } = useSession();
+  const anotar = useAnotar();
   const nav = useNav();
   const { alcance, setAlcance } = useAlcance();
   const { preferencias } = usePreferencias();
@@ -336,23 +338,7 @@ export function DashboardScreen() {
     <Screen
       onRefresh={cargar}
       fab={
-        <FabMenu
-          titulo="¿Qué quieres anotar?"
-          actions={[
-            {
-              icon: 'swap-vertical-outline',
-              label: 'Registrar movimiento',
-              subtitle: 'Un gasto, un ingreso o plata que mueves entre cuentas',
-              onPress: () => nav.go('RegistrarMovimiento'),
-            },
-            {
-              icon: 'add-circle-outline',
-              label: 'Agregar cuenta o bien',
-              subtitle: 'Una cuenta, tarjeta, inversión, deuda o bien',
-              onPress: () => nav.go('AgregarElemento'),
-            },
-          ]}
-        />
+        <FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />
       }
     >
       <TopRow
@@ -430,13 +416,26 @@ export function DashboardScreen() {
         </Hero>
       </Pressable>
       {ver.disponibilidad && alcance === 'mios' && principal ? (
-        <>
-          <Datos>
-            <Dato etiqueta="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} />
-            <Dato etiqueta="Ahorrado en metas" valor={money(principal.valorReservado, principal.moneda)} />
-          </Datos>
-          <Nota>Libre para gastar es lo de tus cuentas que no está guardado para una meta.</Nota>
-        </>
+        // Libre para gastar como una resta que cuadra: parte de la Liquidez (la misma
+        // cifra de "Tu patrimonio") y descuenta lo que no se puede gastar.
+        <Datos>
+          {principal.reservadoEnLiquidez > 0 || principal.plataAjena > 0 ? (
+            <Dato etiqueta="Liquidez" valor={money(principal.valorLiquido, principal.moneda)} />
+          ) : null}
+          {principal.reservadoEnLiquidez > 0 ? (
+            <Dato
+              etiqueta="Guardado para metas"
+              valor={<Text style={styles.resta}>{`− ${money(principal.reservadoEnLiquidez, principal.moneda)}`}</Text>}
+            />
+          ) : null}
+          {principal.plataAjena > 0 ? (
+            <Dato
+              etiqueta="De otras personas"
+              valor={<Text style={styles.resta}>{`− ${money(principal.plataAjena, principal.moneda)}`}</Text>}
+            />
+          ) : null}
+          <Dato etiqueta="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} />
+        </Datos>
       ) : null}
 
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
@@ -453,7 +452,7 @@ export function DashboardScreen() {
             </Pressable>
           </View>
           <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
-          <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={() => nav.go('RegistrarMovimiento')} c={c} styles={styles} />
+          <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={anotar.abrir} c={c} styles={styles} />
           <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('MetaForm')} c={c} styles={styles} />
           <Text style={styles.muted}>
             Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (ingresos y
@@ -551,7 +550,7 @@ export function DashboardScreen() {
         <Section title="Accesos rápidos">
           <QuickActions
             items={[
-              { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: () => nav.go('RegistrarMovimiento') },
+              { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: anotar.abrir },
               { icon: 'flag-outline', label: 'Metas', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
               { icon: 'wallet-outline', label: 'Mi patrimonio', onPress: verPatrimonio },
@@ -561,6 +560,7 @@ export function DashboardScreen() {
       )}
 
       <ErrorText>{error}</ErrorText>
+      {anotar.hoja}
     </Screen>
   );
 }
@@ -592,6 +592,7 @@ const crearEstilos = (c: Paleta) =>
     muted: tipoDe(c).nota,
     headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     balance: { fontSize: 14, fontWeight: '700' },
+    resta: { fontSize: 14, color: c.muted, textAlign: 'right' },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     pasoTxt: { fontSize: 14, color: c.text },
     alerta: {

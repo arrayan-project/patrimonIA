@@ -14,11 +14,19 @@ import {
   type ReservaDeElementoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { money } from '../format';
 import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
+import {
+  opcionesDePersonas,
+  saldoResultante,
+  saldoTexto,
+  type PersonaDTO,
+  type Previo,
+  type ResultadoPlataDTO,
+} from '../personas';
 import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
@@ -33,15 +41,29 @@ import {
   etiqueta,
   Field,
   LinkButton,
+  ListCard,
   Nota,
   Opcional,
   Skeleton,
   Screen,
-  Segmented,
+  TxRow,
 } from '../ui';
 
 const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'CONVERSION'] as const;
 type Tipo = (typeof TIPOS)[number];
+
+/** El título dice qué se está anotando (las puertas del menú `+`, D-8). */
+const TITULOS: Record<Tipo, string> = {
+  GASTO: 'Gasté',
+  INGRESO: 'Recibí',
+  TRANSFERENCIA: 'Moví plata',
+  CONVERSION: 'Moví plata',
+};
+
+/** D-8 — paso 2 de Gasté y Recibí: de quién es la plata. */
+type Quien = 'MIO' | 'OTRA' | 'HOGAR';
+const NUEVA = '__nueva__';
+const DIA = 24 * 60 * 60 * 1000;
 
 /** Plata de una meta (asignación) ahorrada en la cuenta de origen (HZ-13). */
 type MetaEnCuenta = { asignacionId: string; objetivoId: string | null; nombre: string; monto: number };
@@ -70,7 +92,7 @@ function metasDeReservas(reservas: ReservaDeElementoDTO[]): MetaEnCuenta[] {
 }
 
 export function RegistrarMovimientoScreen() {
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const toast = useToast();
   const { key } = useIdempotencyKey();
@@ -94,7 +116,8 @@ export function RegistrarMovimientoScreen() {
   const [origenId, setOrigenId] = useState<string | null>(origenInicial);
   const [destinoId, setDestinoId] = useState<string | null>(destinoInicial);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
-  const [hogarId, setHogarId] = useState<string | null>(null);
+  const [hogar, setHogar] = useState<HogarDTO | null>(null);
+  const hogarId = hogar?.id ?? null;
   const [crearCat, setCrearCat] = useState(false);
   const [catNombre, setCatNombre] = useState('');
   const [catBusy, setCatBusy] = useState(false);
@@ -103,8 +126,20 @@ export function RegistrarMovimientoScreen() {
   const objetivoInicial = (params.objetivoId as string | undefined) ?? null;
   const [metasCuenta, setMetasCuenta] = useState<MetaEnCuenta[]>([]);
   const [asignacionId, setAsignacionId] = useState<string | null>(null);
+  // D-8 / D-3: de quién es la plata y, si es de otra persona, de quién.
+  const [quien, setQuien] = useState<Quien>('MIO');
+  const [personas, setPersonas] = useState<PersonaDTO[]>([]);
+  const [persona, setPersona] = useState<string | null>(null);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  // HZ-20: si la persona no tenía saldo, ¿te había pasado plata antes?
+  const [previo, setPrevio] = useState<Previo | null>(null);
+  const [ingresoId, setIngresoId] = useState<string | null>(null);
+  // Movimientos de tus cuentas: los ingresos a corregir (HZ-20) y lo que te
+  // transfirió alguien del hogar (D-8). Se cargan solo si hacen falta.
+  const [eventosCuentas, setEventosCuentas] = useState<EventoFinancieroDTO[] | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  useTitulo((params.titulo as string | undefined) ?? TITULOS[tipo]);
 
   const sucio =
     Number(monto) > 0 ||
@@ -112,6 +147,7 @@ export function RegistrarMovimientoScreen() {
     destinoId !== destinoInicial ||
     glosa.trim() !== '' ||
     categoriaId !== null ||
+    persona !== null ||
     etiquetaIds.length > 0;
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
@@ -127,7 +163,14 @@ export function RegistrarMovimientoScreen() {
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
       .then((hs) => {
-        setHogarId(hs[0]?.id ?? null);
+        setHogar(hs[0] ?? null);
+        // La lista no trae los miembros; el detalle sí ("De alguien del hogar", D-8).
+        if (hs[0]) {
+          api
+            .get<HogarDTO>(`/hogares/${hs[0].id}`, token)
+            .then(setHogar)
+            .catch(() => {});
+        }
         return hs[0]
           ? api.get<CategoriaMovimientoDTO[]>(
               `/hogares/${hs[0].id}/categorias-movimiento`,
@@ -145,7 +188,36 @@ export function RegistrarMovimientoScreen() {
       .get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token)
       .then(setEtiquetas)
       .catch(() => setEtiquetas([]));
+    api
+      .get<PersonaDTO[]>('/usuarios/me/personas?todas=true', token)
+      .then(setPersonas)
+      .catch(() => setPersonas([]));
   }, [token]);
+
+  // "De alguien del hogar" solo existe en Recibí; fuera de Gasté y Recibí no hay paso 2.
+  useEffect(() => {
+    if ((tipo !== 'GASTO' && tipo !== 'INGRESO') || (tipo === 'GASTO' && quien === 'HOGAR')) {
+      setQuien('MIO');
+    }
+  }, [tipo, quien]);
+
+  const necesitaEventos = (tipo === 'INGRESO' && quien === 'HOGAR') || previo === 'ANOTADA';
+  useEffect(() => {
+    if (!necesitaEventos || eventosCuentas || !elementos) return;
+    const cuentas = elementos.filter(
+      (e) => e.categoriaFuncional !== 'ACTIVO' && e.naturaleza !== 'CUSTODIA_INFORMAL',
+    );
+    Promise.all(
+      cuentas.map((e) =>
+        api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${e.id}`, token).catch(() => []),
+      ),
+    )
+      .then((listas) => {
+        const porId = new Map(listas.flat().map((ev) => [ev.id, ev]));
+        setEventosCuentas([...porId.values()].sort((a, b) => b.fecha.localeCompare(a.fecha)));
+      })
+      .catch(() => setEventosCuentas([]));
+  }, [necesitaEventos, eventosCuentas, elementos, token]);
 
   // HZ-13: las metas con plata en la cuenta de un gasto. Sin plata en metas, la
   // pregunta no aparece.
@@ -173,6 +245,16 @@ export function RegistrarMovimientoScreen() {
       vigente = false;
     };
   }, [tipo, origenId, token, objetivoInicial]);
+
+  // Sin selector de tipo (lo eligió la puerta del menú): en «Moví plata», si las
+  // dos cuentas tienen monedas distintas, es un cambio de moneda.
+  useEffect(() => {
+    if (tipo !== 'TRANSFERENCIA' && tipo !== 'CONVERSION') return;
+    const todos = [...(elementos ?? []), ...elementosHogar];
+    const o = todos.find((e) => e.id === origenId);
+    const d = todos.find((e) => e.id === destinoId);
+    if (o && d) setTipo(o.moneda !== d.moneda ? 'CONVERSION' : 'TRANSFERENCIA');
+  }, [tipo, origenId, destinoId, elementos, elementosHogar]);
 
   // Si la cuenta vino preelegida y el usuario cambia a Ingreso, la plata entra a esa cuenta.
   useEffect(() => {
@@ -241,7 +323,28 @@ export function RegistrarMovimientoScreen() {
       ? 'La cuenta de salida y la de llegada no pueden ser la misma.'
       : '';
 
-  const meta = tipo === 'GASTO' ? metasCuenta.find((m) => m.asignacionId === asignacionId) : undefined;
+  // D-8: los otros miembros del hogar ("De alguien del hogar" solo si hay alguno).
+  const otrosMiembros = (hogar?.miembros ?? []).filter((x) => x.usuarioId !== usuario?.id);
+  const nombreMiembro = otrosMiembros.length === 1 ? otrosMiembros[0].nombre : 'alguien del hogar';
+  const esOtra = puedeCategorizar && quien === 'OTRA';
+  const direccion = tipo === 'GASTO' ? 'SALE' : 'ENTRA';
+  const nombrePersona = (persona === NUEVA ? nuevoNombre : (persona ?? '')).trim().replace(/\s+/g, ' ');
+  const opcionesP = opcionesDePersonas(personas, monedaEvento);
+  const saldoActual =
+    opcionesP.find((x) => x.nombre.toLocaleLowerCase('es') === nombrePersona.toLocaleLowerCase('es'))?.saldo ?? 0;
+  const esMiembro = otrosMiembros.find(
+    (x) => x.nombre.toLocaleLowerCase('es') === nombrePersona.toLocaleLowerCase('es'),
+  );
+  // HZ-20: solo con plata que sale por alguien sin saldo (o nuevo) hay ambigüedad.
+  const pidePrevio = esOtra && tipo === 'GASTO' && !!nombrePersona && saldoActual === 0;
+  const desde90 = Date.now() - 90 * DIA;
+  const ingresosOpc = (eventosCuentas ?? []).filter(
+    (ev) =>
+      ev.tipo === 'INGRESO' && !ev.anulado && ev.moneda === monedaEvento && new Date(ev.fecha).getTime() >= desde90,
+  );
+  const ingreso = ingresosOpc.find((ev) => ev.id === ingresoId);
+
+  const meta = tipo === 'GASTO' && !esOtra ? metasCuenta.find((m) => m.asignacionId === asignacionId) : undefined;
   const cuentaOrigen = elementos?.find((e) => e.id === origenId);
 
   const onSubmit = async () => {
@@ -249,6 +352,29 @@ export function RegistrarMovimientoScreen() {
     setError('');
     setLoading(true);
     try {
+      if (esOtra) {
+        const r = await api.comando<ResultadoPlataDTO>(
+          '/comandos/RegistrarPlataDeOtraPersona',
+          {
+            direccion,
+            cuentaId: direccion === 'SALE' ? origenId : destinoId,
+            monto: Number(monto),
+            persona: nombrePersona,
+            fecha,
+            ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
+            ...(pidePrevio && previo === 'ANOTADA' && ingresoId ? { anularIngresoId: ingresoId } : {}),
+            ...(pidePrevio && previo === 'NO_ANOTADA' ? { registrarEntrada: true } : {}),
+          },
+          token,
+          key,
+        );
+        toast.mostrar(
+          `${saldoTexto(r.persona, r.saldo, r.moneda, money)}${r.anuladoId ? '. Corregimos el ingreso' : ''}`,
+        );
+        permitirSalida();
+        nav.back();
+        return;
+      }
       await api.comando<EventoFinancieroDTO>(
         '/comandos/RegistrarEventoFinanciero',
         {
@@ -297,25 +423,62 @@ export function RegistrarMovimientoScreen() {
   // HZ-17: agrupadas por tipo; "A qué cuenta" no repite la de "Desde" y, en una
   // transferencia, suma las cuentas de los otros miembros agrupadas por persona.
   const propios = new Set(elementos.map((e) => e.id));
-  const opcionesDesde = opcionesDeElementos(elementos);
+  // La plata de otra persona entra o sale de una cuenta: no de un bien, un
+  // crédito ni el saldo con una persona (CUENTA_NO_VALIDA en el backend).
+  const cuentasValidas = esOtra
+    ? elementos.filter(
+        (e) =>
+          e.categoriaFuncional !== 'ACTIVO' &&
+          e.categoriaFuncional !== 'CREDITO' &&
+          e.naturaleza !== 'CUSTODIA_INFORMAL',
+      )
+    : elementos;
+  const opcionesDesde = opcionesDeElementos(cuentasValidas);
   const opcionesA = [
-    ...opcionesDeElementos(elementos, { excluir: origenId }),
-    ...(tipo === 'TRANSFERENCIA'
+    ...opcionesDeElementos(cuentasValidas, { excluir: origenId }),
+    ...(tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION'
       ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId })
       : []),
   ];
 
+  const nombreDe = (id: string | null) =>
+    [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
   const puedeEnviar =
     Number(monto) > 0 &&
     (!necesitaOrigen || !!origenId) &&
     (!necesitaDestino || !!destinoId) &&
-    origenId !== destinoId;
+    origenId !== destinoId &&
+    (!esOtra ||
+      (!!nombrePersona &&
+        !esMiembro &&
+        (!pidePrevio || (previo !== null && (previo !== 'ANOTADA' || !!ingreso)))));
+
+  // D-8: lo que alguien del hogar te transfirió en los últimos 30 días.
+  const desde30 = Date.now() - 30 * DIA;
+  const delHogar = (eventosCuentas ?? [])
+    .filter((ev) => ev.tipo === 'TRANSFERENCIA' && !ev.anulado && new Date(ev.fecha).getTime() >= desde30)
+    .map((ev) => {
+      const sale = ev.impactos.find((i) => i.monto < 0 && !propios.has(i.elementoId));
+      const llega = ev.impactos.find((i) => i.monto > 0 && propios.has(i.elementoId));
+      if (!sale || !llega) return null;
+      const remitente =
+        elementosHogar.find((e) => e.id === sale.elementoId)?.propietarios[0]?.nombre ?? nombreMiembro;
+      return { ev, remitente, cuenta: nombreDe(llega.elementoId) };
+    })
+    .filter((x) => x !== null);
 
   // Resumen fijo abajo: una frase dice qué va a pasar (plantilla Formulario).
-  const nombreDe = (id: string | null) =>
-    [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
   const m = money(Number(monto) || 0, monedaEvento);
-  const resumen: ReactNode = !puedeEnviar
+  const saldoQueda = saldoResultante(saldoActual, direccion, Number(monto) || 0, previo && pidePrevio
+    ? { tipo: previo, montoIngreso: ingreso?.monto }
+    : undefined);
+  const resumen: ReactNode = esOtra
+    ? !puedeEnviar
+      ? 'Completa monto, persona y cuenta.'
+      : `${tipo === 'GASTO' ? `Salen ${m} de ${nombreDe(origenId)}` : `Entran ${m} a ${nombreDe(destinoId)}`}. No es ${
+          tipo === 'GASTO' ? 'gasto' : 'ingreso'
+        } tuyo. ${saldoTexto(nombrePersona, saldoQueda, monedaEvento, money)}.`
+    : !puedeEnviar
     ? necesitaOrigen && necesitaDestino
       ? 'Completa monto, origen y destino.'
       : 'Completa monto y cuenta.'
@@ -332,22 +495,104 @@ export function RegistrarMovimientoScreen() {
     TRANSFERENCIA: 'Registrar transferencia',
     CONVERSION: 'Registrar cambio de moneda',
   }[tipo];
+  const accionFinal = esOtra ? 'Registrar plata de otra persona' : accion;
+
+  const opcionesQuien =
+    tipo === 'GASTO'
+      ? [
+          { value: 'MIO', label: 'Mío' },
+          { value: 'OTRA', label: 'De otra persona', sub: 'Pagaste por alguien, o usaste o devolviste su plata' },
+        ]
+      : [
+          { value: 'MIO', label: 'Mía' },
+          { value: 'OTRA', label: 'De otra persona', sub: 'Te la pasaron, te la prestaron o te devolvieron algo' },
+          ...(otrosMiembros.length > 0
+            ? [{ value: 'HOGAR', label: 'De alguien del hogar', sub: `Te la transfirió ${nombreMiembro}` }]
+            : []),
+        ];
 
   // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca
   // el paso actual. La fecha ya trae valor (hoy), así que cuenta como hecha.
   const paso = contadorPasos();
   const pMonto = paso({ hecho: Number(monto) > 0 });
+  // HZ-22: la decisión que cambia el significado del registro va en el paso 2.
+  const pQuien = puedeCategorizar ? paso({ hecho: true }) : undefined;
+  const delHogarModo = tipo === 'INGRESO' && quien === 'HOGAR';
+  const pPersona = esOtra ? paso({ hecho: !!nombrePersona }) : undefined;
+  const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
+  const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
-  const pMeta = tipo === 'GASTO' && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
+  const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
-  const pCategoria = puedeCategorizar ? paso({ opcional: true }) : undefined;
+  const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
   const pFecha = paso({ hecho: !!fecha });
+
+  const pasoQuien = pQuien ? (
+    <Elegir
+      label={tipo === 'GASTO' ? '¿De quién es este gasto?' : '¿De quién es esta plata?'}
+      paso={pQuien}
+      value={quien}
+      options={opcionesQuien}
+      onChange={(v) => setQuien((v as Quien | null) ?? 'MIO')}
+    />
+  ) : null;
+
+  // D-8: "De alguien del hogar" no crea nada; la transferencia la anota quien la envía.
+  if (delHogarModo) {
+    return (
+      <Screen
+        pie={
+          <>
+            <Nota>No se anota nada: así la plata no queda dos veces.</Nota>
+            <Button
+              title="Listo"
+              onPress={() => {
+                permitirSalida();
+                nav.back();
+              }}
+            />
+          </>
+        }
+      >
+        <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
+        {pasoQuien}
+        <Nota>
+          {`Una transferencia entre ustedes la anota quien la envía, en «Moví plata». Esto te llegó de ${
+            otrosMiembros.length === 1 ? nombreMiembro : 'tu hogar'
+          } en los últimos 30 días:`}
+        </Nota>
+        {eventosCuentas === null ? (
+          <Skeleton filas={2} />
+        ) : delHogar.length === 0 ? (
+          <Nota>{`No llegó nada. Si falta una, pídele a ${nombreMiembro} que la anote en «Moví plata».`}</Nota>
+        ) : (
+          <>
+            <ListCard>
+              {delHogar.map(({ ev, remitente, cuenta }) => (
+                <TxRow
+                  key={ev.id}
+                  title={`De ${remitente}`}
+                  subtitle={`${cuenta} · ${ev.fecha.slice(0, 10)}`}
+                  amount={money(ev.monto, ev.moneda)}
+                  positivo
+                  logo={{ icon: 'people-outline' }}
+                />
+              ))}
+            </ListCard>
+            <Nota>{`Si no aparece, pídele a ${nombreMiembro} que la anote en «Moví plata».`}</Nota>
+          </>
+        )}
+        <ErrorText>{error}</ErrorText>
+      </Screen>
+    );
+  }
+
   return (
     <Screen
       pie={
         <>
           <Nota>{resumen}</Nota>
-          <Button title={accion} onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
+          <Button title={accionFinal} onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
         </>
       }
     >
@@ -368,22 +613,93 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      <Segmented
-        options={new Set(elementos.map((e) => e.moneda)).size > 1 || tipo === 'CONVERSION' ? TIPOS : TIPOS.slice(0, 3)}
-        value={tipo}
-        onChange={setTipo}
-      />
       {tipo === 'CONVERSION' && (
         <Nota>El monto va en la moneda de la cuenta de salida; la otra recibe el equivalente al tipo de cambio vigente.</Nota>
       )}
-      {tipo === 'INGRESO' && (
-        <LinkButton
-          title="¿Te la van a devolver o es de otra persona? Anótala como crédito o deuda"
-          onPress={() => nav.go('AgregarElemento', { categoria: 'CREDITO' })}
+      <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
+
+      {pasoQuien}
+
+      {pPersona && (
+        <BloquePaso paso={pPersona} style={styles.group}>
+          <Elegir
+            label="¿Quién?"
+            paso={pPersona}
+            placeholder="Elegir persona"
+            value={persona}
+            options={[
+              ...opcionesP.map((x) => ({
+                value: x.nombre,
+                label: x.nombre,
+                sub: saldoTexto(x.nombre, x.saldo, monedaEvento, money),
+              })),
+              { value: NUEVA, label: '+ Nueva persona' },
+            ]}
+            onChange={(v) => {
+              setPersona(v);
+              setPrevio(null);
+              setIngresoId(null);
+            }}
+          />
+          {persona === NUEVA && (
+            <Field
+              label="¿Cómo se llama?"
+              value={nuevoNombre}
+              onChangeText={(t) => {
+                setNuevoNombre(t);
+                setPrevio(null);
+              }}
+              autoCapitalize="words"
+              maxLength={80}
+              autoFocus
+            />
+          )}
+          {esMiembro ? (
+            <ErrorText>{`${esMiembro.nombre} es parte del hogar. Para plata entre ustedes usa «Moví plata».`}</ErrorText>
+          ) : (
+            <Nota>{tipo === 'GASTO' ? 'No cuenta como gasto tuyo.' : 'No cuenta como ingreso tuyo.'}</Nota>
+          )}
+        </BloquePaso>
+      )}
+
+      {pPrevio && (
+        <Elegir
+          label={`¿${nombrePersona} te había pasado plata antes?`}
+          paso={pPrevio}
+          placeholder="Elegir"
+          value={previo}
+          options={[
+            { value: 'DEVOLVER', label: 'No, me la va a devolver' },
+            { value: 'ANOTADA', label: 'Sí, y la anoté como mía', sub: 'Corregimos ese ingreso' },
+            { value: 'NO_ANOTADA', label: 'Sí, pero no la anoté' },
+          ]}
+          onChange={(v) => {
+            setPrevio(v as Previo | null);
+            setIngresoId(null);
+          }}
         />
       )}
 
-      <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
+      {pIngreso && (
+        <BloquePaso paso={pIngreso} style={styles.group}>
+          {eventosCuentas === null ? (
+            <Skeleton filas={1} />
+          ) : (
+            <Elegir
+              label="¿Cuál ingreso era?"
+              paso={pIngreso}
+              placeholder={ingresosOpc.length ? 'Elegir ingreso' : 'No hay ingresos en los últimos 90 días'}
+              value={ingresoId}
+              options={ingresosOpc.map((ev) => ({
+                value: ev.id,
+                label: ev.glosa || 'Ingreso',
+                sub: `${money(ev.monto, ev.moneda)} · ${ev.fecha.slice(0, 10)}`,
+              }))}
+              onChange={setIngresoId}
+            />
+          )}
+        </BloquePaso>
+      )}
 
       {necesitaOrigen && (
         <Elegir
@@ -432,7 +748,7 @@ export function RegistrarMovimientoScreen() {
         />
       )}
 
-      {puedeCategorizar && (
+      {pCategoria && (
         <BloquePaso paso={pCategoria} style={styles.group}>
           <Elegir
             label="¿De qué tipo? (opcional)"
