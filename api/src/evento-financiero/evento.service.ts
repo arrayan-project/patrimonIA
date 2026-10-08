@@ -561,7 +561,7 @@ export class EventoFinancieroService {
     const destino = await cargar(dto.elementoDestinoId);
     await this.exigirPropietario(origen.id, actorId, db); // solo mueves plata de lo tuyo
     this.exigirMoneda(origen, moneda); // el monto del evento va en la moneda del origen
-    if (!(await this.actorPuedeRecibirEn(destino, actorId, db))) {
+    if (!(await this.elementos.puedeRecibirTransferencia(destino, actorId, db))) {
       throw errorConCodigo(ForbiddenException, 'DESTINO_NO_PERMITIDO', 'No puedes mover fondos a ese elemento destino');
     }
 
@@ -608,30 +608,6 @@ export class EventoFinancieroService {
       where: { elemento_id: elementoId, usuario_id: actorId },
     });
     if (!prop) throw new ForbiddenException('No eres propietario de ese elemento');
-  }
-
-  /** Destino de transferencia: propio, o de un co-miembro de hogar. Ver GAPS.md G6. */
-  private async actorPuedeRecibirEn(
-    destino: ElementoRow,
-    actorId: string,
-    db: Prisma.TransactionClient = this.prisma,
-  ): Promise<boolean> {
-    const propDestino = await db.elemento_propietario.findMany({
-      where: { elemento_id: destino.id },
-      select: { usuario_id: true },
-    });
-    if (propDestino.some((p) => p.usuario_id === actorId)) return true;
-
-    const hogaresActor = await this.prisma.membresia.findMany({
-      where: { usuario_id: actorId, estado: 'ACTIVA' },
-      select: { hogar_id: true },
-    });
-    const setActor = new Set(hogaresActor.map((m) => m.hogar_id));
-    const hogaresDestino = await this.prisma.membresia.findMany({
-      where: { usuario_id: { in: propDestino.map((p) => p.usuario_id) }, estado: 'ACTIVA' },
-      select: { hogar_id: true },
-    });
-    return hogaresDestino.some((m) => setActor.has(m.hogar_id));
   }
 
   private async actorVeAlgunElemento(elementoIds: string[], actorId: string): Promise<boolean> {

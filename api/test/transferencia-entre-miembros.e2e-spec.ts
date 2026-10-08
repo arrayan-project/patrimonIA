@@ -86,10 +86,14 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
     await B(request(http).post('/comandos/AceptarInvitacion')).send({ invitacionId: inv.id }).expect(200);
 
     // fechaAlta pasada: el SALDO_INICIAL (§G29) no cae en marzo 2026.
+    // Nivel D-2 "Que puedan transferirme" (el de la app por defecto): EXISTENCIA familiar.
     const cuenta = async (quien: typeof A, nombre: string) =>
       (
         await quien(request(http).post('/comandos/RegistrarElementoPatrimonial'))
-          .send({ nombre, tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 1_000_000, moneda: 'CLP', fechaAlta: '2024-01-01' })
+          .send({
+            nombre, tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 1_000_000, moneda: 'CLP', fechaAlta: '2024-01-01',
+            visibilidadPorTipo: { EXISTENCIA: 'FAMILIAR', VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' },
+          })
           .expect(201)
       ).body.id as string;
     cuentaA = await cuenta(A, 'Cuenta A');
@@ -118,6 +122,18 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
     expect(hogar.gastos).toBe(0);
     expect(hogar.movimientos.filter((m) => m.tipo === 'TRANSFERENCIA')).toHaveLength(1);
     expect(await gastosPresupuesto()).toBe(0);
+  });
+
+  it('D-2: A no puede transferir a una cuenta que B no comparte con el hogar ("Nada")', async () => {
+    const privada = (
+      await B(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'Privada B', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'CLP', fechaAlta: '2024-01-01' })
+        .expect(201)
+    ).body.id as string;
+    const r = await A(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'TRANSFERENCIA', monto: 1_000, moneda: 'CLP', elementoOrigenId: cuentaA, elementoDestinoId: privada, fecha: '2026-03-16' })
+      .expect(403);
+    expect(r.body.codigo).toBe('DESTINO_NO_PERMITIDO');
   });
 
   it('B no puede registrar la misma transferencia: el origen debe ser propio', async () => {

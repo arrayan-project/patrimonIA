@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (en rama `feat/G33-D5-destino-miembro`, por probar); siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -256,6 +256,22 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); 8b app
   (`feat/G33-E8b-dos-puertas`) ✅ probada por Juan y mergeada (2026-10-04).
   Bloque 8 cerrado; sigue el bloque 9 (D-7 + HZ-21).
+- **D-5 adelantado del bloque 10 — `DOMINIO` destino de otro miembro + D-2 en
+  el backend (en rama `feat/G33-D5-destino-miembro`, 2026-10-08; por probar
+  en el teléfono)**: plantillas y programados aceptan como destino de una
+  TRANSFERENCIA la cuenta de otro miembro; el origen sigue siendo propio y un
+  INGRESO sigue yendo a una cuenta propia. La regla es una sola,
+  `ElementoService.puedeRecibirTransferencia`, que usan también los eventos:
+  la cuenta es propia o su EXISTENCIA es visible para el actor (nivel D-2 "Que
+  puedan transferirme" o superior). **Corrige un hueco previo:** antes bastaba
+  con que el dueño fuera del mismo hogar, así que por API se podía transferir
+  a una cuenta en "Nada". Un programado lo opera quien tiene el lado propio
+  (el origen; en un INGRESO, el destino): la pareja que recibe no lo ve en su
+  lista. Al materializar se vuelve a validar el destino (`DESTINO_NO_PERMITIDO`
+  si el miembro dejó de compartir la cuenta). App: "A qué cuenta" suma las
+  cuentas de los miembros agrupadas por persona en Nueva plantilla y Nuevo
+  programado (solo en Transferencia); la lista de plantillas y el detalle del
+  programado muestran el nombre de la cuenta ajena. D-6 sigue en el bloque 10.
 - **Bloque 8b de la Fase E — `UI` D-8 + HZ-23, las dos puertas y "¿de quién
   es?" (✅ mergeado, 2026-10-04)**: el menú `+` del
   Inicio pasa a Gasté · Recibí · Moví plata · Ahorrar para una meta · Pagar

@@ -169,4 +169,38 @@ describe('Plantillas de movimiento (e2e)', () => {
     });
     expect(rows).toBe(1);
   });
+  it('D-5: el destino de una TRANSFERENCIA puede ser de otro miembro, si deja transferirle (D-2)', async () => {
+    const otro = (r: request.Test) => r.set('Authorization', `Bearer ${otroToken}`);
+    await auth(request(http).post('/comandos/InvitarMiembro'))
+      .send({ hogarId, emailInvitado: 'plt2@e2e.cl' })
+      .expect(201);
+    const inv = (await otro(request(http).get('/usuarios/me/invitaciones?estado=PENDIENTE')).expect(200)).body[0];
+    await otro(request(http).post('/comandos/AceptarInvitacion')).send({ invitacionId: inv.id }).expect(200);
+    const cuentaDe = async (nombre: string, existencia: 'FAMILIAR' | 'PRIVADA') =>
+      (
+        await otro(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+          .send({
+            nombre, tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 1, moneda: 'CLP',
+            visibilidadPorTipo: { EXISTENCIA: existencia, VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' },
+          })
+          .expect(201)
+      ).body.id as string;
+    const compartida = await cuentaDe('Del miembro', 'FAMILIAR');
+    const privada = await cuentaDe('Privada del miembro', 'PRIVADA');
+
+    const ok = await auth(request(http).post('/comandos/CrearPlantillaMovimiento'))
+      .send({ nombre: 'A mi pareja', tipo: 'TRANSFERENCIA', elementoOrigenId: cuentaId, elementoDestinoId: compartida })
+      .expect(201);
+    expect(ok.body.elementoDestinoId).toBe(compartida);
+    await auth(request(http).post('/comandos/CrearPlantillaMovimiento'))
+      .send({ nombre: 'A su cuenta privada', tipo: 'TRANSFERENCIA', elementoOrigenId: cuentaId, elementoDestinoId: privada })
+      .expect(403);
+    // El origen sigue siendo propio, y un INGRESO no puede ir a la cuenta de otro.
+    await auth(request(http).post('/comandos/CrearPlantillaMovimiento'))
+      .send({ nombre: 'Desde la del miembro', tipo: 'TRANSFERENCIA', elementoOrigenId: compartida, elementoDestinoId: cuentaId })
+      .expect(403);
+    await auth(request(http).post('/comandos/CrearPlantillaMovimiento'))
+      .send({ nombre: 'Ingreso ajeno', tipo: 'INGRESO', elementoDestinoId: compartida })
+      .expect(403);
+  });
 });

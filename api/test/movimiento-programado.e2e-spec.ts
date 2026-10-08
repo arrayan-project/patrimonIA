@@ -257,4 +257,75 @@ describe('Movimiento Programado (e2e)', () => {
         .valorVigente,
     ).toBe(25_000);
   });
+  it('D-5: programa una TRANSFERENCIA a la cuenta de otro miembro (D-2) y la materializa', async () => {
+    const hogarId = (await auth(request(http).post('/comandos/CrearHogar')).send({ nombre: 'Casa' }).expect(201)).body.id;
+    await request(http)
+      .post('/comandos/RegistrarUsuario')
+      .send({ email: 'pareja@e2e.cl', nombre: 'Pareja', password: 'secret123' })
+      .expect(201);
+    const tokenP = (
+      await request(http).post('/auth/login').send({ email: 'pareja@e2e.cl', password: 'secret123' })
+    ).body.accessToken;
+    const P = (r: request.Test) => r.set('Authorization', `Bearer ${tokenP}`);
+    await auth(request(http).post('/comandos/InvitarMiembro')).send({ hogarId, emailInvitado: 'pareja@e2e.cl' }).expect(201);
+    const inv = (await P(request(http).get('/usuarios/me/invitaciones?estado=PENDIENTE')).expect(200)).body[0];
+    await P(request(http).post('/comandos/AceptarInvitacion')).send({ invitacionId: inv.id }).expect(200);
+    const cuentaDe = async (nombre: string, existencia: 'FAMILIAR' | 'PRIVADA') =>
+      (
+        await P(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+          .send({
+            nombre, tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'CLP',
+            visibilidadPorTipo: { EXISTENCIA: existencia, VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' },
+          })
+          .expect(201)
+      ).body.id as string;
+    const compartida = await cuentaDe('Cuenta pareja', 'FAMILIAR');
+    const privada = await cuentaDe('Privada pareja', 'PRIVADA');
+    const programar = (destino: string) =>
+      auth(request(http).post('/comandos/CrearMovimientoProgramado')).send({
+        tipo: 'TRANSFERENCIA', montoPlanificado: 7_000, moneda: 'CLP', fechaProgramada: '2020-06-01',
+        elementoOrigenId: cuentaId, elementoDestinoId: destino,
+      });
+
+    await programar(privada).expect(403);
+    const id = (await programar(compartida).expect(201)).body.id;
+
+    // Lo opera quien lo programó (el origen es suyo); la pareja no lo ve como propio.
+    await auth(request(http).get(`/movimientos-programados/${id}`)).expect(200);
+    await P(request(http).get(`/movimientos-programados/${id}`)).expect(403);
+    const deLaPareja = (await P(request(http).get('/movimientos-programados')).expect(200)).body as Array<{ id: string }>;
+    expect(deLaPareja.map((m) => m.id)).not.toContain(id);
+
+    await auth(request(http).post('/comandos/MaterializarMovimientoProgramado')).send({ movimientoId: id }).expect(200);
+    expect(
+      (await P(request(http).get(`/elementos-patrimoniales/${compartida}`)).expect(200)).body.valorVigente,
+    ).toBe(7_000);
+  });
+
+  it('D-5: no materializa si el miembro dejó de compartir la cuenta de destino', async () => {
+    const tokenP = (
+      await request(http).post('/auth/login').send({ email: 'pareja@e2e.cl', password: 'secret123' })
+    ).body.accessToken;
+    const P = (r: request.Test) => r.set('Authorization', `Bearer ${tokenP}`);
+    const cuenta = (
+      await P(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({
+          nombre: 'Cuenta que se cierra', tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'CLP',
+          visibilidadPorTipo: { EXISTENCIA: 'FAMILIAR', VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' },
+        })
+        .expect(201)
+    ).body.id;
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({ tipo: 'TRANSFERENCIA', montoPlanificado: 1_000, moneda: 'CLP', fechaProgramada: '2020-06-01', elementoOrigenId: cuentaId, elementoDestinoId: cuenta })
+        .expect(201)
+    ).body.id;
+    await P(request(http).post('/comandos/DefinirVisibilidadElementoPatrimonial'))
+      .send({ elementoId: cuenta, niveles: { EXISTENCIA: 'PRIVADA' } })
+      .expect(200);
+    const r = await auth(request(http).post('/comandos/MaterializarMovimientoProgramado'))
+      .send({ movimientoId: id })
+      .expect(403);
+    expect(r.body.codigo).toBe('DESTINO_NO_PERMITIDO');
+  });
 });
