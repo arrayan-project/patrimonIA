@@ -681,7 +681,7 @@ function conMontos(texto: string | undefined, estilo: TextStyle): ReactNode {
 }
 
 /**
- * Tarjeta única con filas (`TxRow`, `ListItem`) separadas por una línea, como
+ * Tarjeta única con filas (`TxRow`) separadas por una línea, como
  * las listas del prototipo. La línea de la última fila queda oculta.
  */
 export function ListCard({ children }: { children: ReactNode }) {
@@ -839,51 +839,6 @@ export function Section({
 export function Nota({ children }: { children: ReactNode }) {
   const styles = useEstilos();
   return <Text style={styles.nota}>{children}</Text>;
-}
-
-/**
- * Fila de una lista de contenido: título + subtítulo opcional + valor a la
- * derecha + chevron si es tocable.
- */
-export function ListItem({
-  title,
-  subtitle,
-  right,
-  onPress,
-  tachado,
-}: {
-  title: string;
-  subtitle?: string;
-  right?: ReactNode;
-  onPress?: () => void;
-  tachado?: boolean;
-}) {
-  const c = useC();
-  const styles = useEstilos();
-  const cuerpo = (
-    <>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.listItemTitle, tachado && styles.listItemTachado]} numberOfLines={2}>
-          {title}
-        </Text>
-        {subtitle ? <Text style={styles.nota}>{subtitle}</Text> : null}
-      </View>
-      {typeof right === 'string' ? <Text style={styles.dataRight}>{right}</Text> : right}
-      {onPress ? <Ionicons name="chevron-forward" size={16} color={c.muted} /> : null}
-    </>
-  );
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.listItem, pressed && styles.cardPressed]}
-      >
-        {cuerpo}
-      </Pressable>
-    );
-  }
-  return <View style={styles.listItem}>{cuerpo}</View>;
 }
 
 /** Métrica destacada: valor grande + etiqueta + pista opcional. */
@@ -2491,16 +2446,7 @@ const crearEstilos = (c: Paleta) => {
     sectionTitle: t.seccion,
     nota: t.nota,
     statValue: { fontSize: 20, fontWeight: '800', color: c.text, letterSpacing: -0.3 },
-    listItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      borderTopWidth: 1,
-      borderTopColor: c.panelAlt,
-      paddingVertical: 10,
-    },
     listItemTitle: t.dato,
-    listItemTachado: { textDecorationLine: 'line-through', color: c.muted },
     migaja: { flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: -8 },
     migajaTexto: { fontSize: 13, color: c.muted, fontWeight: '600' },
     paragraph: { fontSize: 15, color: c.muted, lineHeight: 22 },

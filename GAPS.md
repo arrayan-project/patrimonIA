@@ -58,14 +58,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
-| U3 | **G1** (UI) | `ListItem` en las listas restantes (rows con edición inline + reordenar, no calzan). | 📋 diferido |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
 | — | **G31** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
-
-> U3 se refiere al hallazgo G1 del backlog de UI (`Docs/retirado/UI_UX_BACKLOG.md`),
-> no al gap G1 de Deuda/Crédito.
 
 ## 1.2 Detalle por tema
 
@@ -721,6 +717,7 @@ Planificar).
 |---|-----|--------|
 | U1 | **H3** — validación en vivo (`error?` + `intento`) en los formularios que faltaban | ✅ Fase 53 |
 | U2 | **I1** — `accessibilityRole/Label/State` en los `Pressable` sueltos | ✅ Fase 53 |
+| U3 | **G1** (hallazgo del backlog de UI, no el gap de Deuda/Crédito) — `ListItem` en las listas restantes | ✅ Cerrado por obsoleto (2026-10-08): tras el rediseño (G33, bloque 4 y R1–R6) ninguna pantalla usaba `ListItem`; se eliminó el componente |
 
 ## 2.2 Detalle por tema
 
