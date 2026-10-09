@@ -356,7 +356,7 @@ export function DashboardScreen() {
   // Los avisos sin leer ya los cuenta la campana: acá solo lo que pide algo.
 
   // G32 H-03/H-08 — una sola entrada a "Mi patrimonio" (todas las cuentas y bienes + evolución).
-  const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin });
+  const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin, hogarId });
 
   const cerrarOnboarding = () => {
     setOnbOculto(true);
@@ -540,7 +540,7 @@ export function DashboardScreen() {
                   amount={money(Math.abs(x.valor), monedaPrin)}
                   negativo={x.valor < 0}
                   logo={{ emoji: EMOJI_CATEGORIA_FUNCIONAL[x.cat] }}
-                  onPress={() => nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin })}
+                  onPress={() => nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin, hogarId })}
                 />
               ))}
             </ListCard>
