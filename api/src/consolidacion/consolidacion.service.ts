@@ -149,8 +149,9 @@ export class ConsolidacionService {
       })
       .sort((a, b) => a.moneda.localeCompare(b.moneda));
 
+    // Solo las metas compartidas con este hogar: las personales de cada miembro no son del hogar.
     const objetivos = await this.prisma.objetivo_financiero.findMany({
-      where: { usuario_id: { in: miembros } },
+      where: { hogar_id: hogarId, usuario_id: { in: miembros } },
     });
     let progresoTotal = 0;
     let montoObjetivoTotal = 0;
