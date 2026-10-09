@@ -20,14 +20,13 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
   en Brevo y los correos pueden caer en spam; con dominio, autenticarlo
   (SPF/DKIM) y cambiar `EMAIL_REMITENTE` (§2b).
 - [ ] **Backups propios** — hoy solo el historial de 24 h de Neon (ver Notas).
-- [ ] **Migración 027** (`solicitud_transferencia`, G33 bloque 9) en Neon,
-  **antes** del push que lleva el bloque 9 a `main` (§1, "Migración nueva").
 
 **Hecho**
 
 - [x] §0 Secretos de producción generados.
 - [x] §1 Neon — esquema cargado (2026-09-06); migraciones aplicadas hasta la
-  **026** (2026-09-29).
+  **027** (2026-10-08, `solicitud_transferencia`, desde el SQL Editor abierto
+  con la extensión Neon Local Connect de VS Code).
 - [x] Tanda GAPS 2026-09-29 (G31/G4 código de 6 dígitos, G25, G14, G11)
   desplegada en Render (commit `7b4e443`, después de la migración 026).
 - [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).

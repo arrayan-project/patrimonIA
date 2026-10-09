@@ -171,8 +171,7 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - [x] Migraciones **001–027** aplicadas y plegadas en `init/01_schema.sql`
   (34 tablas). `init/01_schema.sql` sigue siendo la única fuente de estructura;
   CI la carga tal cual.
-- [x] Neon (producción) al día hasta la **026** (2026-09-29, `Docs/DESPLIEGUE.md`).
-- [ ] Neon: aplicar la **027** antes de hacer push del bloque 9 de G33.
+- [x] Neon (producción) al día hasta la **027** (2026-10-08, `Docs/DESPLIEGUE.md`).
 
 ## Verificación rápida
 
