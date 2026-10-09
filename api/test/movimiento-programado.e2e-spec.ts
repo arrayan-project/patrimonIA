@@ -4,6 +4,8 @@ import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { PrismaService } from './../src/prisma/prisma.service.js';
+import { MovimientoProgramadoService } from './../src/movimiento-programado/movimiento-programado.service.js';
+import { hoyChile } from './../src/movimiento-programado/recurrencia.js';
 
 /**
  * Fase 7 — Movimiento Programado (agregado propio, AS #13–#16).
@@ -327,5 +329,100 @@ describe('Movimiento Programado (e2e)', () => {
       .send({ movimientoId: id })
       .expect(403);
     expect(r.body.codigo).toBe('DESTINO_NO_PERMITIDO');
+  });
+
+  // ── D-6: recurrencia y aviso "¿Se pagó?" ──────────────────────────────────
+
+  const serie = async (serieId: string) =>
+    (await auth(request(http).get('/movimientos-programados')).expect(200)).body
+      .filter((m: { serieId: string }) => m.serieId === serieId)
+      .sort((a: { fechaProgramada: string }, b: { fechaProgramada: string }) => a.fechaProgramada.localeCompare(b.fechaProgramada));
+
+  it('D-6: una serie que llega a su fecha genera la siguiente y avisa una sola vez "¿Se pagó?"', async () => {
+    const hoy = hoyChile();
+    const cat = await prisma.categoria_movimiento.findFirstOrThrow({ where: { tipo_aplicable: 'GASTO' } });
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({
+          tipo: 'GASTO', montoPlanificado: 35_000, moneda: 'CLP', fechaProgramada: hoy, elementoOrigenId: cuentaId,
+          observaciones: 'Luz', periodicidad: 'MENSUAL', categoriaId: cat.id,
+        })
+        .expect(201)
+    ).body.id;
+
+    // Dos revisiones a la vez (cron y lectura) no duplican nada.
+    const svc = app.get(MovimientoProgramadoService);
+    await Promise.all([svc.revisarVencidos(), svc.revisarVencidos()]);
+    const filas = await serie(id);
+    expect(filas).toHaveLength(2);
+    expect(filas[0]).toMatchObject({ id, fechaProgramada: hoy, estado: 'PENDIENTE', periodicidad: 'MENSUAL' });
+    expect(filas[1]).toMatchObject({ estado: 'PENDIENTE', periodicidad: 'MENSUAL', categoriaId: cat.id, montoPlanificado: 35_000 });
+    expect(filas[1].fechaProgramada > hoy).toBe(true);
+
+    const avisos = await prisma.notificacion.findMany({ where: { tipo: 'PROGRAMADO_VENCIDO', entidad_id: id } });
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0].titulo).toBe('Luz · 35.000 CLP');
+    expect(avisos[0].cuerpo).toMatch(/^¿Se pagó\?/);
+    expect(await prisma.notificacion.count({ where: { entidad_id: filas[1].id } })).toBe(0);
+
+    // Confirmar con otro monto: el evento lleva la categoría y el detalle; la serie sigue.
+    const mat = await auth(request(http).post('/comandos/MaterializarMovimientoProgramado'))
+      .send({ movimientoId: id, montoEfectivo: 37_000 })
+      .expect(200);
+    const ev = await prisma.evento_financiero.findUniqueOrThrow({ where: { id: mat.body.eventoFinancieroId } });
+    expect(ev).toMatchObject({ categoria_id: cat.id, glosa: 'Luz' });
+    expect(Number(ev.monto)).toBe(37_000);
+    expect((await serie(id))[1].estado).toBe('PENDIENTE');
+  });
+
+  it('D-6: una serie con fecha pasada se pone al día; las vencidas quedan pendientes', async () => {
+    const [y, m] = hoyChile().split('-').map(Number);
+    const desde = new Date(Date.UTC(y, m - 3, 1)).toISOString().slice(0, 10); // día 1, hace dos meses
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({ tipo: 'INGRESO', montoPlanificado: 900_000, moneda: 'CLP', fechaProgramada: desde, elementoDestinoId: cuentaId, periodicidad: 'MENSUAL' })
+        .expect(201)
+    ).body.id;
+    const filas = await serie(id);
+    expect(filas).toHaveLength(4); // hace 2 meses, el mes pasado, este mes y el próximo
+    expect(filas.every((f: { estado: string }) => f.estado === 'PENDIENTE')).toBe(true);
+    const aviso = await prisma.notificacion.findFirstOrThrow({ where: { entidad_id: id } });
+    expect(aviso.titulo).toBe('Ingreso programado · 900.000 CLP');
+    expect(aviso.cuerpo).toMatch(/^¿Llegó\?/);
+    expect(await prisma.notificacion.count({ where: { entidad_id: filas[3].id } })).toBe(0);
+  });
+
+  it('D-6: dejar de repetir cancela solo las que no llegan y no genera más', async () => {
+    const [y, m] = hoyChile().split('-').map(Number);
+    const desde = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 10); // día 1 del mes pasado
+    const id = (
+      await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+        .send({ tipo: 'GASTO', montoPlanificado: 20_000, moneda: 'CLP', fechaProgramada: desde, elementoOrigenId: cuentaId, periodicidad: 'MENSUAL' })
+        .expect(201)
+    ).body.id;
+    expect(await serie(id)).toHaveLength(3);
+
+    const r = await auth(request(http).post('/comandos/CancelarMovimientoProgramado'))
+      .send({ movimientoId: id, motivo: 'Ya no se repite', serie: true })
+      .expect(200);
+    expect(r.body.periodicidad).toBeNull();
+    const filas = await serie(id);
+    expect(filas).toHaveLength(3);
+    expect(filas.map((f: { estado: string }) => f.estado)).toEqual(['PENDIENTE', 'PENDIENTE', 'CANCELADO']);
+    expect(filas.every((f: { periodicidad: string | null }) => f.periodicidad === null)).toBe(true);
+
+    await auth(request(http).post('/comandos/CancelarMovimientoProgramado'))
+      .send({ movimientoId: id, motivo: 'otra vez', serie: true })
+      .expect(400);
+  });
+
+  it('D-6: la categoría solo va en ingresos y gastos, y debe aplicar al tipo', async () => {
+    const ingreso = await prisma.categoria_movimiento.findFirstOrThrow({ where: { tipo_aplicable: 'INGRESO' } });
+    await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+      .send({ tipo: 'GASTO', montoPlanificado: 1, moneda: 'CLP', fechaProgramada: '2030-01-01', elementoOrigenId: cuentaId, categoriaId: ingreso.id })
+      .expect(400);
+    await auth(request(http).post('/comandos/CrearMovimientoProgramado'))
+      .send({ tipo: 'GASTO', montoPlanificado: 1, moneda: 'CLP', fechaProgramada: '2030-01-01', elementoOrigenId: cuentaId, periodicidad: 'SEMANAL' })
+      .expect(400);
   });
 });

@@ -239,12 +239,18 @@ model movimiento_programado {
   observaciones                                                                       String?
   estado                                                                              String
   created_at                                                                          DateTime              @default(now()) @db.Timestamptz(6)
+  periodicidad                                                                        String?
+  dia                                                                                 Int?                  @db.SmallInt
+  serie_id                                                                            String                @db.Uuid
+  categoria_id                                                                        String?               @db.Uuid
+  avisado                                                                             Boolean               @default(false)
   evento_financiero                                                                   evento_financiero[]
   elemento_patrimonial                                                                elemento_patrimonial? @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   elemento_patrimonial_movimiento_programado_elemento_origen_idToelemento_patrimonial elemento_patrimonial? @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial", fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([fecha_programada], map: "ix_movimiento_programado_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
   @@index([elemento_origen_id], map: "ix_movimiento_programado_origen", where: raw("(elemento_origen_id IS NOT NULL)"))
+  @@unique([serie_id, fecha_programada], map: "ux_movimiento_programado_serie_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

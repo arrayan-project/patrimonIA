@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsISO8601,
   IsNumber,
@@ -9,6 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { PERIODICIDADES, type Periodicidad } from '../recurrencia.js';
 
 export const TIPOS_MOV_PROGRAMADO = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
 export type TipoMovProgramado = (typeof TIPOS_MOV_PROGRAMADO)[number];
@@ -43,6 +45,16 @@ export class CrearMovimientoProgramadoDto {
   @IsString()
   @MaxLength(500)
   observaciones?: string;
+
+  /** D-6: se repite cada mes o cada año, el mismo día que `fechaProgramada`. */
+  @IsOptional()
+  @IsIn(PERIODICIDADES)
+  periodicidad?: Periodicidad;
+
+  /** D-6: solo INGRESO y GASTO (como en RegistrarEventoFinanciero, G23). */
+  @IsOptional()
+  @IsUUID()
+  categoriaId?: string;
 }
 
 /** Body de POST /comandos/ActualizarMovimientoProgramado (AS #14). Solo si estado = PENDIENTE. */
@@ -71,6 +83,10 @@ export class ActualizarMovimientoProgramadoDto {
   @IsString()
   @MaxLength(500)
   observaciones?: string;
+
+  @IsOptional()
+  @IsUUID()
+  categoriaId?: string;
 }
 
 /** Body de POST /comandos/MaterializarMovimientoProgramado (AS #15). */
@@ -98,4 +114,12 @@ export class CancelarMovimientoProgramadoDto {
   @IsString()
   @MinLength(3)
   motivo!: string;
+
+  /**
+   * D-6, "Dejar de repetir": la serie no genera más ocurrencias y se cancelan
+   * las que aún no llegan. Las vencidas sin respuesta siguen pendientes.
+   */
+  @IsOptional()
+  @IsBoolean()
+  serie?: boolean;
 }
