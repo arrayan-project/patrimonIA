@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { api, ApiError, type UsuarioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { irAAccion } from './AccionFormScreen';
-import { AccionDestructiva, CampoAlSalir, Dato, Datos, ErrorText, Nota, Screen, Skeleton } from '../ui';
+import { Text } from '../ui/Text';
+import { Button, CampoAlSalir, Dato, Datos, ErrorText, radio, Screen, Skeleton, useC, type Paleta } from '../ui';
 
 /** Mi perfil (plantilla Ajustes, R5): el nombre se guarda al salir del campo. */
 export function PerfilScreen() {
   const { token } = useSession();
   const nav = useNav();
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const [me, setMe] = useState<UsuarioDTO | null>(null);
   const [error, setError] = useState('');
 
@@ -30,8 +34,20 @@ export function PerfilScreen() {
 
   return (
     <Screen>
+      {/* G35: quién eres, como la tarjeta de Ajustes. */}
+      <View style={styles.cabeza}>
+        <View style={styles.inicial}>
+          <Text style={styles.inicialTxt}>{me.nombre.trim().charAt(0).toUpperCase()}</Text>
+        </View>
+        <Text style={styles.nombre} numberOfLines={1}>
+          {me.nombre}
+        </Text>
+        <Text style={styles.dato} numberOfLines={1}>
+          {me.email}
+        </Text>
+      </View>
       <CampoAlSalir
-        label="Nombre"
+        label="✏️ ¿Cómo te llamamos?"
         value={me.nombre}
         autoCapitalize="words"
         onGuardar={async (nombre) => {
@@ -40,12 +56,12 @@ export function PerfilScreen() {
         }}
       />
       <Datos>
-        <Dato etiqueta="Correo" valor={me.email} />
+        <Dato etiqueta="📧 Tu correo" valor={me.email} />
       </Datos>
-      <Nota>Los cambios se guardan solos.</Nota>
       <ErrorText>{error}</ErrorText>
-      <AccionDestructiva
-        title="Desactivar mi cuenta"
+      <Button
+        title="👋 Desactivar mi cuenta"
+        variant="danger"
         onPress={() =>
           irAAccion(nav, {
             titulo: 'Desactivar mi cuenta',
@@ -64,3 +80,28 @@ export function PerfilScreen() {
     </Screen>
   );
 }
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    cabeza: {
+      alignItems: 'center',
+      gap: 4,
+      padding: 20,
+      borderRadius: radio.tarjeta,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    inicial: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 6,
+    },
+    inicialTxt: { fontSize: 30, fontWeight: '800', color: c.primaryText },
+    nombre: { fontSize: 20, fontWeight: '800', color: c.text },
+    dato: { fontSize: 14, color: c.muted },
+  });

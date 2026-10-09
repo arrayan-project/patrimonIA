@@ -228,18 +228,18 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     moneda del total; miembros (cambiar rol, Remover); Invitar a alguien;
     Salir del hogar; Eliminar hogar.
 
-### Tanda 5 · Avisos, ajustes y cuenta
+### Tanda 5 · Avisos, ajustes y cuenta  ✅ (completa, 2026-10-09)
 
-44. **Notificaciones** (`NotificacionesScreen`) — campana. Lista de avisos;
+44. ✅ **Notificaciones** (`NotificacionesScreen`) — campana. Lista de avisos;
     abrir uno (marca leído y lleva a su pantalla); marcar todos como leídos.
 45. ✅ **Ajustes** (`AjustesScreen`, revisado 2026-10-09, §6) — engranaje. Tu cuenta (Mi perfil, Cerrar
     sesión); Cómo se ve (Tema, Fechas, Moneda principal en Inicio, Secciones
     del Inicio); Avisos; Hogar (Gestionar hogar, Invitaciones); Tus datos
     (Categorías, Etiquetas, Agrupaciones, Frecuentes, Tipos de cuenta o bien,
     Tipos de cambio).
-46. **Secciones del Inicio** (`AjustesVisualizacionScreen`) — Ajustes.
+46. ✅ **Secciones del Inicio** (`AjustesVisualizacionScreen`) — Ajustes.
     Mostrar u ocultar cada sección; Mostrar todas.
-47. **Mi perfil** (`PerfilScreen`) — Ajustes. Nombre y correo; Desactivar mi
+47. ✅ **Mi perfil** (`PerfilScreen`) — Ajustes. Nombre y correo; Desactivar mi
     cuenta.
 48. ✅ **Categorías de movimiento** (`CategoriasScreen`) — Ajustes. Lista y
     buscador; ordenar (subir / bajar); abrir una; Nueva categoría.
@@ -255,7 +255,7 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     anteriores. Según el catálogo: nombre, categoría padre, para qué
     movimientos, categoría sugerida, cuentas dentro de una agrupación, monedas
     y tasa; guardar; Archivar o Eliminar.
-54. **Confirmar** (`AccionFormScreen`, título según la acción) — Detalles,
+54. ✅ **Confirmar** (`AccionFormScreen`, título según la acción) — Detalles,
     Gestionar hogar, Mi perfil. Motivo o dato que pide la acción (Eliminar,
     Desactivar, Remover, Invitar, Cerrar presupuesto, Dejar de repetir…);
     confirmar.
@@ -1068,3 +1068,48 @@ eso entran las 6 listas y sus formularios de crear y editar.
 - **Pendiente para la tanda 5:** en Ajustes la fila sigue diciendo
   "🏠 Gestionar hogar" y abre "Personas del hogar"; alinear el nombre al
   revisar Ajustes.
+
+### 44, 46, 47 y 54. Notificaciones, Secciones del Inicio, Mi perfil y Confirmar (`NotificacionesScreen`, `AjustesVisualizacionScreen`, `PerfilScreen`, `AccionFormScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** Notificaciones con tarjetas iguales, un punto rojo para
+  lo nuevo, "· nueva · toca para abrir" en cada una y el rótulo "Avisos"
+  repitiendo el título. Secciones del Inicio con interruptores de solo
+  texto, la nota "Se guarda en tu cuenta…" y "Mostrar todas" subrayado.
+  Mi perfil como formulario (campo "Nombre", fila "Correo", "Los cambios se
+  guardan solos." y "Desactivar mi cuenta" en rojo suelto). Confirmar con un
+  párrafo gris, el paso "1" con una sola pregunta y el botón deshabilitado
+  sin pista de qué escribir.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisiones:
+  Notificaciones agrupa en **Nuevos / Ya vistos** (no por fecha); las cuatro
+  pantallas en una sola rama.
+  - **Notificaciones:** "🔔 Nuevos" con la pastilla "✅ Marcar todo como
+    leído" (solo si hay nuevos) y "Ya vistos". Cada fila: emoji del tipo en
+    un círculo (🧾 te piden tu parte · 🔁 transferencia · 🙅 rechazada ·
+    🗓️ programado · 🎉 meta completada · 🐷 plata de una meta · ✉️
+    invitación), título, detalle, fecha a la derecha y "›" si abre algo. Lo
+    nuevo: título en negrita y círculo del color de acento. Vacío: "🔕 Nada
+    nuevo por ahora".
+  - **Secciones del Inicio:** en el orden del Inicio, con emoji y qué
+    muestra: ✅ Puedes gastar (Debajo del total) · 🏦 Tus cuentas · 🎯 Tus
+    metas · 📊 Así va el mes · ⚡ Atajos. "👀 Mostrar todas" como pastilla,
+    solo si hay alguna oculta; nota "📱 Se ve igual en todos tus teléfonos.".
+  - **Mi perfil:** tarjeta con la inicial, el nombre y el correo; "✏️ ¿Cómo
+    te llamamos?" (se guarda al salir); "📧 Tu correo"; botón "👋 Desactivar
+    mi cuenta" (como "🗑️ Eliminar hogar"). Sin la nota.
+  - **Confirmar:** banda con el emoji de la acción y la explicación (roja
+    suave si es `peligro`, del acento si no); sin número de paso; ejemplo en
+    el campo según el comando ("Ej.: lo anoté por error", "Ej.: ya no la
+    uso"…); el botón lleva el mismo emoji. Emoji y ejemplo salen del nombre
+    del comando (`emojiDe`, `ejemploDe`), sin tocar las pantallas que la abren.
+  - **Ajustes (pendiente de la tanda 4):** la fila pasa a "👥 Personas del
+    hogar · Quiénes están, nombre y moneda"; también el título de respaldo de
+    la ruta y la nota de Crear hogar ("…en Ajustes › Personas del hogar").
+- **Verificado:** `tsc` sin errores; capturas web como Demo. Destinos:
+  aviso de programado → su detalle; aviso de transferencia → Pagar (resuelta);
+  al volver, el aviso abierto pasa a "Ya vistos"; Marcar todo como leído
+  deja todo en "Ya vistos" y quita la pastilla; Personas del hogar abre la
+  pantalla; Mi perfil → Confirmar con la banda y el botón activo al
+  escribir; ocultar Atajos muestra "Mostrar todas" y esta las vuelve a
+  prender. Dato de prueba: 2 avisos de Demo marcados como no leídos en la
+  base local.
+- **Rama y estado:** `feat/G35-tanda5` · probada por Juan y mergeada (2026-10-09).

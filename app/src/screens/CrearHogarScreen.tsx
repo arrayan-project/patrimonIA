@@ -82,7 +82,7 @@ export function CrearHogarScreen() {
         onChange={setMoneda}
         permiteOtro
       />
-      <Nota>Se puede cambiar después en Gestionar hogar.</Nota>
+      <Nota>Se puede cambiar después en Ajustes › Personas del hogar.</Nota>
 
       <ErrorText>{error}</ErrorText>
     </Screen>
