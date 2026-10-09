@@ -60,6 +60,15 @@ export interface SeriePatrimonialDTO {
  * `valorHistoricoElemento` devuelve `existia: false`). Ya NO se usa el estado
  * ACTIVO/INACTIVO actual.
  *
+ * GAPS.md G38 — anotar no es ganar ni perder: en la variación y en la serie
+ * (lo que muestra "cuánto cambió"), una cuenta o bien activo cuenta ANTES de su
+ * `fecha_alta` con el valor con que se anotó. Así cargar una deuda de 2024 hoy
+ * no aparece como una caída de hoy; el gráfico solo se mueve con los hechos
+ * (movimientos, valorizaciones, ajustes). Los dados de baja siguen la ventana
+ * `[fecha_alta, fecha_baja)`, para que el último punto sea el total de hoy. El
+ * patrimonio a una fecha (`patrimonioIndividualHistorico`) no cambia: dice lo
+ * que de verdad había anotado a esa fecha.
+ *
  * Simplificación que queda (GAPS.md G18): un impacto de un evento hoy anulado se
  * considera inexistente en toda la línea de tiempo (la anulación no tiene fecha
  * de hecho económico).
@@ -95,18 +104,36 @@ export class ReconstruccionService {
     usuarioId: string,
     fechaISO: string,
   ): Promise<PatrimonioHistoricoDTO> {
+    return this.#patrimonioA(usuarioId, fechaISO, false);
+  }
+
+  /**
+   * Patrimonio individual a `fecha`. Con `comparable` (G38), un elemento activo
+   * anotado después de `fecha` cuenta con su valor al anotarse.
+   */
+  async #patrimonioA(
+    usuarioId: string,
+    fechaISO: string,
+    comparable: boolean,
+  ): Promise<PatrimonioHistoricoDTO> {
     const fecha = this.#soloFecha(fechaISO);
     const filas = await this.prisma.elemento_propietario.findMany({
       where: { usuario_id: usuarioId },
       include: { elemento_patrimonial: true },
     });
-    const vigentesEnLaFecha = filas.filter((f) =>
-      this.#existiaA(f.elemento_patrimonial, fecha),
+    const vigentesEnLaFecha = filas.filter(
+      (f) =>
+        this.#existiaA(f.elemento_patrimonial, fecha) ||
+        (comparable && this.#cargadoDespues(f.elemento_patrimonial, fecha)),
     );
 
     const acc = new Map<string, Prisma.Decimal>();
     for (const f of vigentesEnLaFecha) {
-      const valorA = await this.#valorElementoA(f.elemento_patrimonial, fecha);
+      const el = f.elemento_patrimonial;
+      const valorA = await this.#valorElementoA(
+        el,
+        this.#cargadoDespues(el, fecha) ? el.fecha_alta!.toISOString().slice(0, 10) : fecha,
+      );
       const parte = valorA.times(f.porcentaje).dividedBy(100);
       acc.set(
         f.elemento_patrimonial.moneda,
@@ -131,8 +158,8 @@ export class ReconstruccionService {
   ): Promise<VariacionPatrimonialDTO> {
     const hasta = hastaISO ? this.#soloFecha(hastaISO) : this.#soloFecha(new Date().toISOString());
     const [a, b] = await Promise.all([
-      this.patrimonioIndividualHistorico(usuarioId, desdeISO),
-      this.patrimonioIndividualHistorico(usuarioId, hasta),
+      this.#patrimonioA(usuarioId, desdeISO, true),
+      this.#patrimonioA(usuarioId, hasta, true),
     ]);
     const monedas = [...new Set([...a.porMoneda, ...b.porMoneda].map((x) => x.moneda))].sort();
     return {
@@ -156,7 +183,7 @@ export class ReconstruccionService {
 
   /**
    * Serie temporal del patrimonio individual: `pasos` fechas equiespaciadas
-   * entre `desde` y `hasta` (ambas incluidas), cada una reconstruida como en
+   * entre `desde` y `hasta` (ambas incluidas), cada una reconstruida como la
    * `patrimonioIndividualHistorico`. Para el gráfico de evolución.
    */
   async seriePatrimonial(
@@ -181,7 +208,7 @@ export class ReconstruccionService {
 
     const puntos = await Promise.all(
       unicas.map(async (fecha) => {
-        const p = await this.patrimonioIndividualHistorico(usuarioId, fecha);
+        const p = await this.#patrimonioA(usuarioId, fecha, true);
         return { fecha, porMoneda: p.porMoneda };
       }),
     );
@@ -203,6 +230,12 @@ export class ReconstruccionService {
     if (alta && fecha < alta) return false;
     if (baja && fecha >= baja) return false;
     return true;
+  }
+
+  /** G38 — activo hoy (sin baja) y anotado después de `fecha`. */
+  #cargadoDespues(el: ElementoRow, fecha: string): boolean {
+    if (el.fecha_baja || !el.fecha_alta) return false;
+    return fecha < el.fecha_alta.toISOString().slice(0, 10);
   }
 
   /** valor_vigente actual − Σ impactos vivos con fecha posterior a `fecha`. */
