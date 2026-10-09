@@ -4,7 +4,7 @@ import { api, ApiError, type AsignacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
-import { Ayuda, EmptyState, ErrorText, ListCard, Screen, Skeleton, TxRow } from '../ui';
+import { EmptyState, ErrorText, ListCard, Screen, Skeleton, TxRow } from '../ui';
 
 /**
  * A7 — "Ahorro sin meta" (D-4 de G33): solo muestra las asignaciones sueltas que
@@ -42,16 +42,14 @@ export function AsignacionesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Ayuda>Plata separada sin meta; no está libre.</Ayuda>
-
       {sueltas.length > 0 ? (
         <ListCard>
           {sueltas.map((a) => (
             <TxRow
               key={a.id}
               title={a.nombre}
-              amount={money(a.totalReservado, 'CLP')}
-              logo={{ icon: 'wallet-outline' }}
+              amount={money(a.totalReservado, a.moneda)}
+              logo={{ emoji: '🐷' }}
               onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id })}
             />
           ))}

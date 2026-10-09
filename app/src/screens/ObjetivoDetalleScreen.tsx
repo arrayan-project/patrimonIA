@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -9,31 +10,36 @@ import {
   type ReservaDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useAccionHeader, useNav, useTitulo } from '../navigation/navigator';
-import { money } from '../format';
+import { useNav, useTitulo } from '../navigation/navigator';
+import { cuantoFalta, money, porcentaje } from '../format';
+import { emojiMeta } from '../emojis';
+import { usePreferencias } from '../preferencias';
 import { irAAccion } from './AccionFormScreen';
 import {
-  AccionDestructiva,
-  Ayuda,
+  AvisoDetalle,
+  BandaDetalle,
   Button,
   Dato,
   Datos,
   ErrorText,
-  etiqueta,
-  Hero,
+  fechaLegible,
   ListCard,
   MenuList,
   Nota,
+  Pastilla,
   ProgressBar,
   Screen,
   Section,
   Skeleton,
   TxRow,
+  useC,
 } from '../ui';
 
 export function ObjetivoDetalleScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
+  const { preferencias } = usePreferencias();
   const objetivoId = nav.route.params?.objetivoId as string;
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
@@ -67,10 +73,6 @@ export function ObjetivoDetalleScreen() {
   useCargaAlEnfocar(cargar);
 
   useTitulo(obj?.nombre);
-  useAccionHeader(
-    'Editar',
-    obj && (obj.puedoModificar || obj.esMio) ? () => nav.go('MetaForm', { objetivoId }) : undefined,
-  );
 
   if (!obj) {
     return (
@@ -94,6 +96,19 @@ export function ObjetivoDetalleScreen() {
   const puedeAhorrar = obj.puedoModificar && obj.estado === 'EN_PROGRESO';
   const puedeUsar = obj.puedoModificar && cuentasConPlata.length > 0;
   const faltan = Math.max(obj.montoObjetivo - obj.progreso, 0);
+  const lista = obj.estado === 'COMPLETADO' || faltan === 0;
+  const agregarParte = () =>
+    irAAccion(nav, {
+      titulo: 'Agregar parte',
+      explicacion: 'Divide la meta en partes (p. ej. "Pie" y "Gastos notariales") para seguir cada una por separado.',
+      pregunta: '¿Cómo se llama la parte?',
+      boton: 'Agregar parte',
+      comando: 'CrearAsignacion',
+      body: { objetivoId },
+      campo: 'nombre',
+      minimo: 1,
+      aviso: 'Parte agregada',
+    });
 
   return (
     <Screen
@@ -102,10 +117,10 @@ export function ObjetivoDetalleScreen() {
         puedeAhorrar || puedeUsar ? (
           <>
             {/* D-1: ahorrar es una pantalla propia (varias cuentas, la cuenta de la meta). */}
-            {puedeAhorrar && <Button title="Aportar a esta meta" onPress={() => nav.go('Ahorrar', { objetivoId })} />}
+            {puedeAhorrar && <Button title="🐷 Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId })} />}
             {puedeUsar && (
               <Button
-                title="Usar plata de la meta"
+                title="💸 Usar plata de la meta"
                 variant={puedeAhorrar ? 'secondary' : undefined}
                 onPress={() =>
                   nav.go('RegistrarMovimiento', {
@@ -120,47 +135,41 @@ export function ObjetivoDetalleScreen() {
         ) : undefined
       }
     >
-      <Hero
-        label="Llevas"
-        value={money(obj.progreso, obj.moneda)}
-        substats={[
-          { label: `${obj.progresoPorcentaje}% de`, value: money(obj.montoObjetivo, obj.moneda) },
-          { label: 'Faltan', value: money(faltan, obj.moneda) },
-        ]}
-      >
-        <ProgressBar pct={obj.progresoPorcentaje} />
-      </Hero>
       {obj.hogarId && !obj.puedoModificar && (
-        <Ayuda>Meta del hogar. Puedes verla, pero no modificarla.</Ayuda>
+        <AvisoDetalle color={c.muted} texto="👀 Meta del hogar: puedes verla, pero no cambiarla." />
+      )}
+      {/* G35: la banda dice cuánto llevas y la resta hasta la meta. */}
+      <BandaDetalle
+        color={lista ? c.ok : c.primary}
+        titulo={`${emojiMeta(objetivoId, preferencias.emojis.metas)} Llevas`}
+        monto={money(obj.progreso, obj.moneda)}
+        sub={lista ? '🎉 ¡Llegaste a la meta!' : `${porcentaje(obj.progresoPorcentaje)} de la meta`}
+      >
+        <View style={styles.barra}>
+          <ProgressBar pct={obj.progresoPorcentaje} />
+        </View>
+        <Datos plano>
+          <Dato etiqueta="🏁 Quieres juntar" valor={money(obj.montoObjetivo, obj.moneda)} />
+          {!lista && <Dato etiqueta="⏳ Te faltan" valor={money(faltan, obj.moneda)} />}
+        </Datos>
+      </BandaDetalle>
+
+      {(obj.hogarId || nombresCuentas.length > 0 || obj.fechaObjetivo || obj.estado === 'CANCELADO') && (
+        <Datos>
+          {obj.estado === 'CANCELADO' ? <Dato etiqueta="❌ Cancelada" valor="" /> : null}
+          {obj.hogarId ? <Dato etiqueta="👥 Con el hogar" valor="Todos la ven" /> : null}
+          {nombresCuentas.length > 0 ? <Dato etiqueta="🏦 Se guarda en" valor={nombresCuentas.join(', ')} /> : null}
+          {obj.fechaObjetivo ? (
+            <Dato
+              etiqueta="📅 Para el"
+              valor={`${fechaLegible(obj.fechaObjetivo)}${lista ? '' : ` · ${cuantoFalta(obj.fechaObjetivo).toLowerCase()}`}`}
+            />
+          ) : null}
+        </Datos>
       )}
 
-      <Datos>
-        <Dato etiqueta="Estado" valor={etiqueta(obj.estado)} />
-        <Dato etiqueta="Compartida" valor={obj.hogarId ? 'Con el hogar' : 'Solo tú'} />
-        {nombresCuentas.length > 0 && <Dato etiqueta="Dónde está la plata" valor={nombresCuentas.join(', ')} />}
-      </Datos>
-
       {(asignaciones.length > 0 || obj.puedoModificar) && (
-        <Section
-          title="En la meta"
-          accion="Agregar parte"
-          onAccion={
-            obj.puedoModificar
-              ? () =>
-                  irAAccion(nav, {
-                    titulo: 'Agregar parte',
-                    explicacion: 'Divide la meta en partes (p. ej. "Pie" y "Gastos notariales") para seguir cada una por separado.',
-                    pregunta: '¿Cómo se llama la parte?',
-                    boton: 'Agregar parte',
-                    comando: 'CrearAsignacion',
-                    body: { objetivoId },
-                    campo: 'nombre',
-                    minimo: 1,
-                    aviso: 'Parte agregada',
-                  })
-              : undefined
-          }
-        >
+        <Section title="🧩 Partes">
           {asignaciones.length === 0 ? (
             <Nota>Aún no ahorras para esta meta.</Nota>
           ) : (
@@ -170,20 +179,35 @@ export function ObjetivoDetalleScreen() {
                   key={a.id}
                   title={a.nombre}
                   amount={money(a.totalReservado, a.moneda)}
-                  logo={{ icon: 'flag-outline' }}
+                  logo={{ emoji: '🐷' }}
                   onPress={() => nav.go('AsignacionDetalle', { asignacionId: a.id, contexto: obj.nombre })}
                 />
               ))}
             </ListCard>
+          )}
+          {obj.puedoModificar && (
+            <View style={styles.fila}>
+              <Pastilla label="➕ Agregar parte" onPress={agregarParte} />
+            </View>
           )}
         </Section>
       )}
 
       <MenuList
         items={[
+          ...(obj.puedoModificar || obj.esMio
+            ? [
+                {
+                  title: 'Editar',
+                  emoji: '✏️',
+                  subtitle: 'Nombre, cuánto juntar, con quién',
+                  onPress: () => nav.go('MetaForm', { objetivoId }),
+                },
+              ]
+            : []),
           {
             title: 'Historial de cambios',
-            icon: 'time-outline',
+            emoji: '🕓',
             onPress: () =>
               nav.go('Historial', { entidadTipo: 'OBJETIVO_FINANCIERO', entidadId: objetivoId, contexto: obj.nombre }),
           },
@@ -192,8 +216,9 @@ export function ObjetivoDetalleScreen() {
 
       <ErrorText>{error}</ErrorText>
       {obj.esMio && (
-        <AccionDestructiva
-          title="Eliminar meta"
+        <Button
+          title="🗑️ Eliminar meta"
+          variant="danger"
           onPress={() =>
             irAAccion(nav, {
               titulo: 'Eliminar meta',
@@ -212,3 +237,8 @@ export function ObjetivoDetalleScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  barra: { marginTop: 12 },
+  fila: { flexDirection: 'row', marginTop: 10 },
+});

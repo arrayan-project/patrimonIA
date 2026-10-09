@@ -5,43 +5,52 @@ import {
   ApiError,
   type AsignacionDTO,
   type ElementoPatrimonialDTO,
+  type ObjetivoFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
-import { GLOSARIO } from '../labels';
+import { emojiElemento, emojiMeta } from '../emojis';
+import { usePreferencias } from '../preferencias';
 import { irAAccion } from './AccionFormScreen';
 import type { ReservaParaSacar } from './SacarPlataScreen';
 import {
-  AccionDestructiva,
-  Ayuda,
+  BandaDetalle,
   Button,
-  Dato,
-  Datos,
   ErrorText,
-  Hero,
+  ListCard,
   MenuList,
-  Migaja,
   Nota,
   Screen,
   Section,
   Skeleton,
+  TxRow,
+  useC,
 } from '../ui';
 
 export function AsignacionDetalleScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
+  const { preferencias } = usePreferencias();
   const asignacionId = nav.route.params?.asignacionId as string;
-  const contexto = nav.route.params?.contexto as string | undefined;
 
   const [asg, setAsg] = useState<AsignacionDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [meta, setMeta] = useState<ObjetivoFinancieroDTO | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      setAsg(await api.get<AsignacionDTO>(`/asignaciones/${asignacionId}`, token));
+      const a = await api.get<AsignacionDTO>(`/asignaciones/${asignacionId}`, token);
+      setAsg(a);
+      // G35: la banda dice de qué meta es (antes, una miga con el contexto).
+      setMeta(
+        a.objetivoId
+          ? await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${a.objetivoId}`, token).catch(() => null)
+          : null,
+      );
       setElementos(
         await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       );
@@ -63,13 +72,13 @@ export function AsignacionDetalleScreen() {
     );
   }
 
-  const nombrePorId = new Map(elementos.map((e) => [e.id, e.nombre]));
+  const porId = new Map(elementos.map((e) => [e.id, e]));
   const reservasActivas = (asg.reservas ?? []).filter((r) => r.estado === 'ACTIVA');
   // D-4: un ahorro sin meta ya no recibe plata nueva; solo se saca o se elimina.
   const deUnaMeta = !!asg.objetivoId;
   const paraSacar: ReservaParaSacar[] = reservasActivas.map((r) => ({
     id: r.id,
-    cuenta: nombrePorId.get(r.elementoOrigenId) ?? 'Cuenta',
+    cuenta: porId.get(r.elementoOrigenId)?.nombre ?? 'Cuenta',
     monto: r.monto,
   }));
   const sacar =
@@ -83,27 +92,43 @@ export function AsignacionDetalleScreen() {
       pie={
         deUnaMeta ? (
           <>
-            <Button title="Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId: asg.objetivoId, asignacionId })} />
-            {sacar && <Button title="Sacar de la meta" variant="secondary" onPress={sacar} />}
+            <Button title="🐷 Ahorrar" onPress={() => nav.go('Ahorrar', { objetivoId: asg.objetivoId, asignacionId })} />
+            {sacar && <Button title="💸 Sacar de la meta" variant="secondary" onPress={sacar} />}
           </>
         ) : sacar ? (
-          <Button title="Sacar" onPress={sacar} />
+          <Button title="💸 Sacar" onPress={sacar} />
         ) : undefined
       }
     >
-      {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Hero label="Ahorrado" value={money(asg.totalReservado, asg.moneda)} />
-      <Ayuda>{GLOSARIO.apartado}</Ayuda>
+      <BandaDetalle
+        color={c.primary}
+        titulo="🐷 Ahorrado"
+        monto={money(asg.totalReservado, asg.moneda)}
+        sub={
+          deUnaMeta
+            ? `${meta ? emojiMeta(meta.id, preferencias.emojis.metas) : '🎯'} Para ${meta?.nombre ?? 'una meta'}`
+            : 'Sin meta'
+        }
+      />
 
-      <Section title="En qué cuentas está">
+      <Section title="🏦 En qué cuentas está">
         {reservasActivas.length === 0 ? (
           <Nota>Aún no ahorras aquí.</Nota>
         ) : (
-          <Datos>
-            {paraSacar.map((r) => (
-              <Dato key={r.id} etiqueta={r.cuenta} valor={money(r.monto, asg.moneda)} />
-            ))}
-          </Datos>
+          <ListCard>
+            {reservasActivas.map((r) => {
+              const el = porId.get(r.elementoOrigenId);
+              return (
+                <TxRow
+                  key={r.id}
+                  title={el?.nombre ?? 'Cuenta'}
+                  amount={money(r.monto, asg.moneda)}
+                  logo={{ emoji: el ? emojiElemento(el, preferencias.emojis.elementos) : '🏦' }}
+                  onPress={el ? () => nav.go('ElementoDetalle', { elementoId: el.id }) : undefined}
+                />
+              );
+            })}
+          </ListCard>
         )}
       </Section>
 
@@ -111,7 +136,7 @@ export function AsignacionDetalleScreen() {
         items={[
           {
             title: 'Historial de cambios',
-            icon: 'time-outline',
+            emoji: '🕓',
             onPress: () =>
               nav.go('Historial', { entidadTipo: 'ASIGNACION', entidadId: asignacionId, contexto: asg.nombre }),
           },
@@ -119,8 +144,9 @@ export function AsignacionDetalleScreen() {
       />
 
       <ErrorText>{error}</ErrorText>
-      <AccionDestructiva
-        title={deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro'}
+      <Button
+        title={deUnaMeta ? '🗑️ Eliminar esta parte' : '🗑️ Eliminar este ahorro'}
+        variant="danger"
         onPress={() =>
           irAAccion(nav, {
             titulo: deUnaMeta ? 'Eliminar esta parte' : 'Eliminar este ahorro',

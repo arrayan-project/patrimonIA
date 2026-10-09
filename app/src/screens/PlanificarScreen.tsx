@@ -11,8 +11,11 @@ import {
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { money } from '../format';
+import { money, porcentaje } from '../format';
+import { TarjetaMeta } from './ObjetivosScreen';
 import {
+  Dato,
+  Datos,
   EmptyState,
   ErrorText,
   GoalCard,
@@ -20,7 +23,6 @@ import {
   ListCard,
   MenuList,
   Hero,
-  Nota,
   ProgressBar,
   Screen,
   Section,
@@ -34,14 +36,6 @@ const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
-
-function diasRestantes(fecha: string | null): string | undefined {
-  if (!fecha) return undefined;
-  const d = Math.round((new Date(`${fecha}T12:00:00`).getTime() - Date.now()) / 86_400_000);
-  if (d < 0) return 'vencido';
-  if (d === 0) return 'hoy';
-  return `${d}d`;
-}
 
 /** Tab "Planificar": sólo lo prospectivo — objetivos, lo apartado, presupuesto. */
 export function PlanificarScreen() {
@@ -110,10 +104,6 @@ export function PlanificarScreen() {
     })
     .sort((a, b) => b.n - a.n);
   const completados = (objetivos ?? []).filter((o) => o.estado === 'COMPLETADO').length;
-  const monedasUnicas = new Set(enProgreso.map((o) => o.moneda));
-  const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
-  const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
-  const pctTotal = meta > 0 ? Math.round((avance / meta) * 100) : 0;
   const hoy = new Date();
 
   // D-4: lo ahorrado en metas ya se ve en cada meta; aquí solo el ahorro sin meta.
@@ -140,20 +130,34 @@ export function PlanificarScreen() {
           </>
         }
       />
-      {/* Plantilla Resumen: una cifra — cuánto llevas ahorrado en tus metas activas. */}
+      {/* Plantilla Resumen: una cifra — cuánto llevas guardado en tus metas activas
+          (G35: debajo, la resta que la explica; otras monedas en su propia línea). */}
       {porMoneda.length > 0 && (
-        <>
-          <Hero label="Ahorrado en tus metas" value={money(porMoneda[0].llevas, porMoneda[0].moneda)}>
-            <ProgressBar pct={porMoneda[0].meta > 0 ? (porMoneda[0].llevas / porMoneda[0].meta) * 100 : 0} />
-          </Hero>
-          <Nota>
-            {`De ${money(porMoneda[0].meta, porMoneda[0].moneda)} que quieres juntar en ${enProgreso.filter((o) => o.moneda === porMoneda[0].moneda).length === 1 ? '1 meta' : `${enProgreso.filter((o) => o.moneda === porMoneda[0].moneda).length} metas`}.`}
-            {porMoneda.length > 1
-              ? ` Además: ${porMoneda.slice(1).map((m) => `${money(m.llevas, m.moneda)} de ${money(m.meta, m.moneda)}`).join(', ')}.`
-              : ''}
-            {completados > 0 ? ` Ya cumpliste ${completados}.` : ''}
-          </Nota>
-        </>
+        <Hero
+          label="🐷 Guardado para metas"
+          value={money(porMoneda[0].llevas, porMoneda[0].moneda)}
+          debajo={
+            <Datos plano>
+              <Dato etiqueta="🎯 Quieres juntar" valor={money(porMoneda[0].meta, porMoneda[0].moneda)} />
+              <Dato
+                etiqueta="⏳ Te faltan"
+                valor={money(Math.max(porMoneda[0].meta - porMoneda[0].llevas, 0), porMoneda[0].moneda)}
+              />
+              {porMoneda.slice(1).map((m) => (
+                <Dato
+                  key={m.moneda}
+                  etiqueta={`💱 Además, en ${m.moneda}`}
+                  valor={`${money(m.llevas, m.moneda)} de ${money(m.meta, m.moneda)}`}
+                />
+              ))}
+              {completados > 0 ? (
+                <Dato etiqueta="✅ Metas cumplidas" valor={String(completados)} />
+              ) : null}
+            </Datos>
+          }
+        >
+          <ProgressBar pct={porMoneda[0].meta > 0 ? (porMoneda[0].llevas / porMoneda[0].meta) * 100 : 0} />
+        </Hero>
       )}
 
       {objetivos === null ? (
@@ -170,39 +174,18 @@ export function PlanificarScreen() {
                 onAccion={() => nav.go('MetaForm')}
               />
             ) : (
-              <>
-                {monedasUnicas.size === 1 && enProgreso.length > 1 && (
-                  <GoalCard
-                    name={`Avance total · ${enProgreso.length} metas`}
-                    hint={`${pctTotal}%`}
-                    pct={pctTotal}
-                    footLeft={`${money(avance, [...monedasUnicas][0])} de ${money(meta, [...monedasUnicas][0])}`}
-                  />
-                )}
-                {enProgreso.map((o) => (
-                  <GoalCard
-                    key={o.id}
-                    name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
-                    hint={`${o.progresoPorcentaje}%`}
-                    pct={o.progresoPorcentaje}
-                    ok={o.progresoPorcentaje >= 100}
-                    footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
-                    footRight={diasRestantes(o.fechaObjetivo)}
-                    onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-                  />
-                ))}
-              </>
+              enProgreso.map((o) => <TarjetaMeta key={o.id} o={o} />)
             )}
           </Section>
 
           {sinMeta.length > 0 && (
-            <Section title="Ahorro sin meta" accion="Ver detalle" onAccion={() => nav.go('Asignaciones')}>
+            <Section title="Ahorro sin meta">
               <ListCard>
                 <TxRow
                   title="Ahorro sin meta"
                   subtitle={`${sinMeta.length} ${sinMeta.length === 1 ? 'ahorro' : 'ahorros'}`}
                   amount={money(totalSinMeta, monedaSinMeta)}
-                  logo={{ icon: 'umbrella-outline' }}
+                  logo={{ emoji: '🐷' }}
                   onPress={() => nav.go('Asignaciones')}
                 />
               </ListCard>
@@ -212,15 +195,21 @@ export function PlanificarScreen() {
           {desv && presupuesto ? (
             <Section
               title={`Presupuesto de ${MESES[hoy.getMonth()]}`}
+              accion="Ver todos"
               onAccion={() => nav.go('Presupuestos')}
             >
               <GoalCard
-                name="Gasto total"
-                hint={`${gastoPct}%`}
+                name="Llevas gastado"
+                emoji="🧾"
+                hint={porcentaje(gastoPct)}
                 pct={gastoPct}
                 ok={gastoPct <= 100}
-                footLeft={`${money(desv.real.gastos, presupuesto.moneda)} gastado`}
-                footRight={`de ${money(desv.esperado.gastos, presupuesto.moneda)}`}
+                footLeft={`${money(desv.real.gastos, presupuesto.moneda)} de ${money(desv.esperado.gastos, presupuesto.moneda)}`}
+                tag={
+                  desv.real.gastos <= desv.esperado.gastos
+                    ? `✅ Te quedan ${money(desv.esperado.gastos - desv.real.gastos, presupuesto.moneda)}`
+                    : `⚠️ Te pasaste ${money(desv.real.gastos - desv.esperado.gastos, presupuesto.moneda)}`
+                }
                 onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
               />
             </Section>
@@ -230,8 +219,8 @@ export function PlanificarScreen() {
                 <TxRow
                   title="Sin presupuesto vigente"
                   subtitle="Crea uno para comparar lo que gastas"
-                  amount="›"
-                  logo={{ icon: 'pie-chart-outline' }}
+                  amount=""
+                  logo={{ emoji: '🧾' }}
                   onPress={() => nav.go('Presupuestos')}
                 />
               </ListCard>
@@ -252,13 +241,13 @@ export function PlanificarScreen() {
                   ? `${n} ${n === 1 ? 'pendiente' : 'pendientes'}`
                   : 'Ingresos y gastos futuros con fecha';
               })(),
-              icon: 'calendar-outline',
+              emoji: '🗓️',
               onPress: () => nav.go('MovimientosProgramados'),
             },
             {
               title: 'Frecuentes',
               subtitle: 'Lo de siempre, a un toque al registrar',
-              icon: 'copy-outline',
+              emoji: '⚡',
               onPress: () => nav.go('Plantillas'),
             },
           ]}

@@ -13,18 +13,22 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
-import { money } from '../format';
+import { money, porcentaje } from '../format';
+import { emojiMeta } from '../emojis';
+import { usePreferencias } from '../preferencias';
 import { useToast } from '../ui/Toast';
 import {
   AmountInput,
+  BandaDetalle,
   Button,
   Chip,
-  contadorPasos,
+  Dato,
+  Datos,
   Elegir,
   ErrorText,
-  LinkButton,
   Nota,
   Panel,
+  Pastilla,
   Screen,
   Skeleton,
   useC,
@@ -48,6 +52,7 @@ export function AhorrarScreen() {
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
+  const { preferencias } = usePreferencias();
   const toast = useToast();
   const { key } = useIdempotencyKey();
 
@@ -152,15 +157,12 @@ export function AhorrarScreen() {
   const setOrigen = (i: number, cambio: Partial<Origen>) =>
     setOrigenes((xs) => xs.map((o, j) => (j === i ? { ...o, ...cambio } : o)));
 
+  // G35: lo que sube la meta se ve en la banda; aquí solo si la plata cambia de cuenta.
   const resumen = (() => {
     if (!meta || validos.length === 0 || !destino) return '';
     const movidos = validos.filter((o) => o.cuentaId !== destino);
-    const quedan = validos.filter((o) => o.cuentaId === destino).reduce((s, o) => s + Number(o.monto), 0);
-    let t = '';
-    if (movidos.length)
-      t += `Se van a mover ${movidos.map((o) => `${money(Number(o.monto), meta.moneda)} de ${nombre(o.cuentaId)}`).join(' y ')} a ${nombre(destino)}. `;
-    if (quedan) t += `${money(quedan, meta.moneda)} que ya están en ${nombre(destino)} quedan separados. `;
-    return `${t}Tu meta ${meta.nombre} sube a ${money(meta.progreso + total, meta.moneda)}.`;
+    if (!movidos.length) return '';
+    return `🔁 Se mueven ${movidos.map((o) => `${money(Number(o.monto), meta.moneda)} de ${nombre(o.cuentaId)}`).join(' y ')} a ${nombre(destino)}.`;
   })();
 
   const puedeEnviar = !!meta && validos.length === origenes.length && !!destino && !excede;
@@ -200,19 +202,17 @@ export function AhorrarScreen() {
     );
   }
 
-  // HZ-19 y HZ-24: numera las preguntas y marca el paso actual.
-  const paso = contadorPasos();
-  const pMeta = paso({ hecho: !!meta });
-  const pParte = asignaciones.length > 1 ? paso({ hecho: true }) : undefined;
-  const pCuentaMeta = meta && !cuentaMeta && origenes.length > 1 ? paso({ hecho: !!destinoElegido }) : undefined;
+  // G35: sin numerar.
+  const verParte = asignaciones.length > 1;
+  const verCuentaMeta = !!meta && !cuentaMeta && origenes.length > 1;
 
   return (
     <Screen
       pie={
         <>
-          <Nota>{resumen || 'Completa la meta, de dónde sale la plata y cuánto.'}</Nota>
+          {resumen ? <Nota>{resumen}</Nota> : !puedeEnviar ? <Nota>Elige la meta, de dónde sale la plata y cuánto.</Nota> : null}
           <Button
-            title={total > 0 && meta ? `Ahorrar ${money(total, meta.moneda)}` : 'Ahorrar'}
+            title={total > 0 && meta ? `🐷 Ahorrar ${money(total, meta.moneda)}` : '🐷 Ahorrar'}
             onPress={onSubmit}
             loading={loading}
             disabled={!puedeEnviar}
@@ -222,7 +222,6 @@ export function AhorrarScreen() {
     >
       <Elegir
         label="¿Para qué meta?"
-        paso={pMeta}
         placeholder="Elegir meta"
         value={objetivoId}
         options={metas.map((m) => ({
@@ -235,26 +234,33 @@ export function AhorrarScreen() {
 
       {meta && (
         <>
-          {cuentaMeta ? (
-            <Nota>
-              {`La plata de ${meta.nombre} se guarda en ${nombre(cuentaMeta)}. Llevas ${money(meta.progreso, meta.moneda)} de ${money(meta.montoObjetivo, meta.moneda)}.`}
-            </Nota>
-          ) : null}
+          {/* G35: la meta y cómo queda, en vivo: llevas + ahorras = quedarías en. */}
+          <BandaDetalle
+            color={c.primary}
+            titulo={`${emojiMeta(meta.id, preferencias.emojis.metas)} Llevas`}
+            monto={money(meta.progreso, meta.moneda)}
+            sub={`${porcentaje(meta.progresoPorcentaje)} de ${money(meta.montoObjetivo, meta.moneda)}${cuentaMeta ? ` · se guarda en ${nombre(cuentaMeta)}` : ''}`}
+          >
+            {total > 0 ? (
+              <Datos plano>
+                <Dato etiqueta="🐷 Ahorras" valor={`+ ${money(total, meta.moneda)}`} />
+                <Dato etiqueta="✅ Quedarías en" valor={money(meta.progreso + total, meta.moneda)} />
+              </Datos>
+            ) : null}
+          </BandaDetalle>
 
-          {pParte && (
+          {verParte && (
             <Elegir
               label="¿Para qué parte de la meta?"
-              paso={pParte}
               value={parteId ?? asignaciones[0].id}
               options={asignaciones.map((a) => ({ value: a.id, label: a.nombre }))}
               onChange={(v) => v && setParteId(v)}
             />
           )}
 
-          {pCuentaMeta && (
+          {verCuentaMeta && (
             <Elegir
               label="¿En qué cuenta guardas la plata de esta meta?"
-              paso={pCuentaMeta}
               placeholder="Elegir cuenta"
               value={destinoElegido}
               options={enMoneda.map((x) => ({ value: x.id, label: x.nombre }))}
@@ -263,20 +269,15 @@ export function AhorrarScreen() {
           )}
 
           {meta && (ajena[meta.moneda] ?? 0) > 0 ? (
-            <Nota>
-              {`En tus cuentas hay ${money(ajena[meta.moneda], meta.moneda)} de otras personas. Lo libre de cada cuenta no lo descuenta: no ahorres esa plata.`}
-            </Nota>
+            <Nota>{`👥 ${money(ajena[meta.moneda], meta.moneda)} de tus cuentas son de otras personas: no los ahorres.`}</Nota>
           ) : null}
 
           {origenes.map((o, i) => {
-            const pOrigen = paso({ hecho: !!o.cuentaId });
-            const pMonto = o.cuentaId ? paso({ hecho: Number(o.monto) > 0 }) : undefined;
             const usadas = new Set(origenes.filter((_, j) => j !== i).map((x) => x.cuentaId));
             return (
               <Panel key={i}>
                 <Elegir
                   label={i === 0 ? '¿De dónde sale la plata?' : '¿De qué otra cuenta?'}
-                  paso={pOrigen}
                   placeholder="Elegir cuenta"
                   value={o.cuentaId}
                   options={enMoneda.map((x) => {
@@ -294,7 +295,6 @@ export function AhorrarScreen() {
                   <View style={styles.monto}>
                     <AmountInput
                       label="¿Cuánto?"
-                      paso={pMonto}
                       value={o.monto}
                       onChange={(v) => setOrigen(i, { monto: v })}
                       moneda={meta.moneda}
@@ -306,11 +306,11 @@ export function AhorrarScreen() {
                     />
                     <View style={styles.chips}>
                       <Chip
-                        label={`Todo lo libre (${money(libreDe(o.cuentaId), meta.moneda)})`}
+                        label={`💯 Todo lo libre (${money(libreDe(o.cuentaId), meta.moneda)})`}
                         onPress={() => setOrigen(i, { monto: String(libreDe(o.cuentaId)) })}
                       />
                       {origenes.length > 1 && (
-                        <Chip label="Quitar" onPress={() => setOrigenes((xs) => xs.filter((_, j) => j !== i))} />
+                        <Chip label="✕ Quitar" onPress={() => setOrigenes((xs) => xs.filter((_, j) => j !== i))} />
                       )}
                     </View>
                   </View>
@@ -320,10 +320,12 @@ export function AhorrarScreen() {
           })}
 
           {origenes.length < enMoneda.length && (
-            <LinkButton
-              title="+ Sumar otra cuenta"
-              onPress={() => setOrigenes((xs) => [...xs, { cuentaId: null, monto: '' }])}
-            />
+            <View style={styles.chips}>
+              <Pastilla
+                label="➕ Sumar otra cuenta"
+                onPress={() => setOrigenes((xs) => [...xs, { cuentaId: null, monto: '' }])}
+              />
+            </View>
           )}
 
         </>

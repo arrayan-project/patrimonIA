@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Text } from '../ui/Text';
 import { api, ApiError } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Button, contadorPasos, Elegir, ErrorText, Field, Nota, Screen } from '../ui';
+import { Button, Dato, Datos, Elegir, ErrorText, Field, Nota, Screen, useC } from '../ui';
 
 /**
  * Sacar la plata ahorrada en una cuenta (plantillas de pantalla, R3): libera
@@ -17,6 +18,7 @@ export interface ReservaParaSacar {
 }
 
 export function SacarPlataScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -32,6 +34,7 @@ export function SacarPlataScreen() {
   useTitulo(deUnaMeta ? 'Sacar de la meta' : 'Sacar');
 
   const elegida = reservas.find((r) => r.id === reservaId);
+  const ahorrado = reservas.reduce((s, r) => s + r.monto, 0);
   const listo = !!elegida && motivo.trim().length >= 3;
 
   const sacar = async () => {
@@ -49,37 +52,46 @@ export function SacarPlataScreen() {
     }
   };
 
-  const paso = contadorPasos();
+  // G35: sin numerar; en vez de explicar, la resta (se saca todo lo de esa cuenta).
   return (
     <Screen
       pie={
-        <>
-          {elegida ? (
-            <Nota>{`${money(elegida.monto, moneda)} vuelven a quedar libres en ${elegida.cuenta}. No salen de la cuenta.`}</Nota>
-          ) : null}
-          <Button
-            title={elegida ? `Sacar ${money(elegida.monto, moneda)}` : 'Sacar'}
-            onPress={sacar}
-            loading={busy}
-            disabled={!listo}
-          />
-        </>
+        <Button
+          title={elegida ? `💸 Sacar ${money(elegida.monto, moneda)}` : '💸 Sacar'}
+          onPress={sacar}
+          loading={busy}
+          disabled={!listo}
+        />
       }
     >
-      <Elegir
-        label="¿De qué cuenta?"
-        paso={paso({ hecho: !!elegida })}
-        placeholder="Elegir cuenta"
-        value={reservaId}
-        options={reservas.map((r) => ({ value: r.id, label: r.cuenta, sub: money(r.monto, moneda) }))}
-        onChange={setReservaId}
-      />
+      {reservas.length > 1 && (
+        <Elegir
+          label="¿De qué cuenta?"
+          placeholder="Elegir cuenta"
+          value={reservaId}
+          options={reservas.map((r) => ({ value: r.id, label: r.cuenta, sub: money(r.monto, moneda) }))}
+          onChange={setReservaId}
+        />
+      )}
+      {elegida && (
+        <>
+          <Datos>
+            <Dato etiqueta={deUnaMeta ? '🐷 En la meta' : '🐷 Ahorrado'} valor={money(ahorrado, moneda)} />
+            <Dato
+              etiqueta={`💸 Sacas de ${elegida.cuenta}`}
+              valor={<Text style={{ fontWeight: '700', color: c.danger }}>{`− ${money(elegida.monto, moneda)}`}</Text>}
+            />
+            <Dato etiqueta="✅ Queda ahorrado" valor={money(ahorrado - elegida.monto, moneda)} />
+          </Datos>
+          <Nota>{`La plata no se mueve: vuelve a quedar libre en ${elegida.cuenta}.`}</Nota>
+        </>
+      )}
       <Field
         label="¿Por qué la sacas?"
-        paso={paso({ hecho: motivo.trim().length >= 3 })}
         value={motivo}
         onChangeText={setMotivo}
         autoCapitalize="sentences"
+        placeholder="p. ej. Pagué el dentista"
       />
       <ErrorText>{error}</ErrorText>
     </Screen>
