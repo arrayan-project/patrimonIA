@@ -1,6 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Text } from '../ui/Text';
+import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -15,17 +13,25 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Skeleton, Button, ErrorText, MoneyField, Screen, Panel, useC, tipoDe, type Paleta } from '../ui';
+import { money } from '../format';
+import { emojiCategoria, emojiMeta } from '../emojis';
+import { usePreferencias } from '../preferencias';
+import { Text } from '../ui/Text';
+import { Button, Dato, Datos, ErrorText, MontoFila, Nota, Panel, Screen, Section, Skeleton, useC } from '../ui';
 
-/** Editor de las líneas del presupuesto por rubro (una por categoría del hogar). */
+/**
+ * Editor de las líneas del presupuesto por rubro (una por categoría del hogar).
+ * G35: arriba, la resta en vivo (pensabas gastar − repartido = sin repartir).
+ */
 export function PresupuestoRubrosScreen() {
   const c = useC();
-  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
+  const { preferencias } = usePreferencias();
   const nav = useNav();
   const toast = useToast();
   const presupuestoId = nav.route.params?.presupuestoId as string;
 
+  const [presu, setPresu] = useState<PresupuestoDTO | null>(null);
   const [cats, setCats] = useState<CategoriaMovimientoDTO[] | null>(null);
   // categoriaId → monto canónico ('' = sin línea)
   const [montos, setMontos] = useState<Record<string, string>>({});
@@ -37,8 +43,9 @@ export function PresupuestoRubrosScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const presu = await api.get<PresupuestoDTO>(`/presupuestos/${presupuestoId}`, token);
-      let hogarId = presu.hogarId;
+      const p = await api.get<PresupuestoDTO>(`/presupuestos/${presupuestoId}`, token);
+      setPresu(p);
+      let hogarId = p.hogarId;
       if (!hogarId) {
         const hogares = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         hogarId = hogares[0]?.id ?? null;
@@ -102,84 +109,80 @@ export function PresupuestoRubrosScreen() {
     );
   }
 
-  const gastos = cats.filter((c) => c.tipoAplicable !== 'INGRESO');
-  const ingresos = cats.filter((c) => c.tipoAplicable === 'INGRESO');
-  const total = (arr: CategoriaMovimientoDTO[]) =>
-    arr.reduce((s, c) => s + Number(montos[c.id] || '0'), 0);
+  const gastos = cats.filter((x) => x.tipoAplicable !== 'INGRESO');
+  const ingresos = cats.filter((x) => x.tipoAplicable === 'INGRESO');
+  const total = (arr: CategoriaMovimientoDTO[]) => arr.reduce((s, x) => s + Number(montos[x.id] || '0'), 0);
+  const moneda = presu?.moneda ?? 'CLP';
+  const pensado = presu?.gastosEsperados ?? 0;
+  const repartido = total(gastos);
+  const sinRepartir = pensado - repartido;
+  const conTotal = (n: number) => (n > 0 ? ` · ${money(n, moneda)}` : '');
 
-  const grupo = (titulo: string, arr: CategoriaMovimientoDTO[], suma: number) =>
-    arr.length === 0 ? null : (
-      <Panel>
-        <View style={styles.filaTitulo}>
-          <Text style={styles.sectionTitle}>{titulo}</Text>
-          <Text style={styles.muted}>{suma.toLocaleString('es-CL')}</Text>
-        </View>
-        {arr.map((c) => (
-          <MoneyField
-            key={c.id}
-            label={c.nombre}
-            value={montos[c.id] ?? ''}
-            onChange={(v) => setMontos((m) => ({ ...m, [c.id]: v }))}
-          />
-        ))}
-      </Panel>
-    );
+  const grupo = (arr: CategoriaMovimientoDTO[]) => (
+    <Panel>
+      {arr.map((x) => (
+        <MontoFila
+          key={x.id}
+          emoji={emojiCategoria(x) ?? '🏷️'}
+          label={x.nombre}
+          value={montos[x.id] ?? ''}
+          onChange={(v) => setMontos((m) => ({ ...m, [x.id]: v }))}
+        />
+      ))}
+    </Panel>
+  );
 
   return (
     <Screen
       onRefresh={cargar}
       pie={
         <Button
-          title="Guardar rubros"
+          title="🧩 Guardar reparto"
           onPress={guardar}
           loading={busy}
           disabled={cats.length === 0 && objetivos.length === 0}
         />
       }
     >
-      <Text style={styles.muted}>Cuánto esperas por categoría en el período. Deja en blanco lo que no quieras seguir.</Text>
+      {pensado > 0 && (
+        <Datos>
+          <Dato etiqueta="🎯 Pensabas gastar" valor={money(pensado, moneda)} />
+          <Dato etiqueta="🧩 Repartido" valor={`− ${money(repartido, moneda)}`} />
+          <Dato
+            etiqueta={sinRepartir >= 0 ? '❓ Sin repartir' : '⚠️ Repartiste de más'}
+            valor={
+              <Text style={{ fontSize: 14, fontWeight: '700', color: sinRepartir >= 0 ? c.text : c.danger }}>
+                {money(Math.abs(sinRepartir), moneda)}
+              </Text>
+            }
+          />
+        </Datos>
+      )}
 
-      {grupo('Gastos por rubro', gastos, total(gastos))}
-      {grupo('Ingresos por rubro', ingresos, total(ingresos))}
+      {gastos.length > 0 && <Section title="🧾 Gastos">{grupo(gastos)}</Section>}
+      {ingresos.length > 0 && <Section title={`📥 Lo que esperas que entre${conTotal(total(ingresos))}`}>{grupo(ingresos)}</Section>}
 
       {objetivos.length > 0 && (
-        <Panel>
-          <View style={styles.filaTitulo}>
-            <Text style={styles.sectionTitle}>Ahorro por meta</Text>
-            <Text style={styles.muted}>
-              {objetivos
-                .reduce((s, o) => s + Number(montosAhorro[o.id] || '0'), 0)
-                .toLocaleString('es-CL')}
-            </Text>
-          </View>
-          <Text style={styles.muted}>
-            Cuánto esperas ahorrar para cada meta en el período. El real usa lo
-            ahorrado dentro del período.
-          </Text>
-          {objetivos.map((o) => (
-            <MoneyField
-              key={o.id}
-              label={o.nombre}
-              value={montosAhorro[o.id] ?? ''}
-              onChange={(v) => setMontosAhorro((m) => ({ ...m, [o.id]: v }))}
-            />
-          ))}
-        </Panel>
+        <Section
+          title={`🐷 Ahorro para metas${conTotal(objetivos.reduce((s, o) => s + Number(montosAhorro[o.id] || '0'), 0))}`}
+        >
+          <Panel>
+            {objetivos.map((o) => (
+              <MontoFila
+                key={o.id}
+                emoji={emojiMeta(o.id, preferencias.emojis.metas)}
+                label={o.nombre}
+                value={montosAhorro[o.id] ?? ''}
+                onChange={(v) => setMontosAhorro((m) => ({ ...m, [o.id]: v }))}
+              />
+            ))}
+          </Panel>
+        </Section>
       )}
 
-      {cats.length === 0 && (
-        <Text style={styles.muted}>
-          Este hogar no tiene categorías. Créalas en Ajustes → Categorías de movimiento.
-        </Text>
-      )}
+      {cats.length === 0 && <Nota>Este hogar no tiene categorías. Créalas en Ajustes → Para ordenar tu plata.</Nota>}
 
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
-
-const crearEstilos = (c: Paleta) => StyleSheet.create({
-  filaTitulo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: tipoDe(c).seccion,
-  muted: tipoDe(c).nota,
-});

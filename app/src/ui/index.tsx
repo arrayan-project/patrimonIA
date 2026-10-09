@@ -832,10 +832,13 @@ export function GoalCard({
   footLeft,
   footRight,
   ok,
+  mal,
   accion,
   onPress,
 }: {
   name: string;
+  /** G35: la barra y el % en rojo (p. ej. un rubro que se pasó). */
+  mal?: boolean;
   /** G35: el emoji de la meta, a la izquierda del nombre. */
   emoji?: string;
   /** G35: una etiqueta bajo el nombre (p. ej. "👥 Del hogar"). */
@@ -866,10 +869,10 @@ export function GoalCard({
           </Text>
           {tag ? <Text style={styles.goalTag}>{tag}</Text> : null}
         </View>
-        {hint ? <Text style={[styles.goalHint, ok && { color: c.ok }]}>{hint}</Text> : null}
+        {hint ? <Text style={[styles.goalHint, ok && { color: c.ok }, mal && { color: c.danger }]}>{hint}</Text> : null}
       </View>
       <View style={styles.goalBar}>
-        <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.primary }]} />
+        <View style={[styles.goalBarFill, { width: w, backgroundColor: mal ? c.danger : ok ? c.ok : c.primary }]} />
       </View>
       {footLeft || footRight || accion ? (
         <View style={styles.goalFoot}>
@@ -1428,10 +1431,13 @@ export function Pastilla({
   onPress,
   accessibilityLabel,
   enlace,
+  activo,
 }: {
   label: string;
   onPress: () => void;
   accessibilityLabel?: string;
+  /** G35: elegida (una opción entre varias pastillas): rellena con el acento. */
+  activo?: boolean;
   /** Lleva a otra cosa (p. ej. "🔍 Ver los 5"): sin relleno y en el color del acento. */
   enlace?: boolean;
 }) {
@@ -1441,14 +1447,16 @@ export function Pastilla({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={activo !== undefined ? { selected: activo } : undefined}
       style={({ pressed }) => [
         styles.opcionalBoton,
         enlace && { backgroundColor: 'transparent', borderColor: c.primary, borderStyle: 'dashed' },
+        activo && { backgroundColor: c.primary, borderColor: c.primary },
         pressed && { opacity: 0.7 },
       ]}
       onPress={onPress}
     >
-      <Text style={[styles.opcionalTxt, enlace && { color: c.primary }]} numberOfLines={1}>
+      <Text style={[styles.opcionalTxt, enlace && { color: c.primary }, activo && { color: c.primaryText }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -1566,6 +1574,44 @@ export function MoneyField({
       />
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
     </BloquePaso>
+  );
+}
+
+/**
+ * G35: una fila de una lista de montos (repartir un presupuesto): emoji,
+ * nombre y el monto a la derecha. Vacío = sin monto (sin "0" de relleno).
+ */
+export function MontoFila({
+  emoji,
+  label,
+  value,
+  onChange,
+}: {
+  emoji: string;
+  label: string;
+  value: string;
+  onChange: (canonico: string) => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <View style={styles.montoFila}>
+      <View style={[styles.txLogo, { backgroundColor: c.panelAlt }]}>
+        <Text style={styles.txEmoji}>{emoji}</Text>
+      </View>
+      <Text style={[styles.txTitle, { flex: 1 }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <TextInput
+        style={[styles.input, styles.montoFilaInput]}
+        keyboardType="numeric"
+        value={montoVisible(value)}
+        onChangeText={(t) => onChange(montoCanonico(t))}
+        placeholder="—"
+        placeholderTextColor={c.mutedDim}
+        accessibilityLabel={`Monto para ${label}`}
+      />
+    </View>
   );
 }
 
@@ -3087,6 +3133,8 @@ const crearEstilos = (c: Paleta) => {
       color: c.text,
     },
     inputError: { borderColor: c.danger },
+    montoFila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
+    montoFilaInput: { width: 130, minHeight: 44, paddingVertical: 8, textAlign: 'right' },
     errorInline: { color: c.danger, fontSize: 12 },
     button: {
       backgroundColor: c.primary,

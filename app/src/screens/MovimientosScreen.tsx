@@ -69,7 +69,7 @@ type FiltroCategoria = { id: string | null; nombre: string };
 const RUBROS_A_LA_VISTA = 4;
 
 /** Encabezado de un día de la lista: "Hoy", "Ayer", "Miércoles 7 de octubre". */
-function nombreDia(fecha: string, hoy: Date): string {
+export function nombreDia(fecha: string, hoy: Date): string {
   const [a, m, d] = fecha.slice(0, 10).split('-').map(Number);
   const dia = new Date(a, m - 1, d);
   const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
