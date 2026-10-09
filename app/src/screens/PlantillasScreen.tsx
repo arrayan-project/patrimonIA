@@ -46,13 +46,15 @@ export function PlantillasScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [pls, els, hogares] = await Promise.all([
+      const [pls, els, hogares, delHogar] = await Promise.all([
         api.get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
         api.get<HogarDTO[]>('/usuarios/me/hogares', token),
+        // D-5: el destino de una transferencia puede ser de otro miembro.
+        api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token).catch(() => []),
       ]);
       setLista(pls);
-      setElementos(els);
+      setElementos([...els, ...delHogar.filter((e) => !els.some((p) => p.id === e.id))]);
       setCategorias(
         hogares[0]
           ? await api.get<CategoriaMovimientoDTO[]>(

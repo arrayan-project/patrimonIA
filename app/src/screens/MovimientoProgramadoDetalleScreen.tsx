@@ -31,6 +31,7 @@ export function MovimientoProgramadoDetalleScreen() {
 
   const [m, setM] = useState<MovimientoProgramadoDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -40,6 +41,12 @@ export function MovimientoProgramadoDetalleScreen() {
       setElementos(
         await api
           .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
+          .catch(() => []),
+      );
+      // D-5: el destino de una transferencia puede ser de otro miembro.
+      setElementosHogar(
+        await api
+          .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token)
           .catch(() => []),
       );
     } catch (e) {
@@ -67,11 +74,11 @@ export function MovimientoProgramadoDetalleScreen() {
   /** G32 H-05 — la cuenta es tocable si es visible para el usuario. */
   const enlaceEl = (id: string) => {
     const el = elementos.find((e) => e.id === id);
-    return el ? (
-      <LinkButton title={`${el.nombre} ›`} onPress={() => nav.go('ElementoDetalle', { elementoId: id })} />
-    ) : (
-      'otra cuenta'
-    );
+    if (el) {
+      return <LinkButton title={`${el.nombre} ›`} onPress={() => nav.go('ElementoDetalle', { elementoId: id })} />;
+    }
+    const ajena = elementosHogar.find((e) => e.id === id);
+    return ajena ? `${ajena.nombre} (de ${ajena.propietarios[0]?.nombre ?? 'otro miembro'})` : 'otra cuenta';
   };
 
   return (

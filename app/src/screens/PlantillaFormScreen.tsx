@@ -11,7 +11,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
-import { opcionesDeElementos } from '../opciones';
+import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import {
   AccionDestructiva,
   AmountInput,
@@ -65,6 +65,7 @@ export function PlantillaFormScreen() {
   const desde = nav.route.params?.desde as DesdeMovimiento | undefined;
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [cargado, setCargado] = useState(false);
   const [error, setError] = useState('');
@@ -77,14 +78,16 @@ export function PlantillaFormScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [pls, els, hogares] = await Promise.all([
+        const [pls, els, hogares, delHogar] = await Promise.all([
           plantillaId
             ? api.get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token)
             : Promise.resolve([]),
           api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
           api.get<HogarDTO[]>('/usuarios/me/hogares', token),
+          api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token).catch(() => []),
         ]);
         setElementos(els);
+        setElementosHogar(delHogar);
         setCategorias(
           hogares[0]
             ? await api.get<CategoriaMovimientoDTO[]>(`/hogares/${hogares[0].id}/categorias-movimiento`, token)
@@ -111,6 +114,9 @@ export function PlantillaFormScreen() {
     })();
   }, [token, plantillaId]);
 
+  // D-5: una transferencia puede ir a la cuenta de otro miembro del hogar.
+  const propios = new Set(elementos.map((e) => e.id));
+  const deMiembros = elementosHogar.filter((e) => !propios.has(e.id));
   const necesitaOrigen = b.tipo === 'GASTO' || b.tipo === 'TRANSFERENCIA';
   const necesitaDestino = b.tipo === 'INGRESO' || b.tipo === 'TRANSFERENCIA';
   const catAplicables = categorias.filter(
@@ -197,7 +203,18 @@ export function PlantillaFormScreen() {
         </>
       }
     >
-      <Segmented options={TIPOS} value={b.tipo} onChange={(tipo) => setB((x) => ({ ...x, tipo }))} />
+      <Segmented
+        options={TIPOS}
+        value={b.tipo}
+        onChange={(tipo) =>
+          setB((x) => ({
+            ...x,
+            tipo,
+            // D-5: la cuenta de otro miembro solo vale como destino de una transferencia.
+            destinoId: tipo !== 'TRANSFERENCIA' && x.destinoId && !propios.has(x.destinoId) ? null : x.destinoId,
+          }))
+        }
+      />
       <Field
         label="¿Cómo se llama?"
         paso={paso({ hecho: listo })}
@@ -233,7 +250,10 @@ export function PlantillaFormScreen() {
           paso={paso()}
           opcionNula="Sin definir"
           value={b.destinoId}
-          options={opcionesDeElementos(elementos, { saldo: false, excluir: b.origenId })}
+          options={[
+            ...opcionesDeElementos(elementos, { saldo: false, excluir: b.origenId }),
+            ...(b.tipo === 'TRANSFERENCIA' ? opcionesDeMiembros(deMiembros) : []),
+          ]}
           onChange={(destinoId) => setB((x) => ({ ...x, destinoId }))}
         />
       )}

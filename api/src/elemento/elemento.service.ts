@@ -894,6 +894,27 @@ export class ElementoService {
     return this.#puedeVer(el, actorId, 'MOVIMIENTOS');
   }
 
+  /**
+   * G6 + D-2 — ¿el actor puede usar el elemento como destino de una
+   * transferencia? Si es propio, sí. Si es de un co-miembro, solo si le
+   * comparte su EXISTENCIA (nivel "Que puedan transferirme" o superior).
+   * Lo usan los eventos, las plantillas y los programados (D-5). `db` deja
+   * ver un elemento propio recién creado dentro de una transacción (D-3).
+   */
+  async puedeRecibirTransferencia(
+    elemento: ElementoRow,
+    actorId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
+    const propIds = (
+      await db.elemento_propietario.findMany({
+        where: { elemento_id: elemento.id },
+        select: { usuario_id: true },
+      })
+    ).map((p) => p.usuario_id);
+    return this.#puedeVer(elemento, actorId, 'EXISTENCIA', propIds);
+  }
+
   /** §A8 — elementos ACTIVOS de co-miembros cuya EXISTENCIA es visible para el actor. */
   async listarVisiblesDelHogar(actorId: string): Promise<ElementoPatrimonialDTO[]> {
     const propios = new Set(

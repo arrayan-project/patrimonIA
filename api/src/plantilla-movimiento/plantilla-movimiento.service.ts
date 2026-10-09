@@ -8,6 +8,7 @@ import {
 import { Prisma, type plantilla_movimiento as PlantillaRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import type {
   ActualizarPlantillaMovimientoDto,
   CrearPlantillaMovimientoDto,
@@ -54,6 +55,7 @@ export class PlantillaMovimientoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly elementos: ElementoService,
   ) {}
 
   async crear(
@@ -225,13 +227,23 @@ export class PlantillaMovimientoService {
   }
 
   /** Valida los campos opcionales que sí vengan: propiedad de elementos, hogar y
-   *  tipo de la categoría, y coherencia entre `tipo` y la categoría. */
+   *  tipo de la categoría, y coherencia entre `tipo` y la categoría. El destino
+   *  de una TRANSFERENCIA puede ser de otro miembro que deja transferirle (D-5, D-2). */
   async #validarCoherencia(
     actorId: string,
     tipo: TipoPlantilla,
     campos: { elementoOrigenId?: string; elementoDestinoId?: string; categoriaId?: string },
   ): Promise<void> {
-    for (const id of [campos.elementoOrigenId, campos.elementoDestinoId]) {
+    if (tipo === 'TRANSFERENCIA' && campos.elementoDestinoId) {
+      const destino = await this.prisma.elemento_patrimonial.findUnique({
+        where: { id: campos.elementoDestinoId },
+      });
+      if (!destino || !(await this.elementos.puedeRecibirTransferencia(destino, actorId))) {
+        throw new ForbiddenException('No puedes transferir a esa cuenta');
+      }
+    }
+    const propios = tipo === 'TRANSFERENCIA' ? [campos.elementoOrigenId] : [campos.elementoOrigenId, campos.elementoDestinoId];
+    for (const id of propios) {
       if (!id) continue;
       const prop = await this.prisma.elemento_propietario.findFirst({
         where: { elemento_id: id, usuario_id: actorId },

@@ -12,6 +12,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import { derivarValorPendiente } from '../common/deuda.js';
 import {
   toMovimientoProgramadoDTO,
@@ -39,6 +40,7 @@ export class MovimientoProgramadoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly elementos: ElementoService,
   ) {}
 
   /** AS #13 — CrearMovimientoProgramado. Sin validación de patrimonio. estado = PENDIENTE. */
@@ -50,7 +52,7 @@ export class MovimientoProgramadoService {
     const { origenId, destinoId } = this.#slots(dto.tipo, dto.elementoOrigenId, dto.elementoDestinoId);
 
     if (origenId) await this.#exigirElementoCompatible(origenId, actorId, moneda, 'origen');
-    if (destinoId) await this.#exigirElementoCompatible(destinoId, actorId, moneda, 'destino');
+    if (destinoId) await this.#exigirElementoCompatible(destinoId, actorId, moneda, 'destino', dto.tipo);
 
     const creado = await this.prisma.$transaction(async (tx) => {
       const m = await tx.movimiento_programado.create({
@@ -123,7 +125,7 @@ export class MovimientoProgramadoService {
       posterior.elemento_origen_id = dto.elementoOrigenId;
     }
     if (dto.elementoDestinoId !== undefined && usaDestino && dto.elementoDestinoId !== m.elemento_destino_id) {
-      await this.#exigirElementoCompatible(dto.elementoDestinoId, actorId, m.moneda, 'destino');
+      await this.#exigirElementoCompatible(dto.elementoDestinoId, actorId, m.moneda, 'destino', m.tipo);
       data.elemento_destino_id = dto.elementoDestinoId;
       anterior.elemento_destino_id = m.elemento_destino_id;
       posterior.elemento_destino_id = dto.elementoDestinoId;
@@ -187,7 +189,12 @@ export class MovimientoProgramadoService {
       plan.push({ elemento: await cargarActivo(m.elemento_origen_id), delta: monto.negated() });
     }
     if (m.elemento_destino_id) {
-      plan.push({ elemento: await cargarActivo(m.elemento_destino_id), delta: monto });
+      const destino = await cargarActivo(m.elemento_destino_id);
+      // D-5: el dueño de la cuenta de destino pudo bajar su nivel (D-2) desde que se programó.
+      if (!(await this.elementos.puedeRecibirTransferencia(destino, actorId))) {
+        throw errorConCodigo(ForbiddenException, 'DESTINO_NO_PERMITIDO', 'No puedes mover fondos a ese elemento destino');
+      }
+      plan.push({ elemento: destino, delta: monto });
     }
 
     const { evento } = await this.prisma.$transaction(async (tx) => {
@@ -292,7 +299,9 @@ export class MovimientoProgramadoService {
     const ids = propios.map((p) => p.elemento_id);
     const movimientos = await this.prisma.movimiento_programado.findMany({
       where: {
-        OR: [{ elemento_destino_id: { in: ids } }, { elemento_origen_id: { in: ids } }],
+        // El lado propio (#ladoPropio): la cuenta que recibe una transferencia
+        // programada por otro miembro (D-5) no la ve como suya.
+        OR: [{ elemento_origen_id: { in: ids } }, { tipo: 'INGRESO', elemento_destino_id: { in: ids } }],
         ...(estado ? { estado } : {}),
       },
       orderBy: { fecha_programada: 'asc' },
@@ -335,29 +344,44 @@ export class MovimientoProgramadoService {
   async #cargar(movimientoId: string, actorId: string): Promise<MovimientoRow> {
     const m = await this.prisma.movimiento_programado.findUnique({ where: { id: movimientoId } });
     if (!m) throw new NotFoundException('Movimiento programado no encontrado');
-    const ids = [m.elemento_origen_id, m.elemento_destino_id].filter((x): x is string => !!x);
-    const propios = await this.prisma.elemento_propietario.findMany({
-      where: { elemento_id: { in: ids }, usuario_id: actorId },
-      select: { elemento_id: true },
+    const propio = await this.prisma.elemento_propietario.findFirst({
+      where: { elemento_id: this.#ladoPropio(m), usuario_id: actorId },
     });
-    if (propios.length !== ids.length) {
+    if (!propio) {
       throw new ForbiddenException('No eres propietario de los elementos del movimiento');
     }
     return m;
   }
 
+  /**
+   * El elemento que el actor tiene que tener para operar el movimiento: el
+   * origen si lo hay (GASTO, TRANSFERENCIA), si no el destino (INGRESO). El
+   * destino de una transferencia puede ser de otro miembro (D-5).
+   */
+  #ladoPropio(m: MovimientoRow): string {
+    return (m.elemento_origen_id ?? m.elemento_destino_id)!;
+  }
+
+  /** Propio; o, como destino de una TRANSFERENCIA, de un miembro que deja transferirle (D-5, D-2). */
   async #exigirElementoCompatible(
     elementoId: string,
     actorId: string,
     moneda: string,
     rol: 'origen' | 'destino',
+    tipo?: string,
   ): Promise<ElementoRow> {
     const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id: elementoId } });
     if (!el) throw new NotFoundException(`Elemento ${rol} no encontrado`);
-    const prop = await this.prisma.elemento_propietario.findFirst({
-      where: { elemento_id: elementoId, usuario_id: actorId },
-    });
-    if (!prop) throw new ForbiddenException(`No eres propietario del elemento ${rol}`);
+    if (rol === 'destino' && tipo === 'TRANSFERENCIA') {
+      if (!(await this.elementos.puedeRecibirTransferencia(el, actorId))) {
+        throw errorConCodigo(ForbiddenException, 'DESTINO_NO_PERMITIDO', 'No puedes mover fondos a ese elemento destino');
+      }
+    } else {
+      const prop = await this.prisma.elemento_propietario.findFirst({
+        where: { elemento_id: elementoId, usuario_id: actorId },
+      });
+      if (!prop) throw new ForbiddenException(`No eres propietario del elemento ${rol}`);
+    }
     if (el.moneda !== moneda) {
       throw new BadRequestException(
         `La moneda (${moneda}) no coincide con la del elemento ${rol} (${el.moneda})`,

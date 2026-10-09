@@ -3,7 +3,7 @@ import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { opcionesDeElementos } from '../opciones';
+import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import { money } from '../format';
 import {
   AmountInput,
@@ -29,6 +29,7 @@ export function NuevoProgramadoScreen() {
   const nav = useNav();
   const toast = useToast();
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -47,10 +48,23 @@ export function NuevoProgramadoScreen() {
       .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
       .then(setElementos)
       .catch((e) => setError(e instanceof ApiError ? e.message : 'Error'));
+    api
+      .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token)
+      .then(setElementosHogar)
+      .catch(() => setElementosHogar([]));
   }, [token]);
 
+  // D-5: una transferencia puede ir a la cuenta de otro miembro del hogar (las
+  // que comparte desde "Que puedan transferirte"); el origen sigue siendo propio.
+  const propios = new Set(elementos.map((e) => e.id));
+  const deMiembros = elementosHogar.filter((e) => !propios.has(e.id));
+  const cambiarTipo = (t: (typeof TIPOS)[number]) => {
+    setTipo(t);
+    if (t !== 'TRANSFERENCIA' && destinoId && !propios.has(destinoId)) setDestinoId(null);
+  };
+
   const origen = elementos.find((e) => e.id === origenId);
-  const destino = elementos.find((e) => e.id === destinoId);
+  const destino = [...elementos, ...deMiembros].find((e) => e.id === destinoId);
   const monedaRef = (usaOrigen ? origen : destino)?.moneda;
 
   const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(fecha.trim());
@@ -88,7 +102,7 @@ export function NuevoProgramadoScreen() {
     }
   };
 
-  const nombreDe = (id: string | null) => elementos.find((e) => e.id === id)?.nombre ?? '';
+  const nombreDe = (id: string | null) => [...elementos, ...deMiembros].find((e) => e.id === id)?.nombre ?? '';
   const m = monedaRef ? `${Number(monto) ? money(Number(monto), monedaRef) : ''}` : '';
   const cuando = fechaValida ? ` el ${fechaLegible(fecha)}` : '';
   const resumen = !puedeCrear
@@ -116,7 +130,7 @@ export function NuevoProgramadoScreen() {
         </>
       }
     >
-      <Segmented options={TIPOS} value={tipo} onChange={setTipo} />
+      <Segmented options={TIPOS} value={tipo} onChange={cambiarTipo} />
       <AmountInput label="¿Cuánto?" paso={paso({ hecho: Number(monto) > 0 })} value={monto} onChange={setMonto} moneda={monedaRef} />
       {usaOrigen && (
         <Elegir
@@ -137,7 +151,10 @@ export function NuevoProgramadoScreen() {
           paso={paso({ hecho: !!destinoId })}
           placeholder="Elegir cuenta"
           value={destinoId}
-          options={opcionesDeElementos(elementos, { saldo: false, excluir: usaOrigen ? origenId : null })}
+          options={[
+            ...opcionesDeElementos(elementos, { saldo: false, excluir: usaOrigen ? origenId : null }),
+            ...(tipo === 'TRANSFERENCIA' ? opcionesDeMiembros(deMiembros) : []),
+          ]}
           onChange={setDestinoId}
         />
       )}

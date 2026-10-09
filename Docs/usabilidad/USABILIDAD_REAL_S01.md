@@ -554,6 +554,9 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
   9. D-7 + HZ-21: solicitud de aporte ("Compartido con el hogar" en Gasté),
      "Avisarle a [miembro]" en Recibí → De alguien del hogar y "Entre
      [miembro] y tú".
-  10. D-5 + D-6: recurrencia y destino de otro miembro.
+  10. D-5 + D-6: recurrencia y destino de otro miembro. D-5 se adelantó
+      (2026-10-08) junto con la regla D-2 en el backend: rama
+      `feat/G33-D5-destino-miembro`, por probar en el teléfono (`GAPS.md`,
+      G33). Queda D-6.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.
