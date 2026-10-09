@@ -12,6 +12,19 @@ const MENSAJES: Record<string, (d: Record<string, unknown>) => string> = {
   OBJETIVO_SOLO_DUENO: () => 'Solo quien creó la meta puede hacer esto.',
   PRESUPUESTO_META_REPETIDA: () => 'Hay una meta repetida en el presupuesto.',
   PRESUPUESTO_META_INVALIDA: () => 'Una de las metas ya no existe o no es parte de este presupuesto.',
+  // G36: cambiar un presupuesto entre "Solo tuyo" y "Del hogar".
+  PRESUPUESTO_SOLO_CREADOR: () => 'Solo quien creó el presupuesto puede cambiar de quién es.',
+  PRESUPUESTO_MISMO_ALCANCE: () => 'El presupuesto ya es así.',
+  PRESUPUESTO_FUERA_DE_ALCANCE: (d) => {
+    const lista = (x: unknown) => (Array.isArray(x) ? x.filter((v) => typeof v === 'string') : []);
+    const partes = [
+      ...lista(d.categorias).map((n) => `la categoría ${n}`),
+      ...lista(d.metas).map((n) => `la meta ${n}`),
+    ];
+    return partes.length > 0
+      ? `Primero saca ${partes.join(', ')} del presupuesto: no son parte de lo nuevo.`
+      : 'Hay montos en categorías o metas que no son parte de lo nuevo. Sácalos primero.';
+  },
   ASIGNACION_NO_ENCONTRADA: () => 'No encontramos esa parte de la meta.',
   ASIGNACION_AJENA: () => 'No puedes usar esa parte de la meta.',
   RESERVA_NO_ENCONTRADA: () => 'No encontramos ese ahorro.',

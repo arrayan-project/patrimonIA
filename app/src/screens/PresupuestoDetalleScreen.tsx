@@ -14,6 +14,8 @@ import { useNav, useTitulo } from '../navigation/navigator';
 import { money, porcentaje } from '../format';
 import { emojiCategoria, emojiMeta } from '../emojis';
 import { usePreferencias } from '../preferencias';
+import { confirmar } from '../ui/confirmar';
+import { useToast } from '../ui/Toast';
 import { irAAccion } from './AccionFormScreen';
 import { nombrePeriodo } from './PresupuestosScreen';
 import {
@@ -45,8 +47,9 @@ import { Dona } from '../ui/charts';
  */
 export function PresupuestoDetalleScreen() {
   const c = useC();
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
+  const toast = useToast();
   const { preferencias } = usePreferencias();
   const presupuestoId = nav.route.params?.presupuestoId as string;
 
@@ -135,6 +138,34 @@ export function PresupuestoDetalleScreen() {
       hogarId: p.hogarId ?? undefined,
     });
   const irARubros = () => nav.go('PresupuestoRubros', { presupuestoId });
+  // G36: solo quien lo creó lo pasa de "Solo tuyo" a "Del hogar" o al revés.
+  const delHogar = p.tipo === 'FAMILIAR';
+  const puedeCambiarAlcance = abierto && p.usuarioId === usuario.id;
+  const cambiarAlcance = async () => {
+    const ok = await confirmar(
+      delHogar ? 'Dejarlo solo para mí' : 'Compartir con el hogar',
+      delHogar
+        ? 'Los demás del hogar dejan de verlo y cuenta solo lo tuyo.'
+        : 'Lo ven todos los del hogar y cuenta lo que gastan entre todos.',
+      delHogar ? 'Dejar solo para mí' : 'Compartir',
+    );
+    if (!ok) return;
+    setError('');
+    try {
+      const hogarId = delHogar
+        ? undefined
+        : (await api.get<HogarDTO[]>('/usuarios/me/hogares', token))[0]?.id;
+      await api.post(
+        '/comandos/CambiarAlcancePresupuesto',
+        { presupuestoId, tipo: delHogar ? 'INDIVIDUAL' : 'FAMILIAR', ...(hogarId ? { hogarId } : {}) },
+        token,
+      );
+      toast.mostrar(delHogar ? '🙋 Ahora es solo tuyo' : '👥 Ahora es del hogar', 'ok');
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    }
+  };
 
   return (
     <Screen
@@ -272,6 +303,23 @@ export function PresupuestoDetalleScreen() {
         <MenuList
           items={[
             { title: 'Cambiar montos', emoji: '✏️', subtitle: 'Cuánto gastar, que entre y ahorrar', onPress: irAMontos },
+            ...(puedeCambiarAlcance
+              ? [
+                  delHogar
+                    ? {
+                        title: 'Dejarlo solo para mí',
+                        emoji: '🙋',
+                        subtitle: 'Los demás del hogar dejan de verlo',
+                        onPress: cambiarAlcance,
+                      }
+                    : {
+                        title: 'Compartir con el hogar',
+                        emoji: '👥',
+                        subtitle: 'Lo ven todos y cuenta lo de todos',
+                        onPress: cambiarAlcance,
+                      },
+                ]
+              : []),
             ...(puedeCerrar
               ? [
                   {
