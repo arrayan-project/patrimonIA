@@ -203,8 +203,8 @@ En resumen:
     pasos" en el Dashboard.
   - [x] 15m+ — lo que quedaba (design tokens, buscador en pickers,
     co-propietarios con %, montos contables, FAB) se cerró en las Fases 18–26;
-    ver `Docs/retirado/UI_UX_BACKLOG.md`. Solo queda `ListItem` en dos listas
-    (diferido a propósito, U3 en `GAPS.md`).
+    ver `Docs/retirado/UI_UX_BACKLOG.md`. U3 (`ListItem`) se cerró por obsoleto
+    (`GAPS.md`, Parte 2).
 
 - [x] **Fase 16 — Reportes financieros + reorganización de navegación**:
   - [x] Backend: `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=` y
