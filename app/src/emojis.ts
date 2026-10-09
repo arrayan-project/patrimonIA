@@ -150,3 +150,12 @@ export function emojiMoneda(moneda: string): string {
       return '💱';
   }
 }
+
+/** Emoji de cada puerta del "+" (banda del monto en Registrar, detalle y Editar). */
+export const EMOJI_ANOTAR: Record<string, string> = {
+  GASTO: '💸',
+  INGRESO: '💰',
+  TRANSFERENCIA: '🔁',
+  CONVERSION: '💱',
+  SALDO_INICIAL: '🏁',
+};

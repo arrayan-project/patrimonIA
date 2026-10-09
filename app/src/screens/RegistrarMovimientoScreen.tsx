@@ -19,7 +19,7 @@ import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { money } from '../format';
-import { emojiCategoria, emojiMeta, emojiTipoMovimiento } from '../emojis';
+import { EMOJI_ANOTAR, emojiCategoria, emojiMeta, emojiTipoMovimiento } from '../emojis';
 import { usePreferencias } from '../preferencias';
 import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import {
@@ -75,7 +75,7 @@ const TITULOS: Record<Tipo, string> = {
 const FRECUENTES_A_LA_VISTA = 2;
 /** "Tus frecuentes de …" / "Aún no tienes frecuentes de …". */
 const DE_TIPO: Record<Tipo, string> = { GASTO: 'gasto', INGRESO: 'ingreso', TRANSFERENCIA: 'plata movida', CONVERSION: 'plata movida' };
-const EMOJIS: Record<Tipo, string> = { GASTO: '💸', INGRESO: '💰', TRANSFERENCIA: '🔁', CONVERSION: '💱' };
+const EMOJIS: Record<Tipo, string> = EMOJI_ANOTAR;
 
 /**
  * D-8 — paso 2 de Gasté y Recibí: de quién es la plata. HOGAR es "Compartido
