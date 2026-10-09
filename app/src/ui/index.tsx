@@ -550,10 +550,13 @@ export function ElegirEmoji({
   label = 'Emoji',
   value,
   onChange,
+  compacto,
 }: {
   label?: string;
   value: string;
   onChange: (emoji: string) => void;
+  /** Solo el botón con el emoji (para ponerlo junto al nombre en un formulario). */
+  compacto?: boolean;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -566,18 +569,29 @@ export function ElegirEmoji({
   };
   return (
     <>
-      <Pressable
-        onPress={() => setAbierto(true)}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}: ${value}. Cambiar`}
-        style={({ pressed }) => [styles.emojiFila, pressed && { opacity: 0.7 }]}
-      >
-        <View style={styles.emojiActual}>
+      {compacto ? (
+        <Pressable
+          onPress={() => setAbierto(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}: ${value}. Cambiar`}
+          style={({ pressed }) => [styles.emojiBoton, pressed && { opacity: 0.7 }]}
+        >
           <Text style={styles.emojiGrande}>{value}</Text>
-        </View>
-        <Text style={[styles.listItemTitle, { flex: 1 }]}>{label}</Text>
-        <Text style={styles.seccionAccion}>Cambiar</Text>
-      </Pressable>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => setAbierto(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}: ${value}. Cambiar`}
+          style={({ pressed }) => [styles.emojiFila, pressed && { opacity: 0.7 }]}
+        >
+          <View style={styles.emojiActual}>
+            <Text style={styles.emojiGrande}>{value}</Text>
+          </View>
+          <Text style={[styles.listItemTitle, { flex: 1 }]}>{label}</Text>
+          <Text style={styles.seccionAccion}>Cambiar</Text>
+        </Pressable>
+      )}
       <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
         <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
           <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
@@ -2090,14 +2104,14 @@ export function Ordenar({ onSubir, onBajar }: { onSubir?: () => void; onBajar?: 
   const styles = useEstilos();
   const flecha = (icono: NombreIcono, label: string, onPress?: () => void) => (
     <Pressable
-      hitSlop={8}
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !onPress }}
+      style={[styles.flechaOrden, !onPress && { opacity: 0.35 }]}
     >
-      <Ionicons name={icono} size={18} color={onPress ? c.primary : c.border} />
+      <Ionicons name={icono} size={20} color={c.primary} />
     </Pressable>
   );
   return (
@@ -2105,6 +2119,23 @@ export function Ordenar({ onSubir, onBajar }: { onSubir?: () => void; onBajar?: 
       {flecha('chevron-up', 'Subir', onSubir)}
       {flecha('chevron-down', 'Bajar', onBajar)}
     </View>
+  );
+}
+
+/**
+ * G35: "Cambiar orden" / "Listo" sobre una lista ordenable. Las flechas solo se
+ * muestran mientras se ordena, para no recargar cada fila.
+ */
+export function ModoOrden({ activo, onCambiar }: { activo: boolean; onCambiar: (v: boolean) => void }) {
+  const styles = useEstilos();
+  return (
+    <Pressable
+      onPress={() => onCambiar(!activo)}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.modoOrden, pressed && { opacity: 0.6 }]}
+    >
+      <Text style={styles.seccionAccion}>{activo ? '✓ Listo' : '↕️ Cambiar orden'}</Text>
+    </Pressable>
   );
 }
 
@@ -2527,6 +2558,16 @@ const crearEstilos = (c: Paleta) => {
       justifyContent: 'center',
     },
     emojiGrande: { fontSize: 24 },
+    emojiBoton: {
+      width: 52,
+      height: 52,
+      borderRadius: radio.campo,
+      borderWidth: 1,
+      borderColor: c.mutedDim, // HZ-24: se ve que se puede tocar
+      backgroundColor: c.acentoSuave,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     emojiGrilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingVertical: 4 },
     emojiCelda: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     emojiOtro: {
@@ -2574,7 +2615,16 @@ const crearEstilos = (c: Paleta) => {
     txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
-    ordenar: { flexDirection: 'row', gap: 14, marginLeft: 8 },
+    ordenar: { flexDirection: 'row', gap: 6, marginLeft: 8 },
+    flechaOrden: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.acentoSuave,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modoOrden: { alignSelf: 'flex-end', minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
     chipsFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     interruptor: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
 

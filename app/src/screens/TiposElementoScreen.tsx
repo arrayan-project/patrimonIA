@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
-import { EMOJI_CATEGORIA_FUNCIONAL } from '../emojis';
+import { EMOJI_CATEGORIA_FUNCIONAL, emojiTipoElemento, NOMBRE_CATEGORIA_FUNCIONAL } from '../emojis';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type TipoElementoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { etiqueta } from '../labels';
 import {
   Ayuda,
   Buscador,
@@ -13,6 +12,7 @@ import {
   ErrorText,
   filtrar,
   ListCard,
+  ModoOrden,
   Ordenar,
   Screen,
   Section,
@@ -31,6 +31,8 @@ export function TiposElementoScreen() {
   const [lista, setLista] = useState<TipoElementoDTO[] | null>(null);
   const [error, setError] = useState('');
   const [busca, setBusca] = useState('');
+  // G35: las flechas para ordenar solo aparecen con "Cambiar orden".
+  const [ordenando, setOrdenando] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -69,7 +71,7 @@ export function TiposElementoScreen() {
 
   return (
     <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nuevo tipo" onPress={nuevo} /> : undefined}>
-      <Ayuda>El tipo sugiere la categoría de la cuenta.</Ayuda>
+      <Ayuda>Corriente, tarjeta, fondo mutuo… cada uno dice qué tipo de plata es.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
@@ -83,21 +85,22 @@ export function TiposElementoScreen() {
         />
       ) : (
         <>
-          <Buscador total={total} value={busca} onChange={setBusca} />
+          {!ordenando && <Buscador total={total} value={busca} onChange={setBusca} />}
+          {!filtrando && <ModoOrden activo={ordenando} onCambiar={setOrdenando} />}
           {GRUPOS.map((g) => {
             const grupo = lista.filter((t) => (t.categoriaSugerida ?? null) === g);
             const filas = filtrando ? grupo.filter((t) => visibles.includes(t)) : grupo;
             return filas.length ? (
-              <Section key={g ?? 'sin'} title={g ? etiqueta(g) : 'Sin sugerencia'}>
+              <Section key={g ?? 'sin'} title={g ? `${EMOJI_CATEGORIA_FUNCIONAL[g]} ${NOMBRE_CATEGORIA_FUNCIONAL[g]}` : 'Sin tipo de plata'}>
                 <ListCard>
                   {filas.map((t, i) => (
                     <TxRow
                       key={t.id}
                       title={t.nombre}
                       amount=""
-                      logo={{ emoji: (t.categoriaSugerida && EMOJI_CATEGORIA_FUNCIONAL[t.categoriaSugerida]) || '💼' }}
+                      logo={{ emoji: emojiTipoElemento(t.nombre, t.categoriaSugerida) }}
                       accesorio={
-                        filtrando ? undefined : (
+                        filtrando || !ordenando ? undefined : (
                           <Ordenar
                             onSubir={i > 0 ? () => mover(grupo, i, -1) : undefined}
                             onBajar={i < grupo.length - 1 ? () => mover(grupo, i, 1) : undefined}

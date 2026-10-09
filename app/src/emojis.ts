@@ -79,12 +79,51 @@ export function emojiTipoMovimiento(tipo: string): string {
   }
 }
 
-/** Emoji de una cuenta o bien: el que eligió el usuario o el de su categoría. */
+/** Nombres sin jerga de las categorías funcionales ("qué tipo de plata es"). */
+export const NOMBRE_CATEGORIA_FUNCIONAL: Record<string, string> = {
+  LIQUIDEZ: 'Cuentas',
+  RESERVA: 'Ahorro',
+  INVERSION: 'Inversiones',
+  ACTIVO: 'Bienes',
+  CREDITO: 'Te deben',
+  DEUDA: 'Deudas',
+};
+
+/** Por nombre de los tipos de cuenta que se crean con el hogar (y nombres comunes). */
+const EMOJI_TIPO_POR_NOMBRE: Record<string, string> = {
+  'cuenta corriente': '🏦',
+  'cuenta vista': '🏧',
+  'cuenta rut': '🏧',
+  'cuenta de ahorro': '🐷',
+  efectivo: '💵',
+  'billetera digital': '📱',
+  'deposito a plazo': '⏳',
+  'fondo mutuo': '📊',
+  apv: '👵',
+  acciones: '📈',
+  criptomonedas: '🪙',
+  propiedad: '🏠',
+  departamento: '🏢',
+  casa: '🏠',
+  vehiculo: '🚗',
+  auto: '🚗',
+  'credito hipotecario': '🏡',
+  'credito de consumo': '💸',
+  'tarjeta de credito': '💳',
+  'prestamo a un tercero': '🤝',
+};
+
+/** Emoji de un tipo de cuenta: por su nombre, o el de su categoría. */
+export function emojiTipoElemento(nombre: string, categoria: string | null | undefined): string {
+  return EMOJI_TIPO_POR_NOMBRE[sinTildes(nombre)] ?? (categoria ? EMOJI_CATEGORIA_FUNCIONAL[categoria] : undefined) ?? '💼';
+}
+
+/** Emoji de una cuenta o bien: el que eligió el usuario, el de su tipo o el de su categoría. */
 export function emojiElemento(
-  el: { id: string; categoriaFuncional: string },
+  el: { id: string; categoriaFuncional: string; tipo?: string },
   elegidos: Record<string, string>,
 ): string {
-  return elegidos[el.id] ?? EMOJI_CATEGORIA_FUNCIONAL[el.categoriaFuncional] ?? '💼';
+  return elegidos[el.id] ?? emojiTipoElemento(el.tipo ?? '', el.categoriaFuncional);
 }
 
 /** Emoji de una meta: el que eligió el usuario o 🎯. */

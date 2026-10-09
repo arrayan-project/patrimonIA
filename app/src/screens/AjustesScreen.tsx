@@ -195,7 +195,7 @@ export function AjustesScreen() {
             { title: 'Categorías', subtitle: 'Mercado, luz, sueldo… con su emoji', emoji: '🏷️', onPress: () => nav.go('Categorias') },
             { title: 'Tipos de cuenta', subtitle: 'Corriente, tarjeta, fondo mutuo…', emoji: '💼', onPress: () => nav.go('TiposElemento') },
             { title: 'Etiquetas', subtitle: "Marcas libres, como 'vacaciones 2026'", emoji: '🔖', onPress: () => nav.go('Etiquetas') },
-            { title: 'Agrupaciones', subtitle: "Juntar cuentas, como 'todo lo del auto'", emoji: '🗂️', onPress: () => nav.go('Agrupaciones') },
+            // Agrupaciones queda fuera hasta que se usen en Mi patrimonio (G35, Juan 2026-10-09).
             { title: 'Tipos de cambio', subtitle: 'Cuánto vale el dólar o la UF', emoji: '💵', onPress: () => nav.go('TiposCambio') },
           ]}
         />

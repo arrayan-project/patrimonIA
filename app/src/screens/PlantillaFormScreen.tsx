@@ -8,6 +8,7 @@ import {
   type PlantillaMovimientoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
+import { emojiCategoria } from '../emojis';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
@@ -260,11 +261,11 @@ export function PlantillaFormScreen() {
 
       {b.tipo !== 'TRANSFERENCIA' && catAplicables.length > 0 && (
         <Elegir
-          label="¿De qué tipo? (opcional)"
+          label="¿De qué categoría? (opcional)"
           paso={paso()}
           opcionNula="Sin categoría"
           value={b.categoriaId}
-          options={catAplicables.map((c) => ({ value: c.id, label: c.nombre }))}
+          options={catAplicables.map((c) => ({ value: c.id, label: `${emojiCategoria(c) ?? '🏷️'} ${c.nombre}` }))}
           onChange={(categoriaId) => setB((x) => ({ ...x, categoriaId }))}
         />
       )}
