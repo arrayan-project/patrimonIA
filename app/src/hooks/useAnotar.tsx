@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { api, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { HojaAcciones, type AccionHoja } from '../ui';
+import { colorAnotar, HojaAcciones, useC, type AccionHoja } from '../ui';
 import { useCargaAlEnfocar } from './useCargaAlEnfocar';
 
 export const TITULO_ANOTAR = '¿Qué quieres anotar?';
@@ -19,6 +19,7 @@ const esTarjeta = (e: ElementoPatrimonialDTO) =>
 export function useAnotar() {
   const { token } = useSession();
   const nav = useNav();
+  const c = useC();
   const [abierto, setAbierto] = useState(false);
   const [tarjetas, setTarjetas] = useState<ElementoPatrimonialDTO[]>([]);
 
@@ -34,24 +35,31 @@ export function useAnotar() {
   const acciones: AccionHoja[] = [
     {
       icon: 'arrow-up-outline',
+      emoji: '💸',
+      grande: colorAnotar(c, 'GASTO'),
       label: 'Gasté',
       subtitle: 'Compré o pagué algo',
       onPress: () => nav.go('RegistrarMovimiento', { tipo: 'GASTO' }),
     },
     {
       icon: 'arrow-down-outline',
+      emoji: '💰',
+      grande: colorAnotar(c, 'INGRESO'),
       label: 'Recibí',
       subtitle: 'Me llegó plata',
       onPress: () => nav.go('RegistrarMovimiento', { tipo: 'INGRESO' }),
     },
     {
       icon: 'swap-horizontal-outline',
+      emoji: '🔁',
+      grande: colorAnotar(c, 'TRANSFERENCIA'),
       label: 'Moví plata',
       subtitle: 'Entre tus cuentas o a alguien del hogar',
       onPress: () => nav.go('RegistrarMovimiento', { tipo: 'TRANSFERENCIA' }),
     },
     {
       icon: 'flag-outline',
+      emoji: '🐷',
       label: 'Ahorrar para una meta',
       subtitle: 'Mandar plata a una meta',
       onPress: () => nav.go('Ahorrar'),
@@ -60,6 +68,7 @@ export function useAnotar() {
       ? [
           {
             icon: 'card-outline' as const,
+            emoji: '💳',
             label: 'Pagar tarjeta',
             subtitle: 'Pagar lo que debes de una tarjeta',
             onPress: () =>
@@ -73,6 +82,7 @@ export function useAnotar() {
       : []),
     {
       icon: 'add-circle-outline',
+      emoji: '➕',
       label: 'Agregar cuenta',
       subtitle: 'Una cuenta, tarjeta, inversión, deuda o bien',
       onPress: () => nav.go('AgregarElemento'),

@@ -1,4 +1,5 @@
 import type { ElementoPatrimonialDTO } from './api/client';
+import { emojiElemento } from './emojis';
 import { money } from './format';
 import type { OpcionSelect } from './ui';
 
@@ -16,10 +17,15 @@ const GRUPOS: [string, string][] = [
  * Elementos propios como opciones agrupadas por tipo. El nombre va en la
  * etiqueta y, en la segunda línea, el valor vigente (con `saldo`) o la moneda. `excluir` saca un id (p. ej. la
  * cuenta ya elegida en "Desde", para que no aparezca otra vez en "A qué cuenta").
+ * Con `emojis` (los elegidos por el usuario), cada opción lleva el emoji de la cuenta (G35).
  */
 export function opcionesDeElementos(
   els: ElementoPatrimonialDTO[],
-  { saldo = true, excluir }: { saldo?: boolean; excluir?: string | null } = {},
+  {
+    saldo = true,
+    excluir,
+    emojis,
+  }: { saldo?: boolean; excluir?: string | null; emojis?: Record<string, string> } = {},
 ): OpcionSelect[] {
   const orden = (cat: string) => {
     const i = GRUPOS.findIndex(([k]) => k === cat);
@@ -33,13 +39,14 @@ export function opcionesDeElementos(
       label: e.nombre,
       sub: saldo ? money(e.valorVigente, e.moneda) : e.moneda,
       grupo: GRUPOS.find(([k]) => k === e.categoriaFuncional)?.[1] ?? 'Otros',
+      ...(emojis ? { emoji: emojiElemento(e, emojis) } : {}),
     }));
 }
 
 /** Cuentas de otros miembros del hogar, agrupadas por persona (destino = persona). */
 export function opcionesDeMiembros(
   els: ElementoPatrimonialDTO[],
-  { excluir }: { excluir?: string | null } = {},
+  { excluir, emojis }: { excluir?: string | null; emojis?: Record<string, string> } = {},
 ): OpcionSelect[] {
   return els
     .filter((e) => e.id !== excluir)
@@ -48,6 +55,7 @@ export function opcionesDeMiembros(
       label: e.nombre,
       sub: e.valorOculto ? undefined : money(e.valorVigente, e.moneda),
       grupo: `Cuentas de ${e.propietarios[0]?.nombre ?? 'otro miembro'}`,
+      ...(emojis ? { emoji: emojiElemento(e, emojis) } : {}),
     }))
     .sort((a, b) => a.grupo.localeCompare(b.grupo));
 }

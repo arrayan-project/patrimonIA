@@ -55,6 +55,7 @@ const VACIO: Borrador = {
  * Formulario de una plantilla (plantillas de pantalla, R2 y R3): sin
  * `plantillaId` crea; con él edita y ofrece eliminar al final. Con `desde`
  * (Detalle de un movimiento: "Guardar como frecuente") crea con esos datos.
+ * Con `tipo` ("Crear uno" en Registrar movimiento) crea con ese tipo elegido.
  */
 export type DesdeMovimiento = Omit<Borrador, 'monto'> & { monto: number; moneda: string };
 
@@ -64,6 +65,7 @@ export function PlantillaFormScreen() {
   const toast = useToast();
   const plantillaId = nav.route.params?.plantillaId as string | undefined;
   const desde = nav.route.params?.desde as DesdeMovimiento | undefined;
+  const tipoInicial = nav.route.params?.tipo as Tipo | undefined;
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
@@ -71,7 +73,11 @@ export function PlantillaFormScreen() {
   const [cargado, setCargado] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [b, setB] = useState<Borrador>(desde ? { ...desde, monto: String(desde.monto) } : VACIO);
+  const [b, setB] = useState<Borrador>(
+    desde
+      ? { ...desde, monto: String(desde.monto) }
+      : { ...VACIO, tipo: tipoInicial && TIPOS.includes(tipoInicial) ? tipoInicial : VACIO.tipo },
+  );
   const [actual, setActual] = useState<PlantillaMovimientoDTO | null>(null);
 
   useTitulo(plantillaId ? 'Editar frecuente' : 'Nuevo frecuente');
