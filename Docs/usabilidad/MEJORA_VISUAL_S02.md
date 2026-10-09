@@ -62,8 +62,8 @@ Pasarlos a la escala se hace dentro del Paso 0, cuando se toquen esas piezas.
 - **Botón "+" (Inicio y Movimientos):** hoja "¿Qué quieres anotar?" con Gasté ·
   Recibí · Moví plata · Ahorrar para una meta · Pagar tarjeta (si hay
   tarjetas) · Agregar cuenta.
-- **Pantallas apiladas:** 48, con barra superior (título + atrás).
-- **Total: 59 pantallas** (más la hoja del "+", que es una pieza común).
+- **Pantallas apiladas:** 49, con barra superior (título + atrás).
+- **Total: 60 pantallas** (más la hoja del "+", que es una pieza común).
 
 ## 4. Decisiones del frente
 
@@ -175,17 +175,20 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     Eliminar esta parte / este ahorro.
 27. ✅ **Sacar** (`SacarPlataScreen`) — Ahorro. De qué cuenta; cuánto; por qué;
     guardar.
-28. **Presupuestos** (`PresupuestosScreen`) — Planificar. Lista; abrir uno;
+28. ✅ **Presupuestos** (`PresupuestosScreen`) — Planificar. Lista; abrir uno;
     Nuevo presupuesto.
-29. **Presupuesto** (`PresupuestoDetalleScreen`) — Presupuestos, Inicio,
+29. ✅ **Presupuesto** (`PresupuestoDetalleScreen`) — Presupuestos, Inicio,
     Planificar, Movimiento. Ver presupuesto vs. gastado, ingresos, ahorro, por
     rubro, ahorro por meta y sin clasificar; ir a los movimientos de un rubro;
     Editar; Editar rubros; Cerrar presupuesto; Eliminar presupuesto.
-30. **Nuevo presupuesto / Editar** (`PresupuestoFormScreen`) — Presupuestos,
+30. ✅ **Nuevo presupuesto / Editar** (`PresupuestoFormScreen`) — Presupuestos,
     Presupuesto. Solo tuyo o del hogar; cada cuánto; cuánto gastar; ingresos
     y ahorro esperados (opcional); moneda; desde / hasta; guardar.
-31. **Presupuesto por rubro** (`PresupuestoRubrosScreen`) — Presupuesto. Monto
+31. ✅ **Presupuesto por rubro** (`PresupuestoRubrosScreen`) — Presupuesto. Monto
     por categoría y ahorro por meta; guardar rubros.
+31b. ✅ **Gastos de una categoría** (`GastosCategoriaScreen`, nueva en G35) —
+    Presupuesto. Ver cuánto pensabas, llevas y quedan; los gastos de esa
+    categoría en el período; abrir uno.
 32. **Movimientos programados** (`MovimientosProgramadosScreen`) — Planificar,
     Inicio. Lista; abrir uno; Programar movimiento.
 33. **Programar movimiento** (`NuevoProgramadoScreen`) — Movimientos
@@ -273,8 +276,8 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 60. **Invitaciones pendientes** (`InvitacionesScreen`) — Bienvenida, Hogar,
     Ajustes. Aceptar; Rechazar.
 
-(La hoja del "+", ítem 2, no es una pantalla: por eso la numeración llega a 60
-con 59 pantallas.)
+(La hoja del "+", ítem 2, no es una pantalla, y Gastos de una categoría
+(31b) se agregó en G35: la numeración llega a 60 con 60 pantallas.)
 
 ## 6. Fichas de revisión
 
@@ -833,3 +836,77 @@ eso entran las 6 listas y sus formularios de crear y editar.
   parte, Historial (meta y parte), Usar plata, Eliminar meta / parte,
   Ahorrar desde la parte y la cuenta desde la parte. No se guardó nada nuevo
   en la base local.
+
+### 28–31. Presupuestos (`PresupuestosScreen`, `PresupuestoDetalleScreen`, `PresupuestoFormScreen`, `PresupuestoRubrosScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** la lista con "Lo que esperas en un período, contra lo
+  real." y filas "Mensual · Individual · 1 oct 2026 → …". El detalle
+  "Presupuesto individual" con "Editar" cortado, una ficha (Período, Estado,
+  Ingresos "0 de 1.850.000", Ahorro "−140.000 de 400.000"), una dona de un
+  solo color con el centro en otra letra y la leyenda "S", rubros "0 CLP /
+  320.000 CLP · −320.000", "Fondo de emergencia 1.200.000 de 200.000" y
+  "Eliminar presupuesto" en texto rojo. El formulario numerado con
+  "Mens… Trime… Seme… Fecha…". Por rubro: un párrafo y 13 campos con "0"
+  apilados, sin comparar con el presupuesto.
+- **Cifra que no cuadraba:** el Inicio decía "📥 Te entró 250.000" en octubre y
+  el Presupuesto "Ingresos 0": el resumen del mes cuenta el saldo inicial de
+  una cuenta abierta en el mes (§G29) y el presupuesto no. **Juan decidió
+  arreglarlo en este bloque:** el presupuesto ahora también lo cuenta como
+  ingreso, sin categoría (`presupuesto.service`, e2e de presupuesto
+  actualizado; anotado en GAPS §G29). Con eso "Te entró" y "Te sobra" dan lo
+  mismo en las dos pantallas.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisión: la
+  dona queda solo si hay 2 o más categorías con gasto.
+  - **Piezas comunes:** `GoalCard` acepta `mal` (barra y % en rojo);
+    `Pastilla` acepta `activo` (elegida, para opciones de 44 px que se leen
+    enteras); `MontoFila` (emoji, nombre y monto a la derecha); la `Dona`
+    usa Nunito en el centro y pone el valor bajo el nombre en la leyenda
+    (también en el Hogar); `nombrePeriodo()` ("Octubre", "Octubre a
+    diciembre", "2026" o las fechas) en `PresupuestosScreen`.
+  - **Presupuestos:** sin el recuadro; una tarjeta por presupuesto con
+    "🗓️ Octubre", "🙋 Solo tuyo" / "👥 Del hogar", el % y "Llevas X de Y"
+    (rojo si se pasó; 🏁 si está cerrado). "Fuera de vigencia" pasa a
+    "Anteriores". "🧾 Nuevo presupuesto".
+  - **Presupuesto:** título con el período ("Octubre"). Banda verde (roja si
+    te pasaste) "🧾 Llevas gastado", "10% de lo que pensabas · 🙋 Solo
+    tuyo", la barra y 🎯 Pensabas gastar · ✅ Te quedan (⚠️ Te pasaste).
+    "📥 Lo que entra y lo que sobra" (si hay ingresos o ahorro esperados):
+    📥 Te entró X de Y (y cada rubro de ingreso) · 🧾 Gastaste · 🎉 Te sobra
+    / ⚠️ Gastaste más de lo que entró · 🐷 Querías que sobrara. "🧾 En qué
+    gastaste": la dona (2 o más) y una tarjeta por categoría con su emoji,
+    "Llevas X de Y" y "✅ Quedan" / "⚠️ Te pasaste" (abre sus movimientos);
+    "❓ Sin categoría" como fila. "🐷 Ahorro para metas en este período" con
+    el emoji de la meta, "Ahorraste X de Y" y "🎉 de más" / "⏳ Te faltan"
+    (abre la meta). Acciones: ✏️ Cambiar montos · 🏁 Cerrar presupuesto
+    (con fechas); botón "🗑️ Eliminar presupuesto"; pie "🧩 Repartir por
+    categoría". Cerrado: aviso "🏁" arriba y sin acciones.
+  - **Nuevo / Cambiar montos:** sin numerar; "¿Cuánto piensas gastar?" en
+    banda verde con 🧾; "🙋 Solo mío / 👥 Del hogar" sigue segunda (HZ-22);
+    "¿Cada cuánto?" en pastillas (🗓️ Cada mes · Cada 3 meses · Cada 6 meses
+    · Cada año · 📅 Entre dos fechas); opcionales 📥 Lo que esperas que
+    entre · 🐷 Lo que quieres que sobre · 💱 Otra moneda. Editar se llama
+    "Cambiar montos".
+  - **Repartir por categoría** (antes "Presupuesto por rubro"): arriba la
+    resta en vivo 🎯 Pensabas gastar − 🧩 Repartido = ❓ Sin repartir (⚠️
+    Repartiste de más, en rojo); 🧾 Gastos, 📥 Lo que esperas que entre y
+    🐷 Ahorro para metas, cada uno como filas con emoji y el monto a la
+    derecha (vacío = "—"); sin párrafos. "🧩 Guardar reparto".
+  - **Gastos de una categoría (nueva, Juan 2026-10-09):** tocar una
+    categoría del presupuesto saltaba a la pestaña Movimientos y cerraba el
+    presupuesto (`irATab`): quien no conoce la app no nota el cambio de
+    pestaña ni puede volver. Ahora se abre encima, con "atrás": título
+    "🛒 Mercado · Octubre", la resta 🎯 Pensabas − 🧾 Llevas = ✅ Quedan y
+    la lista de esos gastos (abre cada uno). Usa los mismos datos que la
+    pestaña Movimientos (`resumen-financiero`), sin cambios en el backend.
+    "❓ Sin categoría" también se abre ("Toca uno para ponerle categoría.").
+    Las categorías con gasto pero sin monto pensado van como filas junto a
+    "Sin categoría" (sin barra vacía). El detalle de un Movimiento sigue
+    llevando a la pestaña filtrada (no se tocó).
+- **Verificado:** `tsc` sin errores; e2e de presupuesto 11/11 verdes contra
+  `patrimonia_test`; capturas web de la lista, el detalle (también en modo
+  oscuro y con la dona, después de que Juan anotó "Curso maquillaje" y
+  "Sueldo mensual"), Nuevo (y "Entre dos fechas"), Cambiar montos, Repartir,
+  Gastos de una categoría (Sin categoría suma 140.000 como en el
+  presupuesto; Educación; Mercado vacío) y la dona del Hogar. Destinos:
+  categoría → Gastos de la categoría → un gasto → atrás → atrás vuelve al
+  presupuesto; meta → Meta; Cambiar montos; Eliminar; Repartir.

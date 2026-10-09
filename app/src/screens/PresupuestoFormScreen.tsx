@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
-  AmountInput,
   Button,
-  contadorPasos,
   DateField,
   ErrorText,
-  etiqueta,
   MoneyField,
+  MontoBanda,
   Nota,
-  Opcional,
+  Opcionales,
+  Pastilla,
+  Question,
   Screen,
   Segmented,
   Select,
+  useC,
 } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
@@ -23,6 +25,14 @@ const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — $
 
 const INTERVALOS = ['MENSUAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
 const CADA = [...INTERVALOS, 'ESPECIFICO'] as const;
+// G35: cada opción se lee entera (antes "Mens… Trime…").
+const NOMBRE_CADA: Record<(typeof CADA)[number], string> = {
+  MENSUAL: '🗓️ Cada mes',
+  TRIMESTRAL: 'Cada 3 meses',
+  SEMESTRAL: 'Cada 6 meses',
+  ANUAL: 'Cada año',
+  ESPECIFICO: '📅 Entre dos fechas',
+};
 
 /**
  * Formulario de un presupuesto (plantillas de pantalla, R2 y R3): sin
@@ -30,6 +40,7 @@ const CADA = [...INTERVALOS, 'ESPECIFICO'] as const;
  * puede cambiar de un presupuesto ya creado).
  */
 export function PresupuestoFormScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -52,7 +63,7 @@ export function PresupuestoFormScreen() {
   const [ahorro, setAhorro] = useState(inicial('ahorro'));
   const [moneda, setMoneda] = useState((nav.route.params?.moneda as string | undefined) ?? 'CLP');
 
-  useTitulo(presupuestoId ? 'Editar montos' : undefined);
+  useTitulo(presupuestoId ? 'Cambiar montos' : undefined);
 
   useEffect(() => {
     api
@@ -106,14 +117,24 @@ export function PresupuestoFormScreen() {
     }
   };
 
-  // HZ-19: numera las preguntas del formulario en el orden en que se muestran.
-  const paso = contadorPasos();
+  // G35: sin numerar; el monto en una banda verde.
+  const campoEntra = (
+    <MoneyField label="📥 ¿Cuánto esperas que te entre?" value={ingresos} onChange={setIngresos} />
+  );
+  const campoSobra = <MoneyField label="🐷 ¿Cuánto quieres que te sobre?" value={ahorro} onChange={setAhorro} />;
   if (presupuestoId) {
     return (
-      <Screen pie={<Button title="Guardar montos" onPress={guardarMontos} loading={busy} />}>
-        <AmountInput label="¿Cuánto esperas gastar?" paso={paso()} value={gastos} onChange={setGastos} moneda={moneda} />
-        <MoneyField label="¿Cuánto esperas ingresar? (opcional)" paso={paso()} value={ingresos} onChange={setIngresos} />
-        <MoneyField label="¿Cuánto esperas ahorrar? (opcional)" paso={paso()} value={ahorro} onChange={setAhorro} />
+      <Screen pie={<Button title="✏️ Guardar montos" onPress={guardarMontos} loading={busy} />}>
+        <MontoBanda
+          label="¿Cuánto piensas gastar?"
+          value={gastos}
+          onChange={setGastos}
+          moneda={moneda}
+          color={c.ok}
+          emoji="🧾"
+        />
+        {campoEntra}
+        {campoSobra}
         <ErrorText>{error}</ErrorText>
       </Screen>
     );
@@ -130,60 +151,63 @@ export function PresupuestoFormScreen() {
   };
   const hayMonto = [gastos, ingresos, ahorro].some((x) => Number(x) > 0);
   const listo = hayMonto && (tipo !== 'FAMILIAR' || !!hogarId);
-  const resumen = !hayMonto
-    ? 'Completa cuánto esperas gastar.'
-    : `${tipo === 'FAMILIAR' ? 'Del hogar' : 'Solo tuyo'}, ${
-        periodicidad === 'ESPECIFICO' ? 'entre las fechas que elijas' : `${etiqueta(intervalo).toLowerCase()}`
-      }. Te mostramos cómo vas contra lo real.`;
 
   return (
     <Screen
       pie={
         <>
-          <Nota>{resumen}</Nota>
-          <Button title="Crear presupuesto" onPress={crear} loading={busy} disabled={!listo} />
+          {!hayMonto && <Nota>Escribe cuánto piensas gastar.</Nota>}
+          <Button title="🧾 Crear presupuesto" onPress={crear} loading={busy} disabled={!listo} />
         </>
       }
     >
-      <AmountInput
-        label="¿Cuánto esperas gastar?"
-        paso={paso({ hecho: hayMonto })}
+      <MontoBanda
+        label="¿Cuánto piensas gastar?"
         value={gastos}
         onChange={setGastos}
         moneda={moneda}
+        color={c.ok}
+        emoji="🧾"
       />
-      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+      {/* HZ-22: la decisión que cambia el significado del registro va segunda. */}
       {hogarId && (
         <Segmented
           label="¿Es solo tuyo o del hogar?"
-          paso={paso({ hecho: true })}
           options={['INDIVIDUAL', 'FAMILIAR'] as const}
           value={tipo}
           onChange={setTipo}
-          formatearOpcion={(v) => (v === 'INDIVIDUAL' ? 'Solo mío' : 'Del hogar')}
+          formatearOpcion={(v) => (v === 'INDIVIDUAL' ? '🙋 Solo mío' : '👥 Del hogar')}
         />
       )}
-      <Segmented
-        label="¿Cada cuánto?"
-        paso={paso({ hecho: true })}
-        options={CADA}
-        value={cada}
-        onChange={elegirCada}
-        formatearOpcion={(v) => (v === 'ESPECIFICO' ? 'Fechas específicas' : etiqueta(v))}
-      />
+      <View style={{ gap: 8 }}>
+        <Question>¿Cada cuánto?</Question>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {CADA.map((v) => (
+            <Pastilla key={v} label={NOMBRE_CADA[v]} activo={cada === v} onPress={() => elegirCada(v)} />
+          ))}
+        </View>
+      </View>
       {periodicidad === 'ESPECIFICO' && (
         <>
           <DateField label="¿Desde cuándo? (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
           <DateField label="¿Hasta cuándo? (opcional)" value={fechaFin} onChange={setFechaFin} optional />
         </>
       )}
-      <Opcional titulo="Agregar ingresos y ahorro esperados" abierto={!!ingresos || !!ahorro}>
-        <MoneyField label="¿Cuánto esperas ingresar? (opcional)" value={ingresos} onChange={setIngresos} />
-        <MoneyField label="¿Cuánto esperas ahorrar? (opcional)" value={ahorro} onChange={setAhorro} />
-      </Opcional>
-      <Opcional titulo="Usar otra moneda" abierto={moneda !== 'CLP'}>
-        <Select label="¿En qué moneda?" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
-      </Opcional>
+      <Opcionales
+        items={[
+          { clave: 'entra', emoji: '📥', titulo: 'Lo que esperas que entre', abierto: !!ingresos, children: campoEntra },
+          { clave: 'sobra', emoji: '🐷', titulo: 'Lo que quieres que sobre', abierto: !!ahorro, children: campoSobra },
+          {
+            clave: 'moneda',
+            emoji: '💱',
+            titulo: 'Otra moneda',
+            abierto: moneda !== 'CLP',
+            children: (
+              <Select label="¿En qué moneda?" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+            ),
+          },
+        ]}
+      />
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

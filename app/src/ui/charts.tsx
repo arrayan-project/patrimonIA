@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from './Text';
+import { FUENTES, Text } from './Text';
 import Svg, {
   Circle,
   Defs,
@@ -21,7 +21,7 @@ const crearEstilos = (c: Paleta) =>
     donaWrap: { flexDirection: 'row', gap: 16, alignItems: 'center', flexWrap: 'wrap' },
     leyenda: { flex: 1, minWidth: 140, gap: 6 },
     leyendaFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    leyendaLabel: { flex: 1, fontSize: 13, color: c.text },
+    leyendaLabel: { fontSize: 13, color: c.text },
     leyendaValor: { fontSize: 12, color: c.muted, fontWeight: '600' },
     ejeFila: { flexDirection: 'row', justifyContent: 'space-between' },
     ejeTxt: { fontSize: 11, color: c.muted },
@@ -102,7 +102,7 @@ export function Dona({
               x={size / 2}
               y={size / 2}
               fontSize={size * 0.11}
-              fontWeight="700"
+              fontFamily={FUENTES['700']}
               fill={c.text}
               textAnchor="middle"
               alignmentBaseline="middle"
@@ -117,13 +117,16 @@ export function Dona({
         {datos.map((s, i) => (
           <View key={i} style={styles.leyendaFila}>
             <Punto color={s.color} />
-            <Text style={styles.leyendaLabel} numberOfLines={1}>
-              {s.label}
-            </Text>
-            <Text style={styles.leyendaValor}>
-              {formatoValor(s.valor)}
-              {total > 0 ? ` · ${Math.round((s.valor / total) * 100)}%` : ''}
-            </Text>
+            {/* G35: el valor bajo el nombre, para que el nombre no se corte. */}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.leyendaLabel} numberOfLines={1}>
+                {s.label}
+              </Text>
+              <Text style={styles.leyendaValor}>
+                {formatoValor(s.valor)}
+                {total > 0 ? ` · ${Math.round((s.valor / total) * 100)}%` : ''}
+              </Text>
+            </View>
           </View>
         ))}
       </View>

@@ -43,6 +43,7 @@ import { AsignacionDetalleScreen } from '../screens/AsignacionDetalleScreen';
 import { PresupuestosScreen } from '../screens/PresupuestosScreen';
 import { PresupuestoDetalleScreen } from '../screens/PresupuestoDetalleScreen';
 import { PresupuestoRubrosScreen } from '../screens/PresupuestoRubrosScreen';
+import { GastosCategoriaScreen } from '../screens/GastosCategoriaScreen';
 import { MovimientosProgramadosScreen } from '../screens/MovimientosProgramadosScreen';
 import { PlantillasScreen } from '../screens/PlantillasScreen';
 import { MovimientoProgramadoDetalleScreen } from '../screens/MovimientoProgramadoDetalleScreen';
@@ -155,7 +156,8 @@ const TITULOS: Record<string, string> = {
   AsignacionDetalle: 'Ahorro',
   Presupuestos: 'Presupuestos',
   PresupuestoDetalle: 'Presupuesto',
-  PresupuestoRubros: 'Presupuesto por rubro',
+  PresupuestoRubros: 'Repartir por categoría',
+  GastosCategoria: 'Gastos',
   MovimientosProgramados: 'Movimientos programados',
   MovimientoProgramadoDetalle: 'Movimiento programado',
   Plantillas: 'Frecuentes',
@@ -213,6 +215,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Presupuestos', PresupuestosScreen],
   ['PresupuestoDetalle', PresupuestoDetalleScreen],
   ['PresupuestoRubros', PresupuestoRubrosScreen],
+  ['GastosCategoria', GastosCategoriaScreen],
   ['MovimientosProgramados', MovimientosProgramadosScreen],
   ['MovimientoProgramadoDetalle', MovimientoProgramadoDetalleScreen],
   ['Plantillas', PlantillasScreen],

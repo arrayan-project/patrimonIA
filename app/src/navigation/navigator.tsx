@@ -40,6 +40,7 @@ export type RouteName =
   | 'Presupuestos'
   | 'PresupuestoDetalle'
   | 'PresupuestoRubros'
+  | 'GastosCategoria'
   | 'MovimientosProgramados'
   | 'MovimientoProgramadoDetalle'
   | 'Plantillas'

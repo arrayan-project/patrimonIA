@@ -518,14 +518,16 @@ export class PresupuestoService {
       });
       for (const e of eventos) {
         // Sin tipos de cambio: se suman los montos tal cual, sin distinguir moneda (GAPS.md G16).
-        if (e.tipo === 'INGRESO') {
+        // G35 (Juan, 2026-10-09): el saldo inicial cuenta como ingreso, igual que
+        // en el resumen del mes (§G29), para que el Presupuesto y el Inicio cuadren.
+        if (e.tipo === 'INGRESO' || e.tipo === 'SALDO_INICIAL') {
           real.ingresos += Number(e.monto);
           sumarCat(e.categoria_id, 'ingresos', Number(e.monto));
         } else if (e.tipo === 'GASTO') {
           real.gastos += Number(e.monto);
           sumarCat(e.categoria_id, 'gastos', Number(e.monto));
         }
-        // TRANSFERENCIA / CONVERSION / PRESTAMO / SALDO_INICIAL: no cuentan como
+        // TRANSFERENCIA / CONVERSION / PRESTAMO: no cuentan como
         // ingreso ni gasto del presupuesto del período.
       }
       real.ahorro = real.ingresos - real.gastos;
