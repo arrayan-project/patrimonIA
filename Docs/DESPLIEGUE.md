@@ -14,10 +14,6 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 **Pendiente**
 
-- [ ] **Migración 028** (`movimiento_programado` recurrencia, G33 D-6) en Neon,
-  **antes** del push que lleva los bloques 10a y 10b a `main` (§1, "Migración
-  nueva"). Sin ella, el backend nuevo falla al listar programados.
-
 - [ ] **Captcha antes del registro** — mientras no exista,
   `AUTH_REGISTRO_TOKEN_REQUERIDO` queda en `false` (GAPS G4).
 - [ ] **Dominio propio para el email** — hoy el remitente es un email verificado
@@ -29,8 +25,8 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 - [x] §0 Secretos de producción generados.
 - [x] §1 Neon — esquema cargado (2026-09-06); migraciones aplicadas hasta la
-  **027** (2026-10-08, `solicitud_transferencia`, desde el SQL Editor abierto
-  con la extensión Neon Local Connect de VS Code).
+  **028** (2026-10-08, recurrencia de `movimiento_programado`, G33 D-6, desde
+  el SQL Editor; verificado: ninguna fila sin `serie_id`).
 - [x] Tanda GAPS 2026-09-29 (G31/G4 código de 6 dígitos, G25, G14, G11)
   desplegada en Render (commit `7b4e443`, después de la migración 026).
 - [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).
