@@ -20,6 +20,8 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
   en Brevo y los correos pueden caer en spam; con dominio, autenticarlo
   (SPF/DKIM) y cambiar `EMAIL_REMITENTE` (§2b).
 - [ ] **Backups propios** — hoy solo el historial de 24 h de Neon (ver Notas).
+- [ ] **Migración 027** (`solicitud_transferencia`, G33 bloque 9) en Neon,
+  **antes** del push que lleva el bloque 9 a `main` (§1, "Migración nueva").
 
 **Hecho**
 

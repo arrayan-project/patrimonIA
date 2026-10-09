@@ -34,12 +34,19 @@ En resumen:
 
 - [ ] **Rediseño de usabilidad** (G33) — la validación de G32 con una usuaria
   real falló; plan y escenarios en `Docs/usabilidad/USABILIDAD_REAL_S01.md`.
-  Siguiente: BUG-HOG (total del hogar en cero) y recorrido de escenarios.
+  Fase E en curso: bloques 1 a 9 y D-5 hechos (estado en `GAPS.md`, G33);
+  sigue D-6 (recurrencia de los movimientos programados).
 - [ ] **Densidad** en las preferencias de visualización (resto de G25).
 - [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
 
 ### Implementado
 
+- [x] **G33, bloque 9 de la Fase E (2026-10-08)** — solicitudes entre miembros
+  del hogar: "Compartido con [miembro]" en Gasté (D-7), "Avisarle a [miembro]"
+  en Recibí → De alguien del hogar, pantalla "Pagarle a [miembro]" y
+  "Entre [miembro] y tú" en Hogar (HZ-21). Tabla `solicitud_transferencia`
+  (migración 027) y 4 comandos nuevos (#81–#84). Corrige la lista vacía de
+  Recibí → De alguien del hogar (bloque 8). Detalle en `GAPS.md`, G33.
 - [x] **Tanda GAPS Parte 1 (b) (2026-09-29)** — importación automática de tipos
   de cambio desde mindicador.cl (G21) y evaluación heurística de usabilidad (G32).
 - [x] **Tanda GAPS Parte 1 (2026-09-29)** — detalle en `GAPS.md` §2.1:

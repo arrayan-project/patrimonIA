@@ -245,15 +245,27 @@ Nota de diseño: `GET /elementos-patrimoniales/{id}` no expone directamente el m
 | `GET /presupuestos/{id}/desviacion` | Proyección `desviacion_presupuestaria` (DB design sección 12) — comparación presupuestado vs. real |
 | `GET /presupuestos?tipo=FAMILIAR&vigente=true` | Presupuestos vigentes — para periódicos, calculado por calendario; para específicos, por `estado = ACTIVO` |
 
-# Endpoints añadidos (Fases 13–52)
+# Endpoints añadidos (Fases 13–52 y G33)
 
 Verificado contra los decoradores de ruta del backend.
 
 ## Comandos (`POST /comandos/{Nombre}`)
 
-Los 26 comandos nuevos de `APPLICATION_SERVICES.md` §"Casos de uso añadidos"
-(#53–#78) tienen cada uno su `POST /comandos/{Nombre}`, con el mismo mapeo 1:1.
-Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`**.
+Los 32 comandos nuevos de `APPLICATION_SERVICES.md` §"Casos de uso añadidos"
+(#53–#84) tienen cada uno su `POST /comandos/{Nombre}`, con el mismo mapeo 1:1.
+Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`**
+(la app lo manda en todos los comandos de G33).
+
+Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
+
+| Endpoint | AS # | Input clave |
+|---|---|---|
+| `POST /comandos/AhorrarParaObjetivo` | #79 | objetivoId, asignacionId?, destinoId?, origenes[] (elementoId, monto), fecha? |
+| `POST /comandos/RegistrarPlataDeOtraPersona` | #80 | direccion (ENTRA/SALE), cuentaId, monto, persona, fecha?, glosa?, anularIngresoId?, registrarEntrada? |
+| `POST /comandos/RegistrarGastoCompartido` | #81 | campos de un GASTO + partes[] (usuarioId, monto) + cuentaDestinoId |
+| `POST /comandos/AvisarTransferenciaSinAnotar` | #82 | usuarioId, monto, cuentaDestinoId, fecha? |
+| `POST /comandos/PagarSolicitud` | #83 | solicitudId, elementoOrigenId, fecha? — responde 200 |
+| `POST /comandos/RechazarSolicitud` | #84 | solicitudId — responde 200 |
 
 ## Consultas nuevas
 
@@ -277,6 +289,10 @@ Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`
 | `POST /auth/registro-token` | token de pre-registro (rate-limit por IP; email opcional → envía código de 6 dígitos) | Fase 12/14c / G4 |
 | `POST /auth/verificar-codigo-registro` | canjea `{ email, codigo }` por el token de pre-registro | G4 |
 | `POST /auth/solicitar-reset-password` · `POST /auth/reset-password` | reset de contraseña con código de 6 dígitos `{ email, codigo, nuevaPassword }` | G31 |
+| `GET /usuarios/me/disponibilidad` | libre para ahorrar por cuenta propia | G33 D-1 |
+| `GET /usuarios/me/personas?todas=` | saldo con signo por persona y moneda (+ te debe, − le debes) | G33 D-3 |
+| `GET /usuarios/me/solicitudes` | solicitudes entre miembros en las dos direcciones, con estado derivado y `cuentaDisponible` | G33 bloque 9 |
+| `GET /usuarios/me/transferencias-hogar?dias=30` | TRANSFERENCIA vigentes entre cuentas propias y de otros miembros, con el nombre del miembro (`dias` de 1 a 366) | G33 bloque 9 / HZ-21 |
 
 ## Query params añadidos al listado de elementos
 
@@ -285,7 +301,7 @@ Todos los `Registrar*` / `Crear*` aceptan el header opcional **`Idempotency-Key`
 
 # Resumen de cobertura
 
-52 endpoints de comando de Fase 0 + 26 añadidos = **78**, mapeados 1:1 contra `APPLICATION_SERVICES.md`.
+52 endpoints de comando de Fase 0 + 32 añadidos = **84**, mapeados 1:1 contra `APPLICATION_SERVICES.md`.
 
 Las 4 políticas automáticas (`UnirseAHogar`, `ConsumirReserva`, `CompletarObjetivo`, `DerivarEstadoOperativo`) están documentadas explícitamente como ausentes en cada sección relevante — no tienen endpoint propio porque no son invocables por el usuario, consistente con Application Services y la Sección U del DDD.
 

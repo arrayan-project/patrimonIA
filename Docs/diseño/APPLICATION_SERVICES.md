@@ -567,6 +567,44 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 - Auditoría: entrada raíz `RegistrarPlataDeOtraPersona` (dirección, persona, monto, moneda, fecha, previo); las del elemento creado, la anulación y las transferencias quedan encadenadas a ella (`encadenada_de_id`).
 - Lectura asociada: `GET /usuarios/me/personas` → un saldo con signo por persona y moneda; los que están en 0 se ocultan salvo con `?todas=true`. `GET /usuarios/me/patrimonio-individual` entrega `plataAjena` (Σ DEUDA `CUSTODIA_INFORMAL`) y `valorLibre` la resta (HZ-18).
 
+## Solicitudes entre miembros del hogar — G33 bloque 9 (D-7, HZ-21)
+
+Un miembro le pide a otro que anote una TRANSFERENCIA hacia una cuenta suya.
+La solicitud vive en `solicitud_transferencia` (migración 027): tabla de apoyo,
+como `notificacion` (Principio 4). No mueve saldos ni se audita; el gasto y el
+pago son eventos normales, con su propia auditoría. El estado **se deriva** al
+leer: pago vigente → `PAGADA`; gasto anulado → `ANULADA`; `rechazada` →
+`RECHAZADA`; si no, `PENDIENTE` (anular el pago la deja pendiente de nuevo).
+Las notificaciones son solo el aviso: si el usuario silencia su tipo (G20), la
+solicitud sigue existiendo.
+
+### 81. RegistrarGastoCompartido
+
+- Input: los campos de un GASTO de #10 (monto, moneda, fecha, elementoOrigenId, asignacionId, categoriaId, glosa, etiquetaIds), partes[] (usuarioId, monto; 1 a 10) y cuentaDestinoId (la cuenta propia donde quien pagó recibe las partes).
+- Validaciones: cada parte es de un miembro distinto, que no es el actor (`PARTES_NO_VALIDAS`) · la suma de las partes no supera el gasto (`PARTES_SUPERAN_TOTAL`) · cada destinatario comparte un hogar activo con el actor (`NO_ES_MIEMBRO`) · la cuenta destino es propia (`DESTINO_AJENO`), activa, LIQUIDEZ o RESERVA y no el saldo con una persona (`CUENTA_NO_VALIDA`), en la moneda del gasto (`MONEDA_DISTINTA`) · cada destinatario ve la EXISTENCIA de esa cuenta, es decir, nivel D-2 "Que puedan transferirte" o más (`DESTINO_NO_VISIBLE`, con `datos: { cuentaId, usuarioId }`) · más las de #10.
+- Orquestación (una transacción): el GASTO por el total con #10 (con su política "Consumir reserva" si trae asignacionId) · una solicitud `GASTO_COMPARTIDO` por parte, con la glosa del gasto o el nombre de su categoría · notificación `SOLICITUD_APORTE` a cada destinatario.
+- Output: gasto (evento), solicitudes[].
+
+### 82. AvisarTransferenciaSinAnotar
+
+- Input: usuarioId (el miembro que envió la plata), monto, cuentaDestinoId (donde llegó), fecha (opcional).
+- Validaciones: las de miembro, cuenta y visibilidad de #81.
+- Orquestación: una solicitud `SIN_ANOTAR` en la moneda de la cuenta · notificación `AVISO_TRANSFERENCIA` al miembro. No crea eventos: la TRANSFERENCIA entre miembros la registra quien la envía (D-8).
+- Output: la solicitud.
+
+### 83. PagarSolicitud
+
+- Input: solicitudId, elementoOrigenId, fecha (opcional; en `SIN_ANOTAR` la de la solicitud, si no hoy).
+- Validaciones: la solicitud existe y el actor es parte (`SOLICITUD_NO_ENCONTRADA`) · el actor es el destinatario (`SOLICITUD_AJENA`) · está `PENDIENTE` (`SOLICITUD_RESUELTA`) · las de #10 para la TRANSFERENCIA: origen propio, misma moneda y destino visible (`DESTINO_NO_PERMITIDO` si quien la pidió dejó de compartir la cuenta).
+- Orquestación (una transacción): TRANSFERENCIA (#10) del origen a la cuenta de la solicitud, con glosa "Mi parte de …" o "Para …" · `evento_pago_id` se fija solo si no cambió desde la lectura (dos toques no pagan dos veces) · la notificación que la pedía queda leída · notificación `SOLICITUD_PAGADA` a quien la pidió.
+- Output: la solicitud.
+
+### 84. RechazarSolicitud — "No me corresponde"
+
+- Input: solicitudId. Validaciones: las de #83 sin el origen. Orquestación: `rechazada = true` · la notificación que la pedía queda leída · notificación `SOLICITUD_RECHAZADA` a quien la pidió. El gasto no cambia. Output: la solicitud.
+
+Lecturas asociadas: `GET /usuarios/me/solicitudes` → las del actor en las dos direcciones (`direccion` ENVIADA o RECIBIDA), con el estado derivado y `cuentaDisponible` (en una recibida pendiente, false si la cuenta dejó de compartirse). `GET /usuarios/me/transferencias-hogar?dias=30` → las TRANSFERENCIA vigentes entre cuentas del actor y cuentas de otros miembros, con el nombre del miembro; la usan "Entre [miembro] y tú" (HZ-21) y Recibí → De alguien del hogar (los movimientos de una cuenta solo traen el impacto de esa cuenta).
+
 ## Cambios en comandos existentes
 
 - **#1 RegistrarElementoPatrimonial**: acepta `visibilidadExistencia` / `visibilidadValor` (dos controles independientes); `naturaleza` (obligatorio para DEUDA/CREDITO); `fechaAlta`. Si categoría ∈ {LIQUIDEZ, RESERVA} y `valorInicial > 0` → emite además un evento `SALDO_INICIAL` + impacto de apertura. Auditoría: + naturaleza (solo DEUDA/CREDITO), + saldo_inicial_evento_id.
@@ -579,6 +617,6 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 
 # Resumen de cobertura
 
-Total: **52 casos de uso de Fase 0 + 28 añadidos (Fases 13–52 y G33) = 80** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
+Total: **52 casos de uso de Fase 0 + 32 añadidos (Fases 13–52 y G33) = 84** invocables por el usuario, mapeados 1:1 contra los comandos de `DDD.md` §T + §X.8. Verificado contra los `@Post('comandos/*')` del backend. No se documentan como casos de uso propios las políticas automáticas (UnirseAHogar, Consumir reserva, Completar objetivo, Derivar estado operativo) porque no son invocables directamente — están descritas como nota dentro del caso de uso que las dispara, conforme a la Sección U.
 
 *Nota de reconciliación: la cifra previa de “~44 comandos” mencionada al iniciar este bloque correspondía a un conteo aproximado. El conteo exacto contra la Sección T, comando por comando, da 52. La diferencia son comandos que existen en la tabla pero no se habían sumado en el estimado inicial (p. ej. ActualizarDatosUsuario, ActualizarDatosHogar, ActualizarDatosPresupuesto, ActualizarDatosAsignacion, ActualizarDatosObjetivoFinanciero, ActualizarMovimientoProgramado, RechazarInvitacion). Este documento es la fuente de verdad del conteo, no la cifra estimada al inicio.

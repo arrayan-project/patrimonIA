@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); sigue D-6. | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -252,6 +252,37 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (`feat/G33-E8a-otra-persona`) ✅ mergeada (2026-10-04); 8b app
   (`feat/G33-E8b-dos-puertas`) ✅ probada por Juan y mergeada (2026-10-04).
   Bloque 8 cerrado; sigue el bloque 9 (D-7 + HZ-21).
+- **Bloque 9 de la Fase E — D-7 + HZ-21, solicitudes entre miembros
+  (implementado y probado por Juan, 2026-10-08)**: un miembro le pide a
+  otro que anote una TRANSFERENCIA hacia una cuenta suya. Dos motivos: su
+  parte de un gasto compartido (D-7) o una transferencia que no anotó
+  ("Avisarle a [miembro]"). **Decisión de Juan (2026-10-08):** tabla de apoyo
+  `solicitud_transferencia` (migración 027), como `notificacion`, en vez de
+  guardar la solicitud solo en la notificación: no mueve saldos ni se audita,
+  y si el usuario silencia el aviso (G20) la solicitud sigue existiendo. El
+  estado se deriva al leer: pago vigente → Pagado; gasto anulado → Anulado;
+  "No me corresponde" → Rechazado; si no, Pendiente (si se anula el pago,
+  vuelve a Pendiente). Comandos de orquestación nuevos, sin tocar
+  `RegistrarEventoFinanciero`: `RegistrarGastoCompartido` (el gasto por el
+  total y una solicitud por parte, en una transacción; la cuenta donde se
+  recibe tiene que ser visible para cada miembro, `DESTINO_NO_VISIBLE` si no),
+  `AvisarTransferenciaSinAnotar`, `PagarSolicitud` (registra la
+  TRANSFERENCIA; `DESTINO_NO_PERMITIDO` si la cuenta dejó de compartirse) y
+  `RechazarSolicitud`. Lecturas: `GET /usuarios/me/solicitudes` y
+  `GET /usuarios/me/transferencias-hogar`. Notificaciones `SOLICITUD_APORTE`,
+  `AVISO_TRANSFERENCIA`, `SOLICITUD_PAGADA` y `SOLICITUD_RECHAZADA`; al
+  responder, el aviso queda leído. App: Gasté → "Compartido con [miembro]"
+  (la mitad u otro monto; con más miembros, con quiénes y partes iguales) y
+  "¿A qué cuenta te transfiere?" (viene la cuenta del gasto; si está en
+  "Nada", botón para subirla a "Que pueda transferirte"); Recibí → De alguien
+  del hogar → "¿No aparece?" con "Avisarle a [miembro]"; pantalla "Pagarle a
+  [miembro]" (Transferir · No me corresponde), a la que se llega desde la
+  notificación y desde una alerta en el Inicio; Hogar → "Entre [miembro] y
+  tú" (HZ-21, solo lectura, con "Ver todo"). **Corrige un error del bloque 8:**
+  la lista de Recibí → De alguien del hogar salía siempre vacía, porque los
+  movimientos de una cuenta solo traen el impacto de esa cuenta y no dicen de
+  quién es el otro lado; ahora la arma el backend
+  (`transferencias-hogar`). Capturas en `Docs/usabilidad/capturas-e9/`.
 - **D-5 adelantado del bloque 10 — `DOMINIO` destino de otro miembro + D-2 en
   el backend (rama `feat/G33-D5-destino-miembro`, probada por Juan y
   mergeada, 2026-10-08)**: plantillas y programados aceptan como destino de una
