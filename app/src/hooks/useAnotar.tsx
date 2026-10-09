@@ -7,8 +7,9 @@ import { useCargaAlEnfocar } from './useCargaAlEnfocar';
 
 export const TITULO_ANOTAR = '¿Qué quieres anotar?';
 
-const esTarjeta = (e: ElementoPatrimonialDTO) =>
-  e.estado === 'ACTIVO' && e.categoriaFuncional === 'DEUDA' && e.tipo.trim().toLowerCase() === 'tarjeta de crédito';
+/** G39 (F-5): las deudas que se pagan (deudas, créditos, préstamos; no los encargos). */
+const esDeudaPagable = (e: ElementoPatrimonialDTO) =>
+  e.estado === 'ACTIVO' && e.categoriaFuncional === 'DEUDA' && e.naturaleza !== 'CUSTODIA_INFORMAL';
 
 /**
  * D-8 — el menú "¿Qué quieres anotar?": una puerta por dirección de la plata
@@ -21,14 +22,14 @@ export function useAnotar() {
   const nav = useNav();
   const c = useC();
   const [abierto, setAbierto] = useState(false);
-  const [tarjetas, setTarjetas] = useState<ElementoPatrimonialDTO[]>([]);
+  const [deudas, setDeudas] = useState<ElementoPatrimonialDTO[]>([]);
 
-  // "Pagar tarjeta" solo aparece si hay tarjeta (al volver a la pantalla se revisa de nuevo).
+  // "Pagar una deuda" solo aparece si hay deudas (al volver a la pantalla se revisa de nuevo).
   const cargar = useCallback(() => {
     api
       .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
-      .then((els) => setTarjetas(els.filter(esTarjeta)))
-      .catch(() => setTarjetas([]));
+      .then((els) => setDeudas(els.filter(esDeudaPagable)))
+      .catch(() => setDeudas([]));
   }, [token]);
   useCargaAlEnfocar(cargar);
 
@@ -64,18 +65,19 @@ export function useAnotar() {
       subtitle: 'Mandar plata a una meta',
       onPress: () => nav.go('Ahorrar'),
     },
-    ...(tarjetas.length > 0
+    ...(deudas.length > 0
       ? [
           {
             icon: 'card-outline' as const,
             emoji: '💳',
-            label: 'Pagar tarjeta',
-            subtitle: 'Pagar lo que debes de una tarjeta',
+            label: 'Pagar una deuda',
+            subtitle: 'Tarjeta, crédito o préstamo',
             onPress: () =>
               nav.go('RegistrarMovimiento', {
                 tipo: 'TRANSFERENCIA',
-                titulo: 'Pagar tarjeta',
-                ...(tarjetas.length === 1 ? { destinoId: tarjetas[0].id } : {}),
+                titulo: 'Pagar',
+                pago: true,
+                ...(deudas.length === 1 ? { destinoId: deudas[0].id } : {}),
               }),
           },
         ]

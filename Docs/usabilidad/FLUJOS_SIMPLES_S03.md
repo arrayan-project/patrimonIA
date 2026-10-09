@@ -333,8 +333,35 @@ cuenta pagaste?" (7 toques si es de hoy, 1 campo).
 **Conteo:** compra 2 pantallas · 7 toques · 1 campo; pago 2 pantallas ·
 5 toques · 1 campo.
 **Lo que cuesta:** no se sugiere el monto a pagar (lo que debes hoy); nada en
-Gasté indica que la tarjeta se elige como cuenta.
-**Objetivo:** *por definir.*
+Gasté indica que la tarjeta se elige como cuenta, y esa lista mezcla cuentas
+con bienes (la casa, el auto) y con lo que te deben.
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-5 (§6) y la lista de Gasté.
+
+*La compra (Gasté)*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe el monto | campo |
+| 4 | Gasté | "¿En qué?" con botones | Toca una categoría | 1 |
+| 5 | Gasté | "¿Desde qué cuenta pagaste?": viene la de la última vez. Al tocarla, la lista muestra solo **🏦 Cuentas · 🐷 Ahorro · 📈 Inversiones · 💳 Tarjetas y créditos** (salen los bienes y lo que te deben, que no pagan nada) | Si no viene la tarjeta, la elige en "💳 Tarjetas y créditos" | 0 o 2 |
+| 6 | Gasté | Pie: "💸 Salen 25.000 de Tarjeta Visa · Mercado · hoy." | "Anotar gasto" | 1 |
+
+*El pago*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | La fila **💳 Pagar una deuda** · "Tarjeta, crédito o préstamo" (antes "Pagar tarjeta", solo tarjetas) | La toca | 1 |
+| 3 | Pagar | Banda del monto con dos botones: **💳 Todo lo que debes · 480.000** y **💵 La cuota · 120.000** (este, solo si la deuda tiene cuota) | Toca "Todo lo que debes" (o escribe otro monto) | 1 |
+| 4 | Pagar | "¿Qué deuda pagas?": viene la única, o la que pagó la última vez, con "🔁 La de tu último pago" | Nada (2 si es otra) | 0 |
+| 5 | Pagar | "¿Desde qué cuenta?": la de su último pago de una deuda | Nada | 0 |
+| 6 | Pagar | Pie: "💳 Pagas 480.000 de Tarjeta Visa desde Cuenta corriente · hoy. Te queda 0 por pagar." | "💳 Pagar" | 1 |
+
+**Conteo objetivo:** compra **4 toques + monto** (meta ✅, antes 7); pago
+**4 toques y 0 campos** (meta ✅, antes 5 + monto).
 
 #### M7 — Compro algo para la casa y mi pareja me pasa su parte
 
@@ -783,7 +810,26 @@ toque** (meta ✅). Antes: 8 a 10 y 3.
 pantallas · 5 toques · 1 campo.
 **Lo que cuesta:** "💳 Pagar tarjeta" del "+" sirve solo para tarjetas; un
 dividendo mensual es un programado que no se sugiere.
-**Objetivo:** *por definir.*
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — el pago, con F-5 (igual que M6).
+Agregar la deuda se trabaja con C1–C3 (bloque 7).
+
+*Cada pago (cada uno, desde su teléfono)*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | 💳 Pagar una deuda | La toca | 1 |
+| 3 | Pagar | Banda con **💵 La cuota · 320.000** y **💳 Todo lo que debes · 47.748.000** | Toca "La cuota" | 1 |
+| 4 | Pagar | "¿Qué deuda pagas?": el hipotecario (la de su último pago) | Nada (2 si es otra) | 0 |
+| 5 | Pagar | "¿Desde qué cuenta?": la de su último pago | Nada | 0 |
+| 6 | Pagar | Pie: "💳 Pagas 320.000 de Crédito hipotecario desde Cuenta corriente · hoy. Te quedan 47.428.000 por pagar." | "💳 Pagar" | 1 |
+
+*El dividendo de todos los meses:* en el mismo formulario, 🔁 Se repite →
+Cada mes (+2 la primera vez); después, "✅ Sí" en los avisos del Inicio
+(1 toque al mes, M5).
+**Conteo objetivo:** cada pago **4 toques y 0 campos** (antes 5 + monto,
+entrando por el detalle de la deuda); con "Se repite", 1 toque al mes.
 
 #### H6 — Invito a mi pareja / acepto la invitación
 
@@ -973,7 +1019,7 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-2 | **Categoría en chips:** las 4 categorías más usadas de ese tipo, a un toque, y "🔍 Otra" para la lista completa. | M1, M2, M5, M7, A5, P2 | −1 toque | ✅ en M1–M2 (§9) |
 | F-3 | **Confirmar desde el Inicio en un toque:** lo programado que ya venció aparece en los avisos del Inicio con "✅ Sí", que anota con el monto y la fecha previstos; la fila abre el Programado para los otros casos. | M5, H3, P2, H5 | −2 toques por mes | ✅ en M5 y H3 (§9) |
 | F-4 | **Personas como respuesta directa:** "¿De quién es?" ofrece las personas recientes (Noira, Papás) junto a Mío y Compartido. | M8, M10 | −2 toques | ⬜ |
-| F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+", con el monto que debes sugerido. | M6, H5 | −2 toques y 0 campos | ⬜ |
+| F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+": la deuda y la cuenta de la última vez, y botones con "Todo lo que debes" y "La cuota"; el pie dice cuánto queda por pagar. Gasté ya no ofrece bienes ni "te deben" como cuenta de pago. | M6, H5 | −1 a −3 toques y 0 campos | ✅ en M6 y H5 (§11) |
 | F-6 | **Tipo opcional** al agregar: se deja en el genérico sin preguntar. | C1, C2, C3 | −2 toques | ⬜ |
 | F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
 | F-8 | **El "+" para todo lo que se repite o viene:** "🔁 Se repite" muestra Cada mes · Cada año como botones, y una fecha futura en Gasté / Recibí / Moví plata deja el movimiento programado en vez de anotarlo. Programar en Planificar sigue existiendo. | M5, H3, P2 | −1 a −4 toques; una sola puerta | ✅ en M5, H3 y P2 (§9) |
@@ -985,7 +1031,7 @@ Frecuencia primero; los primeros fijan los patrones.
 1. **M1, M2, M3** — el formulario base (F-1, F-2). Lo que se decida aquí
    cambia 15 escenarios. ✅ implementado y mergeado (§9).
 2. **M5, H3, P2** — lo que se repite (F-3, F-8). ✅ implementado y mergeado (§10).
-3. **M6, H5** — tarjetas y deudas (F-5).
+3. **M6, H5** — tarjetas y deudas (F-5). ✅ implementado y mergeado (§11).
 4. **M4, M7, M9** — entre miembros del hogar.
 5. **M8, M10** — plata de otras personas (F-4).
 6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor.
@@ -1004,7 +1050,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2. | 🟡 F-1, F-2, F-3 y F-8 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5. | 🟡 F-1, F-2, F-3, F-5 y F-8 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1079,3 +1125,32 @@ requiere deploy en Render.
     local.
 - **Conteo logrado:** confirmar cada mes (M5, H3) 1 toque · M5 la primera vez
   6 + monto · P2 7 + monto.
+
+## 11. Implementación de M6 y H5 (rama `feat/G39-deudas`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). Solo app
+(sin cambios en la API).
+
+- **Hoja "+"** (`hooks/useAnotar`): "💳 Pagar una deuda · Tarjeta, crédito o
+  préstamo" reemplaza a "Pagar tarjeta". Aparece si hay una deuda activa que
+  no sea un encargo de otra persona; con una sola, viene elegida.
+- **Pagar** (`RegistrarMovimientoScreen`, modo pago; también desde "💳 Pagar"
+  del detalle de una deuda):
+  - Orden: monto → "¿Qué deuda pagas?" (solo deudas, con "Debes X") →
+    "¿Desde qué cuenta?" (solo cuentas, ahorro e inversiones).
+  - La deuda y la cuenta de tu último pago vienen elegidas (cada una solo si
+    falta), con "🔁 La de tu último pago. Tócala para cambiarla.".
+  - En la banda, "💳 Todo lo que debes · X" y "💵 La cuota · Y" (si la deuda
+    tiene cuota) llenan el monto de un toque. Los Frecuentes se limitan a los
+    que pagan una deuda.
+  - Pie: "💳 Pagas X de [deuda] desde [cuenta] · hoy. Te quedan Z por
+    pagar." (o "⚠️ Es más de lo que debes"). Botón "💳 Pagar".
+- **Gasté:** "¿Desde qué cuenta pagaste?" ofrece Cuentas, Ahorro, Inversiones
+  y "💳 Tarjetas y créditos" (con "Debes X"); salen los bienes, lo que te
+  deben y los encargos.
+- **Verificado:** `tsc` sin errores; capturas web como Demo de la hoja "+",
+  Pagar vacío y con "La cuota" (420.000 del hipotecario: "Te quedan
+  47.328.000 por pagar", cuadra con 47.748.000 − 420.000) y la lista de
+  cuentas de Gasté. No se anotó nada nuevo.
+- **Conteo logrado:** pagar una deuda 4 toques, sin escribir · compra con
+  tarjeta 4 + monto (si la tarjeta fue la última cuenta).
