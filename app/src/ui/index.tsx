@@ -311,7 +311,7 @@ export function FabMenu({ titulo, actions }: { titulo?: string; actions: AccionH
   );
 }
 
-/** Toggle compacto de 2 opciones para una barra superior (p. ej. Míos / Del hogar). */
+/** Toggle compacto de 2 opciones para una barra superior (p. ej. Lo mío / Del hogar). */
 export function PillToggle<T extends string>({
   options,
   value,
@@ -958,7 +958,12 @@ export function Section({
           {title}
         </Text>
         {onAccion ? (
-          <Pressable onPress={onAccion} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${accion}: ${title}`}>
+          <Pressable
+            onPress={onAccion}
+            accessibilityRole="button"
+            accessibilityLabel={`${accion}: ${title}`}
+            style={styles.zonaEnlace}
+          >
             <Text style={styles.seccionAccion}>{accion}</Text>
           </Pressable>
         ) : null}
@@ -2371,6 +2376,9 @@ const crearEstilos = (c: Paleta) => {
     seccionCabeza: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     rotulo: { ...tipografia.seccion, color: c.text },
     seccionAccion: { fontSize: 13, fontWeight: '700', color: c.primary },
+    // G35: un enlace de texto se toca en 44 px de alto sin mover el diseño
+    // (el relleno se compensa con margen negativo; hitSlop no aplica en web).
+    zonaEnlace: { paddingVertical: 13, marginVertical: -13, paddingHorizontal: 8, marginHorizontal: -8 },
     listCard: {
       backgroundColor: c.bg,
       borderWidth: 1,
@@ -2425,7 +2433,7 @@ const crearEstilos = (c: Paleta) => {
       borderRadius: 999,
       padding: 3,
     },
-    pillToggleOpt: { paddingVertical: 6, paddingHorizontal: 13, borderRadius: 999 },
+    pillToggleOpt: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 999 },
     pillToggleOptActive: { backgroundColor: c.primary },
     pillToggleTxt: { fontSize: 13, fontWeight: '700', color: c.muted },
     pillToggleTxtActive: { color: c.primaryText },
@@ -2448,9 +2456,9 @@ const crearEstilos = (c: Paleta) => {
     },
     pillDateTxt: { fontSize: 12, color: c.text, fontWeight: '500' },
     iconBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: c.bg,
       borderWidth: 1,
       borderColor: c.border,

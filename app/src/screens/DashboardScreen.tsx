@@ -70,6 +70,16 @@ const MESES = [
 ];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+/** G35: nombres sin jerga de las categorías funcionales (lista "Del hogar"). */
+const NOMBRE_CATEGORIA: Record<string, string> = {
+  LIQUIDEZ: 'Cuentas',
+  RESERVA: 'Ahorro',
+  INVERSION: 'Inversiones',
+  ACTIVO: 'Bienes',
+  CREDITO: 'Te deben',
+  DEUDA: 'Deudas',
+};
+
 /** Categorías funcionales, en el orden en que se muestran en la composición. */
 const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
 
@@ -303,7 +313,7 @@ export function DashboardScreen() {
     const pas = new Map(m.distribucionPorPasivo.map((d) => [d.categoria, d]));
     for (const cat of CATS) {
       const d = act.get(cat) ?? pas.get(cat);
-      if (d) composicion.push({ cat, valor: d.valor, sub: `${Math.round(d.porcentaje)}%` });
+      if (d) composicion.push({ cat, valor: d.valor, sub: `${Math.round(d.porcentaje)}% del total` });
     }
   } else {
     for (const cat of CATS) {
@@ -501,7 +511,8 @@ export function DashboardScreen() {
         />
       )}
       {ver.composicion && alcance === 'mios' && (
-        <Section title="Tus cuentas" accion="Ver todas" onAccion={tarjetas.length > 0 ? verPatrimonio : undefined}>
+        // "Ver todas" vive como última tarjeta del carrusel: un solo camino.
+        <Section title="Tus cuentas">
           {tarjetas.length === 0 ? (
             <EmptyState
               icon="wallet-outline"
@@ -533,7 +544,7 @@ export function DashboardScreen() {
               {composicion.slice(0, 4).map((x) => (
                 <TxRow
                   key={x.cat}
-                  title={etiqueta(x.cat)}
+                  title={NOMBRE_CATEGORIA[x.cat]}
                   subtitle={x.sub}
                   amount={money(Math.abs(x.valor), monedaPrin)}
                   negativo={x.valor < 0}
@@ -790,21 +801,30 @@ function CuentasYMovimientos({
             {soloCuenta ? (
               <Pressable
                 onPress={() => nav.go('ElementoDetalle', { elementoId: sel.el.id })}
-                hitSlop={6}
                 accessibilityRole="button"
+                style={styles.zonaEnlace}
               >
                 <Text style={styles.swLink}>Ver la cuenta</Text>
               </Pressable>
             ) : null}
           </View>
-          <Switch
-            value={soloCuenta}
-            onValueChange={setSoloCuenta}
-            trackColor={{ true: c.primary, false: c.faint }}
-            thumbColor={c.bg}
-            ios_backgroundColor={c.faint}
+          {/* El interruptor solo es chico: se toca en un área de 44 px o más a su alrededor. */}
+          <Pressable
+            onPress={() => setSoloCuenta((v) => !v)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: soloCuenta }}
             accessibilityLabel="Ver solo los movimientos de la cuenta elegida"
-          />
+            style={styles.zonaSwitch}
+          >
+            <View pointerEvents="none">
+              <Switch
+                value={soloCuenta}
+                trackColor={{ true: c.primary, false: c.faint }}
+                thumbColor={c.bg}
+                ios_backgroundColor={c.faint}
+              />
+            </View>
+          </Pressable>
         </View>
         {soloCuenta && eventos === null ? (
           <Text style={styles.swVacio}>Cargando…</Text>
@@ -898,8 +918,11 @@ const crearEstilos = (c: Paleta) =>
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
+    zonaSwitch: { padding: 12, margin: -12 },
     swTitulo: { fontSize: 14, fontWeight: '700', color: c.text },
     swLink: { fontSize: 13, fontWeight: '700', color: c.primary, marginTop: 2 },
+    // 44 px de alto para el dedo sin mover el diseño.
+    zonaEnlace: { alignSelf: 'flex-start', paddingVertical: 12, marginVertical: -12, paddingRight: 12 },
     swVacio: { fontSize: 13, color: c.muted, paddingVertical: 14 },
     verMovs: { alignItems: 'center', paddingVertical: 12 },
     metas: { flexDirection: 'row', gap: 12 },

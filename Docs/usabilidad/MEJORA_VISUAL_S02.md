@@ -391,3 +391,20 @@ Una ficha por pantalla, en el orden en que se trabajen. Plantilla:
 - **Prueba de Juan (2026-10-09):** el Inicio quedó bien. Un ajuste: la
   última fila del resumen ("Puedes gastar") tenía línea debajo; `Datos plano`
   ahora la recorta como `ListCard`. Mergeado a `main`.
+- **Validación de las acciones del Inicio (2026-10-09, a pedido de Juan):**
+  se recorrieron las 18 acciones (campana, Ajustes, avisos, tarjeta del
+  total, tarjetas de cuenta, "Ver la cuenta", filas de movimiento, "Ver
+  todos los movimientos", metas, "Ver todas", "Así va", 4 atajos, "+" y
+  "Del hogar"): todas llevan a su destino. Las pantallas de destino ya tienen
+  colores y letra nuevos, pero no los textos ni los emojis (llegan en sus
+  tandas). Ajustes hechos en el Inicio (rama `feat/G35-P0b-inicio-tocables`):
+  - Toda zona tocable mide al menos 44 px: enlaces "Ver todas" / "Ver todo" y
+    "Ver la cuenta" (relleno compensado con margen negativo, porque `hitSlop`
+    no aplica en web), selector "Lo mío / Del hogar", campana y engranaje, y
+    un área alrededor del interruptor de movimientos.
+  - Cuentas: un solo "Ver todas" (la última tarjeta del carrusel); se quitó
+    el enlace del título. La tarjeta del total sigue llevando a Mi patrimonio
+    (Juan: se conserva por ahora).
+  - "Del hogar": categorías sin jerga (Cuentas, Ahorro, Inversiones, Bienes,
+    Te deben, Deudas) y "N% del total".
+  - "Lo mío / Del hogar" también en Movimientos (antes "Míos").
