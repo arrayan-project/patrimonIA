@@ -373,4 +373,102 @@ describe('Presupuesto (e2e)', () => {
     });
     expect(rows).toBe(1);
   });
+  describe('G36 — CambiarAlcancePresupuesto (Solo tuyo ↔ Del hogar)', () => {
+    let socio: string;
+    const S = (r: request.Test) => r.set('Authorization', `Bearer ${socio}`);
+    const cambiar = (body: Record<string, unknown>, t: (r: request.Test) => request.Test = auth) =>
+      t(request(http).post('/comandos/CambiarAlcancePresupuesto')).send(body);
+
+    beforeAll(async () => {
+      await request(http)
+        .post('/comandos/RegistrarUsuario')
+        .send({ email: 'socio@e2e.cl', nombre: 'Socio', password: 'secret123' })
+        .expect(201);
+      socio = (
+        await request(http).post('/auth/login').send({ email: 'socio@e2e.cl', password: 'secret123' })
+      ).body.accessToken;
+      await auth(request(http).post('/comandos/InvitarMiembro'))
+        .send({ hogarId, emailInvitado: 'socio@e2e.cl' })
+        .expect(201);
+      const inv = (await S(request(http).get('/usuarios/me/invitaciones?estado=PENDIENTE')).expect(200)).body[0];
+      await S(request(http).post('/comandos/AceptarInvitacion')).send({ invitacionId: inv.id }).expect(200);
+    });
+
+    it('pasa de Solo tuyo a Del hogar y vuelta, solo quien lo creó, con auditoría', async () => {
+      const id = (
+        await auth(request(http).post('/comandos/CrearPresupuesto'))
+          .send({ tipo: 'INDIVIDUAL', periodicidad: 'PERIODICO', intervalo: 'MENSUAL' })
+          .expect(201)
+      ).body.id;
+      const cat = (await auth(request(http).get(`/hogares/${hogarId}/categorias-movimiento`)).expect(200)).body[0].id;
+      await auth(request(http).post('/comandos/DefinirLineasPresupuesto'))
+        .send({ presupuestoId: id, lineas: [{ categoriaId: cat, montoEsperado: 50_000 }] })
+        .expect(200);
+      await S(request(http).get(`/presupuestos/${id}`)).expect(403);
+
+      const r = await cambiar({ presupuestoId: id, tipo: 'FAMILIAR', hogarId }).expect(200);
+      expect(r.body).toMatchObject({ tipo: 'FAMILIAR', hogarId });
+      await S(request(http).get(`/presupuestos/${id}`)).expect(200);
+      expect((await auth(request(http).get(`/presupuestos/${id}/lineas`)).expect(200)).body).toHaveLength(1);
+
+      const mismo = await cambiar({ presupuestoId: id, tipo: 'FAMILIAR', hogarId }).expect(400);
+      expect(mismo.body.codigo).toBe('PRESUPUESTO_MISMO_ALCANCE');
+      const ajeno = await cambiar({ presupuestoId: id, tipo: 'INDIVIDUAL' }, S).expect(403);
+      expect(ajeno.body.codigo).toBe('PRESUPUESTO_SOLO_CREADOR');
+      await cambiar({ presupuestoId: id, tipo: 'INDIVIDUAL', hogarId }).expect(400);
+
+      await cambiar({ presupuestoId: id, tipo: 'INDIVIDUAL' }).expect(200);
+      await S(request(http).get(`/presupuestos/${id}`)).expect(403);
+      expect(
+        await prisma.auditoria.count({ where: { comando: 'CambiarAlcancePresupuesto', entidad_id: id } }),
+      ).toBe(2);
+    });
+
+    it('bloquea si una meta de otro miembro queda fuera, sin borrar nada', async () => {
+      const id = (
+        await auth(request(http).post('/comandos/CrearPresupuesto'))
+          .send({ tipo: 'FAMILIAR', periodicidad: 'PERIODICO', intervalo: 'MENSUAL', hogarId })
+          .expect(201)
+      ).body.id;
+      const metaSocio = (
+        await S(request(http).post('/comandos/CrearObjetivoFinanciero'))
+          .send({ nombre: 'Bici del socio', montoObjetivo: 300_000 })
+          .expect(201)
+      ).body.id;
+      await auth(request(http).post('/comandos/DefinirLineasAhorroPresupuesto'))
+        .send({ presupuestoId: id, lineas: [{ objetivoId: metaSocio, montoEsperado: 20_000 }] })
+        .expect(200);
+
+      const r = await cambiar({ presupuestoId: id, tipo: 'INDIVIDUAL' }).expect(400);
+      expect(r.body.codigo).toBe('PRESUPUESTO_FUERA_DE_ALCANCE');
+      expect(r.body.datos).toEqual({ categorias: [], metas: ['Bici del socio'] });
+      expect((await auth(request(http).get(`/presupuestos/${id}/lineas-ahorro`)).expect(200)).body).toHaveLength(1);
+
+      await auth(request(http).post('/comandos/DefinirLineasAhorroPresupuesto'))
+        .send({ presupuestoId: id, lineas: [] })
+        .expect(200);
+      await cambiar({ presupuestoId: id, tipo: 'INDIVIDUAL' }).expect(200);
+    });
+
+    it('bloquea si una categoría es de otro hogar tuyo', async () => {
+      const otroHogar = (
+        await auth(request(http).post('/comandos/CrearHogar')).send({ nombre: 'Casa de la playa' }).expect(201)
+      ).body.id;
+      const catPlaya = (await auth(request(http).get(`/hogares/${otroHogar}/categorias-movimiento`)).expect(200))
+        .body[0];
+      const id = (
+        await auth(request(http).post('/comandos/CrearPresupuesto'))
+          .send({ tipo: 'INDIVIDUAL', periodicidad: 'PERIODICO', intervalo: 'MENSUAL' })
+          .expect(201)
+      ).body.id;
+      await auth(request(http).post('/comandos/DefinirLineasPresupuesto'))
+        .send({ presupuestoId: id, lineas: [{ categoriaId: catPlaya.id, montoEsperado: 10_000 }] })
+        .expect(200);
+
+      const r = await cambiar({ presupuestoId: id, tipo: 'FAMILIAR', hogarId }).expect(400);
+      expect(r.body.codigo).toBe('PRESUPUESTO_FUERA_DE_ALCANCE');
+      expect(r.body.datos.categorias).toEqual([catPlaya.nombre]);
+      expect((await auth(request(http).get(`/presupuestos/${id}`)).expect(200)).body.tipo).toBe('INDIVIDUAL');
+    });
+  });
 });

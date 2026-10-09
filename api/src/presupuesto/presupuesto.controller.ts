@@ -4,6 +4,7 @@ import type { UsuarioAutenticado } from '../auth/jwt-payload.js';
 import { PresupuestoService } from './presupuesto.service.js';
 import {
   ActualizarPresupuestoDto,
+  CambiarAlcancePresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
   DefinirLineasAhorroPresupuestoDto,
@@ -24,6 +25,12 @@ export class PresupuestoController {
   @HttpCode(200)
   actualizar(@CurrentUser() u: UsuarioAutenticado, @Body() dto: ActualizarPresupuestoDto) {
     return this.presupuestos.actualizar(u.id, dto);
+  }
+
+  @Post('comandos/CambiarAlcancePresupuesto')
+  @HttpCode(200)
+  cambiarAlcance(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CambiarAlcancePresupuestoDto) {
+    return this.presupuestos.cambiarAlcance(u.id, dto);
   }
 
   @Post('comandos/CerrarPresupuesto')
