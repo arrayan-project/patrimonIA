@@ -4,31 +4,35 @@ import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { AmountInput, Button, contadorPasos, ErrorText, Field, Nota, Screen } from '../ui';
+import { Text } from '../ui/Text';
+import { Button, ErrorText, Field, MontoBanda, Screen, useC } from '../ui';
 
 /**
- * Corregir el monto de un ajuste o de una valorización (plantillas de
- * pantalla, R3): monto correcto y motivo. Se registra una corrección enlazada;
- * el original queda en el historial.
+ * Corregir el monto de una corrección de saldo (ajuste) o de un cambio de
+ * valor (valorización) (plantillas de pantalla, R3): monto correcto y motivo.
+ * Se registra una corrección enlazada; el original queda en el historial.
  */
 const TIPOS = {
   ajuste: {
-    titulo: 'Corregir ajuste',
+    titulo: 'Corregir la corrección de saldo',
     pregunta: '¿Cuál es el monto correcto?',
+    emoji: '🔧',
     comando: 'CorregirAjustePatrimonial',
     cuerpo: (id: string, monto: number) => ({ ajusteId: id, nuevoMonto: monto }),
-    aviso: 'Ajuste corregido',
+    aviso: 'Corrección guardada',
   },
   valorizacion: {
-    titulo: 'Corregir valorización',
+    titulo: 'Corregir el valor',
     pregunta: '¿Cuál es el valor correcto?',
+    emoji: '📈',
     comando: 'CorregirValorizacion',
     cuerpo: (id: string, monto: number) => ({ valorizacionId: id, valorCorrecto: monto }),
-    aviso: 'Valorización corregida',
+    aviso: 'Valor corregido',
   },
 } as const;
 
 export function CorreccionFormScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -66,20 +70,14 @@ export function CorreccionFormScreen() {
     }
   };
 
-  const paso = contadorPasos();
   return (
-    <Screen pie={<Button title="Guardar corrección" onPress={guardar} loading={busy} disabled={!listo} />}>
-      <Nota>
-        {`Hoy dice ${money(actual, moneda)}${signo < 0 ? ' (bajó el saldo; la corrección también lo baja)' : ''}. El original queda en el historial, enlazado a su corrección.`}
-      </Nota>
-      <AmountInput label={tipo.pregunta} paso={paso({ hecho: cambia })} value={monto} onChange={setMonto} moneda={moneda} />
-      <Field
-        label="¿Por qué lo corriges?"
-        paso={paso({ hecho: motivo.trim().length >= 3 })}
-        value={motivo}
-        onChangeText={setMotivo}
-        autoCapitalize="sentences"
-      />
+    <Screen pie={<Button title="✏️ Guardar cambio" onPress={guardar} loading={busy} disabled={!listo} />}>
+      <MontoBanda label={tipo.pregunta} value={monto} onChange={setMonto} moneda={moneda} color={c.primary} emoji={tipo.emoji}>
+        <Text style={{ fontSize: 13, color: c.muted }}>
+          {`Hoy dice ${money(actual, moneda)}${signo < 0 ? ' (baja el saldo, y el cambio también lo baja)' : ''}.`}
+        </Text>
+      </MontoBanda>
+      <Field label="¿Por qué lo cambias?" value={motivo} onChangeText={setMotivo} autoCapitalize="sentences" />
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

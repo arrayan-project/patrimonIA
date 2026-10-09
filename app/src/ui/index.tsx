@@ -801,6 +801,8 @@ export function TxRow({
         <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
       ) : null}
       {accesorio}
+      {/* G35 (Juan): la flecha dice que la fila abre su detalle. */}
+      {onPress && !accesorio ? <Text style={styles.txChev}>›</Text> : null}
     </>
   );
   if (onPress) {
@@ -1348,9 +1350,26 @@ export function Cuando({
  * campo solo si se usa. Con `abierto` (ya trae valor, p. ej. de una
  * plantilla) se muestra abierto.
  */
-export function Opcional({ titulo, abierto, children }: { titulo: string; abierto?: boolean; children: ReactNode }) {
+export function Opcional({
+  titulo,
+  emoji = '➕',
+  abierto,
+  children,
+}: {
+  titulo: string;
+  /** G35: el botón es una `Pastilla` con este emoji (antes, un enlace "+ …"). */
+  emoji?: string;
+  abierto?: boolean;
+  children: ReactNode;
+}) {
   const [ver, setVer] = useState(false);
-  return ver || abierto ? <>{children}</> : <LinkButton title={`+ ${titulo}`} onPress={() => setVer(true)} />;
+  return ver || abierto ? (
+    <>{children}</>
+  ) : (
+    <View style={{ flexDirection: 'row' }}>
+      <Pastilla label={`${emoji} ${titulo}`} onPress={() => setVer(true)} />
+    </View>
+  );
 }
 
 /**
@@ -2378,18 +2397,71 @@ export function Dato({ etiqueta: nombre, valor }: { etiqueta: string; valor: Rea
 }
 
 /**
- * G35: cuánto cambió una cifra en un período, como una resta que cuadra:
- * "Hace un año" → "Hoy" = "Subió / Bajó". Sin tarjeta propia (va bajo un
- * gráfico o en `Hero debajo`).
+ * G35: la cabecera de un detalle (Movimiento, cuenta, valorización, ajuste):
+ * una banda del color de lo que es, con qué es (emoji y verbo), el monto y
+ * una línea debajo. `children` va dentro, bajo la línea (p. ej. una resta).
+ */
+export function BandaDetalle({
+  color,
+  titulo,
+  monto,
+  sub,
+  colorMonto,
+  children,
+}: {
+  color: string;
+  titulo: string;
+  monto: string;
+  sub?: string;
+  colorMonto?: string;
+  children?: ReactNode;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <View style={[styles.bandaDet, { backgroundColor: tinte(color, 0.13), borderColor: tinte(color, 0.28) }]}>
+      <Text style={[styles.bandaDetTitulo, { color: c.muted }]}>{titulo}</Text>
+      <Text style={[styles.bandaDetMonto, { color: colorMonto ?? c.text }]} numberOfLines={1} adjustsFontSizeToFit>
+        {monto}
+      </Text>
+      {sub ? <Text style={[styles.bandaDetSub, { color: c.muted }]}>{sub}</Text> : null}
+      {children}
+    </View>
+  );
+}
+
+/** G35: aviso de color arriba de un detalle ("🗑️ Se eliminó…", "📦 Desactivada…"). */
+export function AvisoDetalle({ texto, color }: { texto: string; color: string }) {
+  const styles = useEstilos();
+  return (
+    <View style={[styles.avisoDet, { backgroundColor: tinte(color, 0.12) }]}>
+      <Text style={[styles.avisoDetTxt, { color }]}>{texto}</Text>
+    </View>
+  );
+}
+
+/**
+ * G35: cuánto cambió una cifra, como una resta que cuadra: antes → ahora =
+ * subió / bajó (p. ej. "🗓️ Hace un año" → "📍 Hoy" = "📉 Bajó"). Sin tarjeta
+ * propia (va bajo un gráfico, en `Hero debajo` o dentro de una banda).
  */
 export function CambioPeriodo({
-  desde,
+  etiquetaAntes,
+  etiquetaAhora = '📍 Hoy',
+  subio = '📈 Subió',
+  bajo = '📉 Bajó',
   antes,
   hoy,
   formato,
+  subirEsMalo,
 }: {
-  /** Cómo se dice el inicio del período ("Hace un año"). */
-  desde: string;
+  /** En una deuda, que suba es malo: va en rojo. */
+  subirEsMalo?: boolean;
+  /** Cómo se dice el inicio ("🗓️ Hace un año", "Hoy dice"). */
+  etiquetaAntes: string;
+  etiquetaAhora?: string;
+  subio?: string;
+  bajo?: string;
   antes: number;
   hoy: number;
   formato: (n: number) => string;
@@ -2400,15 +2472,15 @@ export function CambioPeriodo({
   const pct = antes !== 0 && dif !== 0 ? Math.round((Math.abs(dif) / Math.abs(antes)) * 1000) / 10 : null;
   return (
     <Datos plano>
-      <Dato etiqueta={`🗓️ ${desde}`} valor={formato(antes)} />
-      <Dato etiqueta="📍 Hoy" valor={formato(hoy)} />
+      <Dato etiqueta={etiquetaAntes} valor={formato(antes)} />
+      <Dato etiqueta={etiquetaAhora} valor={formato(hoy)} />
       {dif === 0 ? (
         <Dato etiqueta="➖ Sin cambios" valor="" />
       ) : (
         <Dato
-          etiqueta={dif > 0 ? '📈 Subió' : '📉 Bajó'}
+          etiqueta={dif > 0 ? subio : bajo}
           valor={
-            <Text style={[styles.dataRight, { color: dif > 0 ? c.ok : c.danger }]}>
+            <Text style={[styles.dataRight, { color: dif > 0 !== !!subirEsMalo ? c.ok : c.danger }]}>
               {formato(Math.abs(dif)) + (pct !== null ? ` (${String(pct).replace('.', ',')}%)` : '')}
             </Text>
           }
@@ -2885,6 +2957,13 @@ const crearEstilos = (c: Paleta) => {
     txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
+    bandaDet: { borderRadius: 22, borderWidth: 1, padding: 18, gap: 4 },
+    bandaDetTitulo: { fontSize: 15, fontWeight: '700' },
+    bandaDetMonto: { fontSize: 34, fontWeight: '900' },
+    bandaDetSub: { fontSize: 14 },
+    avisoDet: { borderRadius: 14, padding: 12 },
+    avisoDetTxt: { fontSize: 14, fontWeight: '700' },
+    txChev: { fontSize: 22, color: c.mutedDim, marginLeft: -4, marginTop: -2 },
     ordenar: { flexDirection: 'row', gap: 6, marginLeft: 8 },
     flechaOrden: {
       width: 44,

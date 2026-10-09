@@ -20,6 +20,8 @@ import { irAAccion } from './AccionFormScreen';
 import type { DesdeMovimiento } from './PlantillaFormScreen';
 import {
   aISO,
+  AvisoDetalle,
+  BandaDetalle,
   Button,
   Chip,
   colorAnotar,
@@ -32,7 +34,6 @@ import {
   Nota,
   Screen,
   Skeleton,
-  tinte,
   useC,
 } from '../ui';
 
@@ -229,19 +230,14 @@ export function MovimientoDetalleScreen() {
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       {evento.anulado && (
-        <View style={[styles.aviso, { backgroundColor: tinte(c.danger, 0.12) }]}>
-          <Text style={[styles.avisoTxt, { color: c.danger }]}>🗑️ Este movimiento se eliminó: ya no cuenta en tus saldos.</Text>
-        </View>
+        <AvisoDetalle color={c.danger} texto="🗑️ Este movimiento se eliminó: ya no cuenta en tus saldos." />
       )}
-      <View style={[styles.banda, { backgroundColor: tinte(color, 0.13), borderColor: tinte(color, 0.28) }]}>
-        <Text style={[styles.bandaVerbo, { color: c.muted }]}>
-          {`${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`}
-        </Text>
-        <Text style={[styles.bandaMonto, { color: c.text }]}>{money(evento.monto, evento.moneda)}</Text>
-        <Text style={[styles.bandaSub, { color: c.muted }]}>
-          {`📅 ${fechaLarga(evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
-        </Text>
-      </View>
+      <BandaDetalle
+        color={color}
+        titulo={`${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`}
+        monto={money(evento.monto, evento.moneda)}
+        sub={`📅 ${fechaLarga(evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
+      />
 
       {enlaces.length > 0 && <MenuList items={enlaces} />}
       {(evento.glosa || impacto || datosCuenta.length > 0) && (
@@ -295,11 +291,5 @@ export function MovimientoDetalleScreen() {
 
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  aviso: { borderRadius: 14, padding: 12 },
-  avisoTxt: { fontSize: 14, fontWeight: '700' },
-  banda: { borderRadius: 22, borderWidth: 1, padding: 18, gap: 4 },
-  bandaVerbo: { fontSize: 15, fontWeight: '700' },
-  bandaMonto: { fontSize: 34, fontWeight: '900' },
-  bandaSub: { fontSize: 14 },
   acciones: { gap: 10, marginTop: 4 },
 });

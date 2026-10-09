@@ -140,10 +140,10 @@ const TITULOS: Record<string, string> = {
   RegistrarMovimiento: 'Registrar movimiento',
   ElementoDetalle: 'Detalle',
   MovimientoDetalle: 'Movimiento',
-  Valorizar: 'Registrar valorización',
-  ValorizacionDetalle: 'Valorización',
-  RegistrarAjuste: 'Registrar ajuste patrimonial',
-  AjusteDetalle: 'Ajuste patrimonial',
+  Valorizar: 'Actualizar cuánto vale',
+  ValorizacionDetalle: 'Cambio de valor',
+  RegistrarAjuste: 'Corregir el saldo',
+  AjusteDetalle: 'Corrección de saldo',
   EditarElemento: 'Editar',
   Historial: 'Historial de cambios',
   GestionHogar: 'Gestionar hogar',
@@ -185,7 +185,7 @@ const TITULOS: Record<string, string> = {
   SacarPlata: 'Sacar',
   PagarSolicitud: 'Pagar',
   EntreMiembros: 'Entre ustedes',
-  ValorEnFecha: 'Valor en otra fecha',
+  ValorEnFecha: '¿Cuánto valía antes?',
   AjustesElemento: 'Ajustes de la cuenta',
 };
 

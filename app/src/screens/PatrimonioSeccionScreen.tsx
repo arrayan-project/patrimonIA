@@ -174,7 +174,7 @@ export function PatrimonioSeccionScreen() {
             <Panel>
               <GraficoLinea puntos={puntos} />
               <CambioPeriodo
-                desde="Hace un año"
+                etiquetaAntes="🗓️ Hace un año"
                 antes={puntos[0].valor}
                 hoy={puntos[puntos.length - 1].valor}
                 formato={(n) => money(n, monedaPrin)}

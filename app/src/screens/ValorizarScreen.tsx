@@ -5,10 +5,15 @@ import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
-import { GLOSARIO } from '../labels';
-import { aISO, AmountInput, Ayuda, Button, contadorPasos, Cuando, ErrorText, Migaja, Nota, Screen } from '../ui';
+import { aISO, Button, CambioPeriodo, Cuando, ErrorText, Migaja, MontoBanda, Screen, useC } from '../ui';
 
+/**
+ * Actualizar cuánto vale una casa, un auto o una inversión (G35; comando
+ * RegistrarValorizacion). El nuevo valor reemplaza al de hoy: la resta en vivo
+ * (Hoy dice → Ahora = Sube / Baja) lo muestra sin explicarlo.
+ */
 export function ValorizarScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -34,7 +39,7 @@ export function ValorizarScreen() {
         { elementoId, valorNuevo: Number(valorNuevo), fecha },
         token,
       );
-      toast.mostrar('Valorización registrada');
+      toast.mostrar('Valor actualizado');
       permitirSalida();
       nav.back();
     } catch (e) {
@@ -44,24 +49,23 @@ export function ValorizarScreen() {
     }
   };
 
-  const paso = contadorPasos();
   return (
-    <Screen
-      pie={
-        <>
-          <Nota>
-            {listo && valorActual !== undefined
-              ? `Pasa de ${money(valorActual, moneda)} a ${money(Number(valorNuevo), moneda)}. No es un movimiento de plata.`
-              : 'Completa el valor.'}
-          </Nota>
-          <Button title="Registrar valorización" onPress={onSubmit} loading={loading} disabled={!listo} />
-        </>
-      }
-    >
+    <Screen pie={<Button title="📈 Guardar valor" onPress={onSubmit} loading={loading} disabled={!listo} />}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Ayuda>{GLOSARIO.valorizar}</Ayuda>
-      <AmountInput label="¿Cuánto vale?" paso={paso({ hecho: listo })} value={valorNuevo} onChange={setValorNuevo} moneda={moneda} />
-      <Cuando label="¿A qué fecha?" value={fecha} onChange={setFecha} paso={paso({ hecho: !!fecha })} />
+      <MontoBanda label="¿Cuánto vale hoy?" value={valorNuevo} onChange={setValorNuevo} moneda={moneda} color={c.primary} emoji="📈">
+        {listo && valorActual !== undefined ? (
+          <CambioPeriodo
+            etiquetaAntes="📍 Hoy dice"
+            etiquetaAhora="✏️ Ahora"
+            subio="📈 Sube"
+            bajo="📉 Baja"
+            antes={valorActual}
+            hoy={Number(valorNuevo)}
+            formato={(n) => money(n, moneda)}
+          />
+        ) : null}
+      </MontoBanda>
+      <Cuando label="¿A qué fecha?" value={fecha} onChange={setFecha} />
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

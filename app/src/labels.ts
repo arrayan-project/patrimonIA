@@ -95,17 +95,17 @@ const DICCIONARIO: Record<string, string> = {
  * Comunica la acción sin exponer el mecanismo (UX_FLOWS Flujo 3/6).
  */
 const COMANDOS_AUDITORIA: Record<string, string> = {
-  RegistrarElementoPatrimonial: 'Creó este elemento',
-  ActualizarDatosElementoPatrimonial: 'Actualizó los datos',
-  CorregirDatosElementoPatrimonial: 'Corrigió los datos',
-  CambiarVisibilidadElementoPatrimonial: 'Cambió la visibilidad',
-  CambiarParticipacionEnConsolidacion: 'Cambió si cuenta en el patrimonio del hogar',
-  CambiarPropiedadElementoPatrimonial: 'Cambió los propietarios',
-  DesactivarElementoPatrimonial: 'Desactivó el elemento',
-  ReactivarElementoPatrimonial: 'Reactivó el elemento',
-  EliminarElementoPatrimonial: 'Eliminó el elemento',
-  CondonarDeuda: 'Condonó la deuda',
-  DeclararIncobrable: 'Declaró el crédito incobrable',
+  RegistrarElementoPatrimonial: 'La agregó',
+  ActualizarDatosElementoPatrimonial: 'Cambió los datos',
+  CorregirDatosElementoPatrimonial: 'Corrigió los datos (estaban mal)',
+  CambiarVisibilidadElementoPatrimonial: 'Cambió lo que comparte',
+  CambiarParticipacionEnConsolidacion: 'Cambió si suma al hogar',
+  CambiarPropiedadElementoPatrimonial: 'Cambió de quién es',
+  DesactivarElementoPatrimonial: 'La desactivó',
+  ReactivarElementoPatrimonial: 'La reactivó',
+  EliminarElementoPatrimonial: 'La eliminó',
+  CondonarDeuda: 'Le perdonaron la deuda',
+  DeclararIncobrable: 'Ya no espera que le paguen',
   CrearObjetivoFinanciero: 'Creó la meta',
   ActualizarDatosObjetivoFinanciero: 'Actualizó la meta',
   CambiarEstadoObjetivoFinanciero: 'Cambió el estado',
@@ -118,6 +118,20 @@ const COMANDOS_AUDITORIA: Record<string, string> = {
   CrearReserva: 'Ahorró',
   AjustarMontoReserva: 'Ajustó el monto ahorrado',
   LiberarReserva: 'Sacó plata de la meta',
+  DefinirVisibilidadElementoPatrimonial: 'Cambió lo que comparte',
+  CambiarAdmiteValorizacion: 'Cambió si cambia de valor',
+  RegistrarPlataDeOtraPersona: 'Anotó plata de otra persona',
+  RegistrarEventoFinanciero: 'Anotó un movimiento',
+  CorregirEventoFinanciero: 'Cambió un movimiento',
+  AnularEventoFinanciero: 'Eliminó un movimiento',
+  RegistrarValorizacion: 'Actualizó cuánto vale',
+  CorregirValorizacion: 'Corrigió un valor',
+  AnularValorizacion: 'Eliminó un cambio de valor',
+  RegistrarAjustePatrimonial: 'Corrigió el saldo',
+  CorregirAjustePatrimonial: 'Cambió una corrección de saldo',
+  AnularAjustePatrimonial: 'Eliminó una corrección de saldo',
+  AhorrarParaObjetivo: 'Ahorró para la meta',
+  DefinirDesignadosObjetivo: 'Cambió quiénes la manejan',
 };
 
 /**
@@ -136,7 +150,8 @@ export const GLOSARIO = {
 
 /** Frase legible de una acción de auditoría (cae al humanizado del comando). */
 export function accionAuditoria(comando: string): string {
-  return COMANDOS_AUDITORIA[comando] ?? humanizar(comando);
+  // Sin frase propia: "RegistrarPlataDeOtraPersona" → "Registrar plata de otra persona".
+  return COMANDOS_AUDITORIA[comando] ?? humanizar(comando.replace(/([a-z])([A-Z])/g, '$1_$2'));
 }
 
 /** `EN_PROGRESO` → "En progreso"; `cuenta_corriente` → "Cuenta corriente". */

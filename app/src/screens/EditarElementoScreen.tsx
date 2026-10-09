@@ -12,18 +12,17 @@ import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useToast } from '../ui/Toast';
+import { emojiTipoElemento } from '../emojis';
 import {
-  BloquePaso,
   Button,
-  contadorPasos,
   DateField,
   ErrorText,
   Field,
   MoneyField,
   Nota,
   Opcional,
-  Question,
   Screen,
+  Section,
   Select,
   Skeleton,
   useC,
@@ -68,7 +67,7 @@ export function EditarElementoScreen() {
 
   // ── Propietarios (A3 — CambiarPropiedadElementoPatrimonial) ────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
-  const [tiposCat, setTiposCat] = useState<string[]>([]);
+  const [tiposCat, setTiposCat] = useState<{ nombre: string; categoriaSugerida: string | null }[]>([]);
   const [pcts, setPcts] = useState<Record<string, string>>({});
 
   // ── Detalle de deuda/crédito (§B3) ────────────────────────────────────────
@@ -141,23 +140,29 @@ export function EditarElementoScreen() {
         const [h, tipos] = await Promise.all([
           api.get<HogarDTO>(`/hogares/${h0}`, token),
           api
-            .get<{ nombre: string }[]>(`/hogares/${h0}/tipos-elemento`, token)
-            .catch(() => [] as { nombre: string }[]),
+            .get<{ nombre: string; categoriaSugerida: string | null }[]>(`/hogares/${h0}/tipos-elemento`, token)
+            .catch(() => [] as { nombre: string; categoriaSugerida: string | null }[]),
         ]);
         setMiembros(h?.miembros ?? []);
-        setTiposCat(tipos.map((t) => t.nombre));
+        setTiposCat(tipos);
       })
       .catch(() => setMiembros([]));
   }, [token]);
 
+  // G35: los tipos de lo mismo que es (como en Agregar), con su emoji.
   const opcTipo = useMemo(() => {
+    const cat = el?.categoriaFuncional;
     const base =
-      tiposCat.length > 0 ? tiposCat.map((n) => ({ value: n, label: n })) : OPC_TIPO_FALLBACK;
+      tiposCat.length > 0
+        ? tiposCat
+            .filter((t) => !t.categoriaSugerida || t.categoriaSugerida === cat)
+            .map((t) => ({ value: t.nombre, label: t.nombre, emoji: emojiTipoElemento(t.nombre, t.categoriaSugerida) }))
+        : OPC_TIPO_FALLBACK;
     // asegura que el tipo actual del elemento aparezca aunque no esté en el catálogo
     return tipo && !base.some((o) => o.value === tipo)
-      ? [{ value: tipo, label: tipo }, ...base]
+      ? [{ value: tipo, label: tipo, emoji: emojiTipoElemento(tipo, cat) }, ...base]
       : base;
-  }, [tiposCat, tipo]);
+  }, [tiposCat, tipo, el?.categoriaFuncional]);
 
   useTitulo(el ? `Editar ${el.nombre}` : undefined);
 
@@ -232,11 +237,6 @@ export function EditarElementoScreen() {
     }
   };
 
-  // Los pasos se cuentan en el orden en que se muestran.
-  const paso = contadorPasos();
-  const pNombre = paso({ hecho: !!nombre.trim() });
-  const pTipo = paso({ hecho: !!tipo });
-  const pPropietarios = puedeEditarPropietarios ? paso({ hecho: !errReparto }) : undefined;
   return (
     <Screen
       pie={
@@ -246,39 +246,29 @@ export function EditarElementoScreen() {
         </>
       }
     >
-      <Field
-        label="¿Cómo se llama?"
-        paso={pNombre}
-        value={nombre}
-        onChangeText={setNombre}
-        autoCapitalize="sentences"
-      />
-      <Select label="¿Qué tipo es?" paso={pTipo} value={tipo} options={opcTipo} onChange={setTipo} permiteOtro />
+      <Field label="¿Cómo se llama?" value={nombre} onChangeText={setNombre} autoCapitalize="sentences" />
+      <Select label="¿De qué tipo?" value={tipo} options={opcTipo} onChange={setTipo} permiteOtro />
 
       {esDeudaOCredito && (
-        <Opcional
-          titulo={esDeuda ? 'Agregar detalle de la deuda' : 'Agregar detalle del crédito'}
-          abierto={!!(el.contraparte || el.fechaInicio || el.fechaTermino || el.cuotaMonto != null || el.tasaInteres != null || el.observaciones)}
-        >
-          <Nota>Todo opcional. Sirve para seguir un crédito real (hipotecario, préstamo).</Nota>
+        <Section title={esDeuda ? '💳 De la deuda' : '🤝 Del préstamo'}>
+          <Nota>Todo es opcional.</Nota>
           <Field
-            label={esDeuda ? '¿A quién le debes? (opcional)' : '¿Quién te debe? (opcional)'}
+            label={esDeuda ? '🏛️ ¿A quién le debes?' : '👤 ¿Quién te debe?'}
             value={contraparte}
             onChangeText={setContraparte}
             autoCapitalize="sentences"
           />
-          <DateField label="¿Desde cuándo? (opcional)" value={fechaInicio} onChange={setFechaInicio} optional />
-          <DateField label="¿Hasta cuándo? (opcional)" value={fechaTermino} onChange={setFechaTermino} optional />
-          <MoneyField label="¿De cuánto es la cuota? (opcional)" value={cuota} onChange={setCuota} />
-          <Field label="¿Qué tasa anual tiene? (%, opcional)" value={tasa} onChangeText={setTasa} keyboardType="numeric" />
-          <Field label="Notas (opcional)" value={observaciones} onChangeText={setObservaciones} autoCapitalize="sentences" />
-        </Opcional>
+          <MoneyField label="💵 ¿De cuánto es la cuota?" value={cuota} onChange={setCuota} />
+          <Field label="📈 ¿Qué tasa al año tiene? (%)" value={tasa} onChangeText={setTasa} keyboardType="numeric" />
+          <DateField label="📅 ¿Cuándo empezó?" value={fechaInicio} onChange={setFechaInicio} optional />
+          <DateField label="🏁 ¿Hasta cuándo?" value={fechaTermino} onChange={setFechaTermino} optional />
+          <Field label="📝 Notas" value={observaciones} onChangeText={setObservaciones} autoCapitalize="sentences" />
+        </Section>
       )}
 
-      {pPropietarios && (
-        <BloquePaso paso={pPropietarios} style={styles.grupo}>
-          <Question paso={pPropietarios}>¿De quién es?</Question>
-          <Nota>Reparte el 100%. Quien quede en 0% deja de ser propietario.</Nota>
+      {puedeEditarPropietarios && (
+        <Section title="👥 ¿De quién es?">
+          <Nota>Reparte el 100%. Quien quede en 0% deja de ser dueño.</Nota>
           {personas.map((p) => (
             <View key={p.usuarioId} style={styles.filaPct}>
               <Text style={styles.filaNombre} numberOfLines={1}>
@@ -299,13 +289,13 @@ export function EditarElementoScreen() {
           <Text style={[styles.total, Math.abs(totalPct - 100) < 0.001 && styles.totalOk]}>
             Total: {Math.round(totalPct * 100) / 100}%
           </Text>
-        </BloquePaso>
+        </Section>
       )}
 
       {datosCambiados && (
-        <Opcional titulo="¿Estaba mal registrado? Márcalo como corrección" abierto={corrigiendo}>
+        <Opcional emoji="✏️" titulo="¿Estaba mal anotado?" abierto={corrigiendo}>
           <Field
-            label="¿Qué estaba mal? (opcional)"
+            label="¿Qué estaba mal?"
             value={motivoDato}
             onChangeText={setMotivoDato}
             autoCapitalize="sentences"
@@ -320,7 +310,6 @@ export function EditarElementoScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  grupo: { gap: 8 },
   filaPct: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   filaNombre: { flex: 1, fontSize: 14, color: c.text },
   pctInput: { width: 76 },
