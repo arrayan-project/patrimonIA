@@ -214,7 +214,7 @@ Este documento no introdujo reglas de negocio nuevas — cada paso de cada flujo
 |---|---|---|
 | **Inicio** | El patrimonio de un vistazo | Hero (patrimonio neto + variación), desglose KPI de composición (6 categorías funcionales), tira de disponibilidad (líquido / apartado / disponible), alertas (máx 3, por prioridad), atajos, "Primeros pasos". Engranaje → Ajustes. |
 | **Movimientos** | El flujo, por período | Un selector **Mes / Año / Recientes**; debajo, juntos: KPIs del período (ingresos − gastos = balance, "Disponible hoy") + dona de gastos por rubro + la lista de movimientos de ese período. Incluye transferencias como fila neutra. |
-| **Planificar** | Metas y límites | Objetivos (con avance), "Apartado" (asignaciones/reservas), presupuesto vigente. Submenú: programados, plantillas, evolución. |
+| **Planificar** | Metas y límites | Objetivos (con avance), "Apartado" (asignaciones/reservas), presupuesto vigente. Submenú: programados (con "¿Se repite?", D-6), frecuentes, evolución. |
 | **Hogar** | Lo compartido | Personas (miembros, invitaciones), "Qué se comparte", Patrimonio del hogar, **Movimientos del hogar**. |
 
 **Ajustes** vive en una pantalla apilada (no es tab), abierta desde el engranaje
@@ -237,7 +237,7 @@ signo de una cifra. Sigue el tema del sistema por defecto.
 | Movimientos del hogar | feed consolidado, transferencia como movimiento único (REQUISITES 213) | `hogares/:id/eventos-financieros` |
 | Evolución del patrimonio | `serie-patrimonial` + `variacion-patrimonial` | Fase 9/15g |
 | Categorías / Tipos de elemento / Etiquetas / Agrupaciones | catálogos, con alta inline | Fase 15c–j / 40 |
-| Plantillas de movimiento | moldes; "Guardar como plantilla" desde el detalle de un movimiento | Fase 15h |
+| Frecuentes (plantillas de movimiento) | moldes; chips "Frecuentes" de un toque en Registrar movimiento; "Guardar como frecuente" desde el detalle de un movimiento (G33, D-6) | Fase 15h |
 | Tipos de cambio | tasas registradas (alta manual) | Fase 13 |
 | Ajustes / Notificaciones (preferencias) | silenciar tipos de notificación | Fase 15c/49 |
 | Presupuesto › rubros | editor de `presupuesto_linea` + `linea_ahorro` | Fase 15d/41 |

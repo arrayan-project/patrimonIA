@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); sigue D-6. | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan (2026-10-08). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -313,6 +313,21 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   reciben su primer aviso. Sigue el 10b (app: "¿Se repite?" en Nuevo
   programado y en Gasté/Recibí/Moví plata, aviso con Sí, se pagó · Cambiar
   monto · Este mes no, y plantillas como "Frecuentes" en chips).
+- **Bloque 10b de la Fase E — `UI` D-6 (HZ-16), recurrencia en la app (rama
+  `feat/G33-E10b-recurrencia`, probado por Juan, 2026-10-08)**: "¿Se repite?" (No · Cada
+  mes · Cada año) en Nuevo programado, con categoría para ingreso y gasto, y,
+  cerrado en un `Opcional`, en Gasté/Recibí/Moví plata (no en "De otra
+  persona", "Compartido" ni cambio de moneda): registra el movimiento de hoy y
+  programa la próxima vez (mismo día; sin detalle, toma el nombre del frecuente
+  usado). Son dos llamadas: si falla la segunda, el movimiento queda y el aviso
+  lo dice. El aviso `PROGRAMADO_VENCIDO` abre el detalle: "Sí, se pagó" / "Sí,
+  llegó" (un toque, monto planificado y fecha programada) · "Cambiar monto"
+  (form de confirmar, con la fecha programada por defecto) · "Este mes no" /
+  "Este año no" (cancela esa vez, la serie sigue). "Dejar de repetir" reemplaza
+  a "Cancelar movimiento" en una serie. Las plantillas se llaman "Frecuentes"
+  (texto visible; rutas y modelo intactos) y en Registrar son chips de un
+  toque, en una fila con desplazamiento horizontal, solo las del tipo de la
+  puerta.
 - **Bloque 8b de la Fase E — `UI` D-8 + HZ-23, las dos puertas y "¿de quién
   es?" (✅ mergeado, 2026-10-04)**: el menú `+` del
   Inicio pasa a Gasté · Recibí · Moví plata · Ahorrar para una meta · Pagar
