@@ -53,6 +53,7 @@ import {
   Datos,
 } from '../ui';
 import { Sparkline } from '../ui/charts';
+import type { SolicitudDTO } from '../solicitudes';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -96,6 +97,8 @@ export function DashboardScreen() {
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
   const [presuExcedido, setPresuExcedido] = useState<PresupuestoDTO | null>(null);
   const [noLeidas, setNoLeidas] = useState(0);
+  // G33 bloque 9: lo que un miembro te pide que anotes (su parte, una transferencia).
+  const [porPagar, setPorPagar] = useState<SolicitudDTO[]>([]);
   const [pasos, setPasos] = useState({ cuenta: false, movimiento: false, objetivo: false });
   const [onbOculto, setOnbOculto] = useState(true);
   const [error, setError] = useState('');
@@ -216,6 +219,12 @@ export function DashboardScreen() {
       } catch {
         setNoLeidas(0);
       }
+      setPorPagar(
+        await api
+          .get<SolicitudDTO[]>('/usuarios/me/solicitudes', token)
+          .then((ss) => ss.filter((x) => x.direccion === 'RECIBIDA' && x.estado === 'PENDIENTE'))
+          .catch(() => []),
+      );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -307,7 +316,13 @@ export function DashboardScreen() {
   const enMora = elementos.filter(
     (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
   );
-  const alertas: { texto: string; danger?: boolean; onPress: () => void }[] = [];
+  const alertas: { texto: string; danger?: boolean; onPress: () => void }[] = porPagar.map((x) => ({
+    texto:
+      x.motivo === 'GASTO_COMPARTIDO'
+        ? `${x.solicitante.nombre} te pide tu parte: ${money(x.monto, x.moneda)}${x.glosa ? ` · ${x.glosa}` : ''}`
+        : `${x.solicitante.nombre} te pide anotar una transferencia de ${money(x.monto, x.moneda)}`,
+    onPress: () => nav.go('PagarSolicitud', { solicitudId: x.id }),
+  }));
   if (enMora.length > 0)
     alertas.push({
       texto: `${enMora.length} ${enMora.length === 1 ? 'deuda' : 'deudas'} en mora`,

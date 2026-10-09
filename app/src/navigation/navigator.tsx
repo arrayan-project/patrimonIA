@@ -64,6 +64,8 @@ export type RouteName =
   | 'CorregirMovimiento'
   | 'ProgramadoForm'
   | 'SacarPlata'
+  | 'PagarSolicitud'
+  | 'EntreMiembros'
   | 'ValorEnFecha'
   | 'AjustesElemento';
 

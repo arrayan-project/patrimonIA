@@ -19,6 +19,9 @@ function destino(n: NotificacionDTO): { name: RouteName; params?: Record<string,
       return { name: 'Invitaciones' };
     case 'EVENTO_FINANCIERO':
       return { name: 'MovimientoDetalle', params: { eventoId: n.entidadId } };
+    // G33 bloque 9: lo que te piden se responde ahí; lo que pediste muestra su estado.
+    case 'SOLICITUD_TRANSFERENCIA':
+      return { name: 'PagarSolicitud', params: { solicitudId: n.entidadId } };
     default:
       return null;
   }

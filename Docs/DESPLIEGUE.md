@@ -25,7 +25,8 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 - [x] §0 Secretos de producción generados.
 - [x] §1 Neon — esquema cargado (2026-09-06); migraciones aplicadas hasta la
-  **026** (2026-09-29).
+  **027** (2026-10-08, `solicitud_transferencia`, desde el SQL Editor abierto
+  con la extensión Neon Local Connect de VS Code).
 - [x] Tanda GAPS 2026-09-29 (G31/G4 código de 6 dígitos, G25, G14, G11)
   desplegada en Render (commit `7b4e443`, después de la migración 026).
 - [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).

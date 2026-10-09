@@ -417,6 +417,7 @@ Cada migración cita el gap de `GAPS.md` que la motivó.
 | 006 | **`idempotencia`** (`clave`, `usuario_id`, respuesta guardada, `created_at`) | API_DESIGN §43. Header `Idempotency-Key` en comandos de creación. |
 | 007 | **`tipo_cambio`** (par de monedas, tasa, fecha de vigencia — **inmutable**, una fila por tasa) | REQUISITES §514–532. Dato de referencia **global**, no de un hogar. La puebla el comando `RegistrarTipoCambio` (#53). |
 | 011 | **`plantilla_movimiento`** (personal, `UNIQUE(usuario_id, nombre)`, `tipo`, resto nullable — es un molde sin fecha) | GAPS G24. Usar una plantilla **no** invoca un comando: solo rellena `RegistrarEventoFinanciero`. |
+| 027 | **`solicitud_transferencia`** (`motivo` GASTO_COMPARTIDO \| SIN_ANOTAR, `hogar_id`, `solicitante_id`, `destinatario_id`, `monto`, `moneda`, `elemento_destino_id`, `evento_gasto_id`, `evento_pago_id`, `fecha`, `glosa`, `rechazada`) | GAPS G33 bloque 9 (D-7 + HZ-21). Un miembro le pide a otro que anote una TRANSFERENCIA hacia su cuenta: su parte de un gasto compartido, o una transferencia que no anotó. Como `notificacion`, no mueve saldos ni se audita; el gasto y el pago son eventos normales. El estado se **deriva**: pago vigente → pagada; gasto anulado → anulada; `rechazada`; si no, pendiente. |
 
 ## Resumen de trazabilidad — entidades añadidas
 

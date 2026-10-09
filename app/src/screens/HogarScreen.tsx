@@ -13,6 +13,8 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { leer } from '../auth/secureStorage';
 import { money } from '../format';
+import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
+import { FilaEntreRow } from './EntreMiembrosScreen';
 import {
   ErrorText,
   GoalCard,
@@ -43,6 +45,8 @@ export function HogarScreen() {
   const [objetivosHogar, setObjetivosHogar] = useState<ObjetivoFinancieroDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [cons, setCons] = useState<PatrimonioConsolidadoDTO | null>(null);
+  // HZ-21: "Entre [miembro] y tú".
+  const [entre, setEntre] = useState<EntreMiembros | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -77,6 +81,7 @@ export function HogarScreen() {
         setObjetivosHogar([]);
       }
 
+      setEntre(await cargarEntreMiembros(token, usuario.id, h.id).catch(() => null));
       try {
         const { noLeidas: n } = await api.get<{ noLeidas: number }>(
           '/usuarios/me/notificaciones/no-leidas',
@@ -89,7 +94,7 @@ export function HogarScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, claveHogar, nav]);
+  }, [token, usuario.id, claveHogar, nav]);
 
   useCargaAlEnfocar(cargar);
 
@@ -142,6 +147,23 @@ export function HogarScreen() {
         />
       </Pressable>
       <Nota>Suma lo que cada uno comparte con el hogar. Lo que no compartes no aparece.</Nota>
+      {entre && entre.otros.length > 0 && (
+        <Section
+          title={entre.titulo}
+          accion="Ver todo"
+          onAccion={entre.filas.length > 5 ? () => nav.go('EntreMiembros', { hogarId: hogar.id }) : undefined}
+        >
+          {entre.filas.length === 0 ? (
+            <Nota>Aquí ves lo que se piden y lo que se transfieren.</Nota>
+          ) : (
+            <ListCard>
+              {entre.filas.slice(0, 5).map((f) => (
+                <FilaEntreRow key={f.key} f={f} />
+              ))}
+            </ListCard>
+          )}
+        </Section>
+      )}
 
       <Section
         title="Lo que suma al hogar"

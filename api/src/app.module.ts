@@ -13,6 +13,7 @@ import { ElementoModule } from './elemento/elemento.module.js';
 import { EventoFinancieroModule } from './evento-financiero/evento.module.js';
 import { AhorroModule } from './ahorro/ahorro.module.js';
 import { OtraPersonaModule } from './otra-persona/otra-persona.module.js';
+import { SolicitudModule } from './solicitud/solicitud.module.js';
 import { ValorizacionModule } from './valorizacion/valorizacion.module.js';
 import { AgrupacionModule } from './agrupacion/agrupacion.module.js';
 import { AjustePatrimonialModule } from './ajuste-patrimonial/ajuste.module.js';
@@ -43,6 +44,7 @@ import { TipoCambioModule } from './tipo-cambio/tipo-cambio.module.js';
     EventoFinancieroModule,
     AhorroModule,
     OtraPersonaModule,
+    SolicitudModule,
     ValorizacionModule,
     AjustePatrimonialModule,
     AgrupacionModule,

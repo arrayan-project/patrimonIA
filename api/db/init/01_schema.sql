@@ -426,6 +426,32 @@ CREATE TABLE codigo_verificacion (
     PRIMARY KEY (email, proposito)
 );
 
+-- Solicitudes de transferencia entre miembros del hogar (migración 027, G33
+-- bloque 9: D-7 + HZ-21). Tabla de apoyo, como `notificacion`: el estado se
+-- deriva al leer (pago vigente / gasto anulado / rechazada / pendiente).
+CREATE TABLE solicitud_transferencia (
+    id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    motivo               TEXT          NOT NULL CONSTRAINT ck_solicitud_motivo
+                                           CHECK (motivo IN ('GASTO_COMPARTIDO', 'SIN_ANOTAR')),
+    hogar_id             UUID          NOT NULL REFERENCES hogar(id),
+    solicitante_id       UUID          NOT NULL REFERENCES usuario(id),
+    destinatario_id      UUID          NOT NULL REFERENCES usuario(id),
+    monto                NUMERIC(18,2) NOT NULL CONSTRAINT ck_solicitud_monto CHECK (monto > 0),
+    moneda               TEXT          NOT NULL,
+    elemento_destino_id  UUID          NOT NULL REFERENCES elemento_patrimonial(id),
+    evento_gasto_id      UUID          REFERENCES evento_financiero(id),
+    evento_pago_id       UUID          REFERENCES evento_financiero(id),
+    fecha                DATE          NOT NULL,
+    glosa                TEXT,
+    rechazada            BOOLEAN       NOT NULL DEFAULT false,
+    created_at           TIMESTAMPTZ   NOT NULL DEFAULT now(),
+    CONSTRAINT ck_solicitud_partes CHECK (solicitante_id <> destinatario_id),
+    CONSTRAINT ck_solicitud_gasto CHECK ((motivo = 'GASTO_COMPARTIDO') = (evento_gasto_id IS NOT NULL))
+);
+
+CREATE INDEX ix_solicitud_solicitante ON solicitud_transferencia (solicitante_id, created_at DESC);
+CREATE INDEX ix_solicitud_destinatario ON solicitud_transferencia (destinatario_id, created_at DESC);
+
 -- ============================================================================
 -- 13. Idempotencia de comandos (migración 006 — infraestructura de API)
 -- Guarda la respuesta ya emitida para una (Idempotency-Key, usuario).

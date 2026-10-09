@@ -25,6 +25,13 @@ Fase E.
 | D-6 | Recurrencia | Los programados tienen periodicidad (mensual / anual), día y categoría. **No se registran solos:** en la fecha llega un aviso "¿Se pagó?"; al confirmar se puede ajustar el monto; sin respuesta queda pendiente. Las plantillas se muestran como "Frecuentes". | DOMINIO (HZ-16): campos nuevos en `MovimientoProgramado` |
 | D-7 | Solicitud de aporte (M7) | Notificación con acción (Principio 4), tipo nuevo `SOLICITUD_APORTE`. Quien pagó registra el gasto y responde "¿Lo compartes con tu pareja?"; la pareja toca "Transferir" y llega a la transferencia prellenada; puede confirmar o rechazar; quien pagó ve "pendiente / pagado". Si la cuenta de quien pagó no permite recibir, se le pide subir su nivel (D-2). | Tipo de notificación nuevo; comandos intactos |
 
+**Implementación de D-7 (2026-10-08, decisión de Juan):** la solicitud se
+guarda en una tabla de apoyo, `solicitud_transferencia`, en vez de solo en la
+notificación, para que tenga estado ("pendiente / pagado") y no se pierda si el
+usuario silencia el aviso. No es un agregado ni mueve saldos, y los comandos
+del dominio siguen intactos: se agregan 4 orquestaciones. Detalle en
+`GAPS.md`, G33, bloque 9.
+
 ## 2. Diccionario de superficie (D-4)
 
 | Término actual | Término nuevo |

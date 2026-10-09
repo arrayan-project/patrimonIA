@@ -821,6 +821,7 @@ moneda) — GAPS G7.
 | Objetivo Financiero | `CompartirObjetivoConHogar`, `DefinirDesignadosObjetivo` |
 | Presupuesto | `DefinirLineasPresupuesto`, `DefinirLineasAhorroPresupuesto` |
 | Tipo de Cambio | `RegistrarTipoCambio` |
+| Orquestaciones de G33 (sobre comandos existentes) | `AhorrarParaObjetivo`, `RegistrarPlataDeOtraPersona`, `RegistrarGastoCompartido`, `AvisarTransferenciaSinAnotar`, `PagarSolicitud`, `RechazarSolicitud` |
 
 Estos comandos que operan sobre **categorías, etiquetas, agrupaciones, tipos de
 elemento y plantillas** son configuración/anotación: escriben en `auditoria`
@@ -841,3 +842,24 @@ El detalle de cada uno (input · validaciones · output) está en
   la reconstrucción dan desglose por moneda, sin total único.
 - **Comentarios y adjuntos** en entidades (REQUISITES §D/§M): sin modelar — única
   decisión de dominio de `DOMINIO_PENDIENTE.md` §B que sigue abierta (§B4).
+
+## X.10 · Solicitudes entre miembros del hogar (G33 bloque 9: D-7, HZ-21)
+
+Un miembro le pide a otro que anote una TRANSFERENCIA hacia una cuenta suya:
+su parte de un gasto compartido (M7) o una transferencia que ya le llegó pero
+no está anotada. **No es un agregado del dominio**: es una notificación con
+estado (Principio 4), guardada en `solicitud_transferencia`, una tabla de apoyo
+como `notificacion`. No genera impactos ni auditoría propia; los hechos
+económicos siguen siendo eventos normales:
+
+- quien pagó registra el **GASTO por el total** (la atribución del gasto por
+  persona sigue fuera de alcance, `DECISIONES_FASE_D_S01.md` §3);
+- quien debe su parte registra la **TRANSFERENCIA** desde su cuenta (la
+  transferencia entre miembros la registra siempre quien la envía, D-8).
+
+El **estado se deriva** de esos eventos al leer, así nunca se desfasa: pago
+vigente → pagada; gasto anulado → anulada; "No me corresponde" → rechazada; si
+no, pendiente. Anular la transferencia que la pagó la deja pendiente otra vez.
+La cuenta donde se recibe tiene que ser visible para el otro miembro (nivel
+D-2 "Que puedan transferirte" o más); si deja de serlo, el pago se rechaza con
+la misma regla que cualquier transferencia (`puedeRecibirTransferencia`).
