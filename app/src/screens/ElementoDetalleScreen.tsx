@@ -297,7 +297,7 @@ export function ElementoDetalleScreen() {
                 nav.go(
                   'RegistrarMovimiento',
                   esDeuda
-                    ? { tipo: 'TRANSFERENCIA', destinoId: elementoId }
+                    ? { tipo: 'TRANSFERENCIA', destinoId: elementoId, titulo: 'Pagar', pago: true }
                     : esCredito
                       ? { tipo: 'TRANSFERENCIA', origenId: elementoId }
                       : { cuentaId: elementoId },

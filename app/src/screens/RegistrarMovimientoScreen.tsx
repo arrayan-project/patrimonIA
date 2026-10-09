@@ -191,10 +191,11 @@ export function RegistrarMovimientoScreen() {
   const [loading, setLoading] = useState(false);
   useTitulo((params.titulo as string | undefined) ?? TITULOS[tipo]);
   // G35: la banda del monto lleva el color y el emoji de la puerta del "+".
-  const esPagoTarjeta = params.titulo === 'Pagar tarjeta';
+  // G39 (F-5): "💳 Pagar una deuda" (del "+" o del detalle de una deuda).
+  const esPago = params.pago === true || params.titulo === 'Pagar tarjeta';
   const c = useC();
-  const colorBanda = colorAnotar(c, esPagoTarjeta ? 'TARJETA' : tipo);
-  const emojiBanda = esPagoTarjeta ? '💳' : EMOJIS[tipo];
+  const colorBanda = colorAnotar(c, esPago ? 'TARJETA' : tipo);
+  const emojiBanda = esPago ? '💳' : EMOJIS[tipo];
 
   const sucio =
     Number(monto) > 0 ||
@@ -336,12 +337,40 @@ export function RegistrarMovimientoScreen() {
     if (cuentaId && tipo === 'INGRESO') setDestinoId((d) => d ?? cuentaId);
   }, [cuentaId, tipo]);
 
+  // G39 (F-5): las deudas que se pagan (no los encargos de otras personas) y
+  // las cuentas con que se paga.
+  const deudasPagables = useMemo(
+    () =>
+      (elementos ?? []).filter(
+        (e) => e.categoriaFuncional === 'DEUDA' && e.naturaleza !== 'CUSTODIA_INFORMAL' && e.estado === 'ACTIVO',
+      ),
+    [elementos],
+  );
+  const pagaCon = (e: ElementoPatrimonialDTO) =>
+    ['LIQUIDEZ', 'RESERVA', 'INVERSION'].includes(e.categoriaFuncional) && e.naturaleza !== 'CUSTODIA_INFORMAL';
+
   // G39 (F-1): si se entra sin cuenta elegida (por el "+"), viene la de la
   // última vez en esta puerta. Se ve como paso hecho y se cambia ahí mismo.
   const puerta = tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo;
   useEffect(() => {
     if (recordado || !recientes || !elementos) return;
-    if (esPagoTarjeta || origenInicial || destinoInicial || origenId || destinoId) {
+    // F-5: al pagar, la deuda y la cuenta de tu último pago (cada una solo si falta).
+    if (esPago) {
+      const cuentas = new Set(elementos.filter(pagaCon).map((e) => e.id));
+      const deudas = new Set(deudasPagables.map((e) => e.id));
+      const r = ultimaCuenta(recientes, 'TRANSFERENCIA', (id, lado) =>
+        lado === 'origen' ? cuentas.has(id) : deudas.has(id),
+      );
+      const rec = {
+        origenId: origenId ? null : (r?.origenId ?? null),
+        destinoId: destinoId ? null : (r?.destinoId ?? null),
+      };
+      setRecordado(rec);
+      if (rec.origenId) setOrigenId(rec.origenId);
+      if (rec.destinoId) setDestinoId(rec.destinoId);
+      return;
+    }
+    if (origenInicial || destinoInicial || origenId || destinoId) {
       setRecordado({ origenId: null, destinoId: null });
       return;
     }
@@ -363,7 +392,7 @@ export function RegistrarMovimientoScreen() {
     setRecordado(r);
     if (r.origenId) setOrigenId(r.origenId);
     if (r.destinoId) setDestinoId(r.destinoId);
-  }, [recordado, recientes, elementos, elementosHogar, esPagoTarjeta, origenInicial, destinoInicial, origenId, destinoId, puerta]);
+  }, [recordado, recientes, elementos, elementosHogar, esPago, deudasPagables, origenInicial, destinoInicial, origenId, destinoId, puerta]);
 
   const aplicarPlantilla = (p: PlantillaMovimientoDTO) => {
     if (p.tipo === 'INGRESO' || p.tipo === 'GASTO' || p.tipo === 'TRANSFERENCIA') setTipo(p.tipo);
@@ -377,7 +406,12 @@ export function RegistrarMovimientoScreen() {
 
   // D-6: las plantillas son "Frecuentes": un toque llena el formulario. Solo las
   // de esta puerta (Gasté muestra las de gasto; Moví plata, las transferencias).
-  const frecuentes = plantillas.filter((p) => p.tipo === (tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo));
+  const frecuentes = plantillas.filter(
+    (p) =>
+      p.tipo === (tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo) &&
+      // Al pagar, solo los frecuentes que pagan una deuda.
+      (!esPago || deudasPagables.some((d) => d.id === p.elementoDestinoId)),
+  );
   const emojiFrecuente = (p: PlantillaMovimientoDTO) =>
     emojiCategoria(categorias.find((x) => x.id === p.categoriaId)) ?? emojiTipoMovimiento(p.tipo);
 
@@ -706,21 +740,39 @@ export function RegistrarMovimientoScreen() {
   const propios = new Set(elementos.map((e) => e.id));
   // La plata de otra persona entra o sale de una cuenta: no de un bien, un
   // crédito ni el saldo con una persona (CUENTA_NO_VALIDA en el backend).
-  const cuentasValidas = esOtra
-    ? elementos.filter(
-        (e) =>
-          e.categoriaFuncional !== 'ACTIVO' &&
-          e.categoriaFuncional !== 'CREDITO' &&
-          e.naturaleza !== 'CUSTODIA_INFORMAL',
-      )
-    : elementos;
-  const opcionesDesde = opcionesDeElementos(cuentasValidas, { emojis: emojis.elementos });
-  const opcionesA = [
-    ...opcionesDeElementos(cuentasValidas, { excluir: origenId, emojis: emojis.elementos }),
-    ...(tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION'
-      ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId, emojis: emojis.elementos })
-      : []),
-  ];
+  // G39: un gasto (tuyo o de otra persona) sale de algo que paga: no de un bien
+  // ni de lo que te deben. Al pagar una deuda, de una cuenta.
+  const cuentasValidas = esPago
+    ? elementos.filter(pagaCon)
+    : esOtra || tipo === 'GASTO'
+      ? elementos.filter(
+          (e) =>
+            e.categoriaFuncional !== 'ACTIVO' &&
+            e.categoriaFuncional !== 'CREDITO' &&
+            e.naturaleza !== 'CUSTODIA_INFORMAL',
+        )
+      : elementos;
+  // Lo que debes se dice en positivo ("Debes 380.000"), como al pagar.
+  const subDeuda = (e: ElementoPatrimonialDTO) => `Debes ${money(e.valorPendiente ?? Math.abs(e.valorVigente), e.moneda)}`;
+  const opcionesDesde = opcionesDeElementos(cuentasValidas, { emojis: emojis.elementos }).map((o) => {
+    const e = cuentasValidas.find((x) => x.id === o.value);
+    return tipo === 'GASTO' && o.grupo === 'Deudas' && e ? { ...o, grupo: '💳 Tarjetas y créditos', sub: subDeuda(e) } : o;
+  });
+  const opcionesA = esPago
+    ? opcionesDeElementos(deudasPagables, { emojis: emojis.elementos }).map((o) => {
+        const d = deudasPagables.find((x) => x.id === o.value);
+        return d ? { ...o, sub: subDeuda(d) } : o;
+      })
+    : [
+        ...opcionesDeElementos(cuentasValidas, { excluir: origenId, emojis: emojis.elementos }),
+        ...(tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION'
+          ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId, emojis: emojis.elementos })
+          : []),
+      ];
+  // F-5: cuánto debes de la deuda elegida y su cuota, para llenar el monto de un toque.
+  const deudaElegida = esPago ? deudasPagables.find((e) => e.id === destinoId) : undefined;
+  const pendiente = deudaElegida ? (deudaElegida.valorPendiente ?? Math.abs(deudaElegida.valorVigente)) : 0;
+  const cuota = deudaElegida?.cuotaMonto ?? null;
 
   const nombreDe = (id: string | null) =>
     [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
@@ -769,6 +821,12 @@ export function RegistrarMovimientoScreen() {
       ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}.`
       : tipo === 'INGRESO'
         ? `Entran ${m} a ${nombreDe(destinoId)}.`
+        : tipo === 'TRANSFERENCIA' && deudaElegida
+          ? `Pagas ${m} de ${deudaElegida.nombre} desde ${nombreDe(origenId)}. ${
+              Number(monto) <= pendiente
+                ? `Te quedan ${money(pendiente - Number(monto), deudaElegida.moneda)} por pagar.`
+                : `⚠️ Es más de lo que debes (${money(pendiente, deudaElegida.moneda)}).`
+            }`
         : tipo === 'TRANSFERENCIA'
           ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
           : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
@@ -793,8 +851,8 @@ export function RegistrarMovimientoScreen() {
       : puedeEnviar
         ? `${emojiBanda} ${conRepite}`
         : conRepite;
-  const accion = esPagoTarjeta
-    ? 'Pagar tarjeta'
+  const accion = esPago
+    ? '💳 Pagar'
     : {
         GASTO: 'Anotar gasto',
         INGRESO: 'Anotar ingreso',
@@ -804,7 +862,7 @@ export function RegistrarMovimientoScreen() {
   const accionFinal = esOtra
     ? 'Anotar plata de otra persona'
     : esFuturo
-      ? `🗓️ Programar ${tipo === 'INGRESO' ? 'ingreso' : tipo === 'GASTO' ? 'gasto' : esPagoTarjeta ? 'pago' : 'movimiento'}`
+      ? `🗓️ Programar ${tipo === 'INGRESO' ? 'ingreso' : tipo === 'GASTO' ? 'gasto' : esPago ? 'pago' : 'movimiento'}`
       : accion;
 
   const opcionesQuien =
@@ -844,10 +902,12 @@ export function RegistrarMovimientoScreen() {
   const pPersona = esOtra ? paso({ hecho: !!nombrePersona }) : undefined;
   const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
   const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
+  // G39 (F-5): al pagar, primero qué deuda y después desde qué cuenta.
+  const pAPago = esPago && necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
   const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pRecibe = esCompartido ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
-  const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
+  const pA = pAPago ?? (necesitaDestino ? paso({ hecho: !!destinoId }) : undefined);
   const pFecha = paso({ hecho: !!fecha });
 
   const pasoQuien = pQuien ? (
@@ -950,6 +1010,17 @@ export function RegistrarMovimientoScreen() {
     );
   }
 
+  const bloqueDestino = necesitaDestino ? (
+    <Elegir
+      label={esPago ? '¿Qué deuda pagas?' : tipo === 'INGRESO' ? '¿A qué cuenta llegó?' : '¿A qué cuenta?'}
+      paso={pA}
+      placeholder={esPago ? 'Elegir deuda' : 'Elegir cuenta'}
+      value={destinoId}
+      options={opcionesA}
+      onChange={setDestinoId}
+    />
+  ) : null;
+
   return (
     <Screen
       pie={
@@ -963,7 +1034,25 @@ export function RegistrarMovimientoScreen() {
         {esFuturo ? (
           <Text style={[styles.frecuentesTitulo, { color: c.text, opacity: 1 }]}>{`🗓️ Para el ${diaCorto(fecha)}: se anota ese día`}</Text>
         ) : null}
-        {frecuentes.length === 0 ? (
+        {deudaElegida && (pendiente > 0 || (cuota ?? 0) > 0) ? (
+          <View style={styles.frecuentes}>
+            {pendiente > 0 && (
+              <Pastilla
+                label={`💳 Todo lo que debes · ${money(pendiente, deudaElegida.moneda)}`}
+                activo={Number(monto) === pendiente}
+                onPress={() => setMonto(String(pendiente))}
+              />
+            )}
+            {cuota != null && cuota > 0 && (
+              <Pastilla
+                label={`💵 La cuota · ${money(cuota, deudaElegida.moneda)}`}
+                activo={Number(monto) === cuota}
+                onPress={() => setMonto(String(cuota))}
+              />
+            )}
+          </View>
+        ) : null}
+        {esPago && frecuentes.length === 0 ? null : frecuentes.length === 0 ? (
           <View style={styles.frecuentes}>
             <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Aún no tienes frecuentes de ${DE_TIPO[tipo]}`}</Text>
             <Pastilla
@@ -1210,6 +1299,10 @@ export function RegistrarMovimientoScreen() {
         </BloquePaso>
       )}
 
+      {esPago && bloqueDestino}
+      {esPago && recordado?.destinoId && destinoId === recordado.destinoId ? (
+        <Nota>🔁 La de tu último pago. Tócala para cambiarla.</Nota>
+      ) : null}
       {necesitaOrigen && (
         <Elegir
           label={tipo === 'GASTO' ? '¿Desde qué cuenta pagaste?' : '¿Desde qué cuenta?'}
@@ -1225,6 +1318,9 @@ export function RegistrarMovimientoScreen() {
       )}
       {tipo === 'GASTO' && recordado?.origenId && origenId === recordado.origenId ? (
         <Nota>🔁 La de tu último gasto. Tócala para cambiarla.</Nota>
+      ) : null}
+      {esPago && recordado?.origenId && origenId === recordado.origenId ? (
+        <Nota>🔁 La de tu último pago. Tócala para cambiarla.</Nota>
       ) : null}
 
       {pMeta && (
@@ -1274,20 +1370,11 @@ export function RegistrarMovimientoScreen() {
         </BloquePaso>
       )}
 
-      {necesitaDestino && (
-        <Elegir
-          label={tipo === 'INGRESO' ? '¿A qué cuenta llegó?' : '¿A qué cuenta?'}
-          paso={pA}
-          placeholder="Elegir cuenta"
-          value={destinoId}
-          options={opcionesA}
-          onChange={setDestinoId}
-        />
-      )}
+      {!esPago && bloqueDestino}
       {tipo === 'INGRESO' && recordado?.destinoId && destinoId === recordado.destinoId ? (
         <Nota>🔁 La de tu último ingreso. Tócala para cambiarla.</Nota>
       ) : null}
-      {necesitaOrigen && necesitaDestino && recordado?.origenId && origenId === recordado.origenId && destinoId === recordado.destinoId ? (
+      {!esPago && necesitaOrigen && necesitaDestino && recordado?.origenId && origenId === recordado.origenId && destinoId === recordado.destinoId ? (
         <Nota>🔁 Las de la última vez. Tócalas para cambiarlas.</Nota>
       ) : null}
 
