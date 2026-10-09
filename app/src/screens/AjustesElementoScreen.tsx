@@ -96,7 +96,7 @@ export function AjustesElementoScreen() {
 
   return (
     <Screen>
-      <Section title="Cómo se ve">
+      <Section title="🎨 Cómo se ve">
         <ListCard>
           <ElegirEmoji
             value={emojiElemento(el, preferencias.emojis.elementos)}
@@ -107,7 +107,7 @@ export function AjustesElementoScreen() {
           />
         </ListCard>
       </Section>
-      <Section title="Con el hogar">
+      <Section title="👥 Con el hogar">
         <Elegir
           label={`¿Qué compartes con ${pareja ?? 'el hogar'}?`}
           value={nivel}
@@ -125,7 +125,7 @@ export function AjustesElementoScreen() {
       </Section>
 
       {!esDeudaOCredito && (
-        <Section title="Valor">
+        <Section title="📈 Su valor">
           <Segmented
             label="¿Su valor cambia con el tiempo?"
             options={['No', 'Sí'] as const}
@@ -137,12 +137,12 @@ export function AjustesElementoScreen() {
               )
             }
           />
-          <Nota>Para bienes o inversiones con precio de mercado (propiedades, fondos). Habilita registrar su valor.</Nota>
+          <Nota>Para casas, autos o inversiones: te deja anotar cuánto valen.</Nota>
         </Section>
       )}
 
-      <Opcional titulo="Ver opciones avanzadas" abierto={nivel === 'personalizado'}>
-        <Section title="Avanzado">
+      <Opcional emoji="⚙️" titulo="Más opciones" abierto={nivel === 'personalizado'}>
+        <Section title="⚙️ Más opciones">
           {TIPOS_INFO.map(([k, pregunta]) => (
             <Segmented
               key={k}

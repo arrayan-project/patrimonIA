@@ -2,12 +2,15 @@ import { useCallback, useState } from 'react';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ValorizacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useAccionHeader, useNav } from '../navigation/navigator';
+import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { irAAccion } from './AccionFormScreen';
-import { AccionDestructiva, Dato, Datos, ErrorText, fechaLegible, Hero, Migaja, Nota, Screen, Skeleton } from '../ui';
+import { View } from 'react-native';
+import { AvisoDetalle, BandaDetalle, Button, CambioPeriodo, ErrorText, fechaLegible, Migaja, Nota, Screen, Skeleton, useC } from '../ui';
 
+/** Un cambio de valor (valorización, G35): Antes → Ahora = Subió / Bajó y sus acciones. */
 export function ValorizacionDetalleScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const valorizacionId = nav.route.params?.valorizacionId as string;
@@ -41,12 +44,6 @@ export function ValorizacionDetalleScreen() {
   // corrección vigente, se actúa sobre la corrección.
   const accionable = !!val && !val.anulada && val.correccionDeId === null && !corregida;
 
-  useAccionHeader(
-    'Corregir',
-    accionable && val
-      ? () => nav.go('CorreccionForm', { tipo: 'valorizacion', id: valorizacionId, montoActual: val.valorNuevo, moneda })
-      : undefined,
-  );
 
   if (!val) {
     return (
@@ -57,40 +54,56 @@ export function ValorizacionDetalleScreen() {
     );
   }
 
+  const dif = val.valorNuevo - val.valorAnterior;
   return (
     <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Hero
-        label={val.anulada ? 'Valorización eliminada' : 'Nuevo valor'}
-        value={money(val.valorNuevo, moneda)}
-        substats={[{ label: 'Antes', value: money(val.valorAnterior, moneda) }]}
-      />
-      <Datos>
-        <Dato etiqueta="Fecha" valor={fechaLegible(val.fecha)} />
-        <Dato etiqueta="Estado" valor={val.anulada ? 'Eliminada' : 'Vigente'} />
-      </Datos>
-      {val.correccionDeId && <Nota>Es la corrección de una valorización anterior.</Nota>}
-      {corregida && !val.anulada && <Nota>Esta valorización ya fue corregida.</Nota>}
+      {val.anulada && <AvisoDetalle color={c.danger} texto="🗑️ Este cambio se eliminó: ya no cuenta en el valor." />}
+      <BandaDetalle
+        color={c.primary}
+        titulo={dif >= 0 ? '📈 Subió su valor' : '📉 Bajó su valor'}
+        monto={money(val.valorNuevo, moneda)}
+        sub={`📅 ${fechaLegible(val.fecha)}`}
+      >
+        <CambioPeriodo
+          etiquetaAntes="⏮️ Antes"
+          etiquetaAhora="✅ Después"
+          antes={val.valorAnterior}
+          hoy={val.valorNuevo}
+          formato={(n) => money(n, moneda)}
+        />
+      </BandaDetalle>
+      {val.correccionDeId && <Nota>✏️ Es el cambio de un valor anterior.</Nota>}
+      {corregida && !val.anulada && <Nota>✏️ Este valor ya se cambió: para cambiarlo otra vez, abre ese cambio.</Nota>}
       <ErrorText>{error}</ErrorText>
       {accionable && (
-        <AccionDestructiva
-          title="Eliminar valorización"
-          onPress={() =>
-            irAAccion(nav, {
-              titulo: 'Eliminar valorización',
-              explicacion: esUltimaVigente
-                ? 'El valor del elemento se descuenta en lo que subió o bajó con esta valorización.'
-                : 'El valor actual no cambia (lo fija una valorización posterior); se recalcula el historial entre ambas.',
-              pregunta: '¿Por qué la eliminas?',
-              boton: 'Eliminar valorización',
-              comando: 'AnularValorizacion',
-              body: { valorizacionId },
-              aviso: 'Valorización eliminada',
-              peligro: true,
-              volver: 2,
-            })
-          }
-        />
+        <View style={{ gap: 10, marginTop: 4 }}>
+          <Button
+            title="✏️ Corregir"
+            onPress={() =>
+              nav.go('CorreccionForm', { tipo: 'valorizacion', id: valorizacionId, montoActual: val.valorNuevo, moneda })
+            }
+          />
+          <Button
+            title="🗑️ Eliminar"
+            variant="danger"
+            onPress={() =>
+              irAAccion(nav, {
+                titulo: 'Eliminar cambio de valor',
+                explicacion: esUltimaVigente
+                  ? 'El valor vuelve a lo que era antes de este cambio.'
+                  : 'El valor de hoy no cambia (lo fija un cambio posterior).',
+                pregunta: '¿Por qué lo eliminas?',
+                boton: 'Eliminar',
+                comando: 'AnularValorizacion',
+                body: { valorizacionId },
+                aviso: 'Cambio de valor eliminado',
+                peligro: true,
+                volver: 2,
+              })
+            }
+          />
+        </View>
       )}
     </Screen>
   );

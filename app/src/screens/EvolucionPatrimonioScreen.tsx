@@ -68,7 +68,7 @@ export function EvolucionPatrimonioScreen() {
             value={money(principal.patrimonioHasta, principal.moneda)}
             debajo={
               <CambioPeriodo
-                desde={HACE[periodo]}
+                etiquetaAntes={`🗓️ ${HACE[periodo]}`}
                 antes={principal.patrimonioDesde}
                 hoy={principal.patrimonioHasta}
                 formato={(n) => money(n, principal.moneda)}

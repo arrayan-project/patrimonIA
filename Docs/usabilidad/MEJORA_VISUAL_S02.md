@@ -112,41 +112,41 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 ### Tanda 2 · Mi plata y mis cuentas
 
-7. 🟡 **Tu plata** (`PatrimonioSeccionScreen`, antes "Mi patrimonio", §6) — Inicio. Lista de cuentas y
+7. ✅ **Tu plata** (`PatrimonioSeccionScreen`, antes "Mi patrimonio", §6) — Inicio. Lista de cuentas y
    bienes por categoría; gráfico del último año; "Consultar otra fecha o
    período"; abrir una cuenta; Agregar cuenta o bien.
-8. 🟡 **¿Cómo ha cambiado tu plata?** (`EvolucionPatrimonioScreen`, antes
+8. ✅ **¿Cómo ha cambiado tu plata?** (`EvolucionPatrimonioScreen`, antes
    "Evolución de mi patrimonio", §6) — Tu plata. Elegir período; ver la evolución y el total en otras monedas.
-9. 🟡 **Agregar cuenta o bien** (`AgregarElementoScreen`, §6) — hoja "+", Tu
+9. ✅ **Agregar cuenta o bien** (`AgregarElementoScreen`, §6) — hoja "+", Tu
    plata, Inicio vacío. Qué es; tipo (y crear uno nuevo); nombre;
    moneda; de quién es; desde cuándo; cuota y vencimiento (deudas); si se
    valoriza; después de crear: qué compartes con el hogar (o "Ahora no").
-10. **Detalle de cuenta** (`ElementoDetalleScreen`, título "Detalle") —
+10. ✅ **Detalle de cuenta** (`ElementoDetalleScreen`, título "Detalle") —
     Inicio, Mi patrimonio, Hogar, Movimiento. Ver valor vigente, libre para
     gastar, en metas, datos (tipo, desde, cuota, tasa, saldo pendiente);
     movimientos, valorizaciones, ajustes y ahorros de la cuenta (abrir cada
     uno); Registrar valorización; Registrar interés / ajuste; "¿Cuánto valía
     en otra fecha?"; Ajustes de la cuenta; Editar; Historial de cambios;
     Desactivar / Reactivar; Condonar deuda o Declarar incobrable; Eliminar.
-11. **Editar** (`EditarElementoScreen`) — Detalle de cuenta. Nombre, tipo,
+11. ✅ **Editar** (`EditarElementoScreen`) — Detalle de cuenta. Nombre, tipo,
     fechas, cuota, tasa, notas, dueño; marcar como corrección y por qué;
     guardar cambios.
-12. **Ajustes de la cuenta** (`AjustesElementoScreen`) — Detalle de cuenta.
+12. ✅ **Ajustes de la cuenta** (`AjustesElementoScreen`) — Detalle de cuenta.
     Qué compartes con el hogar (y con quiénes, avanzado); si suma al
     patrimonio del hogar; si su valor cambia con el tiempo.
-13. **Registrar valorización** (`ValorizarScreen`) — Detalle de cuenta.
+13. ✅ **Actualizar cuánto vale** (`ValorizarScreen`, antes "Registrar valorización", §6) — Detalle de cuenta.
     Cuánto vale y a qué fecha; guardar.
-14. **Valorización** (`ValorizacionDetalleScreen`) — Detalle de cuenta. Ver
+14. ✅ **Cambio de valor** (`ValorizacionDetalleScreen`, antes "Valorización", §6) — Detalle de cuenta. Ver
     valor, antes, fecha, estado; Corregir (→ Corregir); Eliminar valorización.
-15. **Registrar ajuste patrimonial** (`RegistrarAjusteScreen`) — Detalle de
+15. ✅ **Corregir el saldo / Sumar intereses** (`RegistrarAjusteScreen`, antes "Registrar ajuste patrimonial", §6) — Detalle de
     cuenta. Si el valor real es menor o mayor; monto; por qué; guardar.
-16. **Ajuste patrimonial** (`AjusteDetalleScreen`) — Detalle de cuenta. Ver
+16. ✅ **Corrección de saldo** (`AjusteDetalleScreen`, antes "Ajuste patrimonial", §6) — Detalle de cuenta. Ver
     motivo, fecha, estado; Corregir; Eliminar ajuste.
-17. **Corregir** (`CorreccionFormScreen`) — Valorización, Ajuste. Nuevo valor;
+17. ✅ **Corregir** (`CorreccionFormScreen`) — Valorización, Ajuste. Nuevo valor;
     por qué; guardar corrección.
-18. **Valor en otra fecha** (`ValorEnFechaScreen`) — Detalle de cuenta. Elegir
+18. ✅ **¿Cuánto valía antes?** (`ValorEnFechaScreen`, antes "Valor en otra fecha", §6) — Detalle de cuenta. Elegir
     fecha; consultar.
-19. **Historial de cambios** (`HistorialScreen`) — Detalle de cuenta, Meta,
+19. ✅ **Historial de cambios** (`HistorialScreen`) — Detalle de cuenta, Meta,
     Ahorro. Leer los cambios (sin acciones).
 
 ### Tanda 3 · Planificar
@@ -614,7 +614,7 @@ eso entran las 6 listas y sus formularios de crear y editar.
   - Al abrir Movimientos, todas las consultas se hacían dos veces (guardar el
     hogar cambiaba la función de carga); el hogar queda en un `ref`.
 
-### 7–9. Tu plata, ¿Cómo ha cambiado tu plata? y Agregar cuenta o bien (`PatrimonioSeccionScreen`, `EvolucionPatrimonioScreen`, `AgregarElementoScreen`)  🟡 (implementado, falta la prueba de Juan)
+### 7–9. Tu plata, ¿Cómo ha cambiado tu plata? y Agregar cuenta o bien (`PatrimonioSeccionScreen`, `EvolucionPatrimonioScreen`, `AgregarElementoScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
 
 - **Cómo se veían:** "Mi patrimonio" no había seguido al Inicio del Paso 0:
   "Tu patrimonio" donde el Inicio dice "Tu plata en total", grupos con jerga
@@ -681,3 +681,91 @@ eso entran las 6 listas y sus formularios de crear y editar.
     trae solo las cuentas de los otros miembros (`alcance=hogar`), así que no
     cuadra con la cifra del Inicio. Ya pasaba antes; arreglarlo cambia la
     consulta, no lo visual.
+
+### 10–19. Detalle de cuenta y lo que se abre desde ahí (`ElementoDetalleScreen`, `EditarElementoScreen`, `AjustesElementoScreen`, `ValorizarScreen`, `ValorizacionDetalleScreen`, `RegistrarAjusteScreen`, `AjusteDetalleScreen`, `CorreccionFormScreen`, `ValorEnFechaScreen`, `HistorialScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** "Valor vigente" (el hipotecario, "−47.748.000" en rojo);
+  una ficha de siete filas con jerga (Categoría, Ámbito, Estado…); en deudas
+  "Estado: Parcialmente pagada" y una nota sobre el interés; movimientos con
+  flechas; "Valorizaciones" y "Ajustes patrimoniales" en dos secciones, aun
+  vacías ("Sin ajustes."); acciones en cuatro lugares ("Editar" cortado
+  arriba, "Registrar" como enlace, menú de íconos grises, textos rojos). Los
+  formularios numerados con el monto como "0" y recuadros que se explican
+  ("—no se suma—"); Registrar ajuste pedía la diferencia y "¿menor o
+  mayor?"; los detalles con "Estado: Vigente" y "Corregir" cortado; Valor en
+  otra fecha solo con un campo; el Historial con "Moneda: — → Clp",
+  "Fondo mutuo fintual", "1 ítem", comandos sin traducir
+  ("Registrarplatadeotrapersona") y JSON crudo.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-detalle-cuenta`). Decisiones: Corregir el saldo pregunta
+  "¿Cuánto tiene de verdad?"; valorizaciones y ajustes en una sola sección;
+  todo el bloque en una rama; **las filas que abren un detalle llevan "›"**
+  (Juan).
+  - **Piezas comunes:** `TxRow` muestra "›" cuando la fila se puede tocar
+    (en toda la app); `BandaDetalle` y `AvisoDetalle` (la banda y el aviso
+    del detalle de Movimiento, ahora compartidos); `CambioPeriodo` acepta
+    sus etiquetas y `subirEsMalo` (deudas en rojo cuando suben); `Opcional`
+    pasa de enlace "+ …" a `Pastilla` con emoji (también en Presupuesto,
+    Frecuente y Programado).
+  - **Detalle:** banda del color de lo que es (rojo deuda, verde te deben,
+    lila lo demás) con "🏦 Tiene / 💳 Debes / 🏠 Vale / 🤝 Te deben" y el
+    monto (la deuda en positivo); debajo el tipo si no repite el nombre,
+    "📦 Encargo de otra persona", el estado solo si dice algo (⏰ En mora,
+    ✅ Pagada, 🤝 Condonada, ❌ Incobrable) y "📅 Desde…". Dentro de la
+    banda, "🙋 Tu parte (60%)" si es compartida y, con metas, la resta del
+    Inicio (🐷 Guardado para metas − … = ✅ Puedes gastar). Deudas: "Pagaste
+    X de Y" con la barra y 💵 Cuota · 🏁 Vence · 🏛️ Le debes a · 📅 Empezó ·
+    📈 Tasa "4,2% al año" · 📝 Notas. "👥 De quién es: Tú 60% · Pareja 40%"
+    solo si es de varios. Sale la ficha (Categoría, Ámbito, Estado, "Con el
+    hogar" vive en Ajustes de la cuenta).
+  - 🎯 En metas con el emoji de cada meta; 🧾 Movimientos como en la pestaña
+    (emoji de la categoría, 5 y "⏬ Ver todos (N)"); 📈 Cambios de valor
+    (valorizaciones y correcciones de saldo por fecha, solo si hay). En una
+    deuda los montos se muestran como cambian lo que debes: pagar "−420.000"
+    en verde, un interés "+168.000" en rojo.
+  - Acciones en una lista con emoji: ✏️ Editar · ⚙️ Ajustes de la cuenta ·
+    📈 Actualizar cuánto vale · 🔧 Corregir el saldo · 🗓️ ¿Cuánto valía
+    antes? · 🕓 Historial de cambios. Pie: "💸 Anotar movimiento" / "💳
+    Pagar" / "🤝 Me pagaron" y la secundaria ("💹 Sumar intereses" o "📈
+    Actualizar cuánto vale"). Al final, botones 📦 Desactivar · 🗑️ Eliminar ·
+    "🤝 Me perdonaron la deuda" / "❌ No me van a pagar" (condonar /
+    incobrable, en palabras). Desactivada: aviso arriba y "♻️ Reactivar".
+  - **Editar:** sin numerar, tipos de lo mismo que es con emoji, "💳 De la
+    deuda" siempre visible (todo opcional), "👥 ¿De quién es?" y "✏️ ¿Estaba
+    mal anotado?" como botón.
+  - **Ajustes de la cuenta:** 🎨 Cómo se ve · 👥 Con el hogar · 📈 Su valor
+    ("Para casas, autos o inversiones: te deja anotar cuánto valen.") y
+    "⚙️ Más opciones" como botón.
+  - **Actualizar cuánto vale** (antes "Registrar valorización"): banda lila
+    con 📈 y la resta en vivo (📍 Hoy dice → ✏️ Ahora = 📈 Sube / 📉 Baja);
+    sale el recuadro; "📈 Guardar valor".
+  - **Corregir el saldo** (antes "Registrar ajuste patrimonial"): "¿Cuánto
+    tiene de verdad?" (en deudas "¿Cuánto debes de verdad?") y la app
+    calcula la diferencia: 📍 Hoy dice → ✅ De verdad = Sube / Baja. Se
+    guarda lo mismo que antes (el ajuste con su monto con signo). "¿Por qué
+    no cuadra?" y una línea: "Úsalo si no sabes qué pasó. Si sabes, mejor
+    anota el movimiento." **Sumar intereses** (mismo formulario): banda roja
+    con el interés sugerido y la resta 📍 Hoy debes → ✏️ Después = 💹 Sube.
+  - **Cambio de valor / Corrección de saldo** (detalles): banda con
+    "📈 Subió su valor" o "💹 Debes más" / "🔧 Subió el saldo", la fecha y
+    la resta Antes → Después; "📝 Por qué"; botones ✏️ Corregir y 🗑️
+    Eliminar (salen de la barra superior); sin "Estado: Vigente" (aviso si
+    se eliminó).
+  - **Corregir:** banda con "Hoy dice X", "¿Por qué lo cambias?", "✏️
+    Guardar cambio".
+  - **¿Cuánto valía antes?** (antes "Valor en otra fecha"): 1 mes · 6 meses ·
+    1 año · 📅 Otra, y la respuesta al tiro como resta (🗓️ Valía el … → 📍
+    Hoy = Subió / Bajó); en deudas "Debías / Hoy debes".
+  - **Historial:** una fila por acción con emoji (✨ La agregó, ✏️, 📦 La
+    desactivó, ♻️, 🗑️…); "Tú" en vez del propio nombre; solo el valor nuevo
+    cuando antes no había nada; montos con moneda, fechas legibles, textos
+    tal como se escribieron, "Tú 60% · Otra persona 40%", lo que se comparte
+    en palabras; frases para las acciones que faltaban y, sin frase,
+    "Registrar plata de otra persona" en vez de "Registrarplatadeotrapersona".
+    Sale "No se puede editar ni borrar". Sirve también a Meta y Ahorro.
+- **Verificado:** `tsc` sin errores; capturas web del Detalle (cuenta
+  corriente, hipotecario, departamento compartido, Fintual, desactivada y
+  modo oscuro), Editar, Ajustes de la cuenta, Actualizar cuánto vale con un
+  monto, Corregir el saldo con un monto, Sumar intereses, Cambio de valor,
+  Corrección de saldo (deuda), Corregir, ¿Cuánto valía antes? y el Historial
+  de tres cuentas. No se guardó nada nuevo en la base local.
