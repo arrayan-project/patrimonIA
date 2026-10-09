@@ -517,36 +517,36 @@ function FormAgrupacion({ id }: { id?: string }) {
         if (sel.length !== antes.length || sel.some((x) => !antes.includes(x)))
           await api.post('/comandos/DefinirElementosAgrupacion', { agrupacionId, elementoIds: sel }, token);
       },
-      actual ? 'Guardado' : 'Agrupación creada',
+      actual ? 'Guardado' : '🗂️ Grupo creado',
     );
 
   const borrar = async () => {
     if (!actual) return;
-    if (!(await confirmar('Eliminar agrupación', `"${actual.nombre}" se borra. Sus elementos quedan sin agrupar (no se pierde nada).`, 'Eliminar')))
+    if (!(await confirmar('Eliminar grupo', `"${actual.nombre}" se borra. Sus cuentas quedan sin grupo (no se pierde nada).`, 'Eliminar')))
       return;
-    await run(() => api.post('/comandos/EliminarAgrupacion', { agrupacionId: actual.id }, token), 'Agrupación eliminada');
+    await run(() => api.post('/comandos/EliminarAgrupacion', { agrupacionId: actual.id }, token), 'Grupo eliminado');
   };
 
   return (
     <FormCatalogo
-      titulo={actual ? 'Editar agrupación' : 'Nueva agrupación'}
+      titulo={actual ? 'Editar grupo' : 'Nuevo grupo'}
       cargado={lista !== null && (!id || !!actual)}
       error={error}
-      accion={actual ? 'Guardar agrupación' : 'Crear agrupación'}
+      accion={actual ? 'Guardar grupo' : '🗂️ Crear grupo'}
       listo={!!nombre.trim()}
       busy={busy}
       onGuardar={guardar}
-      destructiva={actual ? { title: 'Eliminar agrupación', onPress: borrar } : undefined}
+      destructiva={actual ? { title: 'Eliminar grupo', onPress: borrar } : undefined}
     >
       <Field
-        label="¿Cómo se llama?"
+        label="🗂️ ¿Cómo se llama el grupo?"
         paso={paso({ hecho: !!nombre.trim() })}
         value={nombre}
         onChangeText={setNombre}
-        placeholder="p. ej. Inversiones"
+        placeholder="Ej.: Jubilación"
       />
       <ElegirVarios
-        label="¿Qué cuentas o bienes van dentro? (opcional)"
+        label="🏦 ¿Qué cuentas o bienes van dentro? (opcional)"
         paso={paso()}
         values={sel}
         onChange={setSel}

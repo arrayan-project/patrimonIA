@@ -172,7 +172,7 @@ const TITULOS: Record<string, string> = {
   Categorias: 'Categorías',
   TiposElemento: 'Tipos de cuenta',
   Etiquetas: 'Etiquetas',
-  Agrupaciones: 'Agrupaciones',
+  Agrupaciones: 'Mis grupos',
   // CatalogoForm y PlantillaForm ponen su título con useTitulo (crear o editar).
   CatalogoForm: 'Nuevo',
   MetaForm: 'Nueva meta',

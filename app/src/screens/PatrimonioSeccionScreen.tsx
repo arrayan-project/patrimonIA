@@ -5,6 +5,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
+  type AgrupacionDTO,
   type ElementoPatrimonialDTO,
   type ElementosDelHogarDTO,
   type SeriePatrimonialDTO,
@@ -26,8 +27,10 @@ import {
   GroupLabel,
   Hero,
   ListCard,
+  MenuList,
   Panel,
   Pastilla,
+  PillToggle,
   Screen,
   Section,
   Skeleton,
@@ -66,6 +69,9 @@ export function PatrimonioSeccionScreen() {
   const [ocultosTodos, setOcultos] = useState<ElementosDelHogarDTO['ocultos']>([]);
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [verDesactivadas, setVerDesactivadas] = useState(false);
+  // G35: "Mis grupos" (agrupaciones, personales) como otra forma de ver Tu plata.
+  const [grupos, setGrupos] = useState<AgrupacionDTO[]>([]);
+  const [vista, setVista] = useState<'tipo' | 'grupos'>('tipo');
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -83,6 +89,11 @@ export function PatrimonioSeccionScreen() {
       }
       setElementos(categoria ? els.filter((e) => e.categoriaFuncional === categoria) : els);
       if (!categoria && alcance === 'mios') {
+        setGrupos(
+          (await api.get<AgrupacionDTO[]>('/usuarios/me/agrupaciones', token).catch(() => [])).sort(
+            (a, b) => a.orden - b.orden,
+          ),
+        );
         const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
         setSerie(
           await api
@@ -187,6 +198,45 @@ export function PatrimonioSeccionScreen() {
     <Button title="➕ Agregar cuenta o bien" variant="secondary" onPress={() => nav.go('AgregarElemento')} />
   );
 
+  // Un bloque con título, subtotal (en la moneda principal) y sus filas.
+  const bloque = (key: string, titulo: string, els: ElementoPatrimonialDTO[]) => (
+    <View key={key} style={{ gap: 8 }}>
+      <GroupLabel
+        right={
+          <Text style={{ color: c.muted, fontWeight: '700' }}>
+            {money(els.filter((e) => e.moneda === monedaPrin).reduce((s, e) => s + parte(e), 0), monedaPrin)}
+          </Text>
+        }
+      >
+        {titulo}
+      </GroupLabel>
+      <ListCard>{els.map(fila)}</ListCard>
+    </View>
+  );
+  const porGrupo = () => {
+    const enAlguno = new Set(grupos.flatMap((g) => g.elementoIds));
+    const sinGrupo = activas.filter((e) => !enAlguno.has(e.id));
+    return [
+      ...grupos.map((g) => {
+        const els = activas.filter((e) => g.elementoIds.includes(e.id));
+        return els.length > 0 ? bloque(g.id, `🗂️ ${g.nombre}`, els) : null;
+      }),
+      sinGrupo.length > 0 ? bloque('sin-grupo', '📦 Sin grupo', sinGrupo) : null,
+    ];
+  };
+  const armarGrupos = !hogar && (
+    <MenuList
+      items={[
+        {
+          title: grupos.length > 0 ? 'Mis grupos' : 'Armar mis grupos',
+          subtitle: grupos.length > 0 ? 'Crear, cambiar o borrar grupos' : "Junta cuentas, como 'Jubilación'",
+          emoji: '🗂️',
+          onPress: () => nav.go('Agrupaciones'),
+        },
+      ]}
+    />
+  );
+
   if (!categoria) {
     const puntos = (serie?.puntos ?? []).map((p) => ({
       etiqueta: fechaLegible(p.fecha),
@@ -228,7 +278,15 @@ export function PatrimonioSeccionScreen() {
           />
         ) : (
           <>
-            {CATS.map((cat) => {
+            {grupos.length > 0 && (
+              <PillToggle
+                options={['tipo', 'grupos'] as const}
+                value={vista}
+                onChange={setVista}
+                format={(v) => (v === 'tipo' ? '🏦 Por tipo' : '🗂️ Mis grupos')}
+              />
+            )}
+            {grupos.length > 0 && vista === 'grupos' ? porGrupo() : CATS.map((cat) => {
               const delCat = activas.filter((e) => e.categoriaFuncional === cat);
               const ocultasCat = ocultos.filter((o) => o.categoriaFuncional === cat);
               if (delCat.length === 0 && ocultasCat.length === 0) return null;
@@ -249,6 +307,7 @@ export function PatrimonioSeccionScreen() {
             })}
             {grupoDesactivadas}
             {agregar}
+            {armarGrupos}
           </>
         )}
 

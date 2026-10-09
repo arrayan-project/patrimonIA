@@ -245,8 +245,8 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     buscador; ordenar (subir / bajar); abrir una; Nueva categoría.
 49. ✅ **Etiquetas** (`EtiquetasScreen`) — Ajustes. Lista y buscador; abrir una;
     Nueva etiqueta.
-50. ⏸ **Agrupaciones** (fuera de Ajustes hasta usarlas en Mi patrimonio, §6) (`AgrupacionesScreen`) — Ajustes. Lista y buscador; abrir
-    una; Nueva agrupación.
+50. ✅ **Mis grupos** (antes Agrupaciones; se usan en Tu plata, §6) (`AgrupacionesScreen`) — Ajustes y Tu plata. Lista y buscador; abrir
+    uno; Nuevo grupo.
 51. ✅ **Tipos de elemento patrimonial** (`TiposElementoScreen`) — Ajustes. Lista
     y buscador; ordenar; abrir uno; Nuevo tipo.
 52. ✅ **Tipos de cambio** (`TiposCambioScreen`) — Ajustes. Lista de tasas y
@@ -491,7 +491,18 @@ eso entran las 6 listas y sus formularios de crear y editar.
     filas "1 USD = 960 CLP · anotada por ti / se actualiza sola".
   - Agrupaciones fuera de Ajustes (los datos quedan). **Pendiente:** usarlas
     para agrupar cuentas en Mi patrimonio (Juan, 2026-10-09), cuando se
-    revise esa pantalla.
+    revise esa pantalla. → **Hecho (Juan, 2026-10-09; rama
+    `feat/G35-agrupaciones`):** se llaman **"Mis grupos"**. En Tu plata
+    ("Lo mío"), si hay al menos uno, el selector "🏦 Por tipo · 🗂️ Mis
+    grupos": cada grupo con su subtotal y sus cuentas, y "📦 Sin grupo" con
+    el resto (los subtotales suman el total de arriba). Al final de Tu plata,
+    la fila "🗂️ Armar mis grupos" (o "Mis grupos") abre la lista; también
+    vuelve a Ajustes › Para ordenar tu plata ("🗂️ Mis grupos · Junta
+    cuentas, como 'Jubilación'"). Lista, formulario y avisos dicen "grupo"
+    ("🗂️ Nuevo grupo", "🗂️ ¿Cómo se llama el grupo?", "Ej.: Jubilación",
+    "🏦 ¿Qué cuentas o bienes van dentro?", "Sus cuentas quedan sin grupo").
+    Sin cambios en el backend. Dato de prueba local: grupo "Jubilación" de
+    Demo (Cuenta de ahorro + Fondo mutuo Fintual).
 - **Verificado:** `tsc` sin errores; capturas web de listas, modo ordenar y
   formularios; ninguna zona tocable bajo 44 px en Categorías (normal y
   ordenando), Tipos de cuenta y Nueva etiqueta.
