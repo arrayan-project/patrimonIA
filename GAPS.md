@@ -55,7 +55,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
-| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 59 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); sigue la tanda 5 (Avisos, ajustes y cuenta). | 🟡 |
+| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Quedan: Agrupaciones ⏸ (hasta usarlas en Mi patrimonio) y el ícono de la app (cuando se compile la app propia). | 🟡 |
 | — | **G36** | Pasar un presupuesto ya creado de "Solo mío" a "Del hogar" (o al revés): hoy solo se elige al crearlo. Necesita definición de Juan (ver detalle). | 📋 decisión |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
@@ -677,11 +677,11 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
-#### G35 — Mejora visual pantalla por pantalla  ⬜ PENDIENTE (abierto 2026-10-09; V-1 a V-3 decididas)
+#### G35 — Mejora visual pantalla por pantalla  🟡 PARCIAL (abierto 2026-10-09; las 6 tandas completas el 2026-10-09)
 - **Qué pasa**: después de G33 la interfaz mejoró, pero Juan la siente poco
   amigable y demasiado corporativa.
 - **Plan**: [`Docs/usabilidad/MEJORA_VISUAL_S02.md`](Docs/usabilidad/MEJORA_VISUAL_S02.md)
-  (fuente de verdad): inventario de las 59 pantallas con sus acciones,
+  (fuente de verdad): inventario de las 60 pantallas con sus acciones,
   agrupadas en 6 tandas por uso. Visual y textos: no cambian dominio,
   backend, comandos ni flujos. Paso 0: elegir una dirección visual común sobre el
   Inicio y aplicarla a las piezas de `app/src/ui/`; después, pantalla por
@@ -700,7 +700,12 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   metas de todos los miembros (también las personales); ahora solo las
   compartidas con el hogar (requiere deploy en Render). Movimientos del
   hogar pasó a ser la pestaña Movimientos en "Del hogar" (una sola versión
-  de la lista). Siguiente: tanda 5 (Avisos, ajustes y cuenta).
+  de la lista). Tanda 5 (Avisos, ajustes y cuenta) y tanda 6 (Acceso y
+  primer uso) probadas por Juan y mergeadas (2026-10-09); en la tanda 6, sin
+  sesión la app abre en Entrar (antes en Crear cuenta) y las pantallas de
+  acceso llevan el 🌳 de la marca. **Queda:** Agrupaciones ⏸ (fuera de
+  Ajustes hasta usarlas en Mi patrimonio) y el ícono de la app con el árbol,
+  que se hace cuando se compile la app propia (con Expo Go no se ve).
   Anotado fuera de G35: consolidar períodos largos cuando las fechas no son
   del mes en curso, y la lista de un grupo "Del hogar" que trae solo las
   cuentas de los otros miembros (ver la ficha 7–9).

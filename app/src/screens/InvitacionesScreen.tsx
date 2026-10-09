@@ -1,16 +1,16 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, EmptyState, ErrorText, Panel, Screen, Skeleton, useC, type Paleta } from '../ui';
+import { Button, EmptyState, ErrorText, fechaLegible, Panel, Screen, Skeleton, tinte, useC, type Paleta } from '../ui';
 
 export function InvitacionesScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const [invitaciones, setInvitaciones] = useState<InvitacionDTO[] | null>(null);
   const [error, setError] = useState('');
@@ -62,27 +62,35 @@ export function InvitacionesScreen() {
         <Skeleton />
       ) : invitaciones.length === 0 ? (
         <EmptyState
-          icon="mail-open-outline"
-          titulo="No tienes invitaciones pendientes"
-          descripcion="Cuando alguien te invite a su hogar, aparece aquí."
+          emoji="📭"
+          titulo="Todavía no te invitan"
+          descripcion={`Pídele a quien te quiera sumar que te invite con tu correo: ${usuario.email}`}
         />
       ) : (
         invitaciones.map((inv) => (
           <Panel key={inv.id} gap={12}>
-            <Text style={styles.hogar}>{inv.hogarNombre ?? 'Hogar'}</Text>
-            <View style={styles.actions}>
-              <Button
-                title="Aceptar"
-                onPress={() => aceptar(inv.id)}
-                loading={actuando === inv.id}
-              />
-              <Button
-                title="Rechazar"
-                variant="secondary"
-                onPress={() => rechazar(inv.id)}
-                disabled={actuando === inv.id}
-              />
+            <View style={styles.cabeza}>
+              <View style={styles.circulo}>
+                <Text style={styles.emoji}>🏠</Text>
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.hogar}>{inv.hogarNombre ?? 'Hogar'}</Text>
+                <Text style={styles.sub}>Te invitaron · {fechaLegible(inv.createdAt)}</Text>
+              </View>
             </View>
+            <Button
+              title="✅ Unirme"
+              onPress={() => aceptar(inv.id)}
+              loading={actuando === inv.id}
+            />
+            <Pressable
+              onPress={() => rechazar(inv.id)}
+              disabled={actuando === inv.id}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.noGracias, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.noGraciasTxt}>No, gracias</Text>
+            </Pressable>
           </Panel>
         ))
       )}
@@ -91,6 +99,18 @@ export function InvitacionesScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  hogar: { fontSize: 17, fontWeight: '600', color: c.text },
-  actions: { gap: 8 },
+  cabeza: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  circulo: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: tinte(c.primary, 0.14),
+  },
+  emoji: { fontSize: 24 },
+  hogar: { fontSize: 17, fontWeight: '800', color: c.text },
+  sub: { fontSize: 13, color: c.muted },
+  noGracias: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  noGraciasTxt: { fontSize: 15, fontWeight: '700', color: c.muted },
 });
