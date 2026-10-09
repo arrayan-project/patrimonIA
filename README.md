@@ -36,11 +36,19 @@ En resumen:
   real falló; plan y escenarios en `Docs/usabilidad/USABILIDAD_REAL_S01.md`.
   Fase E: bloques 1 a 10 hechos (estado en `GAPS.md`, G33); queda la señal
   de Zoily (usar la app real un mes y completar sola los seis escenarios).
-- [ ] **Densidad** en las preferencias de visualización (resto de G25).
+- [ ] **Mejora visual pantalla por pantalla** (G35) — la app se siente
+  corporativa; inventario y plan en `Docs/usabilidad/MEJORA_VISUAL_S02.md`.
 - [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
 
 ### Implementado
 
+- [x] **G35, Paso 0 + Inicio (2026-10-09)** — nueva dirección visual: paleta
+  lila y pastel (claro y oscuro), letra Nunito (`app/src/ui/Text`), emojis
+  configurables (categorías en `categoria_movimiento.icono`; cuentas y metas
+  en las preferencias del usuario) y textos sin jerga. Inicio rediseñado:
+  resumen con "Puedes gastar", cuentas como tarjetas con sus movimientos del
+  mes, metas en anillo y "Así va el mes". Sin cambios de backend ni de base.
+  Detalle en `Docs/usabilidad/MEJORA_VISUAL_S02.md`.
 - [x] **G33, bloque 10 de la Fase E (2026-10-08)** — recurrencia de los
   movimientos programados (D-6, HZ-16): "¿Se repite?" (cada mes / cada año) en
   Nuevo programado y en Gasté/Recibí/Moví plata, aviso "¿Se pagó?" con "Sí, se

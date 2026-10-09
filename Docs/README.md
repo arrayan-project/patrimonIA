@@ -34,7 +34,7 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 
 ## Registro de decisiones y estado
 
-- **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G33), por qué, qué se decidió, y a qué documento se integró. Ordenado en **Pendiente** (Parte 1, con resumen priorizado) e **Implementado / decisión cerrada** (Parte 2), y dentro de cada parte por tema.
+- **[../GAPS.md](../GAPS.md)** — el ledger: cada vacío o decisión de dominio (G1–G35), por qué, qué se decidió, y a qué documento se integró. Ordenado en **Pendiente** (Parte 1, con resumen priorizado) e **Implementado / decisión cerrada** (Parte 2), y dentro de cada parte por tema.
 - **[retirado/DOMINIO_PENDIENTE.md](retirado/DOMINIO_PENDIENTE.md)** — *retirado*. Análisis de Fase 28; sus conclusiones están en `diseño/DDD.md` §X y `diseño/UX_FLOWS.md` Parte 3.
 - **[retirado/propuesta-rediseno-C-rimu.html](retirado/propuesta-rediseno-C-rimu.html)** — *retirado* (2026-10-03). Propuesta visual C: clara pero poco comprensible; la referencia visual es `usabilidad/prototipo/prototipo-fase-d-s01.html` (ver `GAPS.md`, G33, bloque 4).
 - **[retirado/UI_UX_BACKLOG.md](retirado/UI_UX_BACKLOG.md)** — *journal* de la implementación de UI/UX. El estado vigente está en `diseño/UX_FLOWS.md` Parte 3; sus pulidos sueltos están cerrados (U3 en `GAPS.md`, Parte 2).
@@ -47,6 +47,7 @@ Los originales quedan congelados en [`_baseline/`](_baseline/).
 - **[usabilidad/BENCHMARK_S01.md](usabilidad/BENCHMARK_S01.md)** — Fase C de G33: benchmark de patrones (P-A a P-E) para cada brecha de B, hallazgos HZ-11 a HZ-17 y decisiones D-6 y D-7.
 - **[usabilidad/DECISIONES_FASE_D_S01.md](usabilidad/DECISIONES_FASE_D_S01.md)** — Fase D de G33, bloque 1: decisiones D-1 a D-7 cerradas, diccionario de superficie, M9/M7 fuera de alcance y orden de la Fase E.
 - **[usabilidad/CIERRE_FASE_D_S01.md](usabilidad/CIERRE_FASE_D_S01.md)** — cierre de la Fase D de G33: señal de validación con el prototipo (6 de 6), hallazgos HZ-18 a HZ-23, decisión D-8 (dos puertas y "¿de quién es?") y orden actualizado de la Fase E.
+- **[usabilidad/MEJORA_VISUAL_S02.md](usabilidad/MEJORA_VISUAL_S02.md)** — G35: inventario de las 59 pantallas con sus acciones y revisión visual pantalla por pantalla (solo visual). **Fuente de verdad del frente G35.**
 - **[usabilidad/prototipo/prototipo-fase-d-s01.html](usabilidad/prototipo/prototipo-fase-d-s01.html)** — prototipo interactivo de la Fase D (v5). En el menú `+` y el paso 2 de Gasté y Recibí manda D-8.
 - **[usabilidad/prototipo/plantillas-pantalla-s01.html](usabilidad/prototipo/plantillas-pantalla-s01.html)** — las 5 plantillas de pantalla (Resumen, Lista, Detalle, Formulario, Ajustes) con sus reglas, las reglas comunes y el mapa de cada pantalla de la app a su plantilla. Si una plantilla contradice un hallazgo HZ decidido, gana el hallazgo.
 

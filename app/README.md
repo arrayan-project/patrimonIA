@@ -30,11 +30,12 @@ npm run web         # navegador
 
 Detalle y prioridad en `../GAPS.md` → Parte 1. Lo que toca la app:
 
-- [ ] **Evaluación de usabilidad del flujo completo** para un usuario nuevo
-  (G32): onboarding, mapa de navegación, conexión entre secciones.
+- [ ] **Rediseño de usabilidad** (G33, continúa G32): Fase E hecha; queda la
+  señal de Zoily (usar la app real un mes y completar sola los seis escenarios).
+- [ ] **Mejora visual pantalla por pantalla** (G35): plan en
+  `../Docs/usabilidad/MEJORA_VISUAL_S02.md`.
 - [ ] **Push remoto real** (G20): necesita un development build + `projectId`
   de EAS.
-- [ ] **Densidad** (compacta/cómoda) en Ajustes › Visualización (resto de G25).
 - [ ] `ListItem` en Categorías y Tipos de elemento — diferido a propósito (U3).
 
 ### Implementado
@@ -43,6 +44,12 @@ Journal por fase (Fases 1–19). Las fases 20 en adelante (rediseño,
 reorganización de la navegación, pulido) están descritas en
 `../Docs/diseño/UX_FLOWS.md` Parte 3.
 
+- **Dirección visual e Inicio** (G35, Paso 0): paleta lila y pastel en
+  `src/ui/tema.ts`; letra Nunito cargada en `App.tsx` y aplicada por
+  `src/ui/Text.tsx` (todo texto se importa de ahí); emojis en `src/emojis.ts`
+  y `ElegirEmoji`; `Hero` con degradado, `AnilloAvance`. El Inicio muestra las
+  cuentas como tarjetas con sus 4 movimientos del mes y las metas en anillo.
+  Plan en `../Docs/usabilidad/MEJORA_VISUAL_S02.md`.
 - **Recuperación de contraseña** (G31): link "¿Olvidaste tu contraseña?" en
   Login → `RecuperarPasswordScreen` (email → código + nueva contraseña → vuelta
   a Login). Verificado en producción el 2026-09-27. Desde el 2026-09-29 el

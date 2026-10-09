@@ -1,0 +1,527 @@
+<title>PatrimonIA · Dirección visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Baloo+2:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* Página: comparación lado a lado de 4 maquetas del Inicio (Hoy + A, B, C). La página es neutra; las maquetas llevan su propia identidad. */
+:root {
+  --bg: #f6f6f4; --fg: #1b1c1e; --muted: #666a70; --line: #dcddd8; --panel: #ffffff; --chip: #ebebe6; --focus: #2f6b4f;
+  --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141516; --fg: #ececea; --muted: #9a9ea4; --line: #2b2d30; --panel: #1c1d1f; --chip: #26282b; --focus: #7cc4a0; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #141516; --fg: #ececea; --muted: #9a9ea4; --line: #2b2d30; --panel: #1c1d1f; --chip: #26282b; --focus: #7cc4a0; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 10px; max-width: 72ch; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); line-height: 1.5; }
+.ctrl { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 600 13px var(--f-ui); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ejemplo { font-size: 12px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(300px, 400px)); justify-content: center; gap: 22px; overflow-x: auto; padding-bottom: 8px; }
+@media (max-width: 700px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.col h2 { margin: 0; font-size: 1.05rem; }
+.col h2 small { display: block; font-weight: 500; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.notas { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.5; display: grid; gap: 4px; }
+.notas b { color: var(--fg); font-weight: 600; }
+.textos { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+.textos h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.textos table { border-collapse: collapse; font-size: 13.5px; min-width: 520px; width: 100%; }
+.textos th, .textos td { text-align: left; padding: 7px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+.textos th { color: var(--muted); font-weight: 600; border-top: 0; }
+
+/* ---------- Maqueta (teléfono) ---------- */
+.m { --r: 14px; width: 100%; max-width: 360px; justify-self: center; border-radius: 34px; overflow: hidden; background: var(--m-bg); color: var(--m-fg);
+  border: 8px solid #1c1c1e; box-shadow: 0 10px 30px rgba(0,0,0,.18); font-family: var(--m-font); position: relative; font-variant-numeric: tabular-nums; }
+.m * { box-sizing: border-box; }
+.m .scr { padding: 14px 16px 92px; display: grid; gap: 16px; }
+.m .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.m .hola { font-weight: 700; font-size: 17px; font-family: var(--m-disp); }
+.m .hola small { display: block; font-weight: 500; font-size: 12px; color: var(--m-muted); font-family: var(--m-font); }
+.m .tog { display: inline-flex; background: var(--m-chip); border-radius: 999px; padding: 3px; font-size: 12px; font-weight: 600; }
+.m .tog span { padding: 5px 10px; border-radius: 999px; color: var(--m-muted); }
+.m .tog span.on { background: var(--m-tog-on); color: var(--m-tog-on-fg); }
+.m .icons { display: flex; gap: 6px; }
+.m .ib { width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; background: var(--m-ib); color: var(--m-fg); position: relative; }
+.m .ib i { position: absolute; top: 4px; right: 4px; min-width: 15px; height: 15px; border-radius: 999px; background: var(--m-badge); color: #fff; font: 700 9px/15px var(--f-ui); text-align: center; font-style: normal; }
+.m svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.m .alert { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--r); background: var(--m-alert); color: var(--m-alert-fg); font-size: 13px; }
+.m .alert .tx { flex: 1; min-width: 0; }
+.m .alert .btn { font-weight: 700; font-size: 12px; padding: 6px 11px; border-radius: 999px; background: var(--m-alert-btn); color: var(--m-alert-btn-fg); white-space: nowrap; }
+.m .hero { padding: 18px; border-radius: calc(var(--r) + 4px); background: var(--m-hero); color: var(--m-hero-fg); display: grid; gap: 8px; }
+.m .hero .lb { font-size: 13px; opacity: .85; font-weight: 600; }
+.m .hero .big { font-family: var(--m-disp); font-size: 34px; font-weight: 800; letter-spacing: -.5px; line-height: 1.05; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.m .hero .chg { font-family: var(--m-font); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--m-chg); color: var(--m-chg-fg); letter-spacing: 0; }
+.m .hero .subs { display: flex; gap: 18px; font-size: 13px; }
+.m .hero .subs b { display: block; font-size: 15px; }
+.m .hero .spark { height: 34px; width: 100%; }
+.m .hero .spark path { stroke: var(--m-spark); stroke-width: 2; fill: none; }
+.m .card { background: var(--m-card); border: var(--m-card-border); border-radius: var(--r); box-shadow: var(--m-card-shadow); }
+.m .datos { padding: 4px 14px; font-size: 14px; }
+.m .datos .row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 0; border-top: 1px solid var(--m-line); }
+.m .datos .row:first-child { border-top: 0; }
+.m .datos .row .r { color: var(--m-muted); }
+.m .datos .row.tot { font-weight: 800; font-size: 15.5px; }
+.m .datos .row.tot .v { color: var(--m-ok); }
+.m .sec { display: grid; gap: 8px; }
+.m .sh { display: flex; justify-content: space-between; align-items: baseline; }
+.m .sh h3 { margin: 0; font: var(--m-sh); letter-spacing: var(--m-sh-ls); text-transform: var(--m-sh-tt); color: var(--m-sh-c); }
+.m .sh a { font-size: 12.5px; font-weight: 700; color: var(--m-link); text-decoration: none; }
+.m .list { padding: 2px 12px; }
+.m .li { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-top: 1px solid var(--m-line); }
+.m .li:first-child { border-top: 0; }
+.m .tile { width: 38px; height: 38px; border-radius: var(--m-tile-r); display: grid; place-items: center; flex: none; background: var(--m-tile); color: var(--m-tile-fg); }
+.m .li .t { flex: 1; min-width: 0; font-weight: 600; font-size: 14.5px; }
+.m .li .t small { display: block; font-weight: 500; font-size: 12px; color: var(--m-muted); }
+.m .li .v { font-weight: 700; font-size: 14.5px; }
+.m .neg { color: var(--m-neg); }
+.m .goal { padding: 13px 14px; display: grid; gap: 8px; }
+.m .goal .gt { display: flex; align-items: center; gap: 10px; }
+.m .goal .gt .n { flex: 1; font-weight: 700; font-size: 14.5px; }
+.m .goal .gt .p { font-weight: 800; font-size: 13px; color: var(--m-muted); }
+.m .bar { height: 8px; border-radius: 999px; background: var(--m-track); overflow: hidden; }
+.m .bar i { display: block; height: 100%; border-radius: 999px; background: var(--m-fill); }
+.m .goal .gf { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--m-muted); }
+.m .goal .gf .ah { font-weight: 700; color: var(--m-btn-fg); background: var(--m-btn); padding: 6px 12px; border-radius: 999px; font-size: 12px; }
+.m .flujo { padding: 4px 14px; font-size: 14px; }
+.m .flujo .row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--m-line); }
+.m .flujo .row:first-child { border-top: 0; }
+.m .flujo .row.tot { font-weight: 800; }
+.m .flujo .row.tot .v { color: var(--m-ok); }
+.m .qa { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.m .qa div { display: grid; justify-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; text-align: center; }
+.m .qa .tile { width: 48px; height: 48px; }
+.m .tabs { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 6px 12px; background: var(--m-tabbar); border-top: 1px solid var(--m-line); }
+.m .tabs div { display: grid; justify-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--m-muted); }
+.m .tabs div.on { color: var(--m-tab-on); }
+.m .fab { position: absolute; right: 16px; bottom: 76px; width: 54px; height: 54px; border-radius: var(--m-fab-r); display: grid; place-items: center; background: var(--m-fab); color: var(--m-fab-fg); box-shadow: 0 6px 16px rgba(0,0,0,.22); border: var(--m-fab-border); }
+.m .fab svg { width: 24px; height: 24px; stroke-width: 2.4; }
+
+/* Hoy: el monocromo actual (tema.ts) */
+.v-hoy { --m-font: system-ui, -apple-system, Roboto, sans-serif; --m-disp: var(--m-font);
+  --m-bg:#fff; --m-fg:#111113; --m-muted:#6b6b70; --m-line:#e4e4e7; --m-chip:#f4f4f5; --m-tog-on:#111113; --m-tog-on-fg:#fff; --m-ib:#f4f4f5; --m-badge:#dc2626;
+  --m-alert:#f4f4f5; --m-alert-fg:#111113; --m-alert-btn:transparent; --m-alert-btn-fg:#6b6b70;
+  --m-hero:#f4f4f5; --m-hero-fg:#111113; --m-chg:rgba(5,150,105,.1); --m-chg-fg:#059669; --m-spark:#111113;
+  --m-card:#f4f4f5; --m-card-border:1px solid #e4e4e7; --m-card-shadow:none; --m-ok:#111113; --m-neg:#dc2626;
+  --m-sh: 700 11px/1.2 var(--m-font); --m-sh-ls:1px; --m-sh-tt:uppercase; --m-sh-c:#6b6b70; --m-link:#6b6b70;
+  --m-tile:#e9e9ec; --m-tile-fg:#111113; --m-tile-r:10px; --m-track:#e9e9ec; --m-fill:#111113; --m-btn:transparent; --m-btn-fg:#111113;
+  --m-tabbar:#fff; --m-tab-on:#111113; --m-fab:#111113; --m-fab-fg:#fff; --m-fab-r:999px; --m-fab-border:0; }
+.dk .v-hoy { --m-bg:#000; --m-fg:#f5f5f5; --m-muted:#8a8a8e; --m-line:#1f1f22; --m-chip:#0c0c0d; --m-tog-on:#f5f5f5; --m-tog-on-fg:#000; --m-ib:#0c0c0d;
+  --m-alert:#0c0c0d; --m-alert-fg:#f5f5f5; --m-hero:#0c0c0d; --m-hero-fg:#f5f5f5; --m-chg:rgba(52,211,153,.14); --m-chg-fg:#34d399; --m-spark:#f5f5f5;
+  --m-card:#0c0c0d; --m-card-border:1px solid #1f1f22; --m-ok:#f5f5f5; --m-neg:#ff5c5c; --m-sh-c:#8a8a8e; --m-link:#8a8a8e;
+  --m-tile:#151517; --m-tile-fg:#f5f5f5; --m-track:#151517; --m-fill:#f5f5f5; --m-btn-fg:#f5f5f5; --m-tabbar:#000; --m-tab-on:#f5f5f5; --m-fab:#f5f5f5; --m-fab-fg:#000; }
+
+/* Base común de las propuestas nuevas (D, E, F): cada una con estructura propia */
+.m .px { padding: 14px 16px 150px; display: grid; gap: 16px; }
+.m .pill { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.m .pill svg { width: 16px; height: 16px; }
+
+/* D · Conversación: la pantalla habla en frases; Lexend, pensada para leer fácil */
+.v-d { --m-font: "Lexend", system-ui, sans-serif; --m-disp: var(--m-font);
+  --m-bg:#f7f8fc; --m-fg:#1e2235; --m-muted:#6b7089; --m-line:#e6e8f2; --m-chip:#eceef6; --m-tog-on:#ffffff; --m-tog-on-fg:#1e2235; --m-ib:#eceef6; --m-badge:#e5534b;
+  --d-hl:#3d5afe; --d-hl-soft:#e6eaff; --d-card:#ffffff; --d-ok:#11845b; --d-ok-soft:#e2f5ec; --d-warn-soft:#fff3e0; --d-warn:#a65b00;
+  --m-tabbar:#ffffff; --m-tab-on:#3d5afe; --m-fab:#3d5afe; --m-fab-fg:#fff; --m-fab-r:999px; --m-fab-border:0; }
+.dk .v-d { --m-bg:#11131c; --m-fg:#eceef8; --m-muted:#9ba0b8; --m-line:#232739; --m-chip:#1c2030; --m-tog-on:#2a2f45; --m-tog-on-fg:#eceef8; --m-ib:#1c2030;
+  --d-hl:#8c9eff; --d-hl-soft:#1f2650; --d-card:#191c29; --d-ok:#5fd6a4; --d-ok-soft:#163327; --d-warn-soft:#3a2a12; --d-warn:#ffc46b; --m-tabbar:#11131c; --m-tab-on:#8c9eff; --m-fab:#8c9eff; --m-fab-fg:#11131c; }
+.v-d .frase { background: var(--d-card); border-radius: 22px; padding: 18px; display: grid; gap: 10px; font-size: 15px; line-height: 1.45; }
+.v-d .frase.hl { background: var(--d-hl-soft); }
+.v-d .frase .q { color: var(--m-muted); font-size: 14px; }
+.v-d .frase .n { font-size: 36px; font-weight: 700; letter-spacing: -.8px; line-height: 1.05; color: var(--d-hl); }
+.v-d .frase b { font-weight: 700; }
+.v-d .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.v-d .chips span { background: var(--d-card); border-radius: 999px; padding: 5px 10px; font-size: 12px; color: var(--m-muted); }
+.v-d .frase.hl .chips span { background: var(--m-bg); }
+.v-d .ok { color: var(--d-ok); font-weight: 700; }
+.v-d .estado { display: inline-flex; gap: 6px; align-items: center; background: var(--d-ok-soft); color: var(--d-ok); font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; justify-self: start; }
+.v-d .estado svg { width: 15px; height: 15px; }
+.v-d .pide { background: var(--d-warn-soft); color: var(--m-fg); }
+.v-d .pide .acc { display: flex; gap: 8px; }
+.v-d .pide .pill { background: var(--d-warn); color: var(--d-card); }
+.v-d .pide .pill.sec { background: transparent; color: var(--d-warn); padding-inline: 4px; }
+.v-d .meta { display: grid; gap: 8px; }
+.v-d .meta + .meta { border-top: 1px solid var(--m-line); padding-top: 12px; }
+.v-d .bar { height: 10px; border-radius: 999px; background: var(--m-chip); overflow: hidden; }
+.v-d .bar i { display: block; height: 100%; background: var(--d-hl); border-radius: 999px; }
+.v-d .botones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.v-d .botones div { background: var(--d-card); border-radius: 18px; padding: 12px 6px; display: grid; justify-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
+.v-d .botones svg { width: 22px; height: 22px; color: var(--d-hl); }
+.v-d .lnk { color: var(--d-hl); font-weight: 600; font-size: 13.5px; }
+
+/* E · Billetera: cuentas como tarjetas reales y metas como frascos que se llenan; Outfit */
+.v-e { --m-font: "Outfit", system-ui, sans-serif; --m-disp: var(--m-font);
+  --m-bg:#ffffff; --m-fg:#15171c; --m-muted:#6e7380; --m-line:#eceef1; --m-chip:#f1f2f4; --m-tog-on:#15171c; --m-tog-on-fg:#fff; --m-ib:#f1f2f4; --m-badge:#ef4444;
+  --e-c1:#1f3a8a; --e-c2:#f97316; --e-c3:#0f766e; --e-c4:#be123c; --e-jar:#eef2f7; --e-water:#38bdf8; --e-water2:#a78bfa; --e-soft:#f6f7f9;
+  --m-tabbar:#ffffff; --m-tab-on:#15171c; --m-fab:#15171c; --m-fab-fg:#fff; --m-fab-r:999px; --m-fab-border:0; }
+.dk .v-e { --m-bg:#0e1014; --m-fg:#f1f2f5; --m-muted:#9aa0ab; --m-line:#20232a; --m-chip:#1a1d23; --m-tog-on:#f1f2f5; --m-tog-on-fg:#0e1014; --m-ib:#1a1d23;
+  --e-c1:#3b5bdb; --e-c2:#ea6a16; --e-c3:#14918a; --e-c4:#d6334f; --e-jar:#1a1e26; --e-soft:#16191f; --m-tabbar:#0e1014; --m-tab-on:#f1f2f5; --m-fab:#f1f2f5; --m-fab-fg:#0e1014; }
+.v-e .tot { display: grid; gap: 4px; }
+.v-e .tot .lb { color: var(--m-muted); font-size: 14px; }
+.v-e .tot .n { font-size: 40px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+.v-e .tot .s { font-size: 13px; color: var(--m-muted); }
+.v-e .tot .s b { color: var(--m-fg); font-weight: 600; }
+.v-e .libre { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--e-soft); border-radius: 18px; padding: 14px 16px; }
+.v-e .libre .lb { font-size: 13px; color: var(--m-muted); }
+.v-e .libre .n { font-size: 24px; font-weight: 700; }
+.v-e .libre .pill { background: var(--m-fg); color: var(--m-bg); }
+.v-e .h3 { font-size: 17px; font-weight: 700; display: flex; justify-content: space-between; align-items: baseline; }
+.v-e .h3 a { font-size: 13px; color: var(--m-muted); text-decoration: none; font-weight: 500; }
+.v-e .carrusel { display: flex; gap: 10px; overflow: hidden; margin-right: -16px; }
+.v-e .tj { flex: none; width: 150px; height: 96px; border-radius: 16px; padding: 12px; color: #fff; display: grid; align-content: space-between; position: relative; overflow: hidden; }
+.v-e .tj::after { content: ""; position: absolute; right: -24px; top: -24px; width: 80px; height: 80px; border-radius: 999px; background: rgba(255,255,255,.14); }
+.v-e .tj .nm { font-size: 13px; font-weight: 500; opacity: .9; }
+.v-e .tj .vl { font-size: 18px; font-weight: 700; }
+.v-e .frascos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.v-e .frasco { background: var(--e-soft); border-radius: 18px; padding: 12px; display: grid; gap: 8px; justify-items: center; text-align: center; }
+.v-e .jar { width: 64px; height: 78px; border-radius: 14px 14px 20px 20px; background: var(--e-jar); border: 2px solid var(--m-line); position: relative; overflow: hidden; }
+.v-e .jar::before { content: ""; position: absolute; left: 14px; right: 14px; top: -2px; height: 8px; background: var(--m-line); border-radius: 0 0 4px 4px; }
+.v-e .jar i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--e-water); }
+.v-e .frasco:nth-child(2) .jar i { background: var(--e-water2); }
+.v-e .frasco .nm { font-size: 13.5px; font-weight: 600; }
+.v-e .frasco .sb { font-size: 12px; color: var(--m-muted); }
+.v-e .mes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.v-e .mes div { background: var(--e-soft); border-radius: 14px; padding: 10px; display: grid; gap: 2px; font-size: 12px; color: var(--m-muted); }
+.v-e .mes b { font-size: 15px; color: var(--m-fg); }
+.v-e .mes .pos b { color: #10a35f; }
+.v-e .aviso { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--m-line); border-radius: 16px; padding: 10px 12px; font-size: 13px; }
+.v-e .aviso .av { width: 32px; height: 32px; border-radius: 999px; background: var(--e-c2); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
+.v-e .aviso .tx { flex: 1; min-width: 0; }
+.v-e .aviso .pill { background: var(--m-fg); color: var(--m-bg); padding: 7px 12px; }
+
+/* F · Suave: tonos pastel, todo redondo, "Puedes gastar" como anillo; Baloo 2 + Nunito Sans */
+.v-f { --m-font: "Nunito Sans", system-ui, sans-serif; --m-disp: "Baloo 2", "Nunito Sans", system-ui, sans-serif;
+  --m-bg:#fdfbff; --m-fg:#2b2540; --m-muted:#7a7391; --m-line:#efe9f7; --m-chip:#f3eefb; --m-tog-on:#ffffff; --m-tog-on-fg:#2b2540; --m-ib:#ffffff; --m-badge:#ff6b6b;
+  --f-top1:#ffe1d6; --f-top2:#e9dcff; --f-ring:#7c5cff; --f-ring-bg:#ece5ff; --f-p1:#fff1e6; --f-p2:#e8f7f0; --f-p3:#eaf1ff; --f-p4:#fde8ef; --f-acc:#7c5cff; --f-card:#ffffff;
+  --m-tabbar:#ffffff; --m-tab-on:#7c5cff; --m-fab:#7c5cff; --m-fab-fg:#fff; --m-fab-r:999px; --m-fab-border:0; }
+.dk .v-f { --m-bg:#16131f; --m-fg:#f0ecfa; --m-muted:#a59dbd; --m-line:#2a2438; --m-chip:#221d30; --m-tog-on:#332b47; --m-tog-on-fg:#f0ecfa; --m-ib:#221d30;
+  --f-top1:#3a2630; --f-top2:#2c2347; --f-ring:#a68dff; --f-ring-bg:#2c2545; --f-p1:#33261f; --f-p2:#1b3029; --f-p3:#1e2840; --f-p4:#3a2030; --f-acc:#a68dff; --f-card:#1e1a2a;
+  --m-tabbar:#16131f; --m-tab-on:#a68dff; --m-fab:#a68dff; --m-fab-fg:#16131f; }
+.v-f .cab { margin: -14px -16px 0; padding: 14px 16px 22px; background: linear-gradient(160deg, var(--f-top1), var(--f-top2)); border-radius: 0 0 32px 32px; display: grid; gap: 14px; }
+.v-f .anillo { display: flex; align-items: center; gap: 16px; }
+.v-f .anillo svg.r { width: 118px; height: 118px; flex: none; }
+.v-f .anillo .r circle { fill: none; stroke-width: 12; }
+.v-f .anillo .txt { display: grid; gap: 2px; }
+.v-f .anillo .lb { font-size: 13px; color: var(--m-muted); font-weight: 700; }
+.v-f .anillo .n { font-family: var(--m-disp); font-size: 32px; font-weight: 700; line-height: 1.05; }
+.v-f .anillo .s { font-size: 12.5px; color: var(--m-muted); }
+.v-f .burbujas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.v-f .bb { border-radius: 24px; padding: 14px; display: grid; gap: 6px; }
+.v-f .bb .ico { width: 34px; height: 34px; border-radius: 999px; background: var(--f-card); display: grid; place-items: center; }
+.v-f .bb .lb { font-size: 12.5px; color: var(--m-muted); font-weight: 700; }
+.v-f .bb .n { font-family: var(--m-disp); font-size: 21px; font-weight: 700; line-height: 1.1; }
+.v-f .h3 { font-family: var(--m-disp); font-size: 19px; font-weight: 700; display: flex; justify-content: space-between; align-items: baseline; }
+.v-f .h3 a { font-family: var(--m-font); font-size: 13px; color: var(--f-acc); text-decoration: none; font-weight: 700; }
+.v-f .metas { display: flex; gap: 12px; }
+.v-f .mt { flex: 1; background: var(--f-card); border-radius: 24px; padding: 12px; display: grid; justify-items: center; gap: 4px; text-align: center; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-f .mt svg.r { width: 72px; height: 72px; }
+.v-f .mt .r circle { fill: none; stroke-width: 8; }
+.v-f .mt .nm { font-weight: 700; font-size: 13px; }
+.v-f .mt .sb { font-size: 11.5px; color: var(--m-muted); }
+.v-f .aviso { display: flex; align-items: center; gap: 10px; background: var(--f-card); border-radius: 22px; padding: 10px 12px; font-size: 13px; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-f .aviso .tx { flex: 1; min-width: 0; }
+.v-f .aviso .pill { background: var(--f-acc); color: var(--f-card); padding: 7px 13px; }
+.v-f .aviso .ico { width: 34px; height: 34px; border-radius: 999px; background: var(--f-p4); display: grid; place-items: center; flex: none; }
+/* G · Mezcla elegida por Juan: tarjetas de cuenta (E), metas en anillo (F), resumen de hoy con textos nuevos, colores de F */
+.v-g { --m-font: "Nunito Sans", system-ui, sans-serif; --m-disp: "Baloo 2", "Nunito Sans", system-ui, sans-serif;
+  --m-bg:#fdfbff; --m-fg:#2b2540; --m-muted:#7a7391; --m-line:#efe9f7; --m-chip:#f3eefb; --m-tog-on:#7c5cff; --m-tog-on-fg:#ffffff; --m-ib:#f3eefb; --m-badge:#ff6b6b;
+  --g-card:#ffffff; --g-acc:#7c5cff; --g-acc-soft:#ece5ff; --g-ok:#1f9d68; --g-neg:#e0525a; --g-hero1:#ffe1d6; --g-hero2:#e9dcff;
+  --e-c1:#1f3a8a; --e-c2:#f97316; --e-c3:#0f766e; --e-c4:#be123c;
+  --m-tabbar:#ffffff; --m-tab-on:#7c5cff; --m-fab:#7c5cff; --m-fab-fg:#fff; --m-fab-r:999px; --m-fab-border:0; }
+.dk .v-g { --m-bg:#16131f; --m-fg:#f0ecfa; --m-muted:#a59dbd; --m-line:#2a2438; --m-chip:#221d30; --m-tog-on:#a68dff; --m-tog-on-fg:#16131f; --m-ib:#221d30;
+  --g-card:#1e1a2a; --g-acc:#a68dff; --g-acc-soft:#2c2545; --g-ok:#5fd6a4; --g-neg:#ff8a8f; --g-hero1:#3a2630; --g-hero2:#2c2347;
+  --e-c1:#3b5bdb; --e-c2:#ea6a16; --e-c3:#14918a; --e-c4:#d6334f; --m-tabbar:#16131f; --m-tab-on:#a68dff; --m-fab:#a68dff; --m-fab-fg:#16131f; }
+.v-g .h3 { font-family: var(--m-disp); font-size: 19px; font-weight: 700; display: flex; justify-content: space-between; align-items: baseline; }
+.v-g .h3 a { font-family: var(--m-font); font-size: 13px; color: var(--g-acc); text-decoration: none; font-weight: 700; }
+.v-g .aviso { display: flex; align-items: center; gap: 10px; background: var(--g-card); border-radius: 22px; padding: 10px 12px; font-size: 13px; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-g .aviso .tx { flex: 1; min-width: 0; }
+.v-g .aviso .pill { background: var(--g-acc); color: var(--g-card); padding: 7px 13px; }
+.v-g .aviso .ico { width: 34px; height: 34px; border-radius: 999px; background: var(--g-acc-soft); color: var(--g-acc); display: grid; place-items: center; flex: none; }
+.v-g .res { border-radius: 26px; overflow: hidden; background: var(--g-card); box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-g .res .top2 { background: linear-gradient(160deg, var(--g-hero1), var(--g-hero2)); padding: 16px; display: grid; gap: 6px; }
+.v-g .res .lb { font-size: 13px; font-weight: 700; color: var(--m-muted); }
+.v-g .res .big { font-family: var(--m-disp); font-size: 34px; font-weight: 700; line-height: 1.05; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.v-g .res .chg { font-family: var(--m-font); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--g-card); color: var(--g-ok); }
+.v-g .res .spark { height: 30px; width: 100%; }
+.v-g .res .spark path { stroke: var(--g-acc); stroke-width: 2; fill: none; }
+.v-g .res .subs { display: flex; gap: 18px; font-size: 13px; color: var(--m-muted); }
+.v-g .res .subs b { display: block; font-size: 15px; color: var(--m-fg); }
+.v-g .res .datos { padding: 4px 16px 8px; font-size: 14px; }
+.v-g .res .row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 0; border-top: 1px solid var(--m-line); }
+.v-g .res .row:first-child { border-top: 0; }
+.v-g .res .row .r { color: var(--m-muted); }
+.v-g .res .row.tot { font-weight: 800; font-size: 15.5px; }
+.v-g .res .row.tot .v { color: var(--g-ok); }
+.v-g .carrusel { display: flex; gap: 10px; overflow-x: auto; margin-right: -16px; padding: 4px 16px 6px 2px; scrollbar-width: none; }
+.v-g .carrusel::-webkit-scrollbar { display: none; }
+.v-g .tj { flex: none; width: 138px; height: 104px; border-radius: 18px; padding: 12px; color: #fff; display: grid; align-content: space-between; position: relative; overflow: hidden; border: 0; text-align: left; font: inherit; cursor: pointer; transition: transform .15s, box-shadow .15s, opacity .15s; }
+.v-g .tj::after { content: ""; position: absolute; right: -22px; top: -22px; width: 74px; height: 74px; border-radius: 999px; background: rgba(255,255,255,.14); }
+.v-g .tj .nm { font-size: 12.5px; font-weight: 600; opacity: .92; }
+.v-g .tj .vl { font-family: var(--m-disp); font-size: 18px; font-weight: 700; }
+.v-g .carrusel.sel .tj { opacity: .55; }
+.v-g .carrusel.sel .tj.on { opacity: 1; transform: translateY(-2px); box-shadow: 0 0 0 3px var(--m-bg), 0 0 0 5px var(--g-acc); }
+.v-g .tj.mas { background: var(--g-acc-soft); color: var(--g-acc); align-content: center; justify-items: center; gap: 4px; opacity: 1 !important; }
+.v-g .tj.mas::after { display: none; }
+.v-g .tj.mas .vl { font-size: 15px; }
+.v-g .movs { background: var(--g-card); border-radius: 22px; padding: 4px 14px 10px; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-g .sw { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--m-line); font-size: 13.5px; font-weight: 600; }
+.v-g .sw button { position: relative; width: 46px; height: 28px; border-radius: 999px; border: 0; background: var(--m-chip); cursor: pointer; flex: none; transition: background .15s; }
+.v-g .sw button::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s; }
+.v-g .sw button[aria-checked="true"] { background: var(--g-acc); }
+.v-g .sw button[aria-checked="true"]::after { left: 21px; }
+.v-g .mv { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--m-line); }
+.v-g .sw + .mv { border-top: 0; }
+.v-g .mv .em { width: 38px; height: 38px; border-radius: 14px; background: var(--m-chip); display: grid; place-items: center; font-size: 20px; flex: none; }
+.v-g .tj .emc { display: block; font-size: 20px; margin-bottom: 2px; }
+.v-g .em2 { font-size: 18px; }
+.v-g .mt .sb b { color: var(--m-fg); }
+.v-g .mv .t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
+.v-g .mv .t small { display: block; font-size: 12px; font-weight: 500; color: var(--m-muted); }
+.v-g .mv .v { font-weight: 700; font-size: 14px; }
+.v-g .mv .v.pos { color: var(--g-ok); }
+.v-g .vacio { padding: 12px 0 4px; font-size: 13px; color: var(--m-muted); }
+.v-g .vertodos { display: block; text-align: center; padding-top: 10px; font-size: 13px; font-weight: 700; color: var(--g-acc); }
+.v-g .metas { display: flex; gap: 12px; }
+.v-g .mt { flex: 1; background: var(--g-card); border-radius: 24px; padding: 12px; display: grid; justify-items: center; gap: 4px; text-align: center; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-g .mt svg.r { width: 76px; height: 76px; }
+.v-g .mt .r circle { fill: none; stroke-width: 8; }
+.v-g .mt .nm { font-weight: 700; font-size: 13px; }
+.v-g .mt .sb { font-size: 11.5px; color: var(--m-muted); }
+.v-g .mt .pc { font-size: 26px; line-height: 1; margin-top: -53px; margin-bottom: 25px; }
+.v-g .mes { background: var(--g-card); border-radius: 22px; padding: 4px 16px; font-size: 14px; box-shadow: 0 4px 16px rgba(80,50,160,.07); }
+.v-g .mes .row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--m-line); }
+.v-g .mes .row:first-child { border-top: 0; }
+.v-g .mes .row.tot { font-weight: 800; }
+.v-g .mes .row.tot .v { color: var(--g-ok); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.6 15H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9.7 4.4V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h3"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.5 13.5 3 11l1.5-1.5 8 1 4-4c1-1 2.6-1.4 3.2-.7.7.6.3 2.2-.7 3.2l-4 4 1 8L14.5 21 12 13.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4v16M7 4 4 7M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.5-3.5 3-5.5 6-5.5s5.5 2 6 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.8.2 4.6 2 5 5.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1z"/><path d="M4 7l11-3v3M16 13.5h.01"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M12 3v10M8 7l4-4 4 4"/><path d="M5 15h3l2 2h4a2 2 0 0 0 0-4h-2M5 21h11l4-5"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>El nuevo Inicio de PatrimonIA</h1>
+    <p>Tercera ronda: la mezcla que elegiste. Las tarjetas de cuenta y el interruptor de movimientos funcionan; tócalos. Al lado, el Inicio de hoy para comparar.</p>
+    <div class="ctrl">
+      <div class="seg" role="group" aria-label="Tema de las maquetas">
+        <button id="b-claro" aria-pressed="true">Claro</button>
+        <button id="b-oscuro" aria-pressed="false">Oscuro</button>
+      </div>
+      <span class="ejemplo">Datos de ejemplo, no son tus cifras.</span>
+    </div>
+  </header>
+
+  <section class="grid" id="mocks" aria-label="Maquetas del Inicio"></section>
+
+  <section class="textos" aria-label="Textos">
+    <h2>Textos aprobados</h2>
+    <table>
+      <thead><tr><th>Hoy</th><th>Propuesta</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>Míos / Del hogar</td><td>Lo mío / Del hogar</td><td>Suena a conversación, no a filtro.</td></tr>
+        <tr><td>Tu patrimonio</td><td>Tu plata en total</td><td>"Patrimonio" es palabra de banco.</td></tr>
+        <tr><td>Liquidez</td><td>Plata disponible</td><td>Sin jerga.</td></tr>
+        <tr><td>Libre para gastar</td><td>Puedes gastar</td><td>Directo; es lo que la persona quiere saber.</td></tr>
+        <tr><td>TU PATRIMONIO (Cuentas, Inversiones, Deudas)</td><td>Dónde está tu plata</td><td>Dice para qué sirve la sección.</td></tr>
+        <tr><td>METAS</td><td>Tus metas</td><td>Más cercano; sin mayúsculas que gritan.</td></tr>
+        <tr><td>FLUJO DE OCTUBRE · Ingresos · Gastos · Balance</td><td>Así va octubre · Te entró · Gastaste · Te sobra</td><td>"Flujo" y "balance" son de contador.</td></tr>
+        <tr><td>1 solicitud por pagar</td><td>Ana te pidió $30.000 por el súper · Pagar</td><td>Dice quién, cuánto y por qué, y se resuelve ahí.</td></tr>
+        <tr><td>ACCESOS RÁPIDOS · Movimiento</td><td>Atajos · Anotar</td><td>"Anotar" es lo que hace el botón "+".</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+(function () {
+  var ic = function (id) { return '<svg aria-hidden="true"><use href="#i-' + id + '"/></svg>'; };
+  var T = {
+    hoy: { tog: ['Míos', 'Del hogar'], saludo: '', heroLb: 'Tu patrimonio', tienes: 'Tienes', debes: 'Debes',
+      liq: 'Liquidez', guard: 'Guardado para metas', ajena: 'De otras personas', libre: 'Libre para gastar',
+      secPat: 'Tu patrimonio', verTodo: 'Ver todo', secMetas: 'Metas', verTodas: 'Ver todas', secFlujo: 'Flujo de octubre',
+      ing: 'Ingresos', gas: 'Gastos', bal: 'Balance', secQa: 'Accesos rápidos', qa: ['Movimiento', 'Metas', 'Programados', 'Mi patrimonio'],
+      alerta: '1 solicitud por pagar', alertaBtn: '›', ahorrar: 'Ahorrar',
+      rows: [['Cuentas', '2 cuentas'], ['Inversiones', '1 inversión'], ['Deudas', '1 tarjeta']] },
+    nuevo: { tog: ['Lo mío', 'Del hogar'], saludo: 'Hola, Juan', heroLb: 'Tu plata en total', tienes: 'Tienes', debes: 'Debes',
+      liq: 'Plata disponible', guard: 'Guardado para metas', ajena: 'De otras personas', libre: 'Puedes gastar',
+      secPat: 'Dónde está tu plata', verTodo: 'Ver todo', secMetas: 'Tus metas', verTodas: 'Ver todas', secFlujo: 'Así va octubre',
+      ing: 'Te entró', gas: 'Gastaste', bal: 'Te sobra', secQa: 'Atajos', qa: ['Anotar', 'Metas', 'Programados', 'Tu plata'],
+      alerta: 'Ana te pidió $30.000 por el súper', alertaBtn: 'Pagar', ahorrar: 'Ahorrar',
+      rows: [['Cuentas', 'Corriente y RUT'], ['Inversiones', 'Fondo mutuo'], ['Tarjeta de crédito', 'Pagas el 5 de noviembre']] }
+  };
+  function ring(pct, size, sw, track, color) {
+    var r = (size - sw) / 2, c = 2 * Math.PI * r, o = c * (1 - pct / 100);
+    return '<svg class="r" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true"><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" style="stroke:' + track + '"/>' +
+      '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" style="stroke:' + color + ';stroke-linecap:round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + o.toFixed(1) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/></svg>';
+  }
+  var topNuevo = function (tog) {
+    return '<div class="top"><div class="hola"><small>Viernes 9 de octubre</small>Hola, Juan</div><div class="icons"><span class="ib">' + ic('bell') + '<i>2</i></span><span class="ib">' + ic('gear') + '</span></div></div>' +
+      (tog ? '<div><div class="tog"><span class="on">Lo mío</span><span>Del hogar</span></div></div>' : '');
+  };
+  var tabs = '<div class="tabs"><div class="on">' + ic('home') + 'Inicio</div><div>' + ic('swap') + 'Movimientos</div><div>' + ic('flag') + 'Planificar</div><div>' + ic('people') + 'Hogar</div></div>';
+  function renderD() {
+    return '<div class="m v-d"><div class="px">' + topNuevo(true) +
+      '<div class="frase hl"><span class="q">Este mes puedes gastar</span><span class="n">$860.000</span>' +
+      '<span>De los <b>$1.320.000</b> que tienes disponibles, ya separaste lo de tus metas y lo que no es tuyo.</span>' +
+      '<div class="chips"><span>$400.000 para metas</span><span>$60.000 de otras personas</span></div></div>' +
+      '<div class="frase pide"><span><b>Ana</b> te pidió <b>$30.000</b> por el súper del sábado.</span><div class="acc"><span class="pill">Pagarle</span><span class="pill sec">No me corresponde</span></div></div>' +
+      '<div class="frase"><span>En octubre te entró <b>$1.850.000</b> y gastaste <b>$1.240.000</b>.</span><span class="estado">' + ic('trend') + 'Te sobran $610.000</span><span class="lnk">Ver mis movimientos</span></div>' +
+      '<div class="frase"><span class="q">Tus metas</span>' +
+      '<div class="meta"><span><b>Vacaciones en el sur</b>: llevas $620.000, te faltan <b>$380.000</b>.</span><div class="bar"><i style="width:62%"></i></div></div>' +
+      '<div class="meta"><span><b>Fondo para imprevistos</b>: llevas $700.000, te faltan <b>$1.300.000</b>.</span><div class="bar"><i style="width:35%"></i></div></div></div>' +
+      '<div class="frase"><span>Sumando todo, tienes <b>$5.100.000</b> y debes <b>$850.000</b>: tu plata en total es <b>$4.250.000</b>.</span><span class="lnk">Ver dónde está</span></div>' +
+      '<div class="botones"><div>' + ic('card') + 'Gasté</div><div>' + ic('wallet') + 'Recibí</div><div>' + ic('flag') + 'Ahorrar</div></div>' +
+      '</div>' + tabs + '</div>';
+  }
+  function renderE() {
+    var tj = [['Cuenta corriente', '$1.120.000', 'var(--e-c1)'], ['Cuenta RUT', '$200.000', 'var(--e-c2)'], ['Fondo mutuo', '$3.780.000', 'var(--e-c3)'], ['Tarjeta', '−$850.000', 'var(--e-c4)']];
+    return '<div class="m v-e"><div class="px">' + topNuevo(true) +
+      '<div class="tot"><span class="lb">Tu plata en total</span><span class="n">$4.250.000</span><span class="s">Tienes <b>$5.100.000</b> · Debes <b>$850.000</b></span></div>' +
+      '<div class="libre"><div><div class="lb">Puedes gastar</div><div class="n">$860.000</div></div><span class="pill">' + ic('plus') + 'Anotar</span></div>' +
+      '<div class="h3">Tus cuentas <a href="#" tabindex="-1">Ver todas</a></div>' +
+      '<div class="carrusel">' + tj.map(function (t) { return '<div class="tj" style="background:' + t[2] + '"><span class="nm">' + t[0] + '</span><span class="vl">' + t[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="aviso"><span class="av">A</span><span class="tx"><b>Ana</b> te pidió $30.000 por el súper</span><span class="pill">Pagar</span></div>' +
+      '<div class="h3">Tus metas <a href="#" tabindex="-1">Ver todas</a></div>' +
+      '<div class="frascos"><div class="frasco"><div class="jar"><i style="height:62%"></i></div><span class="nm">Vacaciones en el sur</span><span class="sb">$620.000 de $1.000.000</span></div>' +
+      '<div class="frasco"><div class="jar"><i style="height:35%"></i></div><span class="nm">Fondo para imprevistos</span><span class="sb">$700.000 de $2.000.000</span></div></div>' +
+      '<div class="h3">Así va octubre</div>' +
+      '<div class="mes"><div>Te entró<b>$1.850.000</b></div><div>Gastaste<b>$1.240.000</b></div><div class="pos">Te sobra<b>$610.000</b></div></div>' +
+      '</div><div class="fab">' + ic('plus') + '</div>' + tabs + '</div>';
+  }
+  function renderF() {
+    var acc = 'var(--f-ring)', trk = 'var(--f-ring-bg)';
+    return '<div class="m v-f"><div class="px"><div class="cab">' + topNuevo(true) +
+      '<div class="anillo">' + ring(65, 118, 12, trk, acc) + '<div class="txt"><span class="lb">Puedes gastar</span><span class="n">$860.000</span><span class="s">de $1.320.000 disponibles</span></div></div></div>' +
+      '<div class="aviso"><span class="ico">' + ic('hand') + '</span><span class="tx"><b>Ana</b> te pidió $30.000 por el súper</span><span class="pill">Pagar</span></div>' +
+      '<div class="burbujas">' +
+      '<div class="bb" style="background:var(--f-p3)"><span class="ico">' + ic('wallet') + '</span><span class="lb">Tu plata en total</span><span class="n">$4.250.000</span></div>' +
+      '<div class="bb" style="background:var(--f-p2)"><span class="ico">' + ic('trend') + '</span><span class="lb">Te sobra en octubre</span><span class="n">$610.000</span></div>' +
+      '<div class="bb" style="background:var(--f-p1)"><span class="ico">' + ic('bank') + '</span><span class="lb">Tienes</span><span class="n">$5.100.000</span></div>' +
+      '<div class="bb" style="background:var(--f-p4)"><span class="ico">' + ic('card') + '</span><span class="lb">Debes</span><span class="n">$850.000</span></div></div>' +
+      '<div class="h3">Tus metas <a href="#" tabindex="-1">Ver todas</a></div>' +
+      '<div class="metas"><div class="mt">' + ring(62, 72, 8, trk, '#ff9f6b') + '<span class="nm">Vacaciones en el sur</span><span class="sb">62% · faltan $380.000</span></div>' +
+      '<div class="mt">' + ring(35, 72, 8, trk, '#3ccf91') + '<span class="nm">Fondo para imprevistos</span><span class="sb">35% · faltan $1.300.000</span></div></div>' +
+      '</div><div class="fab">' + ic('plus') + '</div>' + tabs + '</div>';
+  }
+  var CUENTAS = [
+    { id: 'cc', nm: 'Cuenta corriente', vl: '$1.120.000', col: 'var(--e-c1)', em: '🏦' },
+    { id: 'rut', nm: 'Cuenta RUT', vl: '$200.000', col: 'var(--e-c2)', em: '💵' },
+    { id: 'fm', nm: 'Fondo mutuo', vl: '$3.780.000', col: 'var(--e-c3)', em: '📈' },
+    { id: 'tc', nm: 'Tarjeta de crédito', vl: '−$850.000', col: 'var(--e-c4)', em: '💳' }
+  ];
+  var MOVS = [
+    ['cc', 'Sueldo', '1 oct · Sueldo', '+$1.850.000', 1, '💼'], ['tc', 'Supermercado Líder', '8 oct · Mercado', '−$86.400', 0, '🛒'],
+    ['cc', 'Arriendo', '5 oct · Vivienda', '−$520.000', 0, '🏠'], ['rut', 'Bencina', '7 oct · Transporte', '−$42.000', 0, '🚗'],
+    ['cc', 'Luz', '5 oct · Servicios', '−$38.900', 0, '💡'], ['tc', 'Farmacia', '3 oct · Salud', '−$15.200', 0, '💊'],
+    ['rut', 'Transferencia de Ana', '2 oct · De alguien del hogar', '+$30.000', 1, '👥'], ['cc', 'Vacaciones en el sur', '2 oct · Ahorro para meta', '−$100.000', 0, '🐷']
+  ];
+  var G = { sel: 'cc', soloCuenta: true };
+  function movsHtml() {
+    var c = CUENTAS.filter(function (x) { return x.id === G.sel; })[0];
+    var lista = MOVS.filter(function (m) { return !G.soloCuenta || m[0] === G.sel; }).slice(0, 4);
+    var color = function (id) { return CUENTAS.filter(function (x) { return x.id === id; })[0].col; };
+    return '<div class="sw"><span>' + (G.soloCuenta ? 'Solo ' + c.nm : 'Todas tus cuentas') + ' · octubre</span>' +
+      '<button type="button" role="switch" aria-checked="' + G.soloCuenta + '" aria-label="Ver solo los movimientos de la cuenta elegida" data-g="sw"></button></div>' +
+      (lista.length ? lista.map(function (m) { return '<div class="mv"><span class="em">' + m[5] + '</span><span class="t">' + m[1] + '<small>' + m[2] + '</small></span><span class="v' + (m[4] ? ' pos' : '') + '">' + m[3] + '</span></div>'; }).join('') : '<div class="vacio">Sin movimientos este mes.</div>') +
+      '<span class="vertodos">Ver todos los movimientos</span>';
+  }
+  function renderG() {
+    var acc = 'var(--g-acc)', trk = 'var(--g-acc-soft)';
+    var metas = [['Vacaciones en el sur', 62, 'faltan $380.000', '#ff9f6b', '🏖️'], ['Fondo para imprevistos', 35, 'faltan $1.300.000', '#3ccf91', '🛟']];
+    return '<div class="m v-g"><div class="px">' +
+      '<div class="top"><div class="hola"><small>Viernes 9 de octubre</small>Hola, Juan</div><div class="icons"><span class="ib">' + ic('bell') + '<i>2</i></span><span class="ib">' + ic('gear') + '</span></div></div>' +
+      '<div><div class="tog"><span class="on">Lo mío</span><span>Del hogar</span></div></div>' +
+      '<div class="aviso"><span class="ico em2">🛒</span><span class="tx"><b>Ana</b> te pidió $30.000 por el súper</span><span class="pill">Pagar</span></div>' +
+      '<div class="res"><div class="top2"><span class="lb">Tu plata en total</span><div class="big">$4.250.000 <span class="chg">▲ 2,4%</span></div>' +
+      '<svg class="spark" viewBox="0 0 300 30" preserveAspectRatio="none"><path d="M0 25 L40 23 L80 24 L120 18 L160 20 L200 13 L240 10 L300 5"/></svg>' +
+      '<div class="subs"><div>💰 Tienes<b>$5.100.000</b></div><div>💳 Debes<b>$850.000</b></div></div></div>' +
+      '<div class="datos"><div class="row"><span>💵 Plata disponible</span><span>$1.320.000</span></div><div class="row"><span>🐷 Guardado para metas</span><span class="r">− $400.000</span></div>' +
+      '<div class="row"><span>👥 De otras personas</span><span class="r">− $60.000</span></div><div class="row tot"><span>✅ Puedes gastar</span><span class="v">$860.000</span></div></div></div>' +
+      '<div class="h3">Tus cuentas <a href="#" tabindex="-1">Ver todas</a></div>' +
+      '<div class="carrusel sel">' + CUENTAS.slice(0, 3).map(function (c) { return '<button type="button" class="tj' + (c.id === G.sel ? ' on' : '') + '" style="background:' + c.col + '" data-g="tj" data-id="' + c.id + '" aria-pressed="' + (c.id === G.sel) + '"><span class="nm"><span class="emc">' + c.em + '</span>' + c.nm + '</span><span class="vl">' + c.vl + '</span></button>'; }).join('') +
+      '<span class="tj mas">' + ic('plus') + '<span class="vl">Ver todas (4)</span></span></div>' +
+      '<div class="movs" data-g="movs">' + movsHtml() + '</div>' +
+      '<div class="h3">Tus metas <a href="#" tabindex="-1">Ver todas (5)</a></div>' +
+      '<div class="metas">' + metas.map(function (g) { return '<div class="mt">' + ring(g[1], 76, 8, trk, g[3]) + '<span class="pc">' + g[4] + '</span><span class="nm">' + g[0] + '</span><span class="sb"><b>' + g[1] + '%</b> · ' + g[2] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="h3">Así va octubre</div>' +
+      '<div class="mes"><div class="row"><span>📥 Te entró</span><span>$1.850.000</span></div><div class="row"><span>📤 Gastaste</span><span>$1.240.000</span></div><div class="row tot"><span>🎉 Te sobra</span><span class="v">$610.000</span></div></div>' +
+      '</div><div class="fab">' + ic('plus') + '</div>' + tabs + '</div>';
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-g]'); if (!el) return;
+    var m = el.closest('.v-g');
+    if (el.dataset.g === 'tj') {
+      G.sel = el.dataset.id; G.soloCuenta = true;
+      m.querySelectorAll('.tj[data-id]').forEach(function (b) { var on = b.dataset.id === G.sel; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    } else if (el.dataset.g === 'sw') { G.soloCuenta = !G.soloCuenta; }
+    m.querySelector('[data-g="movs"]').innerHTML = movsHtml();
+  });
+  var V = [
+    { k: 'hoy', cls: 'v-hoy', t: T.hoy, nombre: 'Hoy', sub: 'Lo que hay en la app',
+      notas: ['Todo en blanco, negro y gris; el color solo aparece en los montos.', 'Títulos de sección en mayúsculas chicas, tarjetas grises iguales.', 'Palabras de banco: patrimonio, liquidez, flujo, balance.'] },
+    { k: 'g', render: renderG, nombre: 'Propuesta · La mezcla', sub: 'Lo que elegiste de cada ronda',
+      notas: ['<b>Resumen como hoy</b>, con las palabras nuevas: la resta que llega a "Puedes gastar" se ve completa.', '<b>Cuentas como tarjetas de color</b> (de E): se muestran 3 y "Ver todas". <b>Toca una tarjeta</b>: abajo aparecen sus movimientos del mes.', '<b>El interruptor</b> cambia entre los movimientos de esa cuenta y los de todas tus cuentas en el período. Pruébalo.', '<b>Metas en anillo</b> (de F): solo las 2 con más avance; el resto en "Ver todas".', 'Colores, letra y el selector "Lo mío / Del hogar" de F (lila y pastel).', '<b>Emojis</b> para reconocer todo de un vistazo: cada categoría de movimiento (🛒 🏠 💡 🚗), cada tipo de cuenta (🏦 💳 📈), cada meta (🏖️ 🛟) y las filas del resumen.'] }
+  ];
+  function mock(v) {
+    var t = v.t, hoy = v.k === 'hoy';
+    var top = '<div class="top">' + (hoy ? '' : '<div class="hola"><small>Viernes 9 de octubre</small>' + t.saludo + '</div>') +
+      '<div class="tog"><span class="on">' + t.tog[0] + '</span><span>' + t.tog[1] + '</span></div>' +
+      '<div class="icons"><span class="ib">' + ic('bell') + '<i>2</i></span><span class="ib">' + ic('gear') + '</span></div></div>';
+    if (!hoy) top = '<div class="top"><div class="hola"><small>Viernes 9 de octubre</small>' + t.saludo + '</div><div class="icons"><span class="ib">' + ic('bell') + '<i>2</i></span><span class="ib">' + ic('gear') + '</span></div></div><div><div class="tog"><span class="on">' + t.tog[0] + '</span><span>' + t.tog[1] + '</span></div></div>';
+    var alerta = '<div class="alert">' + (hoy ? '' : '<span class="tile t-prog" style="width:30px;height:30px">' + ic('hand') + '</span>') + '<span class="tx">' + t.alerta + '</span><span class="btn">' + t.alertaBtn + '</span></div>';
+    var hero = '<div class="hero"><div class="lb">' + t.heroLb + '</div><div class="big">$4.250.000 <span class="chg">▲ 2,4%</span></div>' +
+      '<svg class="spark" viewBox="0 0 300 34" preserveAspectRatio="none"><path d="M0 28 L40 26 L80 27 L120 20 L160 22 L200 15 L240 12 L300 6"/></svg>' +
+      '<div class="subs"><div>' + t.tienes + '<b>$5.100.000</b></div><div>' + t.debes + '<b>$850.000</b></div></div></div>';
+    var datos = '<div class="card datos"><div class="row"><span>' + t.liq + '</span><span class="v">$1.320.000</span></div>' +
+      '<div class="row"><span>' + t.guard + '</span><span class="r">− $400.000</span></div>' +
+      '<div class="row"><span>' + t.ajena + '</span><span class="r">− $60.000</span></div>' +
+      '<div class="row tot"><span>' + t.libre + '</span><span class="v">$860.000</span></div></div>';
+    var rows = [['cuentas', 'bank', '$1.320.000', ''], ['inv', 'trend', '$3.780.000', ''], ['deuda', 'card', '$850.000', 'neg']];
+    var pat = '<div class="sec"><div class="sh"><h3>' + t.secPat + '</h3><a href="#" tabindex="-1">' + t.verTodo + '</a></div><div class="card list">' +
+      rows.map(function (r, i) { return '<div class="li"><span class="tile t-' + r[0] + '">' + ic(r[1]) + '</span><span class="t">' + t.rows[i][0] + '<small>' + t.rows[i][1] + '</small></span><span class="v ' + r[3] + '">' + (r[3] ? '−' : '') + r[2] + '</span></div>'; }).join('') + '</div></div>';
+    var metas = [['Vacaciones en el sur', 'plane', 62, '$620.000 de $1.000.000'], ['Fondo para imprevistos', 'shield', 35, '$700.000 de $2.000.000']];
+    var met = '<div class="sec"><div class="sh"><h3>' + t.secMetas + '</h3><a href="#" tabindex="-1">' + t.verTodas + '</a></div>' +
+      metas.map(function (g) { return '<div class="card goal"><div class="gt">' + (hoy ? '' : '<span class="tile t-meta" style="width:32px;height:32px">' + ic(g[1]) + '</span>') + '<span class="n">' + g[0] + '</span><span class="p">' + g[2] + '%</span></div><div class="bar"><i style="width:' + g[2] + '%"></i></div><div class="gf"><span>' + g[3] + '</span><span class="ah">' + t.ahorrar + '</span></div></div>'; }).join('') + '</div>';
+    var flujo = '<div class="sec"><div class="sh"><h3>' + t.secFlujo + '</h3><a href="#" tabindex="-1">' + t.verTodo + '</a></div><div class="card flujo">' +
+      '<div class="row"><span>' + t.ing + '</span><span>$1.850.000</span></div><div class="row"><span>' + t.gas + '</span><span>$1.240.000</span></div>' +
+      '<div class="row tot"><span>' + t.bal + '</span><span class="v">$610.000</span></div></div></div>';
+    var qaIc = [['swap', 'cuentas'], ['flag', 'meta'], ['cal', 'prog'], ['wallet', 'inv']];
+    var qa = '<div class="sec"><div class="sh"><h3>' + t.secQa + '</h3></div><div class="qa">' +
+      t.qa.map(function (l, i) { return '<div><span class="tile t-' + qaIc[i][1] + '">' + ic(qaIc[i][0]) + '</span>' + l + '</div>'; }).join('') + '</div></div>';
+    var tabs = '<div class="tabs"><div class="on">' + ic('home') + 'Inicio</div><div>' + ic('swap') + 'Movimientos</div><div>' + ic('flag') + 'Planificar</div><div>' + ic('people') + 'Hogar</div></div>';
+    return '<div class="m ' + v.cls + '"><div class="scr">' + top + alerta + hero + datos + pat + met + flujo + qa + '</div><div class="fab">' + ic('plus') + '</div>' + tabs + '</div>';
+  }
+  var grid = document.getElementById('mocks');
+  grid.innerHTML = V.map(function (v) {
+    return '<div class="col"><h2>' + v.nombre + '<small>' + v.sub + '</small></h2>' + (v.render ? v.render() : mock(v)) +
+      '<ul class="notas">' + v.notas.map(function (n) { return '<li>' + n + '</li>'; }).join('') + '</ul></div>';
+  }).join('');
+  var bc = document.getElementById('b-claro'), bo = document.getElementById('b-oscuro');
+  function set(dk) {
+    grid.classList.toggle('dk', dk); bc.setAttribute('aria-pressed', String(!dk)); bo.setAttribute('aria-pressed', String(dk));
+    try { localStorage.setItem('pat-dv-tema', dk ? 'o' : 'c'); } catch (e) {}
+  }
+  bc.addEventListener('click', function () { set(false); });
+  bo.addEventListener('click', function () { set(true); });
+  try { if (localStorage.getItem('pat-dv-tema') === 'o') set(true); } catch (e) {}
+})();
+</script>
