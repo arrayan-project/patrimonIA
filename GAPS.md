@@ -39,7 +39,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
-| **F** · Planificación: objetivos, reservas, presupuestos y programados | G36 | G2, G13, G14, G15, G16, G26 |
+| **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G32, G33, G35 | G25 |
@@ -56,7 +56,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
 | — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Quedan: Agrupaciones ⏸ (hasta usarlas en Mi patrimonio) y el ícono de la app (cuando se compile la app propia). | 🟡 |
-| — | **G36** | Pasar un presupuesto ya creado de "Solo mío" a "Del hogar" (o al revés): hoy solo se elige al crearlo. Necesita definición de Juan (ver detalle). | 📋 decisión |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
@@ -86,33 +85,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-### Tema F · Planificación: objetivos, reservas, presupuestos y programados
-
-#### G36 — Cambiar si un presupuesto es tuyo o del hogar  📋 DECISIÓN (abierto 2026-10-09)
-- **Qué pasa**: Juan (2026-10-09) no encontró cómo compartir su presupuesto
-  con el hogar. "Solo mío / Del hogar" se pregunta solo al crear el
-  presupuesto (segunda pregunta, HZ-22); después no se puede cambiar:
-  "Cambiar montos" solo edita montos y `ActualizarPresupuestoDto` no recibe
-  `tipo` ni `hogarId`. Hoy la única salida es crear uno nuevo "Del hogar" y
-  eliminar el propio.
-- **Por qué no está resuelto**: cambiar `tipo` cambia qué cuenta el
-  presupuesto (lo tuyo o lo del hogar) y quién lo ve, y choca con reglas ya
-  vigentes en `presupuesto.service`.
-- **Preguntas para decidir**:
-  1. **Categorías del reparto:** un presupuesto del hogar solo acepta
-     categorías de su hogar; uno individual acepta las de cualquier hogar del
-     usuario. Al pasar de tuyo a compartido, ¿qué pasa con los montos ya
-     repartidos en categorías de otro hogar (se borran, se bloquea el cambio,
-     se pregunta)? Lo mismo con el ahorro por meta: ¿metas propias en un
-     presupuesto del hogar?
-  2. **Quién puede cambiarlo:** ¿cualquier miembro del hogar o solo quien lo
-     creó? ¿Y al revés (de "Del hogar" a "Solo mío"): deja de verse para los
-     demás miembros? ¿Se les avisa?
-- **Opciones**: (a) permitir el cambio con reglas para 1 y 2 (comando
-  nuevo o `tipo` en `ActualizarPresupuesto`, más e2e); (b) no permitirlo y
-  ofrecer en el detalle "Copiar para el hogar" (crea uno nuevo con los mismos
-  montos); (c) dejarlo como está y solo aclararlo en la pantalla.
 
 ### Tema H · Notificaciones
 
@@ -1462,6 +1434,44 @@ ya cerrados en Fases 50–51).
 - **Para decidir**: ¿la suma de las líneas de gasto debería cuadrar con
   `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
   (cierra del todo G15)?
+
+#### G36 — Cambiar si un presupuesto es tuyo o del hogar  ✅ RESUELTO (2026-10-09)
+- **Qué pasa**: Juan (2026-10-09) no encontró cómo compartir su presupuesto
+  con el hogar. "Solo mío / Del hogar" se pregunta solo al crear el
+  presupuesto (segunda pregunta, HZ-22); después no se puede cambiar:
+  "Cambiar montos" solo edita montos y `ActualizarPresupuestoDto` no recibe
+  `tipo` ni `hogarId`. Hoy la única salida es crear uno nuevo "Del hogar" y
+  eliminar el propio.
+- **Por qué no está resuelto**: cambiar `tipo` cambia qué cuenta el
+  presupuesto (lo tuyo o lo del hogar) y quién lo ve, y choca con reglas ya
+  vigentes en `presupuesto.service`.
+- **Preguntas para decidir**:
+  1. **Categorías del reparto:** un presupuesto del hogar solo acepta
+     categorías de su hogar; uno individual acepta las de cualquier hogar del
+     usuario. Al pasar de tuyo a compartido, ¿qué pasa con los montos ya
+     repartidos en categorías de otro hogar (se borran, se bloquea el cambio,
+     se pregunta)? Lo mismo con el ahorro por meta: ¿metas propias en un
+     presupuesto del hogar?
+  2. **Quién puede cambiarlo:** ¿cualquier miembro del hogar o solo quien lo
+     creó? ¿Y al revés (de "Del hogar" a "Solo mío"): deja de verse para los
+     demás miembros? ¿Se les avisa?
+- **Opciones**: (a) permitir el cambio con reglas para 1 y 2 (comando
+  nuevo o `tipo` en `ActualizarPresupuesto`, más e2e); (b) no permitirlo y
+  ofrecer en el detalle "Copiar para el hogar" (crea uno nuevo con los mismos
+  montos); (c) dejarlo como está y solo aclararlo en la pantalla.
+- **Decidido (Juan, 2026-10-09)**: opción (a), comando nuevo
+  `CambiarAlcancePresupuesto` (APPLICATION_SERVICES #85, API_DESIGN K).
+  1. Líneas que dejan de valer (categoría de otro hogar, ahorro hacia la meta
+     de alguien que queda fuera): **se bloquea** el cambio y se dice cuáles
+     (`PRESUPUESTO_FUERA_DE_ALCANCE` con los nombres); no se borra nada.
+  2. Solo **quien lo creó** puede cambiarlo, en los dos sentidos; a los demás
+     miembros **no se les avisa** (queda en la auditoría). Cerrado: no se
+     cambia.
+- **Implementado** (rama `feat/G36-alcance-presupuesto`): backend + e2e
+  (`presupuesto.e2e-spec.ts`, 3 casos); en el detalle del presupuesto, para
+  quien lo creó, "👥 Compartir con el hogar" o "🙋 Dejarlo solo para mí",
+  con confirmación. El hogar destino es el primero del usuario, igual que al
+  crear.
 
 ### Tema G · Monedas, proyecciones y reportes
 

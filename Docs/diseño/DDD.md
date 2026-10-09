@@ -830,7 +830,7 @@ moneda) — GAPS G7.
 | Evento Financiero | `CrearCategoriaMovimiento`, `ActualizarCategoriaMovimiento`, `ArchivarCategoriaMovimiento`, `ReordenarCategoriasMovimiento`, `CrearEtiqueta`, `ActualizarEtiqueta`, `EliminarEtiqueta`, `EtiquetarEvento`, `CrearPlantillaMovimiento`, `ActualizarPlantillaMovimiento`, `EliminarPlantillaMovimiento` |
 | Elemento Patrimonial (visualización) | `CrearAgrupacion`, `ActualizarAgrupacion`, `EliminarAgrupacion`, `DefinirElementosAgrupacion`, `CrearTipoElemento`, `ActualizarTipoElemento`, `ArchivarTipoElemento` |
 | Objetivo Financiero | `CompartirObjetivoConHogar`, `DefinirDesignadosObjetivo` |
-| Presupuesto | `DefinirLineasPresupuesto`, `DefinirLineasAhorroPresupuesto` |
+| Presupuesto | `DefinirLineasPresupuesto`, `DefinirLineasAhorroPresupuesto`, `CambiarAlcancePresupuesto` (G36) |
 | Tipo de Cambio | `RegistrarTipoCambio` |
 | Orquestaciones de G33 (sobre comandos existentes) | `AhorrarParaObjetivo`, `RegistrarPlataDeOtraPersona`, `RegistrarGastoCompartido`, `AvisarTransferenciaSinAnotar`, `PagarSolicitud`, `RechazarSolicitud` |
 

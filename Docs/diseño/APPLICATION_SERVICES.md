@@ -540,6 +540,12 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 - Output: PresupuestoDTO. Una sola entrada de auditoría.
 ### 75. DefinirLineasAhorroPresupuesto — igual, con [{ objetivoId, montoEsperado }].
 
+### 85. CambiarAlcancePresupuesto — GAPS G36
+- Input: presupuestoId, tipo (INDIVIDUAL ↔ FAMILIAR), hogarId (obligatorio al pasar a FAMILIAR; no va al pasar a INDIVIDUAL).
+- Validaciones: solo quien creó el presupuesto (`PRESUPUESTO_SOLO_CREADOR`); no CERRADO; tipo distinto del actual (`PRESUPUESTO_MISMO_ALCANCE`); miembro activo del hogar destino. Las líneas tienen que seguir valiendo en el nuevo alcance, con las mismas reglas de #74/#75 (categorías del hogar del presupuesto o, si es individual, de los hogares del actor; metas de los usuarios del alcance). Si alguna queda fuera se rechaza con `PRESUPUESTO_FUERA_DE_ALCANCE` y `datos: { categorias, metas }` (nombres): no se borra nada.
+- Efecto: cambia `tipo` y `hogar_id`; el creador (`usuario_id`) se conserva. Sin aviso a los demás miembros.
+- Output: PresupuestoDTO. Auditoría: Modificación — `{ tipo, hogar_id }` anterior/posterior, relacionada con el hogar.
+
 ## Visibilidad granular del elemento — GAPS G6
 
 ### 76. DefinirVisibilidadElementoPatrimonial

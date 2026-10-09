@@ -238,6 +238,7 @@ de una ocurrencia vencida es una notificación `PROGRAMADO_VENCIDO` con
 | --- | --- | --- |
 | `POST /comandos/CrearPresupuesto` | #49 | tipo, período/propósito, montos esperados |
 | `POST /comandos/ActualizarDatosPresupuesto` | #50 | id, campos a modificar |
+| `POST /comandos/CambiarAlcancePresupuesto` | #85 | presupuestoId, tipo (INDIVIDUAL/FAMILIAR), hogarId (solo FAMILIAR) — GAPS G36 |
 | `POST /comandos/CerrarPresupuesto` | #51 | id (específico, no periódico), motivo |
 | `POST /comandos/EliminarPresupuesto` | #52 | id, motivo |
 
