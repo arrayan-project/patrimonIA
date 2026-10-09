@@ -570,6 +570,11 @@ export interface MovimientoReporteDTO {
    * No se suma a ningún total del período.
    */
   efectoPropio: number | null;
+  /** G39: cuenta de donde salió (impacto negativo) y a donde llegó (positivo). */
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
+  /** G39: cuándo se anotó (no la fecha del movimiento). */
+  registradoEn: string;
 }
 
 export interface ResumenFinancieroDTO {

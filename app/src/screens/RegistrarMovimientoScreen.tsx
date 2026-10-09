@@ -12,6 +12,7 @@ import {
   type ObjetivoFinancieroDTO,
   type PlantillaMovimientoDTO,
   type ReservaDeElementoDTO,
+  type ResumenFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
@@ -30,10 +31,11 @@ import {
   type Previo,
   type ResultadoPlataDTO,
 } from '../personas';
-import { nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
+import { diaCorto, nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
 import { Text } from '../ui/Text';
 import { cadaCuando, OPCIONES_REPITE, siguienteFecha, type Periodicidad } from '../recurrencia';
+import { categoriasMasUsadas, DIAS_RECIENTES, ultimaCuenta, type MovimientoReciente } from '../recientes';
 import {
   colorAnotar,
   contadorPasos,
@@ -52,6 +54,7 @@ import {
   Nota,
   Opcionales,
   Pastilla,
+  Question,
   Section,
   Skeleton,
   Screen,
@@ -175,6 +178,10 @@ export function RegistrarMovimientoScreen() {
   // Recibí → De alguien del hogar: "Avisarle a [miembro]" si la transferencia no aparece.
   const [avisarA, setAvisarA] = useState<string | null>(null);
   const [avisando, setAvisando] = useState(false);
+  // G39 (F-1, F-2): los movimientos de los últimos días dicen la cuenta de la
+  // última vez y las categorías más usadas. `recordado` es lo que se preeligió.
+  const [recientes, setRecientes] = useState<MovimientoReciente[] | null>(null);
+  const [recordado, setRecordado] = useState<{ origenId: string | null; destinoId: string | null } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   useTitulo((params.titulo as string | undefined) ?? TITULOS[tipo]);
@@ -186,8 +193,8 @@ export function RegistrarMovimientoScreen() {
 
   const sucio =
     Number(monto) > 0 ||
-    origenId !== origenInicial ||
-    destinoId !== destinoInicial ||
+    origenId !== (origenInicial ?? recordado?.origenId ?? null) ||
+    destinoId !== (destinoInicial ?? recordado?.destinoId ?? null) ||
     glosa.trim() !== '' ||
     categoriaId !== null ||
     persona !== null ||
@@ -231,6 +238,12 @@ export function RegistrarMovimientoScreen() {
       .get<PersonaDTO[]>('/usuarios/me/personas?todas=true', token)
       .then(setPersonas)
       .catch(() => setPersonas([]));
+    const hoy = new Date();
+    const desde = new Date(hoy.getTime() - DIAS_RECIENTES * DIA);
+    api
+      .get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${aISO(desde)}&hasta=${aISO(hoy)}&alcance=mios`, token)
+      .then((r) => setRecientes(r.movimientos))
+      .catch(() => setRecientes([]));
   }, [token]);
 
   // Los Frecuentes se recargan al volver (p. ej. de "Crear uno").
@@ -318,6 +331,35 @@ export function RegistrarMovimientoScreen() {
     if (cuentaId && tipo === 'INGRESO') setDestinoId((d) => d ?? cuentaId);
   }, [cuentaId, tipo]);
 
+  // G39 (F-1): si se entra sin cuenta elegida (por el "+"), viene la de la
+  // última vez en esta puerta. Se ve como paso hecho y se cambia ahí mismo.
+  const puerta = tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo;
+  useEffect(() => {
+    if (recordado || !recientes || !elementos) return;
+    if (esPagoTarjeta || origenInicial || destinoInicial || origenId || destinoId) {
+      setRecordado({ origenId: null, destinoId: null });
+      return;
+    }
+    // Moví plata recuerda solo plata entre cuentas: pagar una deuda o cobrar lo
+    // que te deben tiene su propia puerta (💳 Pagar, 🤝 Me pagaron).
+    const entreCuentas = (e: ElementoPatrimonialDTO) =>
+      puerta !== 'TRANSFERENCIA' || ['LIQUIDEZ', 'RESERVA', 'INVERSION'].includes(e.categoriaFuncional);
+    const propias = new Set(
+      elementos.filter((e) => e.naturaleza !== 'CUSTODIA_INFORMAL' && entreCuentas(e)).map((e) => e.id),
+    );
+    const deMiembros = new Set(
+      elementosHogar.filter((e) => !elementos.some((x) => x.id === e.id) && entreCuentas(e)).map((e) => e.id),
+    );
+    const r = ultimaCuenta(
+      recientes,
+      puerta,
+      (id, lado) => propias.has(id) || (puerta === 'TRANSFERENCIA' && lado === 'destino' && deMiembros.has(id)),
+    ) ?? { origenId: null, destinoId: null };
+    setRecordado(r);
+    if (r.origenId) setOrigenId(r.origenId);
+    if (r.destinoId) setDestinoId(r.destinoId);
+  }, [recordado, recientes, elementos, elementosHogar, esPagoTarjeta, origenInicial, destinoInicial, origenId, destinoId, puerta]);
+
   const aplicarPlantilla = (p: PlantillaMovimientoDTO) => {
     if (p.tipo === 'INGRESO' || p.tipo === 'GASTO' || p.tipo === 'TRANSFERENCIA') setTipo(p.tipo);
     if (p.monto != null) setMonto(String(p.monto));
@@ -349,6 +391,26 @@ export function RegistrarMovimientoScreen() {
     }
     return orden;
   }, [categorias, tipo]);
+  const preguntaCategoria = tipo === 'INGRESO' ? '¿De qué? (opcional)' : '¿En qué? (opcional)';
+  const categoriaElegida = categorias.find((x) => x.id === categoriaId);
+  const opcionesCategoria = [
+    ...categoriasAplicables.map((x) => ({
+      value: x.id,
+      label: x.nombre,
+      emoji: emojiCategoria(x) ?? '🏷️',
+      sub: x.categoriaPadreId
+        ? `Dentro de ${categorias.find((p) => p.id === x.categoriaPadreId)?.nombre ?? 'otra'}`
+        : undefined,
+    })),
+    { value: NUEVA, label: 'Nueva categoría', emoji: '➕' },
+  ];
+  const elegirCategoria = (v: string | null) => (v === NUEVA ? setCrearCat(true) : setCategoriaId(v));
+  // G39 (F-2): las categorías que más usa en esta puerta, a un toque.
+  const masUsadas = useMemo(() => {
+    if (!recientes || (tipo !== 'GASTO' && tipo !== 'INGRESO')) return [];
+    const aplicables = new Map(categoriasAplicables.map((x) => [x.id, x]));
+    return categoriasMasUsadas(recientes, tipo, (id) => aplicables.has(id)).map((id) => aplicables.get(id)!);
+  }, [recientes, tipo, categoriasAplicables]);
 
   const crearCategoriaInline = async () => {
     if (!hogarId || !catNombre.trim()) return;
@@ -650,6 +712,15 @@ export function RegistrarMovimientoScreen() {
   const saldoQueda = saldoResultante(saldoActual, direccion, Number(monto) || 0, previo && pidePrevio
     ? { tipo: previo, montoIngreso: ingreso?.monto }
     : undefined);
+  // G39: el pie dice solo lo que falta (la cuenta puede venir elegida).
+  const faltan = [
+    Number(monto) > 0 ? null : 'el monto',
+    necesitaOrigen && !origenId ? (necesitaDestino ? 'de qué cuenta sale' : 'la cuenta') : null,
+    necesitaDestino && !destinoId ? (necesitaOrigen ? 'a qué cuenta llega' : 'la cuenta') : null,
+  ].filter(Boolean) as string[];
+  const faltaTexto = faltan.length
+    ? `Completa ${faltan.length > 1 ? `${faltan.slice(0, -1).join(', ')} y ${faltan[faltan.length - 1]}` : faltan[0]}.`
+    : 'Revisa los datos.';
   const resumen: ReactNode = esOtra
     ? !puedeEnviar
       ? 'Completa monto, persona y cuenta.'
@@ -659,9 +730,7 @@ export function RegistrarMovimientoScreen() {
     : !puedeEnviar && esCompartido && (errParte || oculta(recibe))
     ? errParte || `${nombresCompartido} tiene que poder transferirte a ${recibe?.nombre}.`
     : !puedeEnviar
-    ? necesitaOrigen && necesitaDestino
-      ? 'Completa monto, origen y destino.'
-      : 'Completa monto y cuenta.'
+    ? faltaTexto
     : esCompartido
       ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}. Le pedimos a ${nombresCompartido} su parte: ${money(parte, monedaEvento)}${compartidoCon.length > 1 ? ' cada uno' : ''}.`
     : tipo === 'GASTO'
@@ -671,8 +740,15 @@ export function RegistrarMovimientoScreen() {
         : tipo === 'TRANSFERENCIA'
           ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
           : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
+  // G39: el pie dice también en qué y cuándo (lo que vino elegido se ve).
+  const hoyISO = aISO(new Date());
+  const ayerISO = aISO(new Date(Date.now() - DIA));
+  const cuando = fecha === hoyISO ? 'hoy' : fecha === ayerISO ? 'ayer' : diaCorto(fecha);
+  const detalleResumen = [puedeCategorizar && !esOtra ? categoriaElegida?.nombre : null, cuando].filter(Boolean).join(' · ');
+  const conDetalle =
+    typeof resumen === 'string' && puedeEnviar ? resumen.replace(/\.( |$)/, ` · ${detalleResumen}.$1`) : resumen;
   const conRepite =
-    typeof resumen === 'string' && puedeEnviar && repiteAplica && repite !== 'NO' ? `${resumen} Te avisamos ${cadaCuando(repite, fecha)}.` : resumen;
+    typeof resumen === 'string' && puedeEnviar && repiteAplica && repite !== 'NO' ? `${conDetalle} Te avisamos ${cadaCuando(repite, fecha)}.` : conDetalle;
   // G35: con todo listo, el resumen lleva el emoji de la puerta.
   const resumenFinal: ReactNode = puedeEnviar ? `${emojiBanda} ${conRepite}` : conRepite;
   const accion = esPagoTarjeta
@@ -717,6 +793,8 @@ export function RegistrarMovimientoScreen() {
   const pQuien = puedeCategorizar ? paso({ hecho: true }) : undefined;
   const delHogarModo = tipo === 'INGRESO' && quien === 'HOGAR';
   const pParte = esCompartido ? paso({ hecho: Number(monto) > 0 && !errParte }) : undefined;
+  // G39: "¿En qué?" va antes de la cuenta (monto, para qué, cuenta, cuándo).
+  const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
   const pPersona = esOtra ? paso({ hecho: !!nombrePersona }) : undefined;
   const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
   const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
@@ -724,7 +802,6 @@ export function RegistrarMovimientoScreen() {
   const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pRecibe = esCompartido ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
   const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
-  const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
   const pFecha = paso({ hecho: !!fecha });
 
   const pasoQuien = pQuien ? (
@@ -937,6 +1014,71 @@ export function RegistrarMovimientoScreen() {
         </BloquePaso>
       )}
 
+      {pCategoria && (
+        <BloquePaso paso={pCategoria} style={styles.group}>
+          {masUsadas.length > 0 ? (
+            <>
+              <Question paso={pCategoria}>{preguntaCategoria}</Question>
+              <View style={styles.frecuentes}>
+                {masUsadas.map((x) => (
+                  <Pastilla
+                    key={x.id}
+                    label={`${emojiCategoria(x) ?? '🏷️'} ${x.nombre}`}
+                    activo={categoriaId === x.id}
+                    onPress={() => setCategoriaId((actual) => (actual === x.id ? null : x.id))}
+                  />
+                ))}
+                {categoriaElegida && !masUsadas.some((x) => x.id === categoriaElegida.id) ? (
+                  <Pastilla
+                    label={`${emojiCategoria(categoriaElegida) ?? '🏷️'} ${categoriaElegida.nombre}`}
+                    activo
+                    onPress={() => setCategoriaId(null)}
+                  />
+                ) : null}
+                <Elegir
+                  label={preguntaCategoria}
+                  opcionNula="Sin categoría"
+                  value={categoriaId}
+                  options={opcionesCategoria}
+                  onChange={elegirCategoria}
+                  boton={(abrir) => <Pastilla label="🔍 Otra" enlace onPress={abrir} />}
+                />
+              </View>
+            </>
+          ) : (
+            <Elegir
+              label={preguntaCategoria}
+              paso={pCategoria}
+              opcionNula="Sin categoría"
+              value={categoriaId}
+              options={opcionesCategoria}
+              onChange={elegirCategoria}
+            />
+          )}
+          {crearCat ? (
+            <View style={styles.group}>
+              <Field
+                label=""
+                value={catNombre}
+                onChangeText={setCatNombre}
+                autoCapitalize="sentences"
+                placeholder={`Nueva categoría de ${etiqueta(tipo).toLowerCase()}`}
+                autoFocus
+              />
+              <View style={styles.fila}>
+                <View style={{ flex: 1 }}>
+                  <Button title="Crear" variant="secondary" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button title="Cancelar" variant="secondary" onPress={() => setCrearCat(false)} />
+                </View>
+              </View>
+            </View>
+          ) : null}
+        </BloquePaso>
+      )}
+
+
       {pPersona && (
         <BloquePaso paso={pPersona} style={styles.group}>
           <Elegir
@@ -1032,6 +1174,9 @@ export function RegistrarMovimientoScreen() {
           }}
         />
       )}
+      {tipo === 'GASTO' && recordado?.origenId && origenId === recordado.origenId ? (
+        <Nota>🔁 La de tu último gasto. Tócala para cambiarla.</Nota>
+      ) : null}
 
       {pMeta && (
         <BloquePaso paso={pMeta} style={styles.group}>
@@ -1090,49 +1235,12 @@ export function RegistrarMovimientoScreen() {
           onChange={setDestinoId}
         />
       )}
-
-      {pCategoria && (
-        <BloquePaso paso={pCategoria} style={styles.group}>
-          <Elegir
-            label="¿De qué categoría? (opcional)"
-            paso={pCategoria}
-            opcionNula="Sin categoría"
-            value={categoriaId}
-            options={[
-              ...categoriasAplicables.map((x) => ({
-                value: x.id,
-                label: x.nombre,
-                emoji: emojiCategoria(x) ?? '🏷️',
-                sub: x.categoriaPadreId
-                  ? `Dentro de ${categorias.find((p) => p.id === x.categoriaPadreId)?.nombre ?? 'otra'}`
-                  : undefined,
-              })),
-              { value: NUEVA, label: 'Nueva categoría', emoji: '➕' },
-            ]}
-            onChange={(v) => (v === NUEVA ? setCrearCat(true) : setCategoriaId(v))}
-          />
-          {crearCat ? (
-            <View style={styles.group}>
-              <Field
-                label=""
-                value={catNombre}
-                onChangeText={setCatNombre}
-                autoCapitalize="sentences"
-                placeholder={`Nueva categoría de ${etiqueta(tipo).toLowerCase()}`}
-                autoFocus
-              />
-              <View style={styles.fila}>
-                <View style={{ flex: 1 }}>
-                  <Button title="Crear" variant="secondary" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Button title="Cancelar" variant="secondary" onPress={() => setCrearCat(false)} />
-                </View>
-              </View>
-            </View>
-          ) : null}
-        </BloquePaso>
-      )}
+      {tipo === 'INGRESO' && recordado?.destinoId && destinoId === recordado.destinoId ? (
+        <Nota>🔁 La de tu último ingreso. Tócala para cambiarla.</Nota>
+      ) : null}
+      {necesitaOrigen && necesitaDestino && recordado?.origenId && origenId === recordado.origenId && destinoId === recordado.destinoId ? (
+        <Nota>🔁 Las de la última vez. Tócalas para cambiarlas.</Nota>
+      ) : null}
 
       <Cuando value={fecha} onChange={setFecha} paso={pFecha} />
 
