@@ -294,12 +294,13 @@ export function RootNavigator() {
           headerShadowVisible: false,
           contentStyle: { backgroundColor: c.fondo },
         }}
-        initialRouteName={session ? (inicial ?? 'Bienvenida') : 'Registro'}
+        initialRouteName={session ? (inicial ?? 'Bienvenida') : 'Login'}
       >
         {!session ? (
           <>
-            <Stack.Screen name="Registro" component={RegistroScreen} options={{ headerShown: false }} />
+            {/* G35 tanda 6: sin sesión se entra por Login (también al cerrar sesión, que toma la primera de la pila). */}
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Registro" component={RegistroScreen} options={{ headerShown: false }} />
             <Stack.Screen
               name="RecuperarPassword"
               component={RecuperarPasswordScreen}

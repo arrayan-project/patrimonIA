@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
-import { Button, contadorPasos, ErrorText, Field, Nota, Screen, Select } from '../ui';
+import { Button, ErrorText, Field, Nota, Screen, Select } from '../ui';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
@@ -56,27 +56,24 @@ export function CrearHogarScreen() {
     }
   };
 
-  const paso = contadorPasos();
   return (
     <Screen
       pie={
         <>
-          <Nota>Quedas como administrador del hogar y después puedes invitar a los demás.</Nota>
-          <Button title="Crear hogar" onPress={onSubmit} loading={loading} disabled={!!(errNombre || errMoneda)} />
+          <Nota>👑 Quedas a cargo del hogar; después invitas a los demás.</Nota>
+          <Button title="🏠 Crear mi hogar" onPress={onSubmit} loading={loading} disabled={!!(errNombre || errMoneda)} />
         </>
       }
     >
       <Field
-        label="¿Cómo se llama tu hogar?"
-        paso={paso({ hecho: !errNombre })}
+        label="🏠 ¿Cómo se llama tu hogar?"
         value={nombre}
         onChangeText={setNombre}
-        placeholder="p. ej. Familia Pérez"
+        placeholder="Ej.: Casa"
         autoCapitalize="sentences"
       />
       <Select
-        label="¿En qué moneda ven el total del hogar?"
-        paso={paso({ hecho: !errMoneda })}
+        label="💱 ¿En qué moneda quieres ver el total?"
         value={moneda}
         options={OPC_MONEDA}
         onChange={setMoneda}

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api/client';
 import { useNav } from '../navigation/navigator';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { Button, ErrorText, Field, Screen } from '../ui';
+import { BandaAcceso, CabeceraAcceso, EnlaceAcceso, PieAcceso } from '../ui/acceso';
 
 type Paso = 'email' | 'codigo' | 'listo';
 
@@ -21,7 +22,7 @@ export function RecuperarPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
 
-  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
+  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un correo válido.';
   const errCodigo = /^\d{6}$/.test(codigo.trim()) ? '' : 'Escribe los 6 dígitos que te enviamos.';
   const errPassword = password.length >= 8 ? '' : 'Mínimo 8 caracteres.';
 
@@ -63,25 +64,24 @@ export function RecuperarPasswordScreen() {
   if (paso === 'listo') {
     return (
       <Screen>
-        <Title>Contraseña actualizada</Title>
-        <Paragraph>
-          Ya puedes iniciar sesión con tu nueva contraseña. Por seguridad, cerramos la sesión en
-          todos tus dispositivos.
-        </Paragraph>
-        <Button title="Iniciar sesión" onPress={() => nav.go('Login')} />
+        <CabeceraAcceso titulo="✅ Listo, ya tienes contraseña nueva" />
+        <BandaAcceso emoji="🔐">Cerramos tu sesión en todos tus teléfonos.</BandaAcceso>
+        <Button title="👋 Entrar" onPress={() => nav.go('Login')} />
       </Screen>
     );
   }
 
   return (
-    <Screen>
-      <Title>Recuperar contraseña</Title>
+    <Screen
+      pie={<PieAcceso pregunta="¿Te acordaste?" accion="👋 Entrar" onPress={() => nav.go('Login')} />}
+    >
+      <CabeceraAcceso titulo="🔑 ¿Olvidaste tu contraseña?" />
 
       {paso === 'email' ? (
         <>
-          <Paragraph>Escribe el email de tu cuenta y te enviaremos un código.</Paragraph>
+          <BandaAcceso emoji="📬">Te mandamos un código a tu correo para elegir una nueva.</BandaAcceso>
           <Field
-            label="Email"
+            label="📧 Tu correo"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -90,26 +90,26 @@ export function RecuperarPasswordScreen() {
             error={intento ? errEmail : undefined}
           />
           <ErrorText>{error}</ErrorText>
-          <Button title="Enviar código" onPress={solicitar} loading={loading} />
+          <Button title="📬 Mandar código" onPress={solicitar} loading={loading} />
         </>
       ) : (
         <>
-          <Paragraph>
-            Si {email.trim()} tiene una cuenta, te llegará un código de 6 dígitos que vence en 15
-            minutos. Escríbelo aquí y elige tu nueva contraseña.
-          </Paragraph>
+          <BandaAcceso emoji="📬">
+            Si {email.trim()} tiene cuenta, te llega un código · vence en 15 min
+          </BandaAcceso>
           <Field
-            label="Código"
+            label="🔢 Escribe el código"
             keyboardType="number-pad"
             maxLength={6}
             autoComplete="one-time-code"
             textContentType="oneTimeCode"
+            placeholder="6 dígitos"
             value={codigo}
             onChangeText={setCodigo}
             error={intento ? errCodigo : undefined}
           />
           <Field
-            label="Nueva contraseña"
+            label="🔒 Elige tu nueva contraseña"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -117,12 +117,10 @@ export function RecuperarPasswordScreen() {
             error={intento ? errPassword : undefined}
           />
           <ErrorText>{error}</ErrorText>
-          <Button title="Cambiar contraseña" onPress={restablecer} loading={loading} />
-          <LinkButton title="No me llegó — volver a pedirlo" onPress={() => setPaso('email')} />
+          <Button title="🔒 Cambiar contraseña" onPress={restablecer} loading={loading} />
+          <EnlaceAcceso title="No me llegó, pedir otro" onPress={() => setPaso('email')} />
         </>
       )}
-
-      <LinkButton title="Volver a iniciar sesión" onPress={() => nav.go('Login')} />
     </Screen>
   );
 }

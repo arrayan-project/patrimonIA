@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { Button, ErrorText, Field, Screen } from '../ui';
+import { CabeceraAcceso, EnlaceAcceso, PieAcceso } from '../ui/acceso';
 
 export function LoginScreen() {
   const { iniciarSesion } = useAuth();
@@ -13,7 +14,7 @@ export function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
 
-  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
+  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un correo válido.';
   const errPassword = password ? '' : 'Escribe tu contraseña.';
 
   const onSubmit = async () => {
@@ -31,12 +32,13 @@ export function LoginScreen() {
   };
 
   return (
-    <Screen>
-      <Title>Iniciar sesión</Title>
-      <Paragraph>Bienvenido de vuelta a PatrimonIA.</Paragraph>
+    <Screen
+      pie={<PieAcceso pregunta="¿Primera vez?" accion="✨ Crear cuenta" onPress={() => nav.go('Registro')} />}
+    >
+      <CabeceraAcceso titulo="👋 ¡Hola de nuevo!" />
 
       <Field
-        label="Email"
+        label="📧 Tu correo"
         keyboardType="email-address"
         autoCapitalize="none"
         value={email}
@@ -45,7 +47,7 @@ export function LoginScreen() {
         error={intento ? errEmail : undefined}
       />
       <Field
-        label="Contraseña"
+        label="🔒 Tu contraseña"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -55,8 +57,7 @@ export function LoginScreen() {
 
       <ErrorText>{error}</ErrorText>
       <Button title="Entrar" onPress={onSubmit} loading={loading} />
-      <LinkButton title="¿Olvidaste tu contraseña?" onPress={() => nav.go('RecuperarPassword')} />
-      <LinkButton title="No tengo cuenta — registrarme" onPress={() => nav.go('Registro')} />
+      <EnlaceAcceso title="¿Olvidaste tu contraseña?" onPress={() => nav.go('RecuperarPassword')} />
     </Screen>
   );
 }

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { Button, ErrorText, Field, LinkButton, Paragraph, Screen, Title } from '../ui';
+import { Button, ErrorText, Field, Screen } from '../ui';
+import { BandaAcceso, CabeceraAcceso, EnlaceAcceso, PieAcceso } from '../ui/acceso';
 
 export function RegistroScreen() {
   const { solicitarTokenRegistro, verificarCodigoRegistro, registrar } = useAuth();
@@ -16,7 +17,7 @@ export function RegistroScreen() {
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
 
-  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un email válido.';
+  const errEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? '' : 'Escribe un correo válido.';
   const errNombre = nombre.trim() ? '' : 'Escribe tu nombre.';
   const errPassword = password.length >= 8 ? '' : 'Mínimo 8 caracteres.';
 
@@ -47,67 +48,68 @@ export function RegistroScreen() {
   };
 
   return (
-    <Screen>
-      <Title>Crear cuenta</Title>
-      <Paragraph>Regístrate para empezar a usar PatrimonIA.</Paragraph>
-
-      <Field
-        label="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="tu@email.cl"
-        editable={!pideCodigo}
-        error={intento ? errEmail : undefined}
-      />
-      <Field
-        label="Nombre"
-        value={nombre}
-        onChangeText={setNombre}
-        placeholder="Tu nombre"
-        editable={!pideCodigo}
-        error={intento ? errNombre : undefined}
-      />
-      <Field
-        label="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Mínimo 8 caracteres"
-        editable={!pideCodigo}
-        error={intento ? errPassword : undefined}
-      />
+    <Screen
+      pie={
+        pideCodigo ? undefined : (
+          <PieAcceso pregunta="¿Ya tienes cuenta?" accion="👋 Entrar" onPress={() => nav.go('Login')} />
+        )
+      }
+    >
+      <CabeceraAcceso titulo={pideCodigo ? '📬 Revisa tu correo' : '✨ Crea tu cuenta'} />
 
       {pideCodigo ? (
         <>
-          <Paragraph>
-            Te enviamos un código de 6 dígitos a {email.trim()} (vence en 15 minutos). Escríbelo
-            aquí:
-          </Paragraph>
+          <BandaAcceso emoji="📬">
+            Te mandamos un código a {email.trim()} · vence en 15 min
+          </BandaAcceso>
           <Field
-            label="Código de registro"
+            label="🔢 Escribe el código"
             keyboardType="number-pad"
             maxLength={6}
             autoComplete="one-time-code"
             textContentType="oneTimeCode"
+            placeholder="6 dígitos"
             value={codigo}
             onChangeText={setCodigo}
           />
           <ErrorText>{error}</ErrorText>
           <Button
-            title="Confirmar registro"
+            title="✅ Confirmar"
             onPress={() => crear(codigo.trim())}
             loading={loading}
             disabled={!/^\d{6}$/.test(codigo.trim())}
           />
-          <LinkButton title="Volver" onPress={() => setPideCodigo(false)} />
+          <EnlaceAcceso title="← Cambiar mis datos" onPress={() => setPideCodigo(false)} />
         </>
       ) : (
         <>
+          <Field
+            label="✏️ ¿Cómo te llamamos?"
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Tu nombre"
+            autoCapitalize="words"
+            error={intento ? errNombre : undefined}
+          />
+          <Field
+            label="📧 Tu correo"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="tu@email.cl"
+            error={intento ? errEmail : undefined}
+          />
+          <Field
+            label="🔒 Elige una contraseña"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Mínimo 8 caracteres"
+            error={intento ? errPassword : undefined}
+          />
           <ErrorText>{error}</ErrorText>
-          <Button title="Crear cuenta" onPress={() => crear()} loading={loading} />
-          <LinkButton title="Ya tengo cuenta — iniciar sesión" onPress={() => nav.go('Login')} />
+          <Button title="✨ Crear cuenta" onPress={() => crear()} loading={loading} />
         </>
       )}
     </Screen>
