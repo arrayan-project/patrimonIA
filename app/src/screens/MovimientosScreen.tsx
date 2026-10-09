@@ -250,7 +250,7 @@ export function MovimientosScreen() {
           options={['mios', 'hogar'] as const}
           value={alcance}
           onChange={setAlcance}
-          format={(x) => (x === 'mios' ? 'Míos' : 'Del hogar')}
+          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
         />
       </View>
 
