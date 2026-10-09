@@ -3,17 +3,19 @@ import { api, ApiError, type EtiquetaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
+import { EMOJI_ANOTAR } from '../emojis';
 import {
-  AmountInput,
   Button,
-  contadorPasos,
+  colorAnotar,
   Cuando,
   ElegirVarios,
   ErrorText,
   Field,
+  MontoBanda,
   Nota,
-  Opcional,
+  Opcionales,
   Screen,
+  useC,
 } from '../ui';
 
 /**
@@ -23,11 +25,13 @@ import {
  * corregir (es una corrección o ya fue corregido), solo se ven las etiquetas.
  */
 export function CorregirMovimientoScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
   const p = nav.route.params as {
     eventoId: string;
+    tipo: string;
     monto: number;
     fecha: string;
     glosa: string | null;
@@ -80,39 +84,60 @@ export function CorregirMovimientoScreen() {
     }
   };
 
-  const paso = contadorPasos();
+  const elegirEtiquetas = (
+    <ElegirVarios
+      label="Etiquetas (opcional)"
+      values={etiquetaIds}
+      onChange={setEtiquetaIds}
+      options={etiquetas.map((e) => ({ value: e.id, label: e.nombre, emoji: '🏷️' }))}
+    />
+  );
   return (
-    <Screen pie={<Button title={corrige ? 'Guardar corrección' : 'Guardar cambios'} onPress={guardar} loading={busy} disabled={!listo} />}>
+    <Screen pie={<Button title="Guardar cambios" onPress={guardar} loading={busy} disabled={!listo} />}>
       {p.corregible ? (
         <>
           <Nota>
-            Para cambiar el tipo o las cuentas, elimínalo y regístralo de nuevo. Una corrección queda
-            enlazada al original.
+            Puedes cambiar el monto, la fecha y el detalle. Para cambiar la cuenta o el tipo, elimínalo y
+            anótalo de nuevo.
           </Nota>
-          <AmountInput label="¿Cuánto fue?" paso={paso({ hecho: Number(monto) > 0 })} value={monto} onChange={setMonto} moneda={p.moneda} />
-          <Cuando paso={paso({ hecho: true })} value={fecha} onChange={setFecha} />
-          <Opcional titulo="Agregar detalle" abierto={!!glosa}>
-            <Field label="Detalle (opcional)" value={glosa} onChangeText={setGlosa} autoCapitalize="sentences" />
-          </Opcional>
+          <MontoBanda
+            label="¿Cuánto fue?"
+            value={monto}
+            onChange={setMonto}
+            moneda={p.moneda}
+            color={colorAnotar(c, p.tipo)}
+            emoji={EMOJI_ANOTAR[p.tipo] ?? '🧾'}
+          />
+          <Cuando value={fecha} onChange={setFecha} />
+          <Opcionales
+            items={[
+              {
+                clave: 'detalle',
+                emoji: '📝',
+                titulo: 'Detalle',
+                abierto: !!glosa,
+                children: (
+                  <Field label="Detalle (opcional)" value={glosa} onChangeText={setGlosa} autoCapitalize="sentences" />
+                ),
+              },
+              ...(etiquetas.length > 0
+                ? [{ clave: 'etiquetas', emoji: '🏷️', titulo: 'Etiquetas', abierto: etiquetaIds.length > 0, children: elegirEtiquetas }]
+                : []),
+            ]}
+          />
         </>
       ) : (
-        <Nota>Este movimiento ya no se puede corregir (es una corrección o ya fue corregido). Puedes cambiar sus etiquetas.</Nota>
-      )}
-      {etiquetas.length > 0 && (
-        <ElegirVarios
-          label="Etiquetas (opcional)"
-          paso={paso()}
-          values={etiquetaIds}
-          onChange={setEtiquetaIds}
-          options={etiquetas.map((e) => ({ value: e.id, label: e.nombre }))}
-        />
+        <>
+          <Nota>Este movimiento ya se cambió una vez (o es un cambio): solo puedes cambiar sus etiquetas.</Nota>
+          {etiquetas.length > 0 && elegirEtiquetas}
+        </>
       )}
       {corrige && (
         <Field
-          label="¿Por qué lo corriges?"
-          paso={paso({ hecho: motivoOk })}
+          label="¿Por qué lo cambias?"
           value={motivo}
           onChangeText={setMotivo}
+          placeholder="p. ej. me equivoqué en el monto"
           autoCapitalize="sentences"
         />
       )}

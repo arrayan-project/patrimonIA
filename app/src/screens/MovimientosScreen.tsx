@@ -6,9 +6,9 @@ import { TITULO_ANOTAR, useAnotar } from '../hooks/useAnotar';
 import {
   api,
   ApiError,
+  type CategoriaMovimientoDTO,
   type HogarDTO,
   type MovimientoReporteDTO,
-  type PatrimonioIndividualDTO,
   type ResumenAnualDTO,
   type ResumenFinancieroDTO,
 } from '../api/client';
@@ -16,53 +16,66 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useAlcance } from '../ui/alcance';
+import { emojiCategoria, emojiTipoMovimiento } from '../emojis';
 import {
-  Chip,
+  Button,
   colorCategoria,
   EmptyState,
   ErrorText,
   etiqueta,
   FabMenu,
   Field,
-  fechaLegible,
-  Hero,
   IconButton,
   ListCard,
+  Panel,
+  Pastilla,
   PillToggle,
+  Row,
   Section,
   Skeleton,
   Screen,
   Segmented,
   Title,
   TopRow,
-  Panel,
   TxRow,
   useC,
   tipoDe,
   type Paleta,
 } from '../ui';
-import { Dona, GraficoBarras } from '../ui/charts';
+import { GraficoBarras } from '../ui/charts';
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const MESES_LARGO = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const iso = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 type Periodo = 'Mes' | 'Año' | 'Recientes';
-const FILTROS = ['Todos', 'Ingresos', 'Gastos', 'Transferencias'] as const;
+// G35: los filtros hablan como las puertas del "+".
+const FILTROS = ['Todo', 'Gasté', 'Recibí', 'Moví'] as const;
 type Filtro = (typeof FILTROS)[number];
+const EMOJI_FILTRO: Record<Filtro, string> = { Todo: '', Gasté: '💸 ', Recibí: '💰 ', Moví: '🔁 ' };
 
-const logoTipo = (tipo: string) =>
-  tipo === 'INGRESO'
-    ? ('arrow-down-outline' as const)
-    : tipo === 'GASTO'
-      ? ('arrow-up-outline' as const)
-      : tipo === 'SALDO_INICIAL'
-        ? ('flag-outline' as const)
-        : ('swap-horizontal-outline' as const);
+/** Categoría por la que se filtra la lista; `id` null = "Sin categoría". */
+type FiltroCategoria = { id: string | null; nombre: string };
+
+/** Cuántas categorías se ven en "¿En qué se fue?" antes de "Ver todas". */
+const RUBROS_A_LA_VISTA = 4;
+
+/** Encabezado de un día de la lista: "Hoy", "Ayer", "Miércoles 7 de octubre". */
+function nombreDia(fecha: string, hoy: Date): string {
+  const [a, m, d] = fecha.slice(0, 10).split('-').map(Number);
+  const dia = new Date(a, m - 1, d);
+  const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const diff = Math.round((base.getTime() - dia.getTime()) / 86_400_000);
+  if (diff === 0) return 'Hoy';
+  if (diff === 1) return 'Ayer';
+  const txt = `${DIAS[dia.getDay()]} ${d} de ${MESES_LARGO[m - 1]}${a !== hoy.getFullYear() ? ` de ${a}` : ''}`;
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
 
 export function MovimientosScreen() {
   const c = useC();
@@ -78,6 +91,7 @@ export function MovimientosScreen() {
   const [mesesAtras, setMesesAtras] = useState(3);
 
   const [hogarId, setHogarId] = useState<string | null>(null);
+  const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -85,16 +99,22 @@ export function MovimientosScreen() {
   const [resumen, setResumen] = useState<ResumenFinancieroDTO | null>(null);
   const [balancePrev, setBalancePrev] = useState<number | null>(null);
   const [anual, setAnual] = useState<ResumenAnualDTO | null>(null);
-  const [disponible, setDisponible] = useState<PatrimonioIndividualDTO | null>(null);
 
+  const [buscando, setBuscando] = useState(false);
   const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<Filtro>('Todos');
+  const [filtro, setFiltro] = useState<Filtro>('Todo');
+  const [verTodosRubros, setVerTodosRubros] = useState(false);
 
   // G32 H-05 — se llega filtrado por categoría desde un movimiento o un rubro del
-  // presupuesto (`mes` = cualquier fecha del mes a mostrar).
-  const categoriaId = nav.route.params?.categoriaId as string | undefined;
-  const categoriaNombre = nav.route.params?.categoriaNombre as string | undefined;
+  // presupuesto (`mes` = cualquier fecha del mes a mostrar). G35: también se
+  // filtra tocando una categoría de "¿En qué se fue?".
+  const categoriaParam = nav.route.params?.categoriaId as string | undefined;
+  const categoriaNombreParam = nav.route.params?.categoriaNombre as string | undefined;
   const mesParam = nav.route.params?.mes as string | undefined;
+  const [catFiltro, setCatFiltro] = useState<FiltroCategoria | null>(null);
+  useEffect(() => {
+    setCatFiltro(categoriaParam ? { id: categoriaParam, nombre: categoriaNombreParam ?? 'Categoría' } : null);
+  }, [categoriaParam, categoriaNombreParam]);
   useEffect(() => {
     if (!mesParam) return;
     const [a, m] = mesParam.split('-').map(Number);
@@ -121,7 +141,7 @@ export function MovimientosScreen() {
     setCargando(true);
     try {
       let hid = hogarId;
-      if (alcance === 'hogar' && !hid) {
+      if (!hid) {
         const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         hid = hs[0]?.id ?? null;
         setHogarId(hid);
@@ -132,14 +152,12 @@ export function MovimientosScreen() {
         .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
         .then(({ noLeidas: n }) => setNoLeidas(n))
         .catch(() => undefined);
-
-      if (alcance === 'mios') {
+      // G35: las categorías, para el emoji de cada movimiento y de cada rubro.
+      if (hid) {
         api
-          .get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token)
-          .then(setDisponible)
-          .catch(() => setDisponible(null));
-      } else {
-        setDisponible(null);
+          .get<CategoriaMovimientoDTO[]>(`/hogares/${hid}/categorias-movimiento?incluirArchivadas=true`, token)
+          .then(setCategorias)
+          .catch(() => undefined);
       }
 
       const { desde, hasta } = ventana;
@@ -192,21 +210,39 @@ export function MovimientosScreen() {
     });
   };
 
+  const catPorId = useMemo(() => new Map(categorias.map((x) => [x.id, x])), [categorias]);
   const movimientos = useMemo(
     () => [...(resumen?.movimientos ?? [])].sort((a, b) => b.fecha.localeCompare(a.fecha)),
     [resumen],
   );
   const movsFiltrados = movimientos.filter((m) => {
-    if (categoriaId && m.categoriaId !== categoriaId) return false;
-    if (filtro === 'Ingresos' && m.tipo !== 'INGRESO' && m.tipo !== 'SALDO_INICIAL') return false;
-    if (filtro === 'Gastos' && m.tipo !== 'GASTO') return false;
-    if (filtro === 'Transferencias' && m.tipo !== 'TRANSFERENCIA' && m.tipo !== 'CONVERSION')
-      return false;
+    if (catFiltro) {
+      if (catFiltro.id === null ? m.categoriaId !== null || m.tipo !== 'GASTO' : m.categoriaId !== catFiltro.id) return false;
+    }
+    if (filtro === 'Recibí' && m.tipo !== 'INGRESO' && m.tipo !== 'SALDO_INICIAL') return false;
+    if (filtro === 'Gasté' && m.tipo !== 'GASTO') return false;
+    if (filtro === 'Moví' && m.tipo !== 'TRANSFERENCIA' && m.tipo !== 'CONVERSION') return false;
     const t = busca.trim().toLowerCase();
-    if (t && !(m.glosa ?? '').toLowerCase().includes(t) && !etiqueta(m.tipo).toLowerCase().includes(t))
+    if (
+      t &&
+      !(m.glosa ?? '').toLowerCase().includes(t) &&
+      !(m.categoriaId ? (catPorId.get(m.categoriaId)?.nombre ?? '') : '').toLowerCase().includes(t) &&
+      !etiqueta(m.tipo).toLowerCase().includes(t)
+    )
       return false;
     return true;
   });
+  // G35: la lista va agrupada por día.
+  const porDia = useMemo(() => {
+    const grupos: { dia: string; movs: MovimientoReporteDTO[] }[] = [];
+    for (const m of movsFiltrados) {
+      const dia = m.fecha.slice(0, 10);
+      const ultimo = grupos[grupos.length - 1];
+      if (ultimo && ultimo.dia === dia) ultimo.movs.push(m);
+      else grupos.push({ dia, movs: [m] });
+    }
+    return grupos;
+  }, [movsFiltrados]);
 
   const titulo =
     periodo === 'Año'
@@ -216,7 +252,15 @@ export function MovimientosScreen() {
         : `${MESES_LARGO[anchor.mes]} ${anchor.anio}`;
   const etiquetaPeriodo =
     periodo === 'Año' ? `${anchor.anio}` : periodo === 'Recientes' ? 'los últimos meses' : MESES_LARGO[anchor.mes];
+  const enCurso =
+    periodo === 'Recientes' ||
+    (periodo === 'Año' ? anchor.anio === hoy.getFullYear() : anchor.anio === hoy.getFullYear() && anchor.mes === hoy.getMonth());
+  const tituloResumen =
+    periodo === 'Recientes'
+      ? `Así van los últimos ${mesesAtras} meses`
+      : `${enCurso ? 'Así va' : 'Así fue'} ${etiquetaPeriodo}`;
 
+  const hogar = alcance === 'hogar';
   const totales = resumen
     ? resumen.porMoneda.reduce(
         (s, m) => ({ ingresos: s.ingresos + m.ingresos, gastos: s.gastos + m.gastos }),
@@ -226,8 +270,21 @@ export function MovimientosScreen() {
   const balance = totales ? totales.ingresos - totales.gastos : 0;
   const monedaPrincipal = resumen?.porMoneda[0]?.moneda ?? 'CLP';
   const multiMoneda = (resumen?.porMoneda.length ?? 0) > 1;
-  const gastosRubro = (resumen?.porRubro ?? []).filter((r) => r.tipo === 'GASTO' && r.total > 0);
-  const dispLiquido = disponible?.porMoneda.find((m) => m.moneda === monedaPrincipal) ?? disponible?.porMoneda[0];
+  const mesAnterior = MESES_LARGO[anchor.mes === 0 ? 11 : anchor.mes - 1];
+  const contraAnterior = balancePrev != null ? balance - balancePrev : null;
+
+  const gastosRubro = (resumen?.porRubro ?? [])
+    .filter((r) => r.tipo === 'GASTO' && r.total > 0)
+    .sort((a, b) => b.total - a.total);
+  const totalRubros = gastosRubro.reduce((s, r) => s + r.total, 0);
+  const rubrosVisibles = verTodosRubros ? gastosRubro : gastosRubro.slice(0, RUBROS_A_LA_VISTA);
+  const emojiDe = (categoriaId: string | null, tipo: string) =>
+    emojiCategoria(categoriaId ? catPorId.get(categoriaId) : null) ?? emojiTipoMovimiento(tipo);
+  const filtrarCategoria = (f: FiltroCategoria | null) => {
+    setCatFiltro(f);
+    // Si se había llegado filtrado desde otra pantalla, se limpian esos parámetros.
+    if (!f && categoriaParam) nav.go('Movimientos', { categoriaId: undefined, categoriaNombre: undefined, mes: undefined });
+  };
 
   return (
     <Screen onRefresh={cargar} fab={<FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
@@ -256,21 +313,19 @@ export function MovimientosScreen() {
 
       <View style={styles.selectorFila}>
         <Pressable
-          hitSlop={10}
           disabled={periodo === 'Recientes'}
           onPress={() => mover(-1)}
-          style={periodo === 'Recientes' && styles.flechaOff}
+          style={[styles.flechaZona, periodo === 'Recientes' && styles.flechaOff]}
           accessibilityRole="button"
           accessibilityLabel="Período anterior"
         >
           <Text style={styles.flecha}>‹</Text>
         </Pressable>
-        <Text style={styles.periodo}>{titulo}</Text>
+        <Text style={styles.periodo} numberOfLines={1}>🗓️ {titulo.charAt(0).toUpperCase() + titulo.slice(1)}</Text>
         <Pressable
-          hitSlop={10}
           disabled={periodo === 'Recientes'}
           onPress={() => mover(1)}
-          style={periodo === 'Recientes' && styles.flechaOff}
+          style={[styles.flechaZona, periodo === 'Recientes' && styles.flechaOff]}
           accessibilityRole="button"
           accessibilityLabel="Período siguiente"
         >
@@ -288,38 +343,37 @@ export function MovimientosScreen() {
         <Skeleton filas={2} />
       ) : (
         <>
-          <Hero
-            label={`Balance de ${etiquetaPeriodo}`}
-            value={money(balance, monedaPrincipal)}
-            change={
-              balancePrev != null
-                ? `${balance - balancePrev >= 0 ? '▲' : '▼'} ${money(Math.abs(balance - balancePrev), monedaPrincipal)}`
-                : undefined
-            }
-            changeDir={balancePrev != null && balance - balancePrev < 0 ? 'neg' : 'pos'}
-            substats={[
-              { label: 'Ingresos', value: money(totales?.ingresos ?? 0, monedaPrincipal) },
-              { label: 'Gastos', value: money(totales?.gastos ?? 0, monedaPrincipal) },
-            ]}
-          />
-          {alcance === 'mios' && dispLiquido && (
-            <Text style={styles.disp}>
-              Libre para gastar · <Text style={styles.dispB}>{money(dispLiquido.valorLibre, dispLiquido.moneda)}</Text>
-              {dispLiquido.reservadoEnLiquidez > 0 || dispLiquido.plataAjena > 0
-                ? `  (${[
-                    `${money(dispLiquido.valorLiquido, dispLiquido.moneda)} de liquidez`,
-                    ...(dispLiquido.reservadoEnLiquidez > 0 ? [`${money(dispLiquido.reservadoEnLiquidez, dispLiquido.moneda)} en metas`] : []),
-                    ...(dispLiquido.plataAjena > 0 ? [`${money(dispLiquido.plataAjena, dispLiquido.moneda)} de otras personas`] : []),
-                  ].join(' − ')})`
-                : ''}
-            </Text>
-          )}
+          <Section title={tituloResumen}>
+            <Panel gap={0}>
+              <Row left={hogar ? '📥 Les entró' : '📥 Te entró'} right={money(totales?.ingresos ?? 0, monedaPrincipal)} />
+              <Row left={hogar ? '📤 Gastaron' : '📤 Gastaste'} right={money(totales?.gastos ?? 0, monedaPrincipal)} />
+              <Row
+                left={
+                  balance >= 0
+                    ? `🎉 ${hogar ? 'Les' : 'Te'} ${enCurso ? 'sobra' : 'sobró'}`
+                    : `⚠️ ${hogar ? 'Gastaron' : 'Gastaste'} de más`
+                }
+                right={
+                  <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
+                    {money(Math.abs(balance), monedaPrincipal)}
+                  </Text>
+                }
+              />
+            </Panel>
+            {contraAnterior != null && contraAnterior !== 0 && (
+              <Text style={styles.muted}>
+                {`${contraAnterior > 0 ? '▲' : '▼'} ${money(Math.abs(contraAnterior), monedaPrincipal)} ${
+                  contraAnterior > 0 ? 'más' : 'menos'
+                } que en ${mesAnterior}`}
+              </Text>
+            )}
+          </Section>
           {multiMoneda && (
-            <Text style={styles.muted}>Hay movimientos en varias monedas — se muestran sumados sin conversión.</Text>
+            <Text style={styles.muted}>Hay movimientos en varias monedas: se muestran sumados sin convertir.</Text>
           )}
 
           {periodo === 'Año' && anual && !anual.meses.every((m) => m.porMoneda.length === 0) && (
-            <Section title="Ingresos vs. gastos por mes">
+            <Section title="Mes a mes">
               <Panel>
                 <GraficoBarras
                   barras={anual.meses.map((m) => ({
@@ -333,58 +387,106 @@ export function MovimientosScreen() {
           )}
 
           {gastosRubro.length > 0 && (
-            <Section title="Gastos por rubro">
-              <Panel>
-                <Dona
-                  segmentos={gastosRubro.map((r, i) => ({ label: r.nombre, valor: r.total, color: colorCategoria(r.color, i) }))}
-                  centro={money(totales?.gastos ?? 0, monedaPrincipal).replace(` ${monedaPrincipal}`, '')}
-                  formatoValor={(n) => money(n, monedaPrincipal)}
-                />
+            <Section
+              title="¿En qué se fue?"
+              accion={verTodosRubros ? 'Ver menos' : `Ver todas (${gastosRubro.length})`}
+              onAccion={gastosRubro.length > RUBROS_A_LA_VISTA ? () => setVerTodosRubros((v) => !v) : undefined}
+            >
+              <Panel gap={0}>
+                {rubrosVisibles.map((r, i) => {
+                  const pct = totalRubros > 0 ? r.total / totalRubros : 0;
+                  const activo = catFiltro?.id === r.categoriaId;
+                  return (
+                    <Pressable
+                      key={r.categoriaId ?? 'sin'}
+                      onPress={() => filtrarCategoria(activo ? null : { id: r.categoriaId, nombre: r.categoriaId ? r.nombre : 'Sin categoría' })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: activo }}
+                      accessibilityLabel={`${r.nombre}: ${money(r.total, monedaPrincipal)}. Ver sus movimientos`}
+                      style={({ pressed }) => [styles.rubro, activo && styles.rubroActivo, pressed && { opacity: 0.6 }]}
+                    >
+                      <Text style={styles.rubroEmoji}>{emojiDe(r.categoriaId, 'GASTO')}</Text>
+                      <View style={styles.rubroCuerpo}>
+                        <View style={styles.rubroFila}>
+                          <Text style={styles.rubroNombre} numberOfLines={1}>{r.categoriaId ? r.nombre : 'Sin categoría'}</Text>
+                          <Text style={styles.rubroMonto}>{money(r.total, monedaPrincipal)}</Text>
+                        </View>
+                        <View style={styles.rubroBarraFila}>
+                          <View style={styles.rubroPista}>
+                            <View
+                              style={[
+                                styles.rubroBarra,
+                                { width: `${Math.max(pct * 100, 2)}%`, backgroundColor: colorCategoria(r.color, i) },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.rubroPct}>{pct > 0 && pct < 0.01 ? '<1%' : `${Math.round(pct * 100)}%`}</Text>
+                        </View>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </Panel>
             </Section>
           )}
 
-          <Field label="" value={busca} onChangeText={setBusca} placeholder="Buscar en el detalle…" />
-          <View style={styles.chips}>
-            {categoriaId && (
-              <Chip
-                label={`${categoriaNombre ?? 'Categoría'}  ✕`}
-                activo
-                onPress={() =>
-                  nav.go('Movimientos', { categoriaId: undefined, categoriaNombre: undefined, mes: undefined })
-                }
-              />
+          <Section
+            title={hogar ? 'Movimientos del hogar' : 'Tus movimientos'}
+            accion={buscando ? '✕ Cerrar' : '🔍 Buscar'}
+            onAccion={() => {
+              if (buscando) setBusca('');
+              setBuscando((b) => !b);
+            }}
+          >
+            {buscando && (
+              <Field label="" value={busca} onChangeText={setBusca} placeholder="Busca por detalle o categoría" autoFocus />
             )}
-            {FILTROS.map((f) => (
-              <Chip key={f} label={f} activo={filtro === f} onPress={() => setFiltro(f)} />
-            ))}
-          </View>
+            <Segmented
+              options={FILTROS}
+              value={filtro}
+              onChange={setFiltro}
+              formatearOpcion={(f) => `${EMOJI_FILTRO[f]}${f}`}
+            />
+            {catFiltro && (
+              <View style={styles.filtroFila}>
+                <Pastilla
+                  label={`${emojiDe(catFiltro.id, 'GASTO')} ${catFiltro.nombre}  ✕`}
+                  accessibilityLabel={`Quitar el filtro ${catFiltro.nombre}`}
+                  onPress={() => filtrarCategoria(null)}
+                />
+              </View>
+            )}
+          </Section>
 
           {movsFiltrados.length === 0 ? (
             <EmptyState
-              icon="receipt-outline"
-              titulo={movimientos.length === 0 ? `Sin movimientos en ${etiquetaPeriodo}` : 'Nada coincide con el filtro'}
-              descripcion={movimientos.length === 0 ? 'Registra un ingreso o gasto para verlo acá.' : undefined}
-              accion={movimientos.length === 0 ? 'Registrar movimiento' : undefined}
+              emoji={movimientos.length === 0 ? '🧾' : '🔍'}
+              titulo={movimientos.length === 0 ? `Aún no anotas nada en ${etiquetaPeriodo}` : 'Nada coincide con lo que buscas'}
+              descripcion={movimientos.length === 0 ? 'Anota un gasto o lo que recibiste y aparecerá acá.' : undefined}
+              accion={movimientos.length === 0 ? 'Anotar' : undefined}
               onAccion={anotar.abrir}
             />
           ) : (
-            <ListCard>
-              {movsFiltrados.map((m) => (
-                <FilaMovimiento key={m.eventoId} m={m} onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoId })} />
-              ))}
-            </ListCard>
+            porDia.map((g) => (
+              <View key={g.dia} style={styles.dia}>
+                <Text style={styles.diaTitulo}>{nombreDia(g.dia, hoy)}</Text>
+                <ListCard>
+                  {g.movs.map((m) => (
+                    <FilaMovimiento
+                      key={m.eventoId}
+                      m={m}
+                      categoria={m.categoriaId ? catPorId.get(m.categoriaId) : undefined}
+                      emoji={emojiDe(m.categoriaId, m.tipo)}
+                      onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoId })}
+                    />
+                  ))}
+                </ListCard>
+              </View>
+            ))
           )}
 
           {periodo === 'Recientes' && (
-            <Pressable
-              style={styles.mas}
-              onPress={() => setMesesAtras((n) => n + 3)}
-              accessibilityRole="button"
-              accessibilityLabel="Cargar 3 meses más"
-            >
-              <Text style={styles.link}>Cargar 3 meses más (desde hace {mesesAtras + 3})</Text>
-            </Pressable>
+            <Button title={`⏬ Ver 3 meses más (desde hace ${mesesAtras + 3})`} variant="secondary" onPress={() => setMesesAtras((n) => n + 3)} />
           )}
         </>
       )}
@@ -395,22 +497,39 @@ export function MovimientosScreen() {
   );
 }
 
-function FilaMovimiento({ m, onPress }: { m: MovimientoReporteDTO; onPress: () => void }) {
+function FilaMovimiento({
+  m,
+  categoria,
+  emoji,
+  onPress,
+}: {
+  m: MovimientoReporteDTO;
+  categoria: CategoriaMovimientoDTO | undefined;
+  emoji: string;
+  onPress: () => void;
+}) {
   const interno = m.tipo === 'TRANSFERENCIA' || m.tipo === 'CONVERSION';
-  const dir =
-    m.efectoPropio == null || m.efectoPropio === 0
-      ? 'Movimiento interno'
-      : m.efectoPropio < 0
-        ? 'Salió de tus cuentas'
-        : 'Entró a tus cuentas';
-  const signo = m.tipo === 'GASTO' ? '−' : m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? '+' : '';
+  const titulo = m.glosa || categoria?.nombre || etiqueta(m.tipo);
+  let sub: string;
+  let signo = '';
+  if (interno) {
+    const e = m.efectoPropio ?? 0;
+    sub = e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
+    signo = e === 0 ? '' : e < 0 ? '−' : '+';
+  } else if (m.tipo === 'SALDO_INICIAL') {
+    sub = 'Con lo que empezó la cuenta';
+    signo = '+';
+  } else {
+    sub = categoria ? (titulo === categoria.nombre ? etiqueta(m.tipo) : categoria.nombre) : 'Sin categoría';
+    signo = m.tipo === 'GASTO' ? '−' : '+';
+  }
   return (
     <TxRow
-      title={m.glosa || etiqueta(m.tipo)}
-      subtitle={`${interno ? dir : etiqueta(m.tipo)} · ${fechaLegible(m.fecha)}${m.corregido ? ' · corregido' : ''}`}
+      title={titulo}
+      subtitle={`${sub}${m.corregido ? ' · cambiado' : ''}`}
       amount={`${signo}${money(m.monto, m.moneda)}`}
-      positivo={m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL'}
-      logo={{ icon: logoTipo(m.tipo) }}
+      positivo={signo === '+'}
+      logo={{ emoji }}
       onPress={onPress}
     />
   );
@@ -418,15 +537,26 @@ function FilaMovimiento({ m, onPress }: { m: MovimientoReporteDTO; onPress: () =
 
 const crearEstilos = (c: Paleta) =>
   StyleSheet.create({
-    selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
-    flecha: { fontSize: 30, color: c.primary, paddingHorizontal: 8 },
-    flechaOff: { opacity: 0.25 },
-    periodo: { fontSize: 18, fontWeight: '700', color: c.text, minWidth: 170, textAlign: 'center', textTransform: 'capitalize' },
+    selectorFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    flechaZona: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: c.acentoSuave },
+    flecha: { fontSize: 26, lineHeight: 30, color: c.primary, fontWeight: '700' },
+    flechaOff: { opacity: 0.3 },
+    periodo: { flex: 1, fontSize: 18, fontWeight: '800', color: c.text, textAlign: 'center' },
     muted: tipoDe(c).nota,
-    disp: { fontSize: 13, color: c.muted, marginTop: -4 },
-    dispB: { color: c.text, fontWeight: '700' },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    balance: { fontSize: 14, fontWeight: '800' },
     controles: { flexDirection: 'row' },
-    mas: { alignItems: 'center', paddingVertical: 6 },
-    link: { fontSize: 13, color: c.text, fontWeight: '600', textDecorationLine: 'underline' },
+    rubro: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, paddingHorizontal: 6, borderRadius: 14 },
+    rubroActivo: { backgroundColor: c.acentoSuave },
+    rubroEmoji: { fontSize: 22, width: 30, textAlign: 'center' },
+    rubroCuerpo: { flex: 1, gap: 6 },
+    rubroFila: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+    rubroNombre: { flex: 1, fontSize: 15, fontWeight: '700', color: c.text },
+    rubroMonto: { fontSize: 15, fontWeight: '700', color: c.text },
+    rubroBarraFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    rubroPista: { flex: 1, height: 8, borderRadius: 4, backgroundColor: c.panelAlt, overflow: 'hidden' },
+    rubroBarra: { height: 8, borderRadius: 4 },
+    rubroPct: { fontSize: 12, color: c.muted, minWidth: 34, textAlign: 'right' },
+    filtroFila: { flexDirection: 'row' },
+    dia: { gap: 8 },
+    diaTitulo: { fontSize: 14, fontWeight: '800', color: c.muted, paddingHorizontal: 4 },
   });

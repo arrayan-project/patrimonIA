@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -12,29 +13,49 @@ import {
   type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useAccionHeader, useNav, useTitulo } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
+import { EMOJI_ANOTAR, emojiCategoria } from '../emojis';
 import { irAAccion } from './AccionFormScreen';
 import type { DesdeMovimiento } from './PlantillaFormScreen';
 import {
   aISO,
-  AccionDestructiva,
   Button,
   Chip,
+  colorAnotar,
   Dato,
   Datos,
   ErrorText,
   etiqueta,
-  fechaLegible,
-  Hero,
-  LinkButton,
+  MenuList,
   Migaja,
   Nota,
   Screen,
   Skeleton,
+  tinte,
+  useC,
 } from '../ui';
 
+const MESES_LARGO = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+/** "8 de octubre de 2026". */
+const fechaLarga = (f: string) => {
+  const [a, m, d] = f.slice(0, 10).split('-').map(Number);
+  return `${d} de ${MESES_LARGO[m - 1]} de ${a}`;
+};
+/** G35: qué pasó, en palabras de la puerta del "+". */
+const VERBO: Record<string, string> = {
+  GASTO: 'Gastaste',
+  INGRESO: 'Recibiste',
+  TRANSFERENCIA: 'Moviste',
+  CONVERSION: 'Cambiaste',
+  SALDO_INICIAL: 'Saldo inicial',
+};
+
 export function MovimientoDetalleScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const eventoId = nav.route.params?.eventoId as string;
@@ -103,21 +124,6 @@ export function MovimientoDetalleScreen() {
   useCargaAlEnfocar(cargar);
 
   useTitulo(evento ? evento.glosa || etiqueta(evento.tipo) : undefined);
-  useAccionHeader(
-    'Editar',
-    evento && !evento.anulado
-      ? () =>
-          nav.go('CorregirMovimiento', {
-            eventoId,
-            monto: evento.monto,
-            fecha: evento.fecha,
-            glosa: evento.glosa,
-            moneda: evento.moneda,
-            corregible: evento.correccionDeId === null && !tieneCorreccion,
-            etiquetaIds: evento.etiquetaIds,
-          })
-      : undefined,
-  );
 
   if (!evento) {
     return (
@@ -130,28 +136,69 @@ export function MovimientoDetalleScreen() {
 
   const impacto = evento.impactos.find((i) => i.elementoId === elementoId);
   const esInterno = evento.tipo === 'TRANSFERENCIA' || evento.tipo === 'CONVERSION';
-  const nombreCategoria = categorias.find((c) => c.id === evento.categoriaId)?.nombre ?? 'Categoría';
-  /** Nombre de la cuenta, tocable si es visible y no es la cuenta desde la que se llegó. */
-  const enlaceCuenta = (id: string | undefined) => {
-    if (!id) return '—';
-    const nombre = nombresImpacto[id];
-    if (nombre === undefined) return '…';
-    if (nombre === null) return 'otra cuenta';
-    if (id === elementoId) return nombre;
-    return (
-      <LinkButton
-        title={`${nombre} ›`}
-        onPress={() => nav.go('ElementoDetalle', { elementoId: id })}
-      />
-    );
-  };
+  const categoria = categorias.find((x) => x.id === evento.categoriaId);
+  const nombreCategoria = categoria?.nombre ?? 'Categoría';
   const origen = esInterno ? evento.impactos.find((i) => i.monto < 0) : undefined;
   const destino = esInterno ? evento.impactos.find((i) => i.monto > 0) : undefined;
   const esCorreccion = evento.correccionDeId !== null;
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
   const puedePlantilla =
     !evento.anulado && (evento.tipo === 'GASTO' || evento.tipo === 'INGRESO' || evento.tipo === 'TRANSFERENCIA');
+  const color = colorAnotar(c, evento.tipo);
 
+  // G35: las cuentas, la categoría y el presupuesto son filas tocables; una
+  // cuenta no visible o la cuenta desde la que se llegó queda como dato.
+  const enlaces: { key: string; title: string; subtitle: string; emoji: string; onPress: () => void }[] = [];
+  const datosCuenta: { etiqueta: string; valor: string }[] = [];
+  const cuenta = (id: string | undefined, rol: string) => {
+    if (!id) return;
+    const nombre = nombresImpacto[id];
+    if (nombre === undefined) return;
+    if (nombre === null || id === elementoId) {
+      datosCuenta.push({ etiqueta: `🏦 ${rol}`, valor: nombre ?? 'Otra cuenta' });
+      return;
+    }
+    enlaces.push({
+      key: `cuenta-${id}`,
+      title: nombre,
+      subtitle: rol,
+      emoji: '🏦',
+      onPress: () => nav.go('ElementoDetalle', { elementoId: id }),
+    });
+  };
+  if (esInterno) {
+    cuenta(origen?.elementoId, 'Salió de esta cuenta');
+    cuenta(destino?.elementoId, 'Llegó a esta cuenta');
+  } else if (evento.impactos[0]) {
+    cuenta(evento.impactos[0].elementoId, evento.tipo === 'GASTO' ? 'Salió de esta cuenta' : 'Entró a esta cuenta');
+  }
+  const nombreDe = (id: string | undefined) => (id ? nombresImpacto[id] : undefined) ?? undefined;
+  const cuentasBanda = esInterno
+    ? [nombreDe(origen?.elementoId), nombreDe(destino?.elementoId)].filter(Boolean).join(' → ')
+    : nombreDe(evento.impactos[0]?.elementoId);
+  if (evento.categoriaId) {
+    enlaces.push({
+      key: 'categoria',
+      title: nombreCategoria,
+      subtitle: 'Categoría · ver sus movimientos del mes',
+      emoji: emojiCategoria(categoria) ?? '🏷️',
+      onPress: () =>
+        nav.irATab('Movimientos', {
+          categoriaId: evento.categoriaId,
+          categoriaNombre: nombreCategoria,
+          mes: evento.fecha,
+        }),
+    });
+  }
+  if (presupuesto) {
+    enlaces.push({
+      key: 'presupuesto',
+      title: `Presupuesto de ${MESES_LARGO[Number(evento.fecha.slice(5, 7)) - 1]}`,
+      subtitle: 'Ver cómo va',
+      emoji: '📊',
+      onPress: () => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id }),
+    });
+  }
 
   const guardarComoPlantilla = () => {
     const desde: DesdeMovimiento = {
@@ -166,95 +213,93 @@ export function MovimientoDetalleScreen() {
     };
     nav.go('PlantillaForm', { desde });
   };
+  const editar = () =>
+    nav.go('CorregirMovimiento', {
+      eventoId,
+      tipo: evento.tipo,
+      monto: evento.monto,
+      fecha: evento.fecha,
+      glosa: evento.glosa,
+      moneda: evento.moneda,
+      corregible: evento.correccionDeId === null && !tieneCorreccion,
+      etiquetaIds: evento.etiquetaIds,
+    });
 
   return (
-    <Screen
-      onRefresh={cargar}
-      pie={puedePlantilla ? <Button title="Guardar como frecuente" variant="secondary" onPress={guardarComoPlantilla} /> : undefined}
-    >
+    <Screen onRefresh={cargar}>
       {contexto ? <Migaja>{contexto}</Migaja> : null}
-      <Hero
-        label={evento.anulado ? `${etiqueta(evento.tipo)} · eliminado` : etiqueta(evento.tipo)}
-        value={money(evento.monto, evento.moneda)}
-      />
+      {evento.anulado && (
+        <View style={[styles.aviso, { backgroundColor: tinte(c.danger, 0.12) }]}>
+          <Text style={[styles.avisoTxt, { color: c.danger }]}>🗑️ Este movimiento se eliminó: ya no cuenta en tus saldos.</Text>
+        </View>
+      )}
+      <View style={[styles.banda, { backgroundColor: tinte(color, 0.13), borderColor: tinte(color, 0.28) }]}>
+        <Text style={[styles.bandaVerbo, { color: c.muted }]}>
+          {`${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`}
+        </Text>
+        <Text style={[styles.bandaMonto, { color: c.text }]}>{money(evento.monto, evento.moneda)}</Text>
+        <Text style={[styles.bandaSub, { color: c.muted }]}>
+          {`📅 ${fechaLarga(evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
+        </Text>
+      </View>
 
-      <Datos>
-        <Dato etiqueta="Fecha" valor={fechaLegible(evento.fecha)} />
-        {esInterno ? (
-          <>
-            <Dato etiqueta="Desde" valor={enlaceCuenta(origen?.elementoId)} />
-            <Dato etiqueta="Hacia" valor={enlaceCuenta(destino?.elementoId)} />
-          </>
-        ) : evento.impactos[0] ? (
-          <Dato etiqueta="Cuenta" valor={enlaceCuenta(evento.impactos[0].elementoId)} />
-        ) : null}
-        {evento.glosa ? <Dato etiqueta="Detalle" valor={evento.glosa} /> : null}
-        {evento.categoriaId ? (
-          <Dato
-            etiqueta="Categoría"
-            valor={
-              <LinkButton
-                title={`${nombreCategoria} ›`}
-                onPress={() =>
-                  nav.irATab('Movimientos', {
-                    categoriaId: evento.categoriaId,
-                    categoriaNombre: nombreCategoria,
-                    mes: evento.fecha,
-                  })
-                }
-              />
-            }
-          />
-        ) : null}
-        {presupuesto ? (
-          <Dato
-            etiqueta="Presupuesto"
-            valor={
-              <LinkButton
-                title="Ver el del mes ›"
-                onPress={() => nav.go('PresupuestoDetalle', { presupuestoId: presupuesto.id })}
-              />
-            }
-          />
-        ) : null}
-        {impacto && <Dato etiqueta="Efecto en esta cuenta" valor={money(impacto.monto, evento.moneda)} />}
-        <Dato etiqueta="Estado" valor={evento.anulado ? 'Eliminado' : 'Vigente'} />
-      </Datos>
+      {enlaces.length > 0 && <MenuList items={enlaces} />}
+      {(evento.glosa || impacto || datosCuenta.length > 0) && (
+        <Datos>
+          {datosCuenta.map((d) => (
+            <Dato key={d.etiqueta} etiqueta={d.etiqueta} valor={d.valor} />
+          ))}
+          {evento.glosa ? <Dato etiqueta="📝 Detalle" valor={evento.glosa} /> : null}
+          {impacto && <Dato etiqueta="💰 En esta cuenta" valor={money(impacto.monto, evento.moneda)} />}
+        </Datos>
+      )}
       {evento.etiquetaIds.length > 0 && (
         <View style={styles.chips}>
           {evento.etiquetaIds.map((id) => {
             const e = etiquetas.find((x) => x.id === id);
-            return <Chip key={id} label={e?.nombre ?? '—'} color={e?.color} activo />;
+            return <Chip key={id} label={`🏷️ ${e?.nombre ?? '—'}`} color={e?.color} activo />;
           })}
         </View>
       )}
-      {esCorreccion && <Nota>Es la corrección de un movimiento anterior.</Nota>}
-      {tieneCorreccion && <Nota>Este movimiento ya fue corregido: corrige o elimina esa corrección.</Nota>}
+      {esCorreccion && <Nota>✏️ Es el cambio de un movimiento anterior.</Nota>}
+      {tieneCorreccion && <Nota>✏️ Este movimiento ya se cambió: para cambiarlo otra vez, edita o elimina ese cambio.</Nota>}
 
       <ErrorText>{error}</ErrorText>
-      {accionable && (
-        <AccionDestructiva
-          title="Eliminar movimiento"
-          onPress={() =>
-            irAAccion(nav, {
-              titulo: 'Eliminar movimiento',
-              explicacion:
-                'Úsalo si el movimiento no ocurrió: se revierte su efecto sobre el saldo y queda en el historial como eliminado. Si ocurrió con otro monto o fecha, mejor corrígelo con Editar.',
-              pregunta: '¿Por qué lo eliminas?',
-              boton: 'Eliminar movimiento',
-              comando: 'AnularEventoFinanciero',
-              body: { eventoId },
-              aviso: 'Movimiento eliminado',
-              peligro: true,
-              volver: 2,
-            })
-          }
-        />
-      )}
+      <View style={styles.acciones}>
+        {!evento.anulado && <Button title="✏️ Editar" onPress={editar} />}
+        {puedePlantilla && <Button title="⚡ Guardar como frecuente" variant="secondary" onPress={guardarComoPlantilla} />}
+        {accionable && (
+          <Button
+            title="🗑️ Eliminar movimiento"
+            variant="danger"
+            onPress={() =>
+              irAAccion(nav, {
+                titulo: 'Eliminar movimiento',
+                explicacion:
+                  'Úsalo si el movimiento no ocurrió: se deshace su efecto en el saldo y queda en el historial como eliminado. Si ocurrió con otro monto o fecha, mejor cámbialo con Editar.',
+                pregunta: '¿Por qué lo eliminas?',
+                boton: 'Eliminar movimiento',
+                comando: 'AnularEventoFinanciero',
+                body: { eventoId },
+                aviso: 'Movimiento eliminado',
+                peligro: true,
+                volver: 2,
+              })
+            }
+          />
+        )}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  aviso: { borderRadius: 14, padding: 12 },
+  avisoTxt: { fontSize: 14, fontWeight: '700' },
+  banda: { borderRadius: 22, borderWidth: 1, padding: 18, gap: 4 },
+  bandaVerbo: { fontSize: 15, fontWeight: '700' },
+  bandaMonto: { fontSize: 34, fontWeight: '900' },
+  bandaSub: { fontSize: 14 },
+  acciones: { gap: 10, marginTop: 4 },
 });

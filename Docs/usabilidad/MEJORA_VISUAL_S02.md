@@ -99,15 +99,15 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
    otro monto, con quiénes, a qué cuenta te transfieren); recibir de alguien
    del hogar o "Avisarle a [miembro]" si no aparece; sacar de una meta; "¿Se
    repite?" (cada mes o año); guardar.
-4. **Movimientos** (`MovimientosScreen`) — pestaña. Período Mes / Año /
+4. ✅ **Movimientos** (`MovimientosScreen`, §6) — pestaña. Período Mes / Año /
    Recientes y flechas para moverse; Míos / Del hogar; balance del período;
    gráfico ingresos vs. gastos por mes; gastos e ingresos por rubro y filtrar
    por uno; lista por fecha; abrir un movimiento; botón "+".
-5. **Movimiento** (`MovimientoDetalleScreen`) — Movimientos, cuenta, Hogar.
+5. ✅ **Movimiento** (`MovimientoDetalleScreen`, §6) — Movimientos, cuenta, Hogar.
    Ver datos (fecha, cuentas, categoría, detalle, efecto en la cuenta); ir a
    la cuenta, a la categoría o al presupuesto del mes; Editar (→ Editar
    movimiento); Guardar como frecuente; Eliminar movimiento.
-6. **Editar movimiento** (`CorregirMovimientoScreen`) — Movimiento. Cambiar
+6. ✅ **Editar movimiento** (`CorregirMovimientoScreen`, §6) — Movimiento. Cambiar
    monto, detalle y etiquetas; motivo de la corrección; guardar.
 
 ### Tanda 2 · Mi plata y mis cuentas
@@ -550,3 +550,57 @@ eso entran las 6 listas y sus formularios de crear y editar.
   2 a la vista + "🔍 Ver los 5"; sin frecuentes de
   ingreso, "Crear uno" abre Nuevo frecuente en Ingreso, y elegir uno desde la lista o desde un
   botón llena el formulario.
+
+### 4–6. Movimientos, Movimiento y Editar movimiento (`MovimientosScreen`, `MovimientoDetalleScreen`, `CorregirMovimientoScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** tres filas de controles antes de cualquier cifra
+  (Lo mío / Del hogar, ‹ mes ›, Mes / Año / Recientes) con flechas de menos de
+  44 px; "Balance de octubre" con un "▼ 1.525.510 CLP" sin decir contra qué;
+  "Libre para gastar · … de liquidez − …" como párrafo (repetía el Inicio);
+  dona "Gastos por rubro" con la leyenda cortada ("S") y la cifra del centro
+  en otra letra, sin poder tocarla; filtros "Todos / Ingresos / Gastos /
+  Transferencias" de unos 30 px; lista plana con flechas iguales, la fecha en
+  cada fila, "Gasto · Gasto" sin detalle y transferencias sin signo;
+  "Cargar 3 meses más" como enlace de 13 px. El detalle: "Gasto" sin emoji,
+  "Editar" cortado en el borde, enlaces subrayados, "Estado: Vigente",
+  "Eliminar" como texto rojo y "Guardar como frecuente" como acción
+  principal. Editar: pasos numerados, el monto como "0" con línea y "Una
+  corrección queda enlazada al original".
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-movimientos`):
+  - Período en una fila "‹ 🗓️ Octubre 2026 ›" con flechas de 44 px.
+  - Resumen como el del Inicio: "Así va / Así fue [período]" con 📥 Te entró
+    · 📤 Gastaste · 🎉 Te sobra (o ⚠️ Gastaste de más); en "Del hogar", Les
+    entró · Gastaron · Les sobra. Debajo, en el mes, "▲/▼ X más/menos que en
+    [mes anterior]". Sale "Libre para gastar" (está en el Inicio).
+  - "¿En qué se fue?" reemplaza la dona: barras por categoría con emoji,
+    monto y %, de mayor a menor, 4 a la vista y "Ver todas (N)". Tocar una
+    filtra la lista (pastilla "🛒 Mercado ✕", la misma que al llegar desde un
+    movimiento o un presupuesto). Es lo único nuevo en comportamiento.
+  - "Tus movimientos" / "Movimientos del hogar": filtros Todo · 💸 Gasté ·
+    💰 Recibí · 🔁 Moví en el control de opciones de 44 px; "🔍 Buscar" abre
+    el campo (busca también por categoría).
+  - Lista agrupada por día (Hoy, Ayer, "Lunes 5 de octubre"); cada fila con
+    el emoji de su categoría o tipo, el detalle (o la categoría) de título, la
+    categoría o "Entró a / Salió de / Entre tus cuentas" debajo, y el monto
+    con signo (+ verde). El reporte no trae el nombre de la cuenta, por eso
+    no aparece en la fila (cambiarlo es backend).
+  - Año: "Mes a mes". Recientes: botón "⏬ Ver 3 meses más". Estado vacío
+    con 🧾.
+  - Movimiento: banda del color y emoji de su puerta ("💸 Gastaste 60.000
+    CLP", "📅 8 de octubre de 2026 · Cuenta corriente", o "Origen → Destino"
+    en una transferencia); cuentas, categoría y presupuesto del mes como filas
+    tocables con emoji (`MenuList`); 📝 Detalle y "En esta cuenta" como datos;
+    sin "Estado" (si se eliminó, aviso arriba); botones ✏️ Editar, ⚡ Guardar
+    como frecuente y 🗑️ Eliminar movimiento. "Editar" sale de la barra
+    superior.
+  - Editar: nota "Puedes cambiar el monto, la fecha y el detalle…", monto en
+    `MontoBanda` de su tipo, sin numerar, 📝 Detalle y 🏷️ Etiquetas como
+    `Opcionales`, "¿Por qué lo cambias?" y "Guardar cambios".
+  - `EMOJI_ANOTAR` (emoji de cada puerta) pasa a `emojis.ts`, compartido con
+    Registrar.
+- **Verificado:** `tsc` sin errores; capturas web de Mes, Año, Recientes,
+  Del hogar, filtros, búsqueda, filtro por categoría, detalle de gasto y de
+  transferencia, Editar y modo oscuro; la fila Categoría del detalle vuelve a
+  Movimientos filtrada en el mes del movimiento; ninguna zona tocable bajo
+  44 px en Movimientos ni en el detalle.
