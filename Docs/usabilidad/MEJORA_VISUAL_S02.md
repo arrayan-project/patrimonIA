@@ -88,10 +88,10 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
    alertas (presupuesto excedido, deudas en mora, solicitudes por pagar);
    estado vacío "Agrega tu primera cuenta o bien"; botón "+"; campana;
    engranaje.
-2. **Hoja "¿Qué quieres anotar?"** (`hooks/useAnotar`) — botón "+". Gasté ·
+2. ✅ **Hoja "¿Qué quieres anotar?"** (`hooks/useAnotar`, §6) — botón "+". Gasté ·
    Recibí · Moví plata · Ahorrar para una meta · Pagar tarjeta · Agregar
    cuenta.
-3. **Registrar movimiento** (`RegistrarMovimientoScreen`, título según el
+3. ✅ **Registrar movimiento** (`RegistrarMovimientoScreen`, §6; título según el
    tipo: Gasté / Recibí / Moví plata / Pagar tarjeta) — hoja "+", Hogar,
    Frecuentes. Elegir un frecuente; monto; cuenta; categoría (y crear una
    nueva); fecha; detalle y etiquetas opcionales; "¿De quién es?" (Mío / de
@@ -492,3 +492,61 @@ eso entran las 6 listas y sus formularios de crear y editar.
 - **Verificado:** `tsc` sin errores; capturas web de listas, modo ordenar y
   formularios; ninguna zona tocable bajo 44 px en Categorías (normal y
   ordenando), Tipos de cuenta y Nueva etiqueta.
+
+### 2–3. Hoja "+" y Registrar movimiento (`useAnotar`, `RegistrarMovimientoScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** la hoja con seis filas iguales de íconos de línea (Gasté
+  pesaba lo mismo que Agregar cuenta) y "Cancelar" como enlace de 19 px. El
+  formulario, gris y numerado: el monto era un "0" con línea debajo, ninguna
+  lista con emoji (las categorías como "› Nombre"), "¿De qué tipo?" (en
+  Frecuentes ya decía "¿De qué categoría?"), cuatro enlaces subrayados de
+  19 px ("+ Nueva categoría", "+ Agregar detalle", "+ Se repite…", "+ Agregar
+  etiquetas") y Hoy / Ayer / Otra fecha de 30 px.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-registrar`):
+  - Hoja: Gasté 💸, Recibí 💰 y Moví plata 🔁 como tres tarjetas grandes de
+    color (rosa, verde, celeste; `colorAnotar`); Ahorrar 🐷, Pagar tarjeta 💳
+    y Agregar cuenta ➕ como filas con emoji; "Cancelar" como botón.
+  - Formulario: el monto en una banda del color y con el emoji de su puerta
+    (`MontoBanda`; 💳 en Pagar tarjeta, 💱 en cambio de moneda), con los
+    Frecuentes dentro (`Pastilla` de 44 px con el emoji de su categoría).
+  - Emojis en todas las listas (`OpcionSelect.emoji`, pieza común): de quién
+    es (🙋 👫 👤 👥), cuentas (`opcionesDeElementos` / `opcionesDeMiembros`
+    con `emojis`), categorías (las subcategorías dicen "Dentro de …"),
+    personas, metas, "La mitad" / "Otro monto", etiquetas.
+  - "¿De qué categoría?"; "➕ Nueva categoría" es la última opción de la
+    lista.
+  - Fecha con el control de opciones de 44 px (`Cuando`, pieza común:
+    aplica en todos los formularios que la usan).
+  - Opcionales como fila de botones 📝 Detalle · 🔁 Se repite · 🏷️ Etiquetas
+    (`Opcionales`).
+  - Pie: el resumen lleva el emoji de la puerta y el botón dice "Anotar
+    gasto / ingreso / movimiento / cambio de moneda" ("Pagar tarjeta" en esa
+    puerta).
+  - "De alguien del hogar": filas con 👥.
+  - "Cancelar" de las listas (`Select`) y de la hoja de emojis pasa a botón de 44 px en toda la app.
+  - Hojas modales (Juan, 2026-10-09: el velo oscuro subía pegado a la
+    lista, como una cortina): pieza común `HojaModal` para las cuatro hojas
+    (listas, listas múltiples, "+", emojis). El velo aparece en su lugar y
+    solo la hoja sube desde abajo; alto máximo 85% de la pantalla.
+- **Frecuentes (Juan, 2026-10-09):** se probaron también en la hoja "+" y
+  se quitaron de ahí: repetían lo del formulario y mezclaban los tres tipos.
+  En la banda del formulario (opción C, elegida entre botones solos y un
+  selector solo): los 3 primeros frecuentes de ese tipo (orden de Ajustes ›
+  Frecuentes) a un toque y, si hay más, "Ver todos (N)", que abre la lista
+  común (`Elegir` con `boton`) con emoji, monto y cuenta de cada uno. Los
+  Frecuentes son las plantillas (D-6), no otro prellenado.
+  Ajuste de Juan al verlo con datos (2026-10-09): título "⚡ Tus frecuentes
+  (N)" (el número dice que no hay más que buscar), **2** a la vista para que
+  la banda no crezca, y "🔍 Ver los N" distinto de los frecuentes (`Pastilla
+  enlace`: sin relleno, borde punteado lila). Sin frecuentes de ese tipo:
+  "⚡ Aún no tienes frecuentes de …" con "➕ Crear uno", que abre Nuevo
+  frecuente con el tipo ya elegido (`PlantillaForm` acepta `tipo`); al
+  volver, el formulario recarga sus frecuentes.
+- **Verificado:** `tsc` sin errores; capturas web en claro y oscuro de la
+  hoja, Gasté (vacío, lleno, cuentas, categorías, compartido, de otra
+  persona), Recibí (de alguien del hogar), Moví plata y Pagar tarjeta;
+  ninguna zona tocable bajo 44 px; con 5 frecuentes de gasto (simulados),
+  2 a la vista + "🔍 Ver los 5"; sin frecuentes de
+  ingreso, "Crear uno" abre Nuevo frecuente en Ingreso, y elegir uno desde la lista o desde un
+  botón llena el formulario.
