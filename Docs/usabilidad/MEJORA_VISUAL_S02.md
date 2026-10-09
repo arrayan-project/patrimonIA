@@ -902,7 +902,12 @@ eso entran las 6 listas y sus formularios de crear y editar.
     "❓ Sin categoría" también se abre ("Toca uno para ponerle categoría.").
     Las categorías con gasto pero sin monto pensado van como filas junto a
     "Sin categoría" (sin barra vacía). El detalle de un Movimiento sigue
-    llevando a la pestaña filtrada (no se tocó).
+    llevando a la pestaña filtrada (no se tocó). → **Cambiado después (Juan,
+    2026-10-09):** el detalle de un Movimiento también abre esta pantalla
+    encima, con los de esa categoría en el mes del movimiento; con una
+    categoría de ingresos muestra lo que entró ("📥 Entró", "1 ingreso", en
+    verde). Si el movimiento es de otro miembro (ninguna de sus cuentas es
+    tuya), muestra los del hogar. Rama `feat/G35-categoria-encima`.
 - **Verificado:** `tsc` sin errores; e2e de presupuesto 11/11 verdes contra
   `patrimonia_test`; capturas web de la lista, el detalle (también en modo
   oscuro y con la dona, después de que Juan anotó "Curso maquillaje" y

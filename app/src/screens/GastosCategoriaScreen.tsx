@@ -11,7 +11,9 @@ import { Text } from '../ui/Text';
 /**
  * G35 (Juan, 2026-10-09): los gastos de una categoría en el período de un
  * presupuesto, encima del presupuesto (con "atrás"), en vez de saltar a la
- * pestaña Movimientos. `categoriaId` null = sin categoría.
+ * pestaña Movimientos. `categoriaId` null = sin categoría. También se abre
+ * desde el detalle de un movimiento (su mes); con `tipo` INGRESO muestra lo
+ * que entró en una categoría de ingresos.
  */
 export function GastosCategoriaScreen() {
   const c = useC();
@@ -27,6 +29,8 @@ export function GastosCategoriaScreen() {
   const moneda = p.moneda as string;
   const pensado = (p.esperado as number | undefined) ?? 0;
   const hogarId = p.hogarId as string | undefined;
+  const ingreso = p.tipo === 'INGRESO';
+  const tipo = ingreso ? 'INGRESO' : 'GASTO';
 
   const [movs, setMovs] = useState<MovimientoReporteDTO[] | null>(null);
   const [error, setError] = useState('');
@@ -41,11 +45,11 @@ export function GastosCategoriaScreen() {
         `/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`,
         token,
       );
-      setMovs(r.movimientos.filter((m) => m.tipo === 'GASTO' && m.categoriaId === categoriaId));
+      setMovs(r.movimientos.filter((m) => m.tipo === tipo && m.categoriaId === categoriaId));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, desde, hasta, hogarId, categoriaId]);
+  }, [token, desde, hasta, hogarId, categoriaId, tipo]);
 
   useCargaAlEnfocar(cargar);
 
@@ -66,7 +70,10 @@ export function GastosCategoriaScreen() {
     <Screen onRefresh={cargar}>
       <Datos>
         {pensado > 0 ? <Dato etiqueta="🎯 Pensabas gastar" valor={money(pensado, moneda)} /> : null}
-        <Dato etiqueta="🧾 Llevas" valor={pensado > 0 ? `− ${money(llevas, moneda)}` : money(llevas, moneda)} />
+        <Dato
+          etiqueta={ingreso ? '📥 Entró' : '🧾 Llevas'}
+          valor={pensado > 0 ? `− ${money(llevas, moneda)}` : money(llevas, moneda)}
+        />
         {pensado > 0 ? (
           <Dato
             etiqueta={pasado ? '⚠️ Te pasaste' : '✅ Quedan'}
@@ -79,9 +86,15 @@ export function GastosCategoriaScreen() {
         ) : null}
       </Datos>
 
-      <Section title={movs.length === 1 ? '1 gasto' : `${movs.length} gastos`}>
+      <Section
+        title={
+          ingreso
+            ? movs.length === 1 ? '1 ingreso' : `${movs.length} ingresos`
+            : movs.length === 1 ? '1 gasto' : `${movs.length} gastos`
+        }
+      >
         {movs.length === 0 ? (
-          <Nota>Todavía no gastas nada en esto en este período.</Nota>
+          <Nota>{ingreso ? 'Todavía no entra nada en esto en este período.' : 'Todavía no gastas nada en esto en este período.'}</Nota>
         ) : (
           <ListCard>
             {movs.map((m) => (
@@ -89,7 +102,8 @@ export function GastosCategoriaScreen() {
                 key={m.eventoId}
                 title={m.glosa || nombre}
                 subtitle={`${nombreDia(m.fecha, hoy)}${m.corregido ? ' · cambiado' : ''}`}
-                amount={`−${money(m.monto, m.moneda)}`}
+                amount={`${ingreso ? '+' : '−'}${money(m.monto, m.moneda)}`}
+                positivo={ingreso}
                 logo={{ emoji }}
                 onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoId })}
               />
