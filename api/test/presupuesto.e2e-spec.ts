@@ -164,13 +164,15 @@ describe('Presupuesto (e2e)', () => {
       .send({ tipo: 'GASTO', monto: 999_999, moneda: 'CLP', elementoOrigenId: cuentaId, fecha: '2027-01-05' })
       .expect(201);
 
+    // El saldo inicial de la cuenta (1.000.000, abierta hoy, dentro del período)
+    // cuenta como ingreso, igual que en el resumen del mes (§G29).
     const d = await auth(request(http).get(`/presupuestos/${id}/desviacion`)).expect(200);
-    expect(d.body.real.ingresos).toBe(2_500_000);
+    expect(d.body.real.ingresos).toBe(3_500_000);
     expect(d.body.real.gastos).toBe(400_000);
-    expect(d.body.real.ahorro).toBe(2_100_000);
-    expect(d.body.desviacion.ingresos).toBe(-500_000);
+    expect(d.body.real.ahorro).toBe(3_100_000);
+    expect(d.body.desviacion.ingresos).toBe(500_000);
     expect(d.body.desviacion.gastos).toBe(-600_000);
-    expect(d.body.desviacion.ahorro).toBe(100_000);
+    expect(d.body.desviacion.ahorro).toBe(1_100_000);
   });
 
   it('otro usuario no ve ni toca un presupuesto ajeno', async () => {
