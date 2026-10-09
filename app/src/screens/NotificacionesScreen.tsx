@@ -5,7 +5,7 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type NotificacionDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { EmptyState, ErrorText, fechaRelativa, radio, Screen, Section, Skeleton, useC, type Paleta } from '../ui';
+import { EmptyState, ErrorText, fechaRelativa, ListCard, Pastilla, Screen, Section, Skeleton, tinte, tipografia, useC, type Paleta } from '../ui';
 import type { RouteName } from '../navigation/navigator';
 
 /** entidadTipo de una notificación → a qué pantalla lleva. */
@@ -68,45 +68,68 @@ export function NotificacionesScreen() {
     }
   };
 
+  const nuevos = lista?.filter((n) => !n.leida) ?? [];
+  const vistos = lista?.filter((n) => n.leida) ?? [];
+
+  const fila = (n: NotificacionDTO, i: number) => {
+    const d = destino(n);
+    return (
+      <Pressable
+        key={n.id}
+        style={({ pressed }) => [styles.fila, i > 0 && styles.separada, pressed && { opacity: 0.7 }]}
+        accessibilityRole="button"
+        accessibilityLabel={`${n.titulo}. ${n.cuerpo}${!n.leida ? '. Nuevo' : ''}`}
+        onPress={() => {
+          if (!n.leida) void leer(n.id);
+          if (d) nav.go(d.name, d.params);
+        }}
+      >
+        <View style={[styles.emoji, !n.leida && styles.emojiNuevo]}>
+          <Text style={styles.emojiTxt}>{emojiDe(n)}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={styles.cabeza}>
+            <Text style={[styles.titulo, !n.leida && styles.tituloNuevo]} numberOfLines={2}>
+              {n.titulo}
+            </Text>
+            <Text style={styles.fecha}>{fechaRelativa(n.createdAt)}</Text>
+          </View>
+          <Text style={styles.cuerpo}>{n.cuerpo}</Text>
+        </View>
+        {d ? <Text style={styles.chev}>›</Text> : null}
+      </Pressable>
+    );
+  };
+
   return (
     <Screen onRefresh={cargar}>
       {lista === null ? (
         <Skeleton />
       ) : lista.length === 0 ? (
-        <EmptyState icon="notifications-off-outline" titulo="Sin notificaciones" descripcion="Te avisamos cuando completes una meta, se use plata de una meta o te inviten a un hogar." />
+        <EmptyState
+          emoji="🔕"
+          titulo="Nada nuevo por ahora"
+          descripcion="Te avisamos cuando te pidan tu parte de un gasto, toque pagar algo programado o completes una meta."
+        />
       ) : (
-        <Section
-          title="Avisos"
-          accion="Marcar todas como leídas"
-          onAccion={lista.some((n) => !n.leida) ? leerTodas : undefined}
-        >
-          {lista.map((n) => {
-            const d = destino(n);
-            return (
-              <Pressable
-                key={n.id}
-                style={[styles.card, !n.leida && styles.noLeida]}
-                accessibilityRole="button"
-                accessibilityLabel={`${n.titulo}. ${n.cuerpo}${!n.leida ? '. Nueva' : ''}`}
-                onPress={() => {
-                  if (!n.leida) void leer(n.id);
-                  if (d) nav.go(d.name, d.params);
-                }}
-              >
-                <View style={styles.cabeza}>
-                  {!n.leida ? <View style={styles.punto} /> : null}
-                  <Text style={styles.titulo}>{n.titulo}</Text>
-                </View>
-                <Text style={styles.cuerpo}>{n.cuerpo}</Text>
-                <Text style={styles.muted}>
-                  {fechaRelativa(n.createdAt)}
-                  {!n.leida ? ' · nueva' : ''}
-                  {d ? ' · toca para abrir' : ''}
+        <>
+          {nuevos.length > 0 && (
+            <View style={styles.grupo}>
+              <View style={styles.grupoCabeza}>
+                <Text style={styles.rotulo} accessibilityRole="header">
+                  🔔 Nuevos
                 </Text>
-              </Pressable>
-            );
-          })}
-        </Section>
+                <Pastilla label="✅ Marcar todo como leído" onPress={leerTodas} />
+              </View>
+              <ListCard>{nuevos.map(fila)}</ListCard>
+            </View>
+          )}
+          {vistos.length > 0 && (
+            <Section title="Ya vistos">
+              <ListCard>{vistos.map(fila)}</ListCard>
+            </Section>
+          )}
+        </>
       )}
 
       <ErrorText>{error}</ErrorText>
@@ -114,19 +137,42 @@ export function NotificacionesScreen() {
   );
 }
 
+/** G35: el emoji de cada aviso, según qué lo generó. */
+function emojiDe(n: NotificacionDTO): string {
+  switch (n.tipo) {
+    case 'SOLICITUD_APORTE':
+      return '🧾';
+    case 'SOLICITUD_PAGADA':
+    case 'AVISO_TRANSFERENCIA':
+      return '🔁';
+    case 'SOLICITUD_RECHAZADA':
+      return '🙅';
+    case 'PROGRAMADO_VENCIDO':
+      return '🗓️';
+    case 'OBJETIVO_COMPLETADO':
+      return '🎉';
+    case 'RESERVA_CONSUMIDA':
+      return '🐷';
+    case 'INVITACION_RECIBIDA':
+      return '✉️';
+    default:
+      return '🔔';
+  }
+}
+
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  card: {
-    backgroundColor: c.bg,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: radio.tarjeta,
-    padding: 14,
-    gap: 3,
-  },
-  noLeida: { borderColor: c.mutedDim },
-  cabeza: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  punto: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.danger },
+  grupo: { gap: 8, marginTop: 8 },
+  grupoCabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  rotulo: { ...tipografia.seccion, color: c.text },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, minHeight: 64 },
+  separada: { borderTopWidth: 1, borderTopColor: c.border },
+  emoji: { width: 40, height: 40, borderRadius: 20, backgroundColor: c.panelAlt, alignItems: 'center', justifyContent: 'center' },
+  emojiNuevo: { backgroundColor: tinte(c.primary, 0.2) },
+  emojiTxt: { fontSize: 20 },
+  cabeza: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   titulo: { flex: 1, fontSize: 15, fontWeight: '600', color: c.text },
-  cuerpo: { fontSize: 13, color: c.muted },
-  muted: { fontSize: 12, color: c.muted },
+  tituloNuevo: { fontWeight: '800' },
+  fecha: { fontSize: 12, color: c.muted, marginTop: 2 },
+  cuerpo: { fontSize: 13, color: c.muted, marginTop: 2 },
+  chev: { fontSize: 22, color: c.mutedDim },
 });

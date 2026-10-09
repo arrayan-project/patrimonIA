@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { api, ApiError } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { Button, contadorPasos, DateField, ErrorText, Field, Nota, Screen } from '../ui';
+import { Text } from '../ui/Text';
+import { Button, DateField, ErrorText, Field, Screen, tinte, useC, type Paleta } from '../ui';
 
 /**
  * Formulario de una sola pregunta de texto que ejecuta un comando (plantillas
@@ -47,6 +49,8 @@ export function AccionFormScreen() {
   const { cerrarSesion } = useAuth();
   const nav = useNav();
   const toast = useToast();
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const p = nav.route.params as unknown as AccionFormParams;
   const [texto, setTexto] = useState('');
   const [fecha, setFecha] = useState('');
@@ -82,12 +86,13 @@ export function AccionFormScreen() {
     }
   };
 
-  const paso = contadorPasos();
+  const emoji = emojiDe(p);
+  const color = p.peligro ? c.danger : c.primary;
   return (
     <Screen
       pie={
         <Button
-          title={p.boton}
+          title={`${emoji} ${p.boton}`}
           variant={p.peligro ? 'danger' : undefined}
           onPress={ejecutar}
           loading={busy}
@@ -95,22 +100,67 @@ export function AccionFormScreen() {
         />
       }
     >
-      {p.explicacion ? <Nota>{p.explicacion}</Nota> : null}
+      {/* G35: qué va a pasar, en una banda con el emoji de la acción. */}
+      {p.explicacion ? (
+        <View style={[styles.banda, { backgroundColor: tinte(color, 0.12), borderColor: tinte(color, 0.28) }]}>
+          <Text style={styles.bandaEmoji}>{emoji}</Text>
+          <Text style={styles.bandaTxt}>{p.explicacion}</Text>
+        </View>
+      ) : null}
       <Field
         label={p.pregunta}
-        paso={p.minimo === 0 ? paso() : paso({ hecho: listo })}
         value={texto}
         onChangeText={setTexto}
-        placeholder={p.placeholder}
+        placeholder={p.placeholder ?? ejemploDe(p.comando)}
         autoCapitalize={p.teclado === 'email' ? 'none' : 'sentences'}
         keyboardType={p.teclado === 'email' ? 'email-address' : 'default'}
         autoFocus
       />
-      {p.fecha && <DateField label={p.fecha.pregunta} paso={paso()} value={fecha} onChange={setFecha} optional />}
+      {p.fecha && <DateField label={p.fecha.pregunta} value={fecha} onChange={setFecha} optional />}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
+
+/** G35: el emoji de la acción, según el comando (así no lo repite cada pantalla que abre Confirmar). */
+function emojiDe(p: AccionFormParams): string {
+  const k = p.comando;
+  if (k === 'DesactivarUsuario') return '👋';
+  if (k.startsWith('Eliminar') || k.startsWith('Anular')) return '🗑️';
+  if (k.startsWith('Cancelar')) return '🚫';
+  if (k.startsWith('Desactivar')) return '⏸️';
+  if (k.startsWith('Cerrar')) return '🔒';
+  if (k.startsWith('Invitar')) return '✉️';
+  if (k.startsWith('Remover')) return '🚪';
+  if (k.startsWith('Corregir')) return '✏️';
+  if (k.startsWith('Reactivar')) return '♻️';
+  if (k.startsWith('Crear')) return '➕';
+  if (k === 'CondonarDeuda') return '🤝';
+  if (k === 'DeclararIncobrable') return '🙅';
+  return p.peligro ? '⚠️' : '✍️';
+}
+
+/** G35: un ejemplo de motivo en el campo, para que se entienda qué escribir. */
+function ejemploDe(comando: string): string | undefined {
+  if (comando === 'DesactivarUsuario') return 'Ej.: ya no la uso';
+  if (comando === 'CrearAsignacion') return 'Ej.: Pie';
+  if (comando.startsWith('Anular')) return 'Ej.: lo anoté por error';
+  if (comando.startsWith('Eliminar')) return 'Ej.: ya no lo necesito';
+  if (comando.startsWith('Cancelar')) return 'Ej.: ya no lo voy a pagar';
+  if (comando.startsWith('Desactivar')) return 'Ej.: la cerré';
+  if (comando.startsWith('Cerrar')) return 'Ej.: terminó el mes';
+  if (comando.startsWith('Remover')) return 'Ej.: ya no vive aquí';
+  if (comando.startsWith('Reactivar')) return 'Ej.: la volví a usar';
+  if (comando === 'CondonarDeuda' || comando === 'DeclararIncobrable') return 'Ej.: no me la van a pagar';
+  return undefined;
+}
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    banda: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, borderWidth: 1, padding: 16 },
+    bandaEmoji: { fontSize: 28 },
+    bandaTxt: { flex: 1, fontSize: 15, lineHeight: 21, color: c.text },
+  });
 
 /** Abre `AccionForm` desde un Detalle. */
 export function irAAccion(nav: ReturnType<typeof useNav>, params: AccionFormParams): void {

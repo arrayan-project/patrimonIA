@@ -147,7 +147,7 @@ const TITULOS: Record<string, string> = {
   AjusteDetalle: 'Corrección de saldo',
   EditarElemento: 'Editar',
   Historial: 'Historial de cambios',
-  GestionHogar: 'Gestionar hogar',
+  GestionHogar: 'Personas del hogar',
   Perfil: 'Mi perfil',
   Objetivos: 'Metas',
   ObjetivoDetalle: 'Meta',

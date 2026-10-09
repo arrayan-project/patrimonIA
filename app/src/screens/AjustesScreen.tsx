@@ -134,9 +134,9 @@ export function AjustesScreen() {
             ...(hogar
               ? [
                   {
-                    title: 'Gestionar hogar',
-                    subtitle: 'Nombre, personas y moneda del hogar',
-                    emoji: '🏠',
+                    title: 'Personas del hogar',
+                    subtitle: 'Quiénes están, nombre y moneda',
+                    emoji: '👥',
                     onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
                   },
                 ]
