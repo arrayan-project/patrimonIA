@@ -34,13 +34,19 @@ En resumen:
 
 - [ ] **Rediseño de usabilidad** (G33) — la validación de G32 con una usuaria
   real falló; plan y escenarios en `Docs/usabilidad/USABILIDAD_REAL_S01.md`.
-  Fase E en curso: bloques 1 a 9 y D-5 hechos (estado en `GAPS.md`, G33);
-  sigue D-6 (recurrencia de los movimientos programados).
+  Fase E: bloques 1 a 10 hechos (estado en `GAPS.md`, G33); queda la señal
+  de Zoily (usar la app real un mes y completar sola los seis escenarios).
 - [ ] **Densidad** en las preferencias de visualización (resto de G25).
 - [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
 
 ### Implementado
 
+- [x] **G33, bloque 10 de la Fase E (2026-10-08)** — recurrencia de los
+  movimientos programados (D-6, HZ-16): "¿Se repite?" (cada mes / cada año) en
+  Nuevo programado y en Gasté/Recibí/Moví plata, aviso "¿Se pagó?" con "Sí, se
+  pagó" · "Cambiar monto" · "Este mes no", "Dejar de repetir", y las plantillas
+  como "Frecuentes" en chips. Migración 028. Junto con D-5 (destino de otro
+  miembro), ya mergeado. Detalle en `GAPS.md`, G33, bloques 10a y 10b.
 - [x] **G33, bloque 9 de la Fase E (2026-10-08)** — solicitudes entre miembros
   del hogar: "Compartido con [miembro]" en Gasté (D-7), "Avisarle a [miembro]"
   en Recibí → De alguien del hogar, pantalla "Pagarle a [miembro]" y

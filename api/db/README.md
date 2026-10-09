@@ -154,6 +154,12 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   `init/01_schema.sql`. GAPS.md G33, bloque 9. Prisma: el modelo se agregó a
   mano (`prisma db pull` contra una base local con tablas del banking-worker
   trae modelos que no son del API).
+- `028_movimiento_programado_recurrencia.sql` — recurrencia de los movimientos
+  programados (D-6): columnas `periodicidad` (MENSUAL/ANUAL), `dia`, `serie_id`,
+  `categoria_id` y `avisado` en `movimiento_programado`, e índice único
+  `(serie_id, fecha_programada)`. Una fila por ocurrencia; las existentes quedan
+  como serie de una vez. Ya incluida en `init/01_schema.sql`. GAPS.md G33,
+  bloques 10a y 10b. Prisma: campos agregados a mano.
 
 ## Estado
 
@@ -168,10 +174,11 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - [x] Fase 0 — esquema inicial (16 tablas) ejecutado y verificado contra
   `postgres:16`: CHECKs, índices únicos parciales y FKs validados con inserts de
   prueba.
-- [x] Migraciones **001–027** aplicadas y plegadas en `init/01_schema.sql`
+- [x] Migraciones **001–028** aplicadas y plegadas en `init/01_schema.sql`
   (34 tablas). `init/01_schema.sql` sigue siendo la única fuente de estructura;
   CI la carga tal cual.
 - [x] Neon (producción) al día hasta la **027** (2026-10-08, `Docs/DESPLIEGUE.md`).
+- [ ] Neon: aplicar la **028** antes de hacer push de D-6 (G33, bloques 10a y 10b).
 
 ## Verificación rápida
 
