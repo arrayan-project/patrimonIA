@@ -20,6 +20,9 @@ interface MovimientoInterno {
   corregido: boolean;
   /** Solo TRANSFERENCIA/CONVERSION: efecto neto sobre las cuentas del actor. NULL en el resto. */
   efectoPropio: number | null;
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
+  registradoEn: string;
 }
 
 /**
@@ -92,6 +95,9 @@ export class ReporteService {
           etiquetaIds: etiquetasPorEvento.get(m.eventoId) ?? [],
           corregido: m.corregido,
           efectoPropio: m.efectoPropio,
+          elementoOrigenId: m.elementoOrigenId,
+          elementoDestinoId: m.elementoDestinoId,
+          registradoEn: m.registradoEn,
         }),
       ),
     };
@@ -180,6 +186,10 @@ export class ReporteService {
             .filter((i) => i.origen_id === e.id && propios.has(i.elemento_id))
             .reduce((s, i) => s + Number(i.monto), 0)
         : null;
+      // G39: la cuenta de donde salió (impacto negativo) y a donde llegó (positivo).
+      const propiosDelEvento = todosLosImpactos.filter((i) => i.origen_id === e.id);
+      const origen = propiosDelEvento.find((i) => Number(i.monto) < 0);
+      const destino = propiosDelEvento.find((i) => Number(i.monto) > 0);
       filas.push({
         eventoId: e.id,
         fecha: e.fecha.toISOString().slice(0, 10),
@@ -190,6 +200,9 @@ export class ReporteService {
         glosa: e.glosa,
         corregido: deltaPorRaiz.has(e.id),
         efectoPropio,
+        elementoOrigenId: origen?.elemento_id ?? null,
+        elementoDestinoId: destino?.elemento_id ?? null,
+        registradoEn: e.created_at.toISOString(),
       });
     }
     return filas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));

@@ -173,6 +173,9 @@ describe('Reportes financieros (e2e)', () => {
     expect(transfer).toBeTruthy();
     expect(transfer.monto).toBe(100_000);
     expect(transfer.efectoPropio).toBe(0); // salió de una cuenta propia, entró en otra
+    // G39: dice de qué cuenta salió y a cuál llegó (la app recuerda la última).
+    expect(transfer).toMatchObject({ elementoOrigenId: cuentaId, elementoDestinoId: ahorroId });
+    expect(typeof transfer.registradoEn).toBe('string');
     // No cuenta como ingreso/gasto ni aparece en el desglose por rubro.
     expect(r.body.porMoneda).toHaveLength(0);
     expect(r.body.porRubro).toHaveLength(0);
