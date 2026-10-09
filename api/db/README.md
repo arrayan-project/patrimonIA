@@ -147,6 +147,13 @@ cd .. && npm run prisma:pull && npm run prisma:generate
   propósito `REGISTRO`/`RESET`): hash del código de 6 dígitos que se envía por
   email, vencimiento (15 min) e intentos (máx. 5). Reemplaza al JWT largo que
   había que copiar. Ya incluida en `init/01_schema.sql`. GAPS.md G31/G4.
+- `027_solicitud_transferencia.sql` — tabla `solicitud_transferencia`: un
+  miembro le pide a otro que anote una TRANSFERENCIA hacia su cuenta (su parte
+  de un gasto compartido, D-7, o una transferencia sin anotar). Tabla de apoyo,
+  como `notificacion`; el estado se deriva de los eventos. Ya incluida en
+  `init/01_schema.sql`. GAPS.md G33, bloque 9. Prisma: el modelo se agregó a
+  mano (`prisma db pull` contra una base local con tablas del banking-worker
+  trae modelos que no son del API).
 
 ## Estado
 
@@ -161,10 +168,11 @@ cd .. && npm run prisma:pull && npm run prisma:generate
 - [x] Fase 0 — esquema inicial (16 tablas) ejecutado y verificado contra
   `postgres:16`: CHECKs, índices únicos parciales y FKs validados con inserts de
   prueba.
-- [x] Migraciones **001–025** aplicadas y plegadas en `init/01_schema.sql`
-  (32 tablas). `init/01_schema.sql` sigue siendo la única fuente de estructura;
+- [x] Migraciones **001–027** aplicadas y plegadas en `init/01_schema.sql`
+  (34 tablas). `init/01_schema.sql` sigue siendo la única fuente de estructura;
   CI la carga tal cual.
-- [x] Neon (producción) al día hasta la **025** (2026-09-26).
+- [x] Neon (producción) al día hasta la **026** (2026-09-29, `Docs/DESPLIEGUE.md`).
+- [ ] Neon: aplicar la **027** antes de hacer push del bloque 9 de G33.
 
 ## Verificación rápida
 

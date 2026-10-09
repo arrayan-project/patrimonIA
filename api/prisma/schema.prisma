@@ -80,29 +80,29 @@ model codigo_verificacion {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model elemento_patrimonial {
-  id                                                                                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                                                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nombre                                                                               String
   tipo                                                                                 String
   categoria_funcional                                                                  String
   ambito                                                                               String
-  valor_vigente                                                                        Decimal                 @db.Decimal(18, 2)
+  valor_vigente                                                                        Decimal                   @db.Decimal(18, 2)
   moneda                                                                               String
-  participa_valor_liquido                                                              Boolean                 @default(false)
-  participa_consolidacion                                                              Boolean                 @default(false)
-  admite_valorizacion                                                                  Boolean                 @default(false)
+  participa_valor_liquido                                                              Boolean                   @default(false)
+  participa_consolidacion                                                              Boolean                   @default(false)
+  admite_valorizacion                                                                  Boolean                   @default(false)
   visibilidad                                                                          String
   estado                                                                               String
-  valor_pendiente                                                                      Decimal?                @db.Decimal(18, 2)
-  created_at                                                                           DateTime                @default(now()) @db.Timestamptz(6)
-  fecha_alta                                                                           DateTime                @default(now()) @db.Date
-  fecha_baja                                                                           DateTime?               @db.Date
+  valor_pendiente                                                                      Decimal?                  @db.Decimal(18, 2)
+  created_at                                                                           DateTime                  @default(now()) @db.Timestamptz(6)
+  fecha_alta                                                                           DateTime                  @default(now()) @db.Date
+  fecha_baja                                                                           DateTime?                 @db.Date
   contraparte                                                                          String?
-  fecha_inicio                                                                         DateTime?               @db.Date
-  fecha_termino                                                                        DateTime?               @db.Date
-  cuota_monto                                                                          Decimal?                @db.Decimal(18, 2)
-  tasa_interes                                                                         Decimal?                @db.Decimal(9, 4)
+  fecha_inicio                                                                         DateTime?                 @db.Date
+  fecha_termino                                                                        DateTime?                 @db.Date
+  cuota_monto                                                                          Decimal?                  @db.Decimal(18, 2)
+  tasa_interes                                                                         Decimal?                  @db.Decimal(9, 4)
   observaciones                                                                        String?
-  valor_pendiente_inicial                                                              Decimal?                @db.Decimal(18, 2)
+  valor_pendiente_inicial                                                              Decimal?                  @db.Decimal(18, 2)
   naturaleza                                                                           String?
   agrupacion_miembro                                                                   agrupacion_miembro?
   ajuste_patrimonial                                                                   ajuste_patrimonial[]
@@ -111,11 +111,12 @@ model elemento_patrimonial {
   elemento_visibilidad                                                                 elemento_visibilidad[]
   impacto_patrimonial                                                                  impacto_patrimonial[]
   movimiento_programado                                                                movimiento_programado[]
-  movimiento_programado_movimiento_programado_elemento_origen_idToelemento_patrimonial movimiento_programado[] @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial")
-  plantilla_movimiento_plantilla_movimiento_elemento_destino_idToelemento_patrimonial  plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial")
-  plantilla_movimiento_plantilla_movimiento_elemento_origen_idToelemento_patrimonial   plantilla_movimiento[]  @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial")
+  movimiento_programado_movimiento_programado_elemento_origen_idToelemento_patrimonial movimiento_programado[]   @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial")
+  plantilla_movimiento_plantilla_movimiento_elemento_destino_idToelemento_patrimonial  plantilla_movimiento[]    @relation("plantilla_movimiento_elemento_destino_idToelemento_patrimonial")
+  plantilla_movimiento_plantilla_movimiento_elemento_origen_idToelemento_patrimonial   plantilla_movimiento[]    @relation("plantilla_movimiento_elemento_origen_idToelemento_patrimonial")
   reserva                                                                              reserva[]
   valorizacion                                                                         valorizacion[]
+  solicitud_transferencia                                                              solicitud_transferencia[]
 
   @@index([categoria_funcional], map: "ix_elemento_categoria")
   @@index([estado], map: "ix_elemento_estado")
@@ -137,24 +138,26 @@ model elemento_propietario {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model evento_financiero {
-  id                              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tipo                            String
-  monto                           Decimal                @db.Decimal(18, 2)
-  moneda                          String
-  fecha                           DateTime               @db.Date
-  asignacion_id                   String?                @db.Uuid
-  movimiento_programado_origen_id String?                @db.Uuid
-  correccion_de_id                String?                @db.Uuid
-  anulado                         Boolean                @default(false)
-  glosa                           String?
-  categoria_id                    String?                @db.Uuid
-  created_at                      DateTime               @default(now()) @db.Timestamptz(6)
-  evento_etiqueta                 evento_etiqueta[]
-  asignacion                      asignacion?            @relation(fields: [asignacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  categoria_movimiento            categoria_movimiento?  @relation("evento_financiero_categoria", fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  evento_financiero               evento_financiero?     @relation("evento_financieroToevento_financiero", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_evento_financiero         evento_financiero[]    @relation("evento_financieroToevento_financiero")
-  movimiento_programado           movimiento_programado? @relation(fields: [movimiento_programado_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                                                                                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo                                                                               String
+  monto                                                                              Decimal                   @db.Decimal(18, 2)
+  moneda                                                                             String
+  fecha                                                                              DateTime                  @db.Date
+  asignacion_id                                                                      String?                   @db.Uuid
+  movimiento_programado_origen_id                                                    String?                   @db.Uuid
+  correccion_de_id                                                                   String?                   @db.Uuid
+  anulado                                                                            Boolean                   @default(false)
+  glosa                                                                              String?
+  categoria_id                                                                       String?                   @db.Uuid
+  created_at                                                                         DateTime                  @default(now()) @db.Timestamptz(6)
+  evento_etiqueta                                                                    evento_etiqueta[]
+  asignacion                                                                         asignacion?               @relation(fields: [asignacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoria_movimiento                                                               categoria_movimiento?     @relation("evento_financiero_categoria", fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_financiero                                                                  evento_financiero?        @relation("evento_financieroToevento_financiero", fields: [correccion_de_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_evento_financiero                                                            evento_financiero[]       @relation("evento_financieroToevento_financiero")
+  movimiento_programado                                                              movimiento_programado?    @relation(fields: [movimiento_programado_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  solicitud_transferencia_solicitud_transferencia_evento_gasto_idToevento_financiero solicitud_transferencia[] @relation("solicitud_transferencia_evento_gasto_idToevento_financiero")
+  solicitud_transferencia_solicitud_transferencia_evento_pago_idToevento_financiero  solicitud_transferencia[] @relation("solicitud_transferencia_evento_pago_idToevento_financiero")
 
   @@index([asignacion_id], map: "ix_evento_asignacion", where: raw("(asignacion_id IS NOT NULL)"))
   @@index([correccion_de_id], map: "ix_evento_correccion", where: raw("(correccion_de_id IS NOT NULL)"))
@@ -163,16 +166,17 @@ model evento_financiero {
 }
 
 model hogar {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nombre               String
-  moneda_consolidacion String
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  categoria_movimiento categoria_movimiento[]
-  invitacion           invitacion[]
-  membresia            membresia[]
-  objetivo_financiero  objetivo_financiero[]
-  presupuesto          presupuesto[]
-  tipo_elemento        tipo_elemento[]
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                  String
+  moneda_consolidacion    String
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  categoria_movimiento    categoria_movimiento[]
+  invitacion              invitacion[]
+  membresia               membresia[]
+  objetivo_financiero     objetivo_financiero[]
+  presupuesto             presupuesto[]
+  tipo_elemento           tipo_elemento[]
+  solicitud_transferencia solicitud_transferencia[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -308,30 +312,32 @@ model reserva {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model usuario {
-  id                                         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                                      String                  @unique
-  nombre                                     String
-  password_hash                              String
-  preferencias                               Json?
-  estado                                     String
-  token_version                              Int                     @default(0)
-  created_at                                 DateTime                @default(now()) @db.Timestamptz(6)
-  agrupacion_elemento                        agrupacion_elemento[]
-  asignacion                                 asignacion[]
-  auditoria                                  auditoria[]
-  dispositivo_push                           dispositivo_push[]
-  elemento_comparticion                      elemento_comparticion[]
-  elemento_propietario                       elemento_propietario[]
-  etiqueta                                   etiqueta[]
-  idempotencia                               idempotencia[]
-  invitacion_invitacion_emisor_idTousuario   invitacion[]            @relation("invitacion_emisor_idTousuario")
-  invitacion_invitacion_invitado_idTousuario invitacion[]            @relation("invitacion_invitado_idTousuario")
-  membresia                                  membresia[]
-  notificacion                               notificacion[]
-  objetivo_designado                         objetivo_designado[]
-  objetivo_financiero                        objetivo_financiero[]
-  plantilla_movimiento                       plantilla_movimiento[]
-  presupuesto                                presupuesto[]
+  id                                                                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                                                    String                    @unique
+  nombre                                                                   String
+  password_hash                                                            String
+  preferencias                                                             Json?
+  estado                                                                   String
+  token_version                                                            Int                       @default(0)
+  created_at                                                               DateTime                  @default(now()) @db.Timestamptz(6)
+  agrupacion_elemento                                                      agrupacion_elemento[]
+  asignacion                                                               asignacion[]
+  auditoria                                                                auditoria[]
+  dispositivo_push                                                         dispositivo_push[]
+  elemento_comparticion                                                    elemento_comparticion[]
+  elemento_propietario                                                     elemento_propietario[]
+  etiqueta                                                                 etiqueta[]
+  idempotencia                                                             idempotencia[]
+  invitacion_invitacion_emisor_idTousuario                                 invitacion[]              @relation("invitacion_emisor_idTousuario")
+  invitacion_invitacion_invitado_idTousuario                               invitacion[]              @relation("invitacion_invitado_idTousuario")
+  membresia                                                                membresia[]
+  notificacion                                                             notificacion[]
+  objetivo_designado                                                       objetivo_designado[]
+  objetivo_financiero                                                      objetivo_financiero[]
+  plantilla_movimiento                                                     plantilla_movimiento[]
+  presupuesto                                                              presupuesto[]
+  solicitud_transferencia_solicitud_transferencia_solicitante_idTousuario  solicitud_transferencia[] @relation("solicitud_transferencia_solicitante_idTousuario")
+  solicitud_transferencia_solicitud_transferencia_destinatario_idTousuario solicitud_transferencia[] @relation("solicitud_transferencia_destinatario_idTousuario")
 }
 
 model valorizacion {
@@ -567,4 +573,31 @@ model objetivo_designado {
   usuario             usuario             @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([objetivo_id, usuario_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model solicitud_transferencia {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  motivo               String
+  hogar_id             String               @db.Uuid
+  solicitante_id       String               @db.Uuid
+  destinatario_id      String               @db.Uuid
+  monto                Decimal              @db.Decimal(18, 2)
+  moneda               String
+  elemento_destino_id  String               @db.Uuid
+  evento_gasto_id      String?              @db.Uuid
+  evento_pago_id       String?              @db.Uuid
+  fecha                DateTime             @db.Date
+  glosa                String?
+  rechazada            Boolean              @default(false)
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  hogar                hogar                @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  solicitante          usuario              @relation("solicitud_transferencia_solicitante_idTousuario", fields: [solicitante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  destinatario         usuario              @relation("solicitud_transferencia_destinatario_idTousuario", fields: [destinatario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_gasto         evento_financiero?   @relation("solicitud_transferencia_evento_gasto_idToevento_financiero", fields: [evento_gasto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evento_pago          evento_financiero?   @relation("solicitud_transferencia_evento_pago_idToevento_financiero", fields: [evento_pago_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([destinatario_id, created_at(sort: Desc)], map: "ix_solicitud_destinatario")
+  @@index([solicitante_id, created_at(sort: Desc)], map: "ix_solicitud_solicitante")
 }
