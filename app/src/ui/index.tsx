@@ -10,20 +10,20 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
-  TextInput,
   View,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { Text, TextInput } from './Text';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { etiqueta } from '../labels';
 import { CLARO, radio, tipografia, useC, type Paleta } from './tema';
 import { useToast } from './Toast';
@@ -189,7 +189,8 @@ export function Screen({
           styles.screenContent,
           {
             paddingTop: conHeader ? 16 : 20 + insets.top,
-            paddingBottom: 24 + (conHeader && !pie ? insets.bottom : 0) + (fab ? 72 : 0),
+            // Con barra de pestañas el "+" queda más arriba: el final del contenido no debe quedar debajo de él.
+            paddingBottom: 24 + (conHeader && !pie ? insets.bottom : 0) + (fab ? (conHeader ? 72 : 124) : 0),
           },
         ]}
         keyboardShouldPersistTaps="handled"
@@ -272,7 +273,7 @@ export function HojaAcciones({
               }}
             >
               <View style={styles.fabActionIc}>
-                <Ionicons name={a.icon} size={20} color={c.text} />
+                <Ionicons name={a.icon} size={20} color={c.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.fabActionTxt}>{a.label}</Text>
@@ -439,6 +440,7 @@ export function Hero({
   changeDir,
   substats,
   children,
+  debajo,
 }: {
   label: string;
   value: ReactNode;
@@ -446,11 +448,24 @@ export function Hero({
   changeDir?: 'pos' | 'neg';
   substats?: { label: string; value: string }[];
   children?: ReactNode;
+  /** G35: contenido en la parte blanca de la misma tarjeta (p. ej. la resta hasta "Puedes gastar"). */
+  debajo?: ReactNode;
 }) {
   const c = useC();
   const styles = useEstilos();
+  const [gradId] = useState(() => `hero-${Math.random().toString(36).slice(2)}`);
   return (
+    <View style={styles.heroCaja}>
     <View style={styles.hero}>
+      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <Defs>
+          <LinearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={c.heroA} />
+            <Stop offset="1" stopColor={c.heroB} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100" height="100" fill={`url(#${gradId})`} />
+      </Svg>
       <Text style={styles.heroLbl}>{label}</Text>
       <View style={styles.heroRow}>
         {typeof value === 'string' ? <Text style={styles.heroVal}>{value}</Text> : value}
@@ -458,10 +473,7 @@ export function Hero({
           <Text
             style={[
               styles.heroChg,
-              {
-                color: changeDir === 'neg' ? c.danger : c.ok,
-                backgroundColor: tinte(changeDir === 'neg' ? c.danger : c.ok, 0.15),
-              },
+              { color: changeDir === 'neg' ? c.danger : c.ok, backgroundColor: c.bg },
             ]}
           >
             {change}
@@ -471,14 +483,133 @@ export function Hero({
       {substats && substats.length > 0 ? (
         <View style={styles.heroSubs}>
           {substats.map((s, i) => (
-            <Text key={i} style={styles.heroSub}>
-              {s.label} <Text style={styles.heroSubB}>{s.value}</Text>
-            </Text>
+            <View key={i}>
+              <Text style={styles.heroSub}>{s.label}</Text>
+              <Text style={styles.heroSubB}>{s.value}</Text>
+            </View>
           ))}
         </View>
       ) : null}
       {children ? <View style={styles.heroChart}>{children}</View> : null}
     </View>
+    {debajo ? <View style={styles.heroDebajo}>{debajo}</View> : null}
+    </View>
+  );
+}
+
+/** Anillo de avance (metas). `children` va al centro (p. ej. el emoji de la meta). */
+export function AnilloAvance({
+  pct,
+  color,
+  tam = 76,
+  grosor = 8,
+  children,
+}: {
+  pct: number;
+  color?: string;
+  tam?: number;
+  grosor?: number;
+  children?: ReactNode;
+}) {
+  const c = useC();
+  const radioA = (tam - grosor) / 2;
+  const largo = 2 * Math.PI * radioA;
+  const p = Math.max(0, Math.min(100, pct));
+  return (
+    <View style={{ width: tam, height: tam, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={tam} height={tam} style={StyleSheet.absoluteFill}>
+        <Circle cx={tam / 2} cy={tam / 2} r={radioA} stroke={c.acentoSuave} strokeWidth={grosor} fill="none" />
+        <Circle
+          cx={tam / 2}
+          cy={tam / 2}
+          r={radioA}
+          stroke={color ?? c.primary}
+          strokeWidth={grosor}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${largo} ${largo}`}
+          strokeDashoffset={largo * (1 - p / 100)}
+          transform={`rotate(-90 ${tam / 2} ${tam / 2})`}
+        />
+      </Svg>
+      {children}
+    </View>
+  );
+}
+
+/** Emojis para elegir (G35), agrupados por tema. También se puede escribir cualquier otro. */
+export const EMOJIS_ELEGIBLES = [
+  '🏦', '💵', '💳', '📈', '💰', '🐷', '🏠', '🚗', '🤝', '🪙',
+  '🛒', '🍽️', '☕', '💡', '💧', '🔥', '📱', '🌐', '🚌', '⛽',
+  '🩺', '💊', '📚', '🎓', '👶', '🐶', '👕', '🎁', '🎉', '🎬',
+  '✈️', '🏖️', '🏔️', '🛟', '🎯', '💍', '🔧', '🧾', '💼', '📦',
+] as const;
+
+/** Fila "Emoji" de un formulario o de Ajustes: muestra el actual y abre una hoja para cambiarlo. */
+export function ElegirEmoji({
+  label = 'Emoji',
+  value,
+  onChange,
+}: {
+  label?: string;
+  value: string;
+  onChange: (emoji: string) => void;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const [abierto, setAbierto] = useState(false);
+  const [otro, setOtro] = useState('');
+  const elegir = (e: string) => {
+    setAbierto(false);
+    setOtro('');
+    onChange(e);
+  };
+  return (
+    <>
+      <Pressable
+        onPress={() => setAbierto(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value}. Cambiar`}
+        style={({ pressed }) => [styles.emojiFila, pressed && { opacity: 0.7 }]}
+      >
+        <View style={styles.emojiActual}>
+          <Text style={styles.emojiGrande}>{value}</Text>
+        </View>
+        <Text style={[styles.listItemTitle, { flex: 1 }]}>{label}</Text>
+        <Text style={styles.seccionAccion}>Cambiar</Text>
+      </Pressable>
+      <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
+        <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
+          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            <View style={styles.agarre} />
+            <Text style={styles.modalTitulo}>Elige un emoji</Text>
+            <ScrollView contentContainerStyle={styles.emojiGrilla}>
+              {EMOJIS_ELEGIBLES.map((e) => (
+                <Pressable
+                  key={e}
+                  onPress={() => elegir(e)}
+                  accessibilityRole="button"
+                  accessibilityLabel={e}
+                  style={[styles.emojiCelda, e === value && { backgroundColor: c.acentoSuave }]}
+                >
+                  <Text style={styles.emojiGrande}>{e}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <TextInput
+              value={otro}
+              onChangeText={setOtro}
+              placeholder="O escribe otro emoji"
+              placeholderTextColor={c.mutedDim}
+              style={styles.emojiOtro}
+              returnKeyType="done"
+              onSubmitEditing={() => otro.trim() && elegir(otro.trim())}
+            />
+            <LinkButton title="Cancelar" onPress={() => setAbierto(false)} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -501,7 +632,7 @@ export function QuickActions({
           style={({ pressed }) => [styles.quickItem, pressed && { opacity: 0.6 }]}
         >
           <View style={styles.quickIc}>
-            <Ionicons name={it.icon} size={18} color={c.text} />
+            <Ionicons name={it.icon} size={20} color={c.primary} />
           </View>
           <Text style={styles.quickTxt}>{it.label}</Text>
         </Pressable>
@@ -533,7 +664,7 @@ export function TxRow({
   positivo?: boolean;
   /** Monto en rojo (deuda, saldo en contra). */
   negativo?: boolean;
-  logo?: { icon?: NombreIcono; text?: string; color?: string };
+  logo?: { icon?: NombreIcono; text?: string; color?: string; emoji?: string };
   virtual?: boolean;
   tag?: string;
   /** Controles al final de la fila (p. ej. ▲▼ para ordenar un catálogo). */
@@ -554,7 +685,9 @@ export function TxRow({
             : { backgroundColor: logo?.color ?? c.panelAlt },
         ]}
       >
-        {logo?.icon ? (
+        {logo?.emoji ? (
+          <Text style={styles.txEmoji}>{logo.emoji}</Text>
+        ) : logo?.icon ? (
           <Ionicons name={logo.icon} size={17} color={tinta} />
         ) : (
           <Text style={[styles.txLogoTxt, { color: tinta }]}>
@@ -630,7 +763,7 @@ export function GoalCard({
         {hint ? <Text style={[styles.goalHint, ok && { color: c.ok }]}>{hint}</Text> : null}
       </View>
       <View style={styles.goalBar}>
-        <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.text }]} />
+        <View style={[styles.goalBarFill, { width: w, backgroundColor: ok ? c.ok : c.primary }]} />
       </View>
       {footLeft || footRight || accion ? (
         <View style={styles.goalFoot}>
@@ -1959,7 +2092,14 @@ export function Ordenar({ onSubir, onBajar }: { onSubir?: () => void; onBajar?: 
 }
 
 /** Datos en pares de un Detalle: una sola tarjeta, sin campos editables. */
-export function Datos({ children }: { children: ReactNode }) {
+export function Datos({ children, plano }: { children: ReactNode; /** Sin tarjeta propia (dentro de otra, p. ej. `Hero debajo`). */ plano?: boolean }) {
+  // Como en ListCard: la línea de la última fila queda fuera del recorte.
+  if (plano)
+    return (
+      <View style={{ overflow: 'hidden' }}>
+        <View style={{ marginBottom: -1 }}>{children}</View>
+      </View>
+    );
   return <ListCard>{children}</ListCard>;
 }
 
@@ -2209,12 +2349,10 @@ const crearEstilos = (c: Paleta) => {
       borderRadius: 14,
     },
     fabActionIc: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.border,
+      width: 44,
+      height: 44,
+      borderRadius: 16,
+      backgroundColor: c.acentoSuave,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -2231,8 +2369,8 @@ const crearEstilos = (c: Paleta) => {
     },
     seccion: { gap: 8, marginTop: 8 },
     seccionCabeza: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    rotulo: { ...tipografia.rotulo, color: c.muted },
-    seccionAccion: { fontSize: 13, fontWeight: '600', color: c.muted },
+    rotulo: { ...tipografia.seccion, color: c.text },
+    seccionAccion: { fontSize: 13, fontWeight: '700', color: c.primary },
     listCard: {
       backgroundColor: c.bg,
       borderWidth: 1,
@@ -2261,7 +2399,7 @@ const crearEstilos = (c: Paleta) => {
     listaTitulo: { ...tipografia.fila, color: c.text },
     listaSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: c.mutedDim },
-    radioOn: { borderWidth: 6, borderColor: c.text },
+    radioOn: { borderWidth: 6, borderColor: c.primary },
     casilla: {
       width: 20,
       height: 20,
@@ -2271,7 +2409,7 @@ const crearEstilos = (c: Paleta) => {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    casillaOn: { backgroundColor: c.text, borderColor: c.text },
+    casillaOn: { backgroundColor: c.primary, borderColor: c.primary },
     monto: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -2283,15 +2421,13 @@ const crearEstilos = (c: Paleta) => {
     montoMoneda: { fontSize: 18, fontWeight: '600', color: c.muted },
     pillToggle: {
       flexDirection: 'row',
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.border,
+      backgroundColor: c.faint,
       borderRadius: 999,
-      padding: 2,
+      padding: 3,
     },
-    pillToggleOpt: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 },
+    pillToggleOpt: { paddingVertical: 6, paddingHorizontal: 13, borderRadius: 999 },
     pillToggleOptActive: { backgroundColor: c.primary },
-    pillToggleTxt: { fontSize: 12, fontWeight: '600', color: c.muted },
+    pillToggleTxt: { fontSize: 13, fontWeight: '700', color: c.muted },
     pillToggleTxtActive: { color: c.primaryText },
 
     // hub / hero
@@ -2312,9 +2448,9 @@ const crearEstilos = (c: Paleta) => {
     },
     pillDateTxt: { fontSize: 12, color: c.text, fontWeight: '500' },
     iconBtn: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       backgroundColor: c.bg,
       borderWidth: 1,
       borderColor: c.border,
@@ -2335,29 +2471,57 @@ const crearEstilos = (c: Paleta) => {
     },
     iconBtnBadgeTxt: { color: '#fff', fontSize: 9, fontWeight: '800' },
 
-    hero: { paddingHorizontal: 2, gap: 6 },
+    heroCaja: {
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radio.tarjeta + 4,
+      overflow: 'hidden',
+    },
+    hero: { padding: 16, gap: 6, overflow: 'hidden' },
+    heroDebajo: { paddingHorizontal: 16, paddingVertical: 4 },
     heroLbl: { ...tipografia.rotulo, color: c.muted },
     heroRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
     heroVal: { ...tipografia.hero, color: c.text },
     heroChg: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
-    heroSubs: { flexDirection: 'row', gap: 18, flexWrap: 'wrap' },
-    heroSub: { fontSize: 13, color: c.muted },
-    heroSubB: { color: c.text, fontWeight: '700' },
-    heroChart: { marginTop: 10 },
+    heroSubs: { flexDirection: 'row', gap: 22, flexWrap: 'wrap', marginTop: 2 },
+    heroSub: { fontSize: 13, color: c.muted, fontWeight: '600' },
+    heroSubB: { fontSize: 16, color: c.text, fontWeight: '800' },
+    heroChart: { marginTop: 4 },
+    emojiFila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14 },
+    emojiActual: {
+      width: 44,
+      height: 44,
+      borderRadius: radio.icono + 2,
+      backgroundColor: c.acentoSuave,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emojiGrande: { fontSize: 24 },
+    emojiGrilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingVertical: 4 },
+    emojiCelda: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    emojiOtro: {
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.bg,
+      borderRadius: radio.campo,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 16,
+      color: c.text,
+    },
 
     quickRow: { flexDirection: 'row', gap: 10 },
     quickItem: { flex: 1, alignItems: 'center', gap: 6, paddingVertical: 8 },
     quickIc: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: c.bg,
-      borderWidth: 1,
-      borderColor: c.border,
+      width: 50,
+      height: 50,
+      borderRadius: 18,
+      backgroundColor: c.acentoSuave,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    quickTxt: { fontSize: 10, color: c.muted, fontWeight: '500' },
+    quickTxt: { fontSize: 12, color: c.text, fontWeight: '700' },
 
     txRow: {
       flexDirection: 'row',
@@ -2368,13 +2532,14 @@ const crearEstilos = (c: Paleta) => {
       borderBottomColor: c.border,
     },
     txLogo: {
-      width: 36,
-      height: 36,
+      width: 40,
+      height: 40,
       borderRadius: radio.icono,
       alignItems: 'center',
       justifyContent: 'center',
     },
     txLogoTxt: { fontSize: 15, fontWeight: '800' },
+    txEmoji: { fontSize: 20 },
     txMain: { flex: 1, minWidth: 0 },
     txTitle: { ...tipografia.fila, color: c.text },
     txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
@@ -2402,13 +2567,11 @@ const crearEstilos = (c: Paleta) => {
     goalBtn: {
       height: 34,
       paddingHorizontal: 14,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.panelAlt,
+      borderRadius: 999,
+      backgroundColor: c.acentoSuave,
       justifyContent: 'center',
     },
-    goalBtnTxt: { fontSize: 14, fontWeight: '600', color: c.text },
+    goalBtnTxt: { fontSize: 14, fontWeight: '700', color: c.primary },
 
     miniGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     miniPanel: {

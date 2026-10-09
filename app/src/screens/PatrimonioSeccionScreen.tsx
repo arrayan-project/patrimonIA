@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ElementoPatrimonialDTO, type SeriePatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';

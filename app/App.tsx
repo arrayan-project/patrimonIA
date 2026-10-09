@@ -1,3 +1,12 @@
+import {
+  Nunito_400Regular,
+  Nunito_500Medium,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  Nunito_900Black,
+  useFonts,
+} from '@expo-google-fonts/nunito';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/auth/AuthContext';
@@ -13,6 +22,17 @@ import { ToastProvider } from './src/ui/Toast';
  * Navegación con @react-navigation; sesión persistida (expo-secure-store).
  */
 export default function App() {
+  // G35: la letra de la app (ui/Text). Hasta que carga no se pinta nada, para
+  // no mostrar un instante la letra del sistema; si falla, sigue con la del sistema.
+  const [fuentesListas, errorFuentes] = useFonts({
+    Nunito_400Regular,
+    Nunito_500Medium,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+  });
+  if (!fuentesListas && !errorFuentes) return null;
   return (
     <SafeAreaProvider>
       <TemaProvider>

@@ -10,6 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { fuente } from '../ui/Text';
 import { useC, useTema } from '../ui';
 
 import { LoginScreen } from '../screens/LoginScreen';
@@ -100,9 +101,10 @@ function Tabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: c.text,
+        tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: c.mutedDim,
-        tabBarStyle: { backgroundColor: c.fondo, borderTopColor: c.border },
+        tabBarStyle: { backgroundColor: c.bg, borderTopColor: c.border },
+        tabBarLabelStyle: fuente('700'),
       }}
     >
       <Tab.Screen
@@ -284,7 +286,7 @@ export function RootNavigator() {
           headerShown: true,
           headerBackButtonDisplayMode: 'minimal',
           headerTintColor: c.text,
-          headerTitleStyle: { color: c.text },
+          headerTitleStyle: { color: c.text, ...fuente('800') },
           headerStyle: { backgroundColor: c.fondo },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: c.fondo },

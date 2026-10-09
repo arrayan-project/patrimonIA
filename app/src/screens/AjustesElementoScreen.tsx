@@ -3,7 +3,22 @@ import { api, ApiError, type ElementoPatrimonialDTO, type HogarDTO, type Miembro
 import { useSession } from '../auth/AuthContext';
 import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
 import { useNav, useTitulo } from '../navigation/navigator';
-import { Elegir, ElegirVarios, ErrorText, Nota, Opcional, Screen, Section, Segmented, Skeleton, useGuardarAlInstante } from '../ui';
+import { emojiElemento } from '../emojis';
+import { conEmoji, usePreferencias } from '../preferencias';
+import {
+  Elegir,
+  ElegirEmoji,
+  ElegirVarios,
+  ErrorText,
+  ListCard,
+  Nota,
+  Opcional,
+  Screen,
+  Section,
+  Segmented,
+  Skeleton,
+  useGuardarAlInstante,
+} from '../ui';
 
 const VIS = ['PRIVADA', 'FAMILIAR', 'COMPARTIDA'] as const;
 type Nivel = (typeof VIS)[number];
@@ -23,6 +38,7 @@ export function AjustesElementoScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
   const guardar = useGuardarAlInstante();
+  const { preferencias, guardarPreferencias } = usePreferencias();
   const elementoId = nav.route.params?.elementoId as string;
 
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
@@ -80,6 +96,17 @@ export function AjustesElementoScreen() {
 
   return (
     <Screen>
+      <Section title="Cómo se ve">
+        <ListCard>
+          <ElegirEmoji
+            value={emojiElemento(el, preferencias.emojis.elementos)}
+            onChange={(e) =>
+              // guardarPreferencias ya vuelve atrás si falla.
+              void guardar(() => guardarPreferencias(conEmoji(preferencias, 'elementos', el.id, e)), () => undefined)
+            }
+          />
+        </ListCard>
+      </Section>
       <Section title="Con el hogar">
         <Elegir
           label={`¿Qué compartes con ${pareja ?? 'el hogar'}?`}

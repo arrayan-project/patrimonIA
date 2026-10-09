@@ -14,6 +14,7 @@ import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
+import { emojiCategoria } from '../emojis';
 import { useToast } from '../ui/Toast';
 import {
   AccionDestructiva,
@@ -21,6 +22,7 @@ import {
   Button,
   contadorPasos,
   DateField,
+  ElegirEmoji,
   ElegirVarios,
   ErrorText,
   etiqueta,
@@ -140,6 +142,8 @@ function FormCategoria({ id }: { id?: string }) {
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState<(typeof TIPOS_CATEGORIA)[number]>('GASTO');
   const [padre, setPadre] = useState('');
+  // G35: el emoji de la categoría (`icono`). null = el que corresponde a su nombre.
+  const [emoji, setEmoji] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -153,6 +157,7 @@ function FormCategoria({ id }: { id?: string }) {
           setNombre(actual.nombre);
           setTipo(actual.tipoAplicable);
           setPadre(actual.categoriaPadreId ?? '');
+          setEmoji(actual.icono && !/^[a-z-]+$/.test(actual.icono) ? actual.icono : null);
         }
         setHogarId(h);
         setLista(cats);
@@ -171,6 +176,7 @@ function FormCategoria({ id }: { id?: string }) {
       .map((r) => ({ value: r.id, label: r.nombre })),
   ];
   const paso = contadorPasos();
+  const emojiVisible = emoji ?? emojiCategoria({ nombre, icono: null }) ?? '🏷️';
 
   const guardar = () =>
     actual
@@ -178,6 +184,7 @@ function FormCategoria({ id }: { id?: string }) {
           const body: Record<string, unknown> = { categoriaId: actual.id };
           if (nombre.trim() !== actual.nombre) body.nombre = nombre.trim();
           if (padre !== (actual.categoriaPadreId ?? '')) body.categoriaPadreId = padre || null;
+          if (emojiVisible !== actual.icono) body.icono = emojiVisible;
           await api.post('/comandos/ActualizarCategoriaMovimiento', body, token);
         }, 'Guardado')
       : run(
@@ -188,6 +195,7 @@ function FormCategoria({ id }: { id?: string }) {
                 hogarId,
                 nombre: nombre.trim(),
                 tipoAplicable: tipo,
+                icono: emojiVisible,
                 ...(padre ? { categoriaPadreId: padre } : {}),
               },
               token,
@@ -224,6 +232,7 @@ function FormCategoria({ id }: { id?: string }) {
         autoCapitalize="sentences"
         placeholder="p. ej. Mascotas"
       />
+      <ElegirEmoji value={emojiVisible} onChange={setEmoji} />
       {!actual && (
         <Segmented
           label="¿Para qué movimientos?"
