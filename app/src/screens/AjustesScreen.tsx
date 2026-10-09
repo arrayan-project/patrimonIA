@@ -165,7 +165,7 @@ export function AjustesScreen() {
             { title: 'Categorías', icon: 'list-outline', onPress: () => nav.go('Categorias') },
             { title: 'Tipos de cuenta o bien', icon: 'pricetag-outline', onPress: () => nav.go('TiposElemento') },
             { title: 'Etiquetas', icon: 'pricetags-outline', onPress: () => nav.go('Etiquetas') },
-            { title: 'Plantillas', icon: 'copy-outline', onPress: () => nav.go('Plantillas') },
+            { title: 'Frecuentes', icon: 'copy-outline', onPress: () => nav.go('Plantillas') },
             { title: 'Tipos de cambio', icon: 'swap-horizontal-outline', onPress: () => nav.go('TiposCambio') },
             { title: 'Agrupaciones', icon: 'folder-outline', onPress: () => nav.go('Agrupaciones') },
           ]}

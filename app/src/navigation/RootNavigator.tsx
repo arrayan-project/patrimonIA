@@ -156,7 +156,7 @@ const TITULOS: Record<string, string> = {
   PresupuestoRubros: 'Presupuesto por rubro',
   MovimientosProgramados: 'Movimientos programados',
   MovimientoProgramadoDetalle: 'Movimiento programado',
-  Plantillas: 'Plantillas de movimiento',
+  Plantillas: 'Frecuentes',
   EvolucionPatrimonio: 'Evolución de mi patrimonio',
   HogarConsolidado: 'Patrimonio del hogar',
   MovimientosHogar: 'Movimientos del hogar',
@@ -174,7 +174,7 @@ const TITULOS: Record<string, string> = {
   MetaForm: 'Nueva meta',
   PresupuestoForm: 'Nuevo presupuesto',
   NuevoProgramado: 'Programar movimiento',
-  PlantillaForm: 'Nueva plantilla',
+  PlantillaForm: 'Nuevo frecuente',
   // AccionForm, CorreccionForm, ProgramadoForm y SacarPlata ponen su título con useTitulo.
   AccionForm: 'Confirmar',
   CorreccionForm: 'Corregir',

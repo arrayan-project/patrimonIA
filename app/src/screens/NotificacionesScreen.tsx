@@ -17,6 +17,9 @@ function destino(n: NotificacionDTO): { name: RouteName; params?: Record<string,
       return { name: 'AsignacionDetalle', params: { asignacionId: n.entidadId } };
     case 'INVITACION':
       return { name: 'Invitaciones' };
+    // D-6: "¿Se pagó?" se responde en el detalle del programado.
+    case 'MOVIMIENTO_PROGRAMADO':
+      return { name: 'MovimientoProgramadoDetalle', params: { movimientoId: n.entidadId } };
     case 'EVENTO_FINANCIERO':
       return { name: 'MovimientoDetalle', params: { eventoId: n.entidadId } };
     // G33 bloque 9: lo que te piden se responde ahí; lo que pediste muestra su estado.

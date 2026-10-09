@@ -53,7 +53,7 @@ const VACIO: Borrador = {
 /**
  * Formulario de una plantilla (plantillas de pantalla, R2 y R3): sin
  * `plantillaId` crea; con él edita y ofrece eliminar al final. Con `desde`
- * (Detalle de un movimiento: "Guardar como plantilla") crea con esos datos.
+ * (Detalle de un movimiento: "Guardar como frecuente") crea con esos datos.
  */
 export type DesdeMovimiento = Omit<Borrador, 'monto'> & { monto: number; moneda: string };
 
@@ -73,7 +73,7 @@ export function PlantillaFormScreen() {
   const [b, setB] = useState<Borrador>(desde ? { ...desde, monto: String(desde.monto) } : VACIO);
   const [actual, setActual] = useState<PlantillaMovimientoDTO | null>(null);
 
-  useTitulo(plantillaId ? 'Editar plantilla' : 'Nueva plantilla');
+  useTitulo(plantillaId ? 'Editar frecuente' : 'Nuevo frecuente');
 
   useEffect(() => {
     (async () => {
@@ -94,7 +94,7 @@ export function PlantillaFormScreen() {
             : [],
         );
         const p = pls.find((x) => x.id === plantillaId);
-        if (plantillaId && !p) return setError('La plantilla ya no existe.');
+        if (plantillaId && !p) return setError('Ese frecuente ya no existe.');
         if (p) {
           setActual(p);
           setB({
@@ -140,14 +140,14 @@ export function PlantillaFormScreen() {
       };
       if (actual) {
         await api.post('/comandos/ActualizarPlantillaMovimiento', { plantillaId: actual.id, ...campos }, token);
-        toast.mostrar('Plantilla guardada');
+        toast.mostrar('Frecuente guardado');
       } else {
         await api.post(
           '/comandos/CrearPlantillaMovimiento',
           { ...campos, ...(desde && campos.monto != null ? { moneda: desde.moneda } : {}) },
           token,
         );
-        toast.mostrar('Plantilla creada');
+        toast.mostrar('Frecuente creado');
       }
       nav.back();
     } catch (e) {
@@ -159,12 +159,12 @@ export function PlantillaFormScreen() {
 
   const borrar = async () => {
     if (!actual) return;
-    if (!(await confirmar('Eliminar plantilla', `"${actual.nombre}" se borra. Los movimientos que ya registraste no cambian.`, 'Eliminar')))
+    if (!(await confirmar('Eliminar frecuente', `"${actual.nombre}" se borra. Los movimientos que ya registraste no cambian.`, 'Eliminar')))
       return;
     setBusy(true);
     try {
       await api.post('/comandos/EliminarPlantillaMovimiento', { plantillaId: actual.id }, token);
-      toast.mostrar('Plantilla eliminada');
+      toast.mostrar('Frecuente eliminado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -192,10 +192,10 @@ export function PlantillaFormScreen() {
           <Nota>
             {listo
               ? `Aparece arriba al registrar un movimiento; lo que dejes en blanco lo eliges ahí.`
-              : 'Ponle un nombre a la plantilla.'}
+              : 'Ponle un nombre, p. ej. Luz.'}
           </Nota>
           <Button
-            title={actual ? 'Guardar plantilla' : 'Crear plantilla'}
+            title={actual ? 'Guardar frecuente' : 'Crear frecuente'}
             onPress={guardar}
             loading={busy}
             disabled={!listo}
@@ -280,7 +280,7 @@ export function PlantillaFormScreen() {
       </Opcional>
 
       <ErrorText>{error}</ErrorText>
-      {actual ? <AccionDestructiva title="Eliminar plantilla" onPress={borrar} /> : null}
+      {actual ? <AccionDestructiva title="Eliminar frecuente" onPress={borrar} /> : null}
     </Screen>
   );
 }

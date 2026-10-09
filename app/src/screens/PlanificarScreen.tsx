@@ -256,8 +256,8 @@ export function PlanificarScreen() {
               onPress: () => nav.go('MovimientosProgramados'),
             },
             {
-              title: 'Plantillas de movimiento',
-              subtitle: 'Moldes para el gasto o ingreso de siempre',
+              title: 'Frecuentes',
+              subtitle: 'Lo de siempre, a un toque al registrar',
               icon: 'copy-outline',
               onPress: () => nav.go('Plantillas'),
             },
