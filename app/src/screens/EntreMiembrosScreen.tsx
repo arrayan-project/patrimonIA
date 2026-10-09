@@ -21,7 +21,7 @@ export function FilaEntreRow({ f }: { f: FilaEntre }) {
       subtitle={f.detalle}
       amount={f.monto}
       positivo={f.positivo}
-      logo={{ icon: f.eventoId ? 'swap-horizontal-outline' : 'receipt-outline' }}
+      logo={{ emoji: f.emoji }}
       onPress={onPress}
     />
   );

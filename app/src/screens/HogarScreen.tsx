@@ -13,11 +13,14 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { leer } from '../auth/secureStorage';
 import { money } from '../format';
+import { emojiElemento } from '../emojis';
+import { usePreferencias } from '../preferencias';
+import { cargarCuentasHogar, deQuien } from '../cuentasHogar';
 import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
 import { FilaEntreRow } from './EntreMiembrosScreen';
+import { TarjetaMeta } from './ObjetivosScreen';
 import {
   ErrorText,
-  GoalCard,
   Hero,
   IconButton,
   ListCard,
@@ -31,19 +34,21 @@ import {
   TxRow,
 } from '../ui';
 
-/** Tab "Hogar": personas y lo que se comparte. El patrimonio consolidado vive en Inicio (toggle). */
+/** Tab "Hogar": la plata que comparten, lo que pasa entre ustedes y las personas del hogar. */
 export function HogarScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
+  const { preferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
 
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
-  const [compartidos, setCompartidos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [suman, setSuman] = useState<ElementoPatrimonialDTO[]>([]);
   // HZ-10 (3) / D-2: cuentas de otros miembros visibles que no suman ("Que
   // puedan transferirte"). Sin esto parecía que ese nivel no hacía nada.
   const [paraTransferir, setParaTransferir] = useState<ElementoPatrimonialDTO[]>([]);
-  const [objetivosHogar, setObjetivosHogar] = useState<ObjetivoFinancieroDTO[]>([]);
+  const [metas, setMetas] = useState<ObjetivoFinancieroDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
+  const [invitaciones, setInvitaciones] = useState(0);
   const [cons, setCons] = useState<PatrimonioConsolidadoDTO | null>(null);
   // HZ-21: "Entre [miembro] y tú".
   const [entre, setEntre] = useState<EntreMiembros | null>(null);
@@ -63,34 +68,28 @@ export function HogarScreen() {
       setCons(await api.get<PatrimonioConsolidadoDTO>(`/hogares/${h.id}/patrimonio-consolidado`, token).catch(() => null));
 
       try {
-        const [els, mios, objs] = await Promise.all([
-          api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?alcance=hogar', token),
-          api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+        const [cuentas, objs] = await Promise.all([
+          cargarCuentasHogar(token),
           api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
         ]);
-        // `alcance=hogar` trae solo lo de los otros miembros: lo tuyo que suma al hogar va también.
-        const vistos = new Set<string>();
-        setCompartidos(
-          [...mios, ...els].filter((e) => e.participaConsolidacion && !vistos.has(e.id) && vistos.add(e.id)),
-        );
-        setParaTransferir(els.filter((e) => !e.participaConsolidacion && e.categoriaFuncional !== 'DEUDA' && e.categoriaFuncional !== 'CREDITO'));
-        setObjetivosHogar(objs.filter((o) => o.hogarId));
+        setSuman(cuentas.suman);
+        setParaTransferir(cuentas.paraTransferir);
+        setMetas(objs.filter((o) => o.hogarId === h.id && o.estado !== 'CANCELADO'));
       } catch {
-        setCompartidos([]);
+        setSuman([]);
         setParaTransferir([]);
-        setObjetivosHogar([]);
+        setMetas([]);
       }
 
       setEntre(await cargarEntreMiembros(token, usuario.id, h.id).catch(() => null));
-      try {
-        const { noLeidas: n } = await api.get<{ noLeidas: number }>(
-          '/usuarios/me/notificaciones/no-leidas',
-          token,
-        );
-        setNoLeidas(n);
-      } catch {
-        setNoLeidas(0);
-      }
+      api
+        .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
+        .then(({ noLeidas: n }) => setNoLeidas(n))
+        .catch(() => setNoLeidas(0));
+      api
+        .get<unknown[]>('/usuarios/me/invitaciones?estado=PENDIENTE', token)
+        .then((xs) => setInvitaciones(xs.length))
+        .catch(() => setInvitaciones(0));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -106,6 +105,13 @@ export function HogarScreen() {
       </Screen>
     );
   }
+
+  const verPatrimonio = () => nav.go('HogarConsolidado', { hogarId: hogar.id });
+  const pm = cons?.porMoneda[0];
+  // Tienen − Deben = total: solo si cuadra (una moneda, la del hogar).
+  const cuadra =
+    cons && pm && cons.porMoneda.length === 1 && pm.moneda === cons.monedaConsolidacion &&
+    Math.abs(pm.activos - Math.abs(pm.pasivos) - pm.patrimonioNeto) < 1;
 
   return (
     <Screen onRefresh={cargar}>
@@ -124,40 +130,32 @@ export function HogarScreen() {
         }
       />
 
-      {/* Plantilla Resumen: una cifra que responde "¿cuánta plata tiene el hogar?". Tienen − Deben = total. */}
-      <Pressable
-        onPress={() => nav.go('HogarConsolidado', { hogarId: hogar.id })}
-        accessibilityRole="button"
-        accessibilityLabel="Ver la plata del hogar"
-      >
+      <Pressable onPress={verPatrimonio} accessibilityRole="button" accessibilityLabel="Ver la plata del hogar">
         <Hero
-          label="Plata del hogar"
+          label="🏠 Plata del hogar"
           value={cons?.total != null ? money(cons.total, cons.monedaConsolidacion) : '—'}
           substats={
-            cons &&
-            cons.porMoneda.length === 1 &&
-            cons.porMoneda[0].moneda === cons.monedaConsolidacion &&
-            Math.abs(cons.porMoneda[0].activos - Math.abs(cons.porMoneda[0].pasivos) - cons.porMoneda[0].patrimonioNeto) < 1
+            cuadra && pm
               ? [
-                  { label: 'Tienen', value: money(cons.porMoneda[0].activos, cons.porMoneda[0].moneda) },
-                  { label: 'Deben', value: money(Math.abs(cons.porMoneda[0].pasivos), cons.porMoneda[0].moneda) },
+                  { label: '💰 Tienen', value: money(pm.activos, pm.moneda) },
+                  { label: '💳 Deben', value: money(Math.abs(pm.pasivos), pm.moneda) },
                 ]
               : undefined
           }
         />
       </Pressable>
-      <Nota>Suma lo que cada uno comparte con el hogar. Lo que no compartes no aparece.</Nota>
+
       {entre && entre.otros.length > 0 && (
         <Section
-          title={entre.titulo}
-          accion="Ver todo"
-          onAccion={entre.filas.length > 5 ? () => nav.go('EntreMiembros', { hogarId: hogar.id }) : undefined}
+          title={`🤝 ${entre.titulo}`}
+          accion={`Ver todo (${entre.filas.length})`}
+          onAccion={entre.filas.length > 4 ? () => nav.go('EntreMiembros', { hogarId: hogar.id }) : undefined}
         >
           {entre.filas.length === 0 ? (
-            <Nota>Aquí ves lo que se piden y lo que se transfieren.</Nota>
+            <Nota>Todavía nada: aquí aparece lo que se piden y lo que se transfieren.</Nota>
           ) : (
             <ListCard>
-              {entre.filas.slice(0, 5).map((f) => (
+              {entre.filas.slice(0, 4).map((f) => (
                 <FilaEntreRow key={f.key} f={f} />
               ))}
             </ListCard>
@@ -166,40 +164,39 @@ export function HogarScreen() {
       )}
 
       <Section
-        title="Lo que suma al hogar"
-        accion="Ver todo"
-        onAccion={compartidos.length > 4 ? () => nav.go('HogarConsolidado', { hogarId: hogar.id }) : undefined}
+        title="🏠 Lo que suma al hogar"
+        accion={`Ver todo (${suman.length})`}
+        onAccion={suman.length > 4 ? verPatrimonio : undefined}
       >
-        {compartidos.length === 0 ? (
+        {suman.length === 0 ? (
           <Nota>Ninguna cuenta ni bien suma al hogar por ahora.</Nota>
         ) : (
           <ListCard>
-            {compartidos.slice(0, 4).map((e) => (
+            {suman.slice(0, 4).map((e) => (
               <TxRow
                 key={e.id}
                 title={e.nombre}
-                subtitle={e.propietarios.map((p) => p.nombre ?? 'Propietario').join(', ')}
+                subtitle={deQuien(e, usuario.id)}
                 amount={e.valorOculto ? '—' : money(e.valorVigente, e.moneda)}
-                logo={{ icon: 'wallet-outline' }}
+                negativo={!e.valorOculto && e.valorVigente < 0}
+                logo={{ emoji: emojiElemento(e, preferencias.emojis.elementos) }}
                 onPress={() => nav.go('ElementoDetalle', { elementoId: e.id })}
               />
             ))}
           </ListCard>
         )}
-        {compartidos.length > 4 && <Nota>y {compartidos.length - 4} más</Nota>}
       </Section>
 
       {paraTransferir.length > 0 && (
-        <Section title="Para transferir">
-          <Nota>Cuentas de otros miembros a las que puedes transferir. No suman al hogar.</Nota>
+        <Section title="🔁 Para transferirles">
           <ListCard>
             {paraTransferir.map((e) => (
               <TxRow
                 key={e.id}
                 title={e.nombre}
-                subtitle={e.propietarios.map((p) => p.nombre ?? 'Propietario').join(', ')}
+                subtitle={deQuien(e, usuario.id)}
                 amount={e.valorOculto ? '' : money(e.valorVigente, e.moneda)}
-                logo={{ icon: 'arrow-redo-outline' }}
+                logo={{ emoji: emojiElemento(e, preferencias.emojis.elementos) }}
                 onPress={() => nav.go('RegistrarMovimiento', { tipo: 'TRANSFERENCIA', destinoId: e.id })}
               />
             ))}
@@ -207,57 +204,44 @@ export function HogarScreen() {
         </Section>
       )}
 
-      <Section title="Metas del hogar">
-        {objetivosHogar.length === 0 ? (
-          <Nota>Ninguna meta compartida.</Nota>
+      <Section
+        title="🎯 Metas del hogar"
+        accion={`Ver todas (${metas.length})`}
+        onAccion={metas.length > 4 ? () => nav.go('Objetivos') : undefined}
+      >
+        {metas.length === 0 ? (
+          <Nota>Ninguna meta compartida con el hogar.</Nota>
         ) : (
-          objetivosHogar.slice(0, 4).map((o) => (
-            <GoalCard
-              key={o.id}
-              name={o.nombre}
-              hint={`${o.progresoPorcentaje}%`}
-              pct={o.progresoPorcentaje}
-              footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
-              onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-            />
-          ))
+          metas.slice(0, 4).map((o) => <TarjetaMeta key={o.id} o={o} ahorrar />)
         )}
-      </Section>
-
-      <Section title="Personas">
-        <MenuList
-          items={[
-            {
-              title: 'Miembros y roles',
-              subtitle: 'Nombre del hogar, miembros, roles, moneda de consolidación',
-              icon: 'people-outline',
-              onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
-            },
-            {
-              title: 'Invitaciones recibidas',
-              subtitle: 'Hogares a los que te invitaron',
-              icon: 'mail-outline',
-              onPress: () => nav.go('Invitaciones'),
-            },
-          ]}
-        />
       </Section>
 
       <Section title="Más del hogar">
         <MenuList
           items={[
             {
-              title: 'Patrimonio del hogar',
-              subtitle: 'Consolidado por moneda, distribución de activos y pasivos',
-              icon: 'home-outline',
-              onPress: () => nav.go('HogarConsolidado', { hogarId: hogar.id }),
+              title: 'Personas del hogar',
+              subtitle: 'Nombre, quiénes están e invitar a alguien',
+              emoji: '👥',
+              onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
             },
             {
               title: 'Movimientos del hogar',
-              subtitle: 'Ingresos, gastos y transferencias sobre el patrimonio consolidado',
-              icon: 'swap-horizontal-outline',
+              subtitle: 'Lo que entra, sale y se mueve en el hogar',
+              emoji: '🧾',
               onPress: () => nav.go('MovimientosHogar', { hogarId: hogar.id }),
             },
+            ...(invitaciones > 0
+              ? [
+                  {
+                    title: 'Te invitaron a otro hogar',
+                    subtitle: invitaciones === 1 ? '1 invitación por responder' : `${invitaciones} invitaciones por responder`,
+                    emoji: '📩',
+                    badge: invitaciones,
+                    onPress: () => nav.go('Invitaciones'),
+                  },
+                ]
+              : []),
           ]}
         />
       </Section>

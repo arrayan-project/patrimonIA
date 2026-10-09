@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filasEntre, nombres, parteIgual, tituloSolicitud, type SolicitudDTO } from './solicitudes.ts';
+import { diaCorto, filasEntre, nombres, parteIgual, tituloSolicitud, type SolicitudDTO } from './solicitudes.ts';
 
 const fmt = (n: number, m: string) => `${n} ${m}`;
 
@@ -64,9 +64,15 @@ test('Entre ustedes: solicitudes y transferencias con miembros, sin repetir el p
   assert.deepEqual(
     filas.map((f) => [f.titulo, f.detalle, f.positivo]),
     [
-      ['Juan te transfirió', 'Cuenta Zoily · 2026-03-22', true],
-      ['Supermercado', 'Te pidió Juan · Pagado · 2026-03-20', false],
+      ['Juan te transfirió', `Cuenta Zoily · ${diaCorto('2026-03-22')}`, true],
+      ['Supermercado', `✅ Le pagaste a Juan · ${diaCorto('2026-03-20')}`, false],
     ],
   );
   assert.equal(filas[1].solicitudId, undefined);
+});
+
+test('diaCorto: el año solo si no es el actual', () => {
+  const hoy = new Date('2026-10-09T12:00:00');
+  assert.equal(diaCorto('2026-10-08', hoy), '8 oct');
+  assert.equal(diaCorto('2025-12-31', hoy), '31 dic 2025');
 });
