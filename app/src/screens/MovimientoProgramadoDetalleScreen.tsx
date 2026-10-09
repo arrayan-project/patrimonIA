@@ -9,28 +9,37 @@ import {
   type MovimientoProgramadoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useAccionHeader, useNav } from '../navigation/navigator';
-import { money } from '../format';
+import { useNav, useTitulo } from '../navigation/navigator';
+import { cuantoFalta, money } from '../format';
+import { EMOJI_ANOTAR, emojiCategoria } from '../emojis';
 import { cadaCuando } from '../recurrencia';
 import { confirmar } from '../ui/confirmar';
 import { useToast } from '../ui/Toast';
 import { irAAccion } from './AccionFormScreen';
+import { fechaCorta, tituloProgramado } from './MovimientosProgramadosScreen';
 import {
   aISO,
-  AccionDestructiva,
+  BandaDetalle,
   Button,
+  colorAnotar,
   Dato,
   Datos,
   ErrorText,
-  etiqueta,
   fechaLegible,
-  Hero,
   LinkButton,
+  MenuList,
   Screen,
   Skeleton,
+  useC,
 } from '../ui';
 
+/** G35: qué pasa con la plata, según el tipo, antes y después de confirmarlo. */
+const VA_A = { GASTO: 'Vas a pagar', INGRESO: 'Te va a llegar', TRANSFERENCIA: 'Vas a mover' } as const;
+const TOCABA = { GASTO: 'Tocaba pagar', INGRESO: 'Tenía que llegarte', TRANSFERENCIA: 'Tocaba mover' } as const;
+const YA = { GASTO: 'Pagaste', INGRESO: 'Te llegó', TRANSFERENCIA: 'Moviste' } as const;
+
 export function MovimientoProgramadoDetalleScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -76,9 +85,19 @@ export function MovimientoProgramadoDetalleScreen() {
 
   const pendiente = m?.estado === 'PENDIENTE';
   const abrirForm = (modo: 'editar' | 'confirmar') =>
-    m && nav.go('ProgramadoForm', { modo, movimientoId, monto: m.montoPlanificado, fecha: m.fechaProgramada, moneda: m.moneda });
+    m &&
+    nav.go('ProgramadoForm', {
+      modo,
+      movimientoId,
+      monto: m.montoPlanificado,
+      fecha: m.fechaProgramada,
+      moneda: m.moneda,
+      tipo: m.tipo,
+      // G35: el pie de "Confirmar" dice en qué cuenta se anota.
+      cuenta: [...elementos, ...elementosHogar].find((e) => e.id === (m.elementoOrigenId ?? m.elementoDestinoId))?.nombre,
+    });
 
-  useAccionHeader('Editar', pendiente ? () => abrirForm('editar') : undefined);
+  useTitulo(m ? tituloProgramado(m, categorias, [...elementos, ...elementosHogar]) : 'Movimiento programado');
 
   // D-6: llegada la fecha, el aviso pregunta "¿Se pagó?" (o "¿Llegó?" en un ingreso).
   const vencido = pendiente && !!m && m.fechaProgramada.slice(0, 10) <= aISO(new Date());
@@ -95,7 +114,7 @@ export function MovimientoProgramadoDetalleScreen() {
         { movimientoId, fechaEfectiva: m.fechaProgramada.slice(0, 10) },
         token,
       );
-      toast.mostrar(ingreso ? 'Listo, quedó anotado lo que llegó' : 'Pago confirmado');
+      toast.mostrar(ingreso ? 'Listo, quedó anotado lo que llegó' : 'Listo, quedó anotado');
       nav.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
@@ -140,8 +159,22 @@ export function MovimientoProgramadoDetalleScreen() {
     return ajena ? `${ajena.nombre} (de ${ajena.propietarios[0]?.nombre ?? 'otro miembro'})` : 'otra cuenta';
   };
 
-  const categoria = categorias.find((c) => c.id === m.categoriaId);
+  const categoria = categorias.find((x) => x.id === m.categoriaId);
   const saltarTexto = m.periodicidad === 'ANUAL' ? 'Este año no' : 'Este mes no';
+  const transferencia = m.tipo === 'TRANSFERENCIA';
+  const fecha = m.fechaProgramada.slice(0, 10);
+  const titulo =
+    vencido ? TOCABA[m.tipo] : m.estado === 'PENDIENTE' ? VA_A[m.tipo] : m.estado === 'MATERIALIZADO' ? YA[m.tipo] : 'No se hizo';
+  const sub = vencido
+    ? `⏰ Era el ${fechaCorta(fecha)} · ${ingreso ? '¿llegó?' : transferencia ? '¿se hizo?' : '¿se pagó?'}`
+    : pendiente
+      ? `📅 ${fechaLegible(fecha)} · ${cuantoFalta(fecha).toLowerCase()}`
+      : m.estado === 'MATERIALIZADO'
+        ? `✅ ${fechaLegible(fecha)}`
+        : `❌ Cancelado · era el ${fechaLegible(fecha)}`;
+  // Lo que se ofrece al tocar el botón principal, según el tipo.
+  const yaPaso = ingreso ? 'Sí, llegó' : transferencia ? 'Sí, se hizo' : 'Sí, se pagó';
+  const adelantar = ingreso ? 'Ya llegó' : transferencia ? 'Ya lo hice' : 'Ya lo pagué';
 
   return (
     <Screen
@@ -150,54 +183,71 @@ export function MovimientoProgramadoDetalleScreen() {
         vencido ? (
           <>
             <Button
-              title={ingreso ? 'Sí, llegó' : 'Sí, se pagó'}
+              title={`✅ ${yaPaso}`}
               onPress={confirmarTalCual}
               loading={busy === 'pagar'}
               disabled={busy !== null}
             />
-            <Button title="Cambiar monto" variant="secondary" onPress={() => abrirForm('confirmar')} disabled={busy !== null} />
+            <Button title="✏️ Fue otro monto" variant="secondary" onPress={() => abrirForm('confirmar')} disabled={busy !== null} />
           </>
         ) : pendiente ? (
-          <Button title="Confirmar pago" onPress={() => abrirForm('confirmar')} />
+          <Button title={`✅ ${adelantar}`} onPress={() => abrirForm('confirmar')} />
         ) : undefined
       }
     >
-      <Hero
-        label={
-          vencido
-            ? `${m.observaciones || categoria?.nombre || etiqueta(m.tipo)} · ${ingreso ? '¿Llegó?' : '¿Se pagó?'}`
-            : `${etiqueta(m.tipo)} · ${etiqueta(m.estado).toLowerCase()}`
-        }
-        value={money(m.montoPlanificado, m.moneda)}
+      <BandaDetalle
+        color={m.estado === 'CANCELADO' ? c.muted : colorAnotar(c, m.tipo)}
+        titulo={`${EMOJI_ANOTAR[m.tipo]} ${titulo}`}
+        monto={money(m.montoPlanificado, m.moneda)}
+        sub={sub}
       />
       <Datos>
-        <Dato etiqueta="Fecha programada" valor={fechaLegible(m.fechaProgramada)} />
         {m.periodicidad ? (
-          <Dato etiqueta="Se repite" valor={cadaCuando(m.periodicidad, m.fechaProgramada, m.dia)} />
+          <Dato etiqueta="🔁 Se repite" valor={cadaCuando(m.periodicidad, m.fechaProgramada, m.dia)} />
         ) : null}
-        {categoria ? <Dato etiqueta="Categoría" valor={categoria.nombre} /> : null}
-        {m.elementoOrigenId ? <Dato etiqueta="Desde" valor={enlaceEl(m.elementoOrigenId)} /> : null}
-        {m.elementoDestinoId ? <Dato etiqueta="Hacia" valor={enlaceEl(m.elementoDestinoId)} /> : null}
-        {m.observaciones ? <Dato etiqueta="Observaciones" valor={m.observaciones} /> : null}
-        {m.eventoFinancieroId ? (
-          <Dato
-            etiqueta="Movimiento generado"
-            valor={
-              <LinkButton
-                title="Ver ›"
-                onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoFinancieroId })}
-              />
-            }
-          />
+        {m.elementoOrigenId ? (
+          <Dato etiqueta={transferencia ? '🏦 Desde' : '🏦 Sale de'} valor={enlaceEl(m.elementoOrigenId)} />
         ) : null}
+        {m.elementoDestinoId ? (
+          <Dato etiqueta={transferencia ? '🏦 Hacia' : '🏦 Llega a'} valor={enlaceEl(m.elementoDestinoId)} />
+        ) : null}
+        {categoria ? <Dato etiqueta={`${emojiCategoria(categoria)} Categoría`} valor={categoria.nombre} /> : null}
       </Datos>
-      <ErrorText>{error}</ErrorText>
-      {pendiente && m.periodicidad && (
-        <AccionDestructiva title={saltarTexto} onPress={() => void saltar(saltarTexto)} />
+
+      {(pendiente || m.eventoFinancieroId) && (
+        <MenuList
+          items={[
+            ...(m.eventoFinancieroId
+              ? [
+                  {
+                    title: 'Ver lo que quedó anotado',
+                    emoji: '🧾',
+                    onPress: () => nav.go('MovimientoDetalle', { eventoId: m.eventoFinancieroId }),
+                  },
+                ]
+              : []),
+            ...(pendiente
+              ? [{ title: 'Cambiar monto o fecha', emoji: '✏️', onPress: () => abrirForm('editar') }]
+              : []),
+            ...(pendiente && m.periodicidad
+              ? [
+                  {
+                    title: saltarTexto,
+                    emoji: '⏭️',
+                    subtitle: 'No se anota nada esta vez',
+                    onPress: () => void saltar(saltarTexto),
+                  },
+                ]
+              : []),
+          ]}
+        />
       )}
+
+      <ErrorText>{error}</ErrorText>
       {m.periodicidad ? (
-        <AccionDestructiva
-          title="Dejar de repetir"
+        <Button
+          title="🛑 Dejar de repetir"
+          variant="danger"
           onPress={() =>
             irAAccion(nav, {
               titulo: 'Dejar de repetir',
@@ -211,22 +261,25 @@ export function MovimientoProgramadoDetalleScreen() {
             })
           }
         />
-      ) : pendiente && (
-        <AccionDestructiva
-          title="Cancelar movimiento"
-          onPress={() =>
-            irAAccion(nav, {
-              titulo: 'Cancelar movimiento',
-              explicacion: 'Se cancela y ya no podrás confirmar su pago. Queda en el historial.',
-              pregunta: '¿Por qué lo cancelas?',
-              boton: 'Cancelar movimiento',
-              comando: 'CancelarMovimientoProgramado',
-              body: { movimientoId },
-              aviso: 'Movimiento cancelado',
-              peligro: true,
-            })
-          }
-        />
+      ) : (
+        pendiente && (
+          <Button
+            title="🗑️ Cancelar este movimiento"
+            variant="danger"
+            onPress={() =>
+              irAAccion(nav, {
+                titulo: 'Cancelar movimiento',
+                explicacion: 'Se cancela y ya no podrás confirmarlo. Queda en el historial.',
+                pregunta: '¿Por qué lo cancelas?',
+                boton: 'Cancelar movimiento',
+                comando: 'CancelarMovimientoProgramado',
+                body: { movimientoId },
+                aviso: 'Movimiento cancelado',
+                peligro: true,
+              })
+            }
+          />
+        )
       )}
     </Screen>
   );

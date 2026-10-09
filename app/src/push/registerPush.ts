@@ -1,16 +1,19 @@
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 
 /**
  * Obtiene el Expo push token del dispositivo. Devuelve null en web, en
  * simulador, sin permiso, o si falta el projectId de EAS (requiere un
- * development build — en Expo Go SDK 53+ el push remoto está limitado).
+ * development build). En Expo Go devuelve null sin cargar expo-notifications:
+ * desde el SDK 53, en Android el módulo falla apenas se importa y la app no
+ * arranca ("runtime not ready").
  */
 export async function obtenerExpoPushToken(): Promise<string | null> {
   try {
     if (Platform.OS === 'web' || !Device.isDevice) return null;
+    if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null;
+    const Notifications = await import('expo-notifications');
 
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') {
