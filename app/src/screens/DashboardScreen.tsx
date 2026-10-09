@@ -59,6 +59,7 @@ import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
 import {
   EMOJI_CATEGORIA_FUNCIONAL,
+  NOMBRE_CATEGORIA_FUNCIONAL,
   emojiCategoria,
   emojiElemento,
   emojiMeta,
@@ -71,15 +72,6 @@ const MESES = [
 ];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-/** G35: nombres sin jerga de las categorías funcionales (lista "Del hogar"). */
-const NOMBRE_CATEGORIA: Record<string, string> = {
-  LIQUIDEZ: 'Cuentas',
-  RESERVA: 'Ahorro',
-  INVERSION: 'Inversiones',
-  ACTIVO: 'Bienes',
-  CREDITO: 'Te deben',
-  DEUDA: 'Deudas',
-};
 
 /** Categorías funcionales, en el orden en que se muestran en la composición. */
 const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
@@ -543,7 +535,7 @@ export function DashboardScreen() {
               {composicion.slice(0, 4).map((x) => (
                 <TxRow
                   key={x.cat}
-                  title={NOMBRE_CATEGORIA[x.cat]}
+                  title={NOMBRE_CATEGORIA_FUNCIONAL[x.cat]}
                   subtitle={x.sub}
                   amount={money(Math.abs(x.valor), monedaPrin)}
                   negativo={x.valor < 0}

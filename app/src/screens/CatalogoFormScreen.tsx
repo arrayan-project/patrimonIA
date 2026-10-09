@@ -14,7 +14,8 @@ import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { confirmar } from '../ui/confirmar';
-import { emojiCategoria } from '../emojis';
+import { EMOJI_CATEGORIA_FUNCIONAL, emojiCategoria, emojiMoneda, NOMBRE_CATEGORIA_FUNCIONAL } from '../emojis';
+import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 import { useToast } from '../ui/Toast';
 import {
   AccionDestructiva,
@@ -22,6 +23,7 @@ import {
   Button,
   contadorPasos,
   DateField,
+  Elegir,
   ElegirEmoji,
   ElegirVarios,
   ErrorText,
@@ -135,6 +137,8 @@ async function hogarDe(token: string | null): Promise<string | null> {
 const TIPOS_CATEGORIA = ['GASTO', 'INGRESO', 'AMBOS'] as const;
 
 function FormCategoria({ id }: { id?: string }) {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const { busy, error, setError, run } = useEnvio();
   const [hogarId, setHogarId] = useState<string | null>(null);
@@ -170,7 +174,7 @@ function FormCategoria({ id }: { id?: string }) {
   const actual = lista?.find((x) => x.id === id);
   // Dos niveles: el padre es una raíz, nunca la misma categoría.
   const opcPadre = [
-    { value: '', label: 'Ninguna (categoría principal)' },
+    { value: '', label: 'No, es una categoría principal' },
     ...(lista ?? [])
       .filter((x) => !x.categoriaPadreId && x.id !== id)
       .map((r) => ({ value: r.id, label: r.nombre })),
@@ -205,11 +209,11 @@ function FormCategoria({ id }: { id?: string }) {
 
   const archivar = async () => {
     if (!actual) return;
-    if (!(await confirmar('Archivar categoría', `"${actual.nombre}" deja de aparecer al registrar movimientos. Los movimientos ya clasificados no cambian.`, 'Archivar')))
+    if (!(await confirmar('Dejar de usar', `"${actual.nombre}" deja de aparecer al registrar movimientos. Los movimientos que ya la tienen no cambian.`, 'Dejar de usar')))
       return;
     await run(
       () => api.post('/comandos/ArchivarCategoriaMovimiento', { categoriaId: actual.id }, token),
-      'Categoría archivada',
+      'Listo, ya no aparece',
     );
   };
 
@@ -222,17 +226,22 @@ function FormCategoria({ id }: { id?: string }) {
       listo={!!nombre.trim() && !!hogarId}
       busy={busy}
       onGuardar={guardar}
-      destructiva={actual ? { title: 'Archivar categoría', onPress: archivar } : undefined}
+      destructiva={actual ? { title: 'Dejar de usar esta categoría', onPress: archivar } : undefined}
     >
-      <Field
-        label="¿Cómo se llama?"
-        paso={paso({ hecho: !!nombre.trim() })}
-        value={nombre}
-        onChangeText={setNombre}
-        autoCapitalize="sentences"
-        placeholder="p. ej. Mascotas"
-      />
-      <ElegirEmoji value={emojiVisible} onChange={setEmoji} />
+      {/* G35: el emoji va pegado al nombre; se toca para cambiarlo. */}
+      <View style={styles.nombreConEmoji}>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="¿Cómo se llama?"
+            paso={paso({ hecho: !!nombre.trim() })}
+            value={nombre}
+            onChangeText={setNombre}
+            autoCapitalize="sentences"
+            placeholder="p. ej. Mascotas"
+          />
+        </View>
+        <ElegirEmoji compacto label="Emoji de la categoría" value={emojiVisible} onChange={setEmoji} />
+      </View>
       {!actual && (
         <Segmented
           label="¿Para qué movimientos?"
@@ -240,6 +249,7 @@ function FormCategoria({ id }: { id?: string }) {
           options={TIPOS_CATEGORIA}
           value={tipo}
           onChange={setTipo}
+          formatearOpcion={(v) => (v === 'AMBOS' ? 'Ambos' : v === 'GASTO' ? 'Gastos' : 'Ingresos')}
         />
       )}
       <Select
@@ -335,6 +345,7 @@ function FormEtiqueta({ id }: { id?: string }) {
             accessibilityRole="button"
             accessibilityLabel="Sin color"
             accessibilityState={{ selected: !color }}
+            style={styles.zonaColor}
           >
             <View style={[styles.swatch, !color && styles.swatchSel, { backgroundColor: c.faint }]} />
           </Pressable>
@@ -345,6 +356,7 @@ function FormEtiqueta({ id }: { id?: string }) {
               accessibilityRole="button"
               accessibilityLabel={`Color ${col}`}
               accessibilityState={{ selected: color === col }}
+              style={styles.zonaColor}
             >
               <View style={[styles.swatch, color === col && styles.swatchSel, { backgroundColor: col }]} />
             </Pressable>
@@ -355,11 +367,21 @@ function FormEtiqueta({ id }: { id?: string }) {
   );
 }
 
+/** G35: "¿Qué tipo de plata es?" con nombres sin jerga y su emoji. */
+const DESCRIPCION_CATEGORIA: Record<string, string> = {
+  LIQUIDEZ: 'Plata para el día a día',
+  RESERVA: 'Plata guardada',
+  INVERSION: 'Fondos, acciones, APV…',
+  ACTIVO: 'Casa, auto…',
+  DEUDA: 'Lo que debes',
+  CREDITO: 'Plata que prestaste',
+};
 const OPC_CAT_ELEMENTO = [
-  { value: '', label: 'Sin sugerencia' },
+  { value: '', label: 'Todavía no sé' },
   ...(['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'DEUDA', 'CREDITO'] as const).map((v) => ({
     value: v,
-    label: etiqueta(v),
+    label: `${EMOJI_CATEGORIA_FUNCIONAL[v]} ${NOMBRE_CATEGORIA_FUNCIONAL[v]}`,
+    sub: DESCRIPCION_CATEGORIA[v],
   })),
 ];
 
@@ -415,9 +437,9 @@ function FormTipoElemento({ id }: { id?: string }) {
 
   const archivar = async () => {
     if (!actual) return;
-    if (!(await confirmar('Archivar tipo', `"${actual.nombre}" deja de sugerirse al agregar cuentas o bienes. Los elementos ya creados no cambian.`, 'Archivar')))
+    if (!(await confirmar('Dejar de usar', `"${actual.nombre}" deja de aparecer al agregar una cuenta. Las cuentas que ya lo tienen no cambian.`, 'Dejar de usar')))
       return;
-    await run(() => api.post('/comandos/ArchivarTipoElemento', { tipoId: actual.id }, token), 'Tipo archivado');
+    await run(() => api.post('/comandos/ArchivarTipoElemento', { tipoId: actual.id }, token), 'Listo, ya no aparece');
   };
 
   return (
@@ -429,7 +451,7 @@ function FormTipoElemento({ id }: { id?: string }) {
       listo={!!nombre.trim() && !!hogarId}
       busy={busy}
       onGuardar={guardar}
-      destructiva={actual ? { title: 'Archivar tipo', onPress: archivar } : undefined}
+      destructiva={actual ? { title: 'Dejar de usar este tipo', onPress: archivar } : undefined}
     >
       <Field
         label="¿Cómo se llama?"
@@ -440,7 +462,7 @@ function FormTipoElemento({ id }: { id?: string }) {
         placeholder="p. ej. Billetera digital"
       />
       <Select
-        label="¿Qué categoría sugiere? (opcional)"
+        label="¿Qué tipo de plata es? (opcional)"
         paso={paso()}
         options={OPC_CAT_ELEMENTO}
         value={cat}
@@ -541,6 +563,12 @@ function FormAgrupacion({ id }: { id?: string }) {
   );
 }
 
+const OPC_MONEDA_TASA = [...MONEDAS_FRECUENTES, 'CLF'].map((m) => ({
+  value: m,
+  label: `${emojiMoneda(m)} ${m === 'CLF' ? 'UF' : m}`,
+  sub: m === 'CLF' ? 'Unidad de fomento' : NOMBRE_MONEDA[m],
+}));
+
 function FormTipoCambio() {
   const { token } = useSession();
   const { busy, error, run } = useEnvio();
@@ -585,26 +613,23 @@ function FormTipoCambio() {
       busy={busy}
       onGuardar={registrar}
     >
-      <Field
-        label="¿Desde qué moneda?"
+      {/* G35: las monedas se eligen de una lista (antes se escribía el código a mano). */}
+      <Elegir
+        label="¿Qué moneda?"
         paso={paso({ hecho: !errOrigen })}
         value={origen}
-        onChangeText={setOrigen}
-        maxLength={3}
-        autoCapitalize="characters"
-        error={origen ? errOrigen || undefined : undefined}
+        options={OPC_MONEDA_TASA}
+        onChange={(v) => v && setOrigen(v)}
       />
-      <Field
-        label="¿A qué moneda?"
+      <Elegir
+        label="¿En qué moneda la mides?"
         paso={paso({ hecho: !errDestino })}
         value={destino}
-        onChangeText={setDestino}
-        maxLength={3}
-        autoCapitalize="characters"
-        error={destino ? errDestino || undefined : undefined}
+        options={OPC_MONEDA_TASA.filter((o) => o.value !== origen)}
+        onChange={(v) => v && setDestino(v)}
       />
       <Field
-        label={`¿Cuántos ${destino.trim().toUpperCase() || 'CLP'} vale 1 ${origen.trim().toUpperCase() || 'USD'}?`}
+        label={`¿Cuántos ${destino} vale 1 ${origen === 'CLF' ? 'UF' : origen}?`}
         paso={paso({ hecho: !errTasa })}
         keyboardType="numeric"
         value={tasa}
@@ -625,7 +650,10 @@ function FormTipoCambio() {
 const crearEstilos = (c: Paleta) =>
   StyleSheet.create({
     campo: { gap: 8 },
-    colores: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    swatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
+    colores: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    // G35: se toca en 44 px; el círculo se ve de 34.
+    zonaColor: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    swatch: { width: 34, height: 34, borderRadius: 17, borderWidth: 3, borderColor: 'transparent' },
+    nombreConEmoji: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
     swatchSel: { borderColor: c.text },
   });

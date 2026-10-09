@@ -81,7 +81,7 @@ export function PlantillasScreen() {
 
   return (
     <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nuevo frecuente" onPress={nueva} /> : undefined}>
-      <Ayuda>Lo de siempre, a un toque al registrar.</Ayuda>
+      <Ayuda>Lo que anotas seguido: elígelo al registrar y queda casi listo.</Ayuda>
 
       {lista === null ? (
         <Skeleton />

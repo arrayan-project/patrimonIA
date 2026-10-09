@@ -49,8 +49,8 @@ export function TiposCambioScreen() {
     <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Registrar tasa" onPress={nueva} /> : undefined}>
       <Ayuda>
         {ultimaImportada
-          ? `USD, EUR y UF se actualizan solos cada hora (${ultimaImportada.fuente}, ${fechaLegible(ultimaImportada.fechaVigencia)}).`
-          : 'USD, EUR y UF se actualizan solos cada hora.'}
+          ? `Cuánto vale el dólar o la UF en pesos. USD, EUR y UF se actualizan solos cada hora (${fechaLegible(ultimaImportada.fechaVigencia)}).`
+          : 'Cuánto vale el dólar o la UF en pesos. USD, EUR y UF se actualizan solos cada hora.'}
       </Ayuda>
 
       {lista === null ? (
@@ -73,9 +73,10 @@ export function TiposCambioScreen() {
               {visibles.map((t) => (
                 <TxRow
                   key={t.id}
-                  title={`${t.monedaOrigen} → ${t.monedaDestino}`}
-                  subtitle={`${fechaLegible(t.fechaVigencia)} · ${t.fuente ?? 'a mano'}`}
-                  amount={String(t.tasa)}
+                  // G35: "1 USD = 960 CLP" se entiende solo.
+                  title={`1 ${t.monedaOrigen} = ${t.tasa.toLocaleString('es-CL', { maximumFractionDigits: 4 })} ${t.monedaDestino}`}
+                  subtitle={`${fechaLegible(t.fechaVigencia)} · ${t.fuente ? 'se actualiza sola' : 'anotada por ti'}`}
+                  amount=""
                   logo={{ emoji: emojiMoneda(t.monedaOrigen) }}
                 />
               ))}

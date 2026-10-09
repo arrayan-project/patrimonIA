@@ -12,6 +12,7 @@ import {
   ErrorText,
   filtrar,
   ListCard,
+  ModoOrden,
   Ordenar,
   Screen,
   Section,
@@ -34,6 +35,8 @@ export function CategoriasScreen() {
   const [lista, setLista] = useState<CategoriaMovimientoDTO[] | null>(null);
   const [error, setError] = useState('');
   const [busca, setBusca] = useState('');
+  // G35: las flechas para ordenar solo aparecen con "Cambiar orden".
+  const [ordenando, setOrdenando] = useState(false);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -94,7 +97,7 @@ export function CategoriasScreen() {
 
   return (
     <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva categoría" onPress={nueva} /> : undefined}>
-      <Ayuda>Clasifican ingresos y gastos del hogar.</Ayuda>
+      <Ayuda>Mercado, luz, sueldo… cada una con su emoji. Son del hogar.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
@@ -108,19 +111,24 @@ export function CategoriasScreen() {
         />
       ) : (
         <>
-          <Buscador total={total} value={busca} onChange={setBusca} />
+          {!ordenando && <Buscador total={total} value={busca} onChange={setBusca} />}
+          {!filtrando && <ModoOrden activo={ordenando} onCambiar={setOrdenando} />}
           {GRUPOS.map(([tipo, titulo]) => {
             const grupo = raices.filter((r) => r.tipoAplicable === tipo);
             const filas = grupo.flatMap((r, i) => {
               const hijos = hijosDe(r.id);
               if (!filtrando)
                 return [
-                  fila(r, undefined, (
-                    <Ordenar
-                      onSubir={i > 0 ? () => mover(grupo, i, -1) : undefined}
-                      onBajar={i < grupo.length - 1 ? () => mover(grupo, i, 1) : undefined}
-                    />
-                  )),
+                  fila(
+                    r,
+                    undefined,
+                    ordenando ? (
+                      <Ordenar
+                        onSubir={i > 0 ? () => mover(grupo, i, -1) : undefined}
+                        onBajar={i < grupo.length - 1 ? () => mover(grupo, i, 1) : undefined}
+                      />
+                    ) : undefined,
+                  ),
                   ...hijos.map((h) => fila(h, r)),
                 ];
               return [

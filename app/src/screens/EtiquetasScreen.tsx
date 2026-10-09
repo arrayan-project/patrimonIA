@@ -42,7 +42,7 @@ export function EtiquetasScreen() {
 
   return (
     <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva etiqueta" onPress={nueva} /> : undefined}>
-      <Ayuda>Marcas tuyas; no entran en el presupuesto.</Ayuda>
+      <Ayuda>Marcas libres, como 'vacaciones 2026'. Son tuyas y no cambian tus totales.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
