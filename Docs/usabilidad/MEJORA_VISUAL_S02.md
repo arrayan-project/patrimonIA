@@ -209,14 +209,14 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 ### Tanda 4 · Hogar
 
-38. **Hogar** (`HogarScreen`) — pestaña. Plata del hogar (Tienen / Deben);
+38. ✅ **Hogar** (`HogarScreen`) — pestaña. Plata del hogar (Tienen / Deben);
     lo que suma al hogar (abrir cada cuenta); metas del hogar; "Entre
     [miembro] y tú"; Para transferir (→ Registrar movimiento); Personas;
     invitaciones recibidas; Más del hogar (Patrimonio del hogar, Movimientos
     del hogar, Gestionar hogar); campana; engranaje.
-39. **Patrimonio del hogar** (`HogarConsolidadoScreen`) — Hogar. Ver Tienen /
+39. ✅ **Patrimonio del hogar** (`HogarConsolidadoScreen`) — Hogar. Ver Tienen /
     Deben, plata y metas del hogar por moneda (sin acciones).
-40. **Movimientos del hogar** (`MovimientosHogarScreen`) — Hogar. Lista por
+40. ✅ **Movimientos del hogar** (`MovimientosHogarScreen`) — Hogar. Lista por
     mes; abrir un movimiento.
 41. **Entre ustedes** (`EntreMiembrosScreen`) — Hogar. Lista de solicitudes y
     transferencias entre dos miembros; abrir un movimiento; pagar una
@@ -960,7 +960,7 @@ eso entran las 6 listas y sus formularios de crear y editar.
   lista con el nuevo en "⏰ Por confirmar". Dato de prueba en la base local:
   "Prueba G35 vencido" (12.000, 1 oct), creado y cancelado.
 
-### 38–40. Hogar, Patrimonio del hogar y Movimientos del hogar (`HogarScreen`, `HogarConsolidadoScreen`, `MovimientosHogarScreen`)  ⏳ (implementado, falta la prueba de Juan)
+### 38–40. Hogar, Patrimonio del hogar y Movimientos del hogar (`HogarScreen`, `HogarConsolidadoScreen`, `MovimientosHogarScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
 
 - **Tanda 4 en dos bloques** (Juan, 2026-10-09): A (38–40) y B (41–43:
   Entre ustedes, Pagar, Gestionar hogar).
