@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -11,6 +11,7 @@ import {
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type MovimientoReporteDTO,
+  type MovimientoProgramadoDTO,
   type HogarDTO,
   type MetricasHogarDTO,
   type ObjetivoFinancieroDTO,
@@ -41,6 +42,8 @@ import {
   IconButton,
   ListCard,
   Panel,
+  Pastilla,
+  aISO,
   PillToggle,
   QuickActions,
   Row,
@@ -57,6 +60,8 @@ import {
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
+import { useToast } from '../ui/Toast';
+import { fechaCorta, tituloProgramado } from './MovimientosProgramadosScreen';
 import {
   EMOJI_CATEGORIA_FUNCIONAL,
   NOMBRE_CATEGORIA_FUNCIONAL,
@@ -106,6 +111,10 @@ export function DashboardScreen() {
   const [noLeidas, setNoLeidas] = useState(0);
   // G33 bloque 9: lo que un miembro te pide que anotes (su parte, una transferencia).
   const [porPagar, setPorPagar] = useState<SolicitudDTO[]>([]);
+  // G39 (F-3): lo programado que ya tocaba, para confirmarlo aquí con un toque.
+  const [porConfirmar, setPorConfirmar] = useState<MovimientoProgramadoDTO[]>([]);
+  const [confirmando, setConfirmando] = useState<string | null>(null);
+  const toast = useToast();
   const [pasos, setPasos] = useState({ cuenta: false, movimiento: false, objetivo: false });
   const [onbOculto, setOnbOculto] = useState(true);
   const [error, setError] = useState('');
@@ -239,6 +248,17 @@ export function DashboardScreen() {
           .then((ss) => ss.filter((x) => x.direccion === 'RECIBIDA' && x.estado === 'PENDIENTE'))
           .catch(() => []),
       );
+      const hoyISO = aISO(new Date());
+      setPorConfirmar(
+        await api
+          .get<MovimientoProgramadoDTO[]>('/movimientos-programados', token)
+          .then((ms) =>
+            ms
+              .filter((x) => x.estado === 'PENDIENTE' && x.fechaProgramada.slice(0, 10) <= hoyISO)
+              .sort((a, b) => a.fechaProgramada.localeCompare(b.fechaProgramada)),
+          )
+          .catch(() => []),
+      );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -329,11 +349,29 @@ export function DashboardScreen() {
     (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' || o.hogarId === hogarId),
   );
 
+  /** G39 (F-3): "✅ Sí": se anota con el monto y la fecha previstos, como "Sí, se pagó" del Programado. */
+  const confirmarSi = async (m: MovimientoProgramadoDTO) => {
+    setConfirmando(m.id);
+    try {
+      await api.post(
+        '/comandos/MaterializarMovimientoProgramado',
+        { movimientoId: m.id, fechaEfectiva: m.fechaProgramada.slice(0, 10) },
+        token,
+      );
+      toast.mostrar(m.tipo === 'INGRESO' ? 'Listo, quedó anotado lo que llegó' : 'Listo, quedó anotado');
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setConfirmando(null);
+    }
+  };
+
   // ── Alertas (máx 3, por prioridad) ─────────────────────────────────────
   const enMora = elementos.filter(
     (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
   );
-  const alertas: { texto: string; emoji: string; onPress: () => void }[] = porPagar.map((x) => ({
+  const alertas: { texto: string; sub?: string; emoji: string; onPress: () => void; accesorio?: ReactNode }[] = porPagar.map((x) => ({
     texto:
       x.motivo === 'GASTO_COMPARTIDO'
         ? `${x.solicitante.nombre} te pide tu parte: ${money(x.monto, x.moneda)}${x.glosa ? ` · ${x.glosa}` : ''}`
@@ -341,6 +379,22 @@ export function DashboardScreen() {
     emoji: '🤝',
     onPress: () => nav.go('PagarSolicitud', { solicitudId: x.id }),
   }));
+  for (const m of porConfirmar) {
+    const pregunta = m.tipo === 'INGRESO' ? '¿Te llegó' : m.tipo === 'GASTO' ? '¿Pagaste' : '¿Hiciste';
+    alertas.push({
+      texto: `${pregunta} ${tituloProgramado(m, categorias, elementos)}?`,
+      sub: `${money(m.montoPlanificado, m.moneda)} · era el ${fechaCorta(m.fechaProgramada.slice(0, 10))}`,
+      emoji: '⏰',
+      onPress: () => nav.go('MovimientoProgramadoDetalle', { movimientoId: m.id }),
+      accesorio: (
+        <Pastilla
+          label={confirmando === m.id ? '…' : '✅ Sí'}
+          accessibilityLabel={`Sí, ${tituloProgramado(m, categorias, elementos)}`}
+          onPress={() => confirmando === null && void confirmarSi(m)}
+        />
+      ),
+    });
+  }
   if (enMora.length > 0)
     alertas.push({
       texto: `${enMora.length} ${enMora.length === 1 ? 'deuda' : 'deudas'} en mora`,
@@ -407,7 +461,7 @@ export function DashboardScreen() {
       {alertas.length > 0 && (
         <ListCard>
           {alertas.slice(0, 3).map((a, i) => (
-            <TxRow key={i} title={a.texto} amount="" logo={{ emoji: a.emoji }} onPress={a.onPress} />
+            <TxRow key={i} title={a.texto} subtitle={a.sub} amount="" logo={{ emoji: a.emoji }} onPress={a.onPress} accesorio={a.accesorio} />
           ))}
           {alertas.length > 3 && (
             <TxRow title={`Ver todos los avisos (${alertas.length})`} amount="" logo={{ emoji: '🔔' }} onPress={() => nav.go('Notificaciones')} />

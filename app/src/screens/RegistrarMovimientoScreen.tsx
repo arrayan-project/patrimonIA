@@ -34,7 +34,7 @@ import {
 import { diaCorto, nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
 import { Text } from '../ui/Text';
-import { cadaCuando, OPCIONES_REPITE, siguienteFecha, type Periodicidad } from '../recurrencia';
+import { cadaCuando, siguienteFecha, type Periodicidad } from '../recurrencia';
 import { categoriasMasUsadas, DIAS_RECIENTES, ultimaCuenta, type MovimientoReciente } from '../recientes';
 import {
   colorAnotar,
@@ -88,6 +88,11 @@ type Quien = 'MIO' | 'OTRA' | 'HOGAR';
 /** Cuentas donde se recibe una transferencia de un miembro (como en el backend). */
 const RECIBEN = ['LIQUIDEZ', 'RESERVA'];
 const NUEVA = '__nueva__';
+/** G39 (F-8): "¿Se repite?" en dos botones; sin elegir, no se repite. */
+const REPITE_BOTONES: { value: Periodicidad; label: string }[] = [
+  { value: 'MENSUAL', label: '🔁 Cada mes' },
+  { value: 'ANUAL', label: '📆 Cada año' },
+];
 const DIA = 24 * 60 * 60 * 1000;
 
 /** Plata de una meta (asignación) ahorrada en la cuenta de origen (HZ-13). */
@@ -477,6 +482,11 @@ export function RegistrarMovimientoScreen() {
   const esCompartido = tipo === 'GASTO' && quien === 'HOGAR';
   // D-6: se repite lo propio; la plata de otra persona, lo compartido y el cambio de moneda, no.
   const repiteAplica = !esOtra && !esCompartido && tipo !== 'CONVERSION';
+  // G39 (F-8): con una fecha futura no se anota: queda programado para ese día.
+  // Lo que el programado no sabe guardar (de otra persona, compartido, cambio
+  // de moneda, plata de una meta) se anota el día que pasa.
+  const esFuturo = fecha > aISO(new Date());
+  const futuroNoSe = esFuturo && (!repiteAplica || !!asignacionId);
   const compartidoCon =
     otrosMiembros.length === 1
       ? otrosMiembros
@@ -578,6 +588,27 @@ export function RegistrarMovimientoScreen() {
     setError('');
     setLoading(true);
     try {
+      if (esFuturo) {
+        await api.post(
+          '/comandos/CrearMovimientoProgramado',
+          {
+            tipo,
+            montoPlanificado: Number(monto),
+            moneda: monedaEvento,
+            fechaProgramada: fecha,
+            ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
+            ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
+            ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
+            ...(glosa.trim() || frecuente ? { observaciones: glosa.trim() || frecuente } : {}),
+            ...(repite !== 'NO' ? { periodicidad: repite } : {}),
+          },
+          token,
+        );
+        toast.mostrar(`Programado para el ${diaCorto(fecha)}`);
+        permitirSalida();
+        nav.back();
+        return;
+      }
       if (esOtra) {
         const r = await api.comando<ResultadoPlataDTO>(
           '/comandos/RegistrarPlataDeOtraPersona',
@@ -694,6 +725,7 @@ export function RegistrarMovimientoScreen() {
   const nombreDe = (id: string | null) =>
     [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
   const puedeEnviar =
+    !futuroNoSe &&
     Number(monto) > 0 &&
     (!necesitaOrigen || !!origenId) &&
     (!necesitaDestino || !!destinoId) &&
@@ -747,10 +779,20 @@ export function RegistrarMovimientoScreen() {
   const detalleResumen = [puedeCategorizar && !esOtra ? categoriaElegida?.nombre : null, cuando].filter(Boolean).join(' · ');
   const conDetalle =
     typeof resumen === 'string' && puedeEnviar ? resumen.replace(/\.( |$)/, ` · ${detalleResumen}.$1`) : resumen;
+  const preguntaDia = tipo === 'INGRESO' ? 'si llegó' : tipo === 'GASTO' ? 'si se pagó' : 'si se hizo';
+  const resumenFuturo = `Lo dejamos anotado para el ${diaCorto(fecha)}. Ese día te preguntamos ${preguntaDia}${
+    repite !== 'NO' ? `, y después ${cadaCuando(repite, fecha)}` : ''
+  }.`;
   const conRepite =
     typeof resumen === 'string' && puedeEnviar && repiteAplica && repite !== 'NO' ? `${conDetalle} Te avisamos ${cadaCuando(repite, fecha)}.` : conDetalle;
   // G35: con todo listo, el resumen lleva el emoji de la puerta.
-  const resumenFinal: ReactNode = puedeEnviar ? `${emojiBanda} ${conRepite}` : conRepite;
+  const resumenFinal: ReactNode = futuroNoSe
+    ? 'Esto se anota el día que pase: con una fecha futura solo se programa lo tuyo.'
+    : esFuturo && puedeEnviar
+      ? `🗓️ ${resumenFuturo}`
+      : puedeEnviar
+        ? `${emojiBanda} ${conRepite}`
+        : conRepite;
   const accion = esPagoTarjeta
     ? 'Pagar tarjeta'
     : {
@@ -759,7 +801,11 @@ export function RegistrarMovimientoScreen() {
         TRANSFERENCIA: 'Anotar movimiento',
         CONVERSION: 'Anotar cambio de moneda',
       }[tipo];
-  const accionFinal = esOtra ? 'Anotar plata de otra persona' : accion;
+  const accionFinal = esOtra
+    ? 'Anotar plata de otra persona'
+    : esFuturo
+      ? `🗓️ Programar ${tipo === 'INGRESO' ? 'ingreso' : tipo === 'GASTO' ? 'gasto' : esPagoTarjeta ? 'pago' : 'movimiento'}`
+      : accion;
 
   const opcionesQuien =
     tipo === 'GASTO'
@@ -914,6 +960,9 @@ export function RegistrarMovimientoScreen() {
       }
     >
       <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda}>
+        {esFuturo ? (
+          <Text style={[styles.frecuentesTitulo, { color: c.text, opacity: 1 }]}>{`🗓️ Para el ${diaCorto(fecha)}: se anota ese día`}</Text>
+        ) : null}
         {frecuentes.length === 0 ? (
           <View style={styles.frecuentes}>
             <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Aún no tienes frecuentes de ${DE_TIPO[tipo]}`}</Text>
@@ -1269,18 +1318,26 @@ export function RegistrarMovimientoScreen() {
                   emoji: '🔁',
                   titulo: 'Se repite',
                   abierto: repite !== 'NO',
+                  // G39 (F-8): dos botones a la vista, sin lista. Tocar el elegido lo quita.
                   children: (
-                    <Elegir
-                      label="¿Se repite?"
-                      value={repite}
-                      options={OPCIONES_REPITE}
-                      onChange={(v) => setRepite((v as 'NO' | Periodicidad | null) ?? 'NO')}
-                    />
+                    <View style={styles.group}>
+                      <Question>¿Se repite?</Question>
+                      <View style={styles.frecuentes}>
+                        {REPITE_BOTONES.map((o) => (
+                          <Pastilla
+                            key={o.value}
+                            label={o.label}
+                            activo={repite === o.value}
+                            onPress={() => setRepite((actual) => (actual === o.value ? 'NO' : o.value))}
+                          />
+                        ))}
+                      </View>
+                    </View>
                   ),
                 },
               ]
             : []),
-          ...(etiquetas.length > 0
+          ...(etiquetas.length > 0 && !esFuturo
             ? [
                 {
                   clave: 'etiquetas',
