@@ -604,3 +604,12 @@ eso entran las 6 listas y sus formularios de crear y editar.
   transferencia, Editar y modo oscuro; la fila Categoría del detalle vuelve a
   Movimientos filtrada en el mes del movimiento; ninguna zona tocable bajo
   44 px en Movimientos ni en el detalle.
+- **Arreglos después de la prueba de Juan (2026-10-09, rama
+  `fix/G35-movimientos-fechas`):**
+  - En Recientes, "Ver 3 meses más" mostraba en rojo "Falta ?desde=YYYY-MM-DD"
+    al pasar al año anterior: la fecha se armaba como texto sin cambiar de año
+    (`2026--1-01`). Ahora se calcula con el calendario (`iso`); esto también
+    evita que la vista Mes de diciembre pidiera el mes 13. No hay límite hacia
+    atrás.
+  - Al abrir Movimientos, todas las consultas se hacían dos veces (guardar el
+    hogar cambiaba la función de carga); el hogar queda en un `ref`.
