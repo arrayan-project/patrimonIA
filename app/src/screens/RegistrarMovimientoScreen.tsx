@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
 import {
   api,
@@ -17,7 +17,10 @@ import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { money } from '../format';
+import { emojiCategoria, emojiMeta, emojiTipoMovimiento } from '../emojis';
+import { usePreferencias } from '../preferencias';
 import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import {
   opcionesDePersonas,
@@ -29,11 +32,11 @@ import {
 } from '../personas';
 import { nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
+import { Text } from '../ui/Text';
 import { cadaCuando, OPCIONES_REPITE, siguienteFecha, type Periodicidad } from '../recurrencia';
 import {
-  Chip,
+  colorAnotar,
   contadorPasos,
-  AmountInput,
   Elegir,
   ElegirVarios,
   BloquePaso,
@@ -43,15 +46,16 @@ import {
   ErrorText,
   etiqueta,
   Field,
-  LinkButton,
   ListCard,
   MoneyField,
-  Question,
+  MontoBanda,
   Nota,
-  Opcional,
+  Opcionales,
+  Pastilla,
   Section,
   Skeleton,
   Screen,
+  useC,
   TxRow,
 } from '../ui';
 
@@ -65,6 +69,13 @@ const TITULOS: Record<Tipo, string> = {
   TRANSFERENCIA: 'Moví plata',
   CONVERSION: 'Moví plata',
 };
+
+/** G35: el emoji de cada puerta del "+" (banda del monto y resumen). */
+/** G35: los 2 primeros Frecuentes (orden de Ajustes › Frecuentes) van a un toque; el resto en "Ver todos". */
+const FRECUENTES_A_LA_VISTA = 2;
+/** "Tus frecuentes de …" / "Aún no tienes frecuentes de …". */
+const DE_TIPO: Record<Tipo, string> = { GASTO: 'gasto', INGRESO: 'ingreso', TRANSFERENCIA: 'plata movida', CONVERSION: 'plata movida' };
+const EMOJIS: Record<Tipo, string> = { GASTO: '💸', INGRESO: '💰', TRANSFERENCIA: '🔁', CONVERSION: '💱' };
 
 /**
  * D-8 — paso 2 de Gasté y Recibí: de quién es la plata. HOGAR es "Compartido
@@ -107,6 +118,8 @@ export function RegistrarMovimientoScreen() {
   const nav = useNav();
   const toast = useToast();
   const { key } = useIdempotencyKey();
+  const { preferencias } = usePreferencias();
+  const emojis = preferencias.emojis;
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
@@ -165,6 +178,11 @@ export function RegistrarMovimientoScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   useTitulo((params.titulo as string | undefined) ?? TITULOS[tipo]);
+  // G35: la banda del monto lleva el color y el emoji de la puerta del "+".
+  const esPagoTarjeta = params.titulo === 'Pagar tarjeta';
+  const c = useC();
+  const colorBanda = colorAnotar(c, esPagoTarjeta ? 'TARJETA' : tipo);
+  const emojiBanda = esPagoTarjeta ? '💳' : EMOJIS[tipo];
 
   const sucio =
     Number(monto) > 0 ||
@@ -206,10 +224,6 @@ export function RegistrarMovimientoScreen() {
       .then(setCategorias)
       .catch(() => setCategorias([]));
     api
-      .get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token)
-      .then(setPlantillas)
-      .catch(() => setPlantillas([]));
-    api
       .get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token)
       .then(setEtiquetas)
       .catch(() => setEtiquetas([]));
@@ -218,6 +232,15 @@ export function RegistrarMovimientoScreen() {
       .then(setPersonas)
       .catch(() => setPersonas([]));
   }, [token]);
+
+  // Los Frecuentes se recargan al volver (p. ej. de "Crear uno").
+  const cargarPlantillas = useCallback(() => {
+    api
+      .get<PlantillaMovimientoDTO[]>('/usuarios/me/plantillas-movimiento', token)
+      .then(setPlantillas)
+      .catch(() => setPlantillas([]));
+  }, [token]);
+  useCargaAlEnfocar(cargarPlantillas);
 
   // Fuera de Gasté y Recibí no hay paso 2.
   useEffect(() => {
@@ -308,6 +331,8 @@ export function RegistrarMovimientoScreen() {
   // D-6: las plantillas son "Frecuentes": un toque llena el formulario. Solo las
   // de esta puerta (Gasté muestra las de gasto; Moví plata, las transferencias).
   const frecuentes = plantillas.filter((p) => p.tipo === (tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo));
+  const emojiFrecuente = (p: PlantillaMovimientoDTO) =>
+    emojiCategoria(categorias.find((x) => x.id === p.categoriaId)) ?? emojiTipoMovimiento(p.tipo);
 
   const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
@@ -596,11 +621,11 @@ export function RegistrarMovimientoScreen() {
           e.naturaleza !== 'CUSTODIA_INFORMAL',
       )
     : elementos;
-  const opcionesDesde = opcionesDeElementos(cuentasValidas);
+  const opcionesDesde = opcionesDeElementos(cuentasValidas, { emojis: emojis.elementos });
   const opcionesA = [
-    ...opcionesDeElementos(cuentasValidas, { excluir: origenId }),
+    ...opcionesDeElementos(cuentasValidas, { excluir: origenId, emojis: emojis.elementos }),
     ...(tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION'
-      ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId })
+      ? opcionesDeMiembros(elementosHogar.filter((e) => !propios.has(e.id)), { excluir: origenId, emojis: emojis.elementos })
       : []),
   ];
 
@@ -646,36 +671,41 @@ export function RegistrarMovimientoScreen() {
         : tipo === 'TRANSFERENCIA'
           ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
           : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
-  const resumenFinal: ReactNode =
+  const conRepite =
     typeof resumen === 'string' && puedeEnviar && repiteAplica && repite !== 'NO' ? `${resumen} Te avisamos ${cadaCuando(repite, fecha)}.` : resumen;
-  const accion = {
-    GASTO: 'Registrar gasto',
-    INGRESO: 'Registrar ingreso',
-    TRANSFERENCIA: 'Registrar transferencia',
-    CONVERSION: 'Registrar cambio de moneda',
-  }[tipo];
-  const accionFinal = esOtra ? 'Registrar plata de otra persona' : accion;
+  // G35: con todo listo, el resumen lleva el emoji de la puerta.
+  const resumenFinal: ReactNode = puedeEnviar ? `${emojiBanda} ${conRepite}` : conRepite;
+  const accion = esPagoTarjeta
+    ? 'Pagar tarjeta'
+    : {
+        GASTO: 'Anotar gasto',
+        INGRESO: 'Anotar ingreso',
+        TRANSFERENCIA: 'Anotar movimiento',
+        CONVERSION: 'Anotar cambio de moneda',
+      }[tipo];
+  const accionFinal = esOtra ? 'Anotar plata de otra persona' : accion;
 
   const opcionesQuien =
     tipo === 'GASTO'
       ? [
-          { value: 'MIO', label: 'Mío' },
+          { value: 'MIO', label: 'Mío', emoji: '🙋' },
           ...(otrosMiembros.length > 0
             ? [
                 {
                   value: 'HOGAR',
+                  emoji: '👫',
                   label: otrosMiembros.length === 1 ? `Compartido con ${nombreMiembro}` : 'Compartido con el hogar',
                   sub: `Pagaste algo de ${otrosMiembros.length === 1 ? 'los dos' : 'todos'} y te transfieren su parte`,
                 },
               ]
             : []),
-          { value: 'OTRA', label: 'De otra persona', sub: 'Pagaste por alguien, o usaste o devolviste su plata' },
+          { value: 'OTRA', label: 'De otra persona', emoji: '👤', sub: 'Pagaste por alguien, o usaste o devolviste su plata' },
         ]
       : [
-          { value: 'MIO', label: 'Mía' },
-          { value: 'OTRA', label: 'De otra persona', sub: 'Te la pasaron, te la prestaron o te devolvieron algo' },
+          { value: 'MIO', label: 'Mía', emoji: '🙋' },
+          { value: 'OTRA', label: 'De otra persona', emoji: '👤', sub: 'Te la pasaron, te la prestaron o te devolvieron algo' },
           ...(otrosMiembros.length > 0
-            ? [{ value: 'HOGAR', label: 'De alguien del hogar', sub: `Te la transfirió ${nombreMiembro}` }]
+            ? [{ value: 'HOGAR', label: 'De alguien del hogar', emoji: '👥', sub: `Te la transfirió ${nombreMiembro}` }]
             : []),
         ];
 
@@ -729,7 +759,7 @@ export function RegistrarMovimientoScreen() {
           </>
         }
       >
-        <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
+        <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda} />
         {pasoQuien}
         <Nota>
           {`Una transferencia entre ustedes la anota quien la envía, en «Moví plata». Esto te llegó de ${
@@ -749,7 +779,7 @@ export function RegistrarMovimientoScreen() {
                 subtitle={`${t.cuentaPropia.nombre} · ${t.fecha}`}
                 amount={money(t.monto, t.moneda)}
                 positivo
-                logo={{ icon: 'people-outline' }}
+                logo={{ emoji: '👥' }}
               />
             ))}
           </ListCard>
@@ -769,7 +799,7 @@ export function RegistrarMovimientoScreen() {
             label="¿A qué cuenta te llegó?"
             placeholder="Elegir cuenta"
             value={destinoId}
-            options={opcionesDeElementos(cuentasDeMiembro)}
+            options={opcionesDeElementos(cuentasDeMiembro, { emojis: emojis.elementos })}
             onChange={setDestinoId}
           />
           {oculta(cuentaLlegada) && cuentaLlegada ? (
@@ -806,25 +836,55 @@ export function RegistrarMovimientoScreen() {
         </>
       }
     >
-      {frecuentes.length > 0 && (
-        <View style={styles.group}>
-          <Question>Frecuentes</Question>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
-            {frecuentes.map((p) => (
-              <Chip
+      <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda}>
+        {frecuentes.length === 0 ? (
+          <View style={styles.frecuentes}>
+            <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Aún no tienes frecuentes de ${DE_TIPO[tipo]}`}</Text>
+            <Pastilla
+              label="➕ Crear uno"
+              enlace
+              onPress={() => nav.go('PlantillaForm', { tipo: tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo })}
+            />
+          </View>
+        ) : (
+          <View style={styles.frecuentes}>
+            <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Tus frecuentes (${frecuentes.length})`}</Text>
+            {frecuentes.slice(0, FRECUENTES_A_LA_VISTA).map((p) => (
+              <Pastilla
                 key={p.id}
-                label={p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre}
+                label={p.monto != null ? `${emojiFrecuente(p)} ${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : `${emojiFrecuente(p)} ${p.nombre}`}
+                accessibilityLabel={`Usar frecuente ${p.nombre}`}
                 onPress={() => aplicarPlantilla(p)}
               />
             ))}
-          </ScrollView>
-        </View>
-      )}
-
+            {frecuentes.length > FRECUENTES_A_LA_VISTA && (
+              <Elegir
+                label={`Tus frecuentes de ${DE_TIPO[tipo]}`}
+                value={null}
+                options={frecuentes.map((p) => ({
+                  value: p.id,
+                  label: p.nombre,
+                  emoji: emojiFrecuente(p),
+                  sub: [
+                    p.monto != null ? money(p.monto, p.moneda ?? 'CLP') : null,
+                    nombreDe(p.elementoOrigenId ?? p.elementoDestinoId ?? null) || null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || undefined,
+                }))}
+                onChange={(id) => {
+                  const p = frecuentes.find((x) => x.id === id);
+                  if (p) aplicarPlantilla(p);
+                }}
+                boton={(abrir) => <Pastilla label={`🔍 Ver los ${frecuentes.length}`} enlace onPress={abrir} />}
+              />
+            )}
+          </View>
+        )}
+      </MontoBanda>
       {tipo === 'CONVERSION' && (
         <Nota>El monto va en la moneda de la cuenta de salida; la otra recibe el equivalente al tipo de cambio vigente.</Nota>
       )}
-      <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
 
       {pasoQuien}
 
@@ -840,9 +900,10 @@ export function RegistrarMovimientoScreen() {
                   {
                     value: 'MITAD',
                     label: 'La mitad',
+                    emoji: '➗',
                     sub: Number(monto) > 0 ? money(parteIgual(Number(monto), 1, monedaEvento), monedaEvento) : undefined,
                   },
-                  { value: 'OTRO', label: 'Otro monto' },
+                  { value: 'OTRO', label: 'Otro monto', emoji: '✏️' },
                 ]}
                 onChange={(v) => setReparto((v as 'MITAD' | 'OTRO' | null) ?? 'MITAD')}
               />
@@ -861,7 +922,7 @@ export function RegistrarMovimientoScreen() {
                 label="¿Con quiénes?"
                 values={conQuienes ?? otrosMiembros.map((x) => x.usuarioId)}
                 onChange={setConQuienes}
-                options={otrosMiembros.map((x) => ({ value: x.usuarioId, label: x.nombre }))}
+                options={otrosMiembros.map((x) => ({ value: x.usuarioId, label: x.nombre, emoji: '🙂' }))}
               />
               {compartidoCon.length > 0 && Number(monto) > 0 ? (
                 <Nota>{`Partes iguales: ${money(parte, monedaEvento)} cada uno.`}</Nota>
@@ -887,9 +948,10 @@ export function RegistrarMovimientoScreen() {
               ...opcionesP.map((x) => ({
                 value: x.nombre,
                 label: x.nombre,
+                emoji: '👤',
                 sub: saldoTexto(x.nombre, x.saldo, monedaEvento, money),
               })),
-              { value: NUEVA, label: '+ Nueva persona' },
+              { value: NUEVA, label: 'Nueva persona', emoji: '➕' },
             ]}
             onChange={(v) => {
               setPersona(v);
@@ -981,6 +1043,7 @@ export function RegistrarMovimientoScreen() {
             options={metasCuenta.map((x) => ({
               value: x.asignacionId,
               label: x.nombre,
+              emoji: x.objetivoId ? emojiMeta(x.objetivoId, emojis.metas) : '🐷',
               sub: money(x.monto, monedaEvento),
             }))}
             onChange={setAsignacionId}
@@ -1000,7 +1063,7 @@ export function RegistrarMovimientoScreen() {
             paso={pRecibe}
             placeholder="Elegir cuenta"
             value={recibe?.id ?? null}
-            options={opcionesDeElementos(cuentasRecibe)}
+            options={opcionesDeElementos(cuentasRecibe, { emojis: emojis.elementos })}
             onChange={setRecibeId}
           />
           {oculta(recibe) && recibe ? (
@@ -1031,15 +1094,22 @@ export function RegistrarMovimientoScreen() {
       {pCategoria && (
         <BloquePaso paso={pCategoria} style={styles.group}>
           <Elegir
-            label="¿De qué tipo? (opcional)"
+            label="¿De qué categoría? (opcional)"
             paso={pCategoria}
             opcionNula="Sin categoría"
             value={categoriaId}
-            options={categoriasAplicables.map((x) => ({
-              value: x.id,
-              label: x.categoriaPadreId ? `›  ${x.nombre}` : x.nombre,
-            }))}
-            onChange={setCategoriaId}
+            options={[
+              ...categoriasAplicables.map((x) => ({
+                value: x.id,
+                label: x.nombre,
+                emoji: emojiCategoria(x) ?? '🏷️',
+                sub: x.categoriaPadreId
+                  ? `Dentro de ${categorias.find((p) => p.id === x.categoriaPadreId)?.nombre ?? 'otra'}`
+                  : undefined,
+              })),
+              { value: NUEVA, label: 'Nueva categoría', emoji: '➕' },
+            ]}
+            onChange={(v) => (v === NUEVA ? setCrearCat(true) : setCategoriaId(v))}
           />
           {crearCat ? (
             <View style={styles.group}>
@@ -1052,50 +1122,76 @@ export function RegistrarMovimientoScreen() {
                 autoFocus
               />
               <View style={styles.fila}>
-                <Button title="Crear" variant="secondary" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
-                <LinkButton title="Cancelar" onPress={() => setCrearCat(false)} />
+                <View style={{ flex: 1 }}>
+                  <Button title="Crear" variant="secondary" onPress={crearCategoriaInline} loading={catBusy} disabled={!catNombre.trim()} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button title="Cancelar" variant="secondary" onPress={() => setCrearCat(false)} />
+                </View>
               </View>
             </View>
-          ) : (
-            <LinkButton title="+ Nueva categoría" onPress={() => setCrearCat(true)} />
-          )}
+          ) : null}
         </BloquePaso>
       )}
 
       <Cuando value={fecha} onChange={setFecha} paso={pFecha} />
 
-      <Opcional titulo="Agregar detalle" abierto={!!glosa}>
-        <Field
-          label="Detalle (opcional)"
-          value={glosa}
-          onChangeText={setGlosa}
-          placeholder="p. ej. pago internet marzo"
-          autoCapitalize="sentences"
-          maxLength={140}
-        />
-      </Opcional>
-
-      {repiteAplica && (
-        <Opcional titulo="Se repite cada mes o año" abierto={repite !== 'NO'}>
-          <Elegir
-            label="¿Se repite?"
-            value={repite}
-            options={OPCIONES_REPITE}
-            onChange={(v) => setRepite((v as 'NO' | Periodicidad | null) ?? 'NO')}
-          />
-        </Opcional>
-      )}
-
-      {etiquetas.length > 0 && (
-        <Opcional titulo="Agregar etiquetas" abierto={etiquetaIds.length > 0}>
-          <ElegirVarios
-            label="Etiquetas (opcional)"
-            values={etiquetaIds}
-            onChange={setEtiquetaIds}
-            options={etiquetas.map((e) => ({ value: e.id, label: e.nombre }))}
-          />
-        </Opcional>
-      )}
+      <Opcionales
+        items={[
+          {
+            clave: 'detalle',
+            emoji: '📝',
+            titulo: 'Detalle',
+            abierto: !!glosa,
+            children: (
+              <Field
+                label="Detalle (opcional)"
+                value={glosa}
+                onChangeText={setGlosa}
+                placeholder="p. ej. pago internet marzo"
+                autoCapitalize="sentences"
+                maxLength={140}
+              />
+            ),
+          },
+          ...(repiteAplica
+            ? [
+                {
+                  clave: 'repite',
+                  emoji: '🔁',
+                  titulo: 'Se repite',
+                  abierto: repite !== 'NO',
+                  children: (
+                    <Elegir
+                      label="¿Se repite?"
+                      value={repite}
+                      options={OPCIONES_REPITE}
+                      onChange={(v) => setRepite((v as 'NO' | Periodicidad | null) ?? 'NO')}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(etiquetas.length > 0
+            ? [
+                {
+                  clave: 'etiquetas',
+                  emoji: '🏷️',
+                  titulo: 'Etiquetas',
+                  abierto: etiquetaIds.length > 0,
+                  children: (
+                    <ElegirVarios
+                      label="Etiquetas (opcional)"
+                      values={etiquetaIds}
+                      onChange={setEtiquetaIds}
+                      options={etiquetas.map((e) => ({ value: e.id, label: e.nombre, emoji: '🔖' }))}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
 
       {errMismo ? <ErrorText>{errMismo}</ErrorText> : null}
       <ErrorText>{error}</ErrorText>
@@ -1106,4 +1202,6 @@ export function RegistrarMovimientoScreen() {
 const styles = StyleSheet.create({
   group: { gap: 8 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  frecuentes: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  frecuentesTitulo: { width: '100%', fontSize: 13, fontWeight: '700', opacity: 0.75 },
 });

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,6 +16,7 @@ import {
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import { Text, TextInput } from './Text';
 import DateTimePicker, {
@@ -235,7 +237,58 @@ export function FAB({ icon, onPress }: { icon: NombreIcono; onPress: () => void 
   );
 }
 
-export type AccionHoja = { icon: NombreIcono; label: string; subtitle?: string; onPress: () => void };
+export type AccionHoja = {
+  icon: NombreIcono;
+  label: string;
+  subtitle?: string;
+  onPress: () => void;
+  /** G35: emoji en lugar del ícono de línea. */
+  emoji?: string;
+  /** G35: las de todos los días van como tarjeta grande de este color, en fila. */
+  grande?: string;
+};
+
+/**
+ * G35: la hoja modal común (listas, "+", emojis). El velo aparece en su lugar
+ * (fade) y solo la hoja sube desde abajo; antes el velo subía pegado a la hoja
+ * y se veía como una cortina oscura detrás. Tocar el velo cierra.
+ */
+export function HojaModal({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const styles = useEstilos();
+  // El 85% de la pantalla: un % no sirve dentro de la capa animada (no tiene alto propio).
+  const { height: alto } = useWindowDimensions();
+  const subida = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!visible) return;
+    subida.setValue(0);
+    Animated.timing(subida, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+  }, [visible, subida]);
+  const translateY = subida.interpolate({ inputRange: [0, 1], outputRange: [500, 0] });
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalFondo} onPress={onClose} accessibilityRole="button" accessibilityLabel="Cerrar">
+        <Animated.View style={{ transform: [{ translateY }] }}>
+          <Pressable style={[styles.modalHoja, { maxHeight: alto * 0.85 }]} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+            {children}
+          </Pressable>
+        </Animated.View>
+      </Pressable>
+    </Modal>
+  );
+}
 
 /**
  * Hoja con varias acciones (la del "+", p. ej. "¿Qué quieres anotar?"). La usa
@@ -255,36 +308,62 @@ export function HojaAcciones({
 }) {
   const c = useC();
   const styles = useEstilos();
+  const tocar = (a: AccionHoja) => {
+    onClose();
+    a.onPress();
+  };
+  const grandes = actions.filter((a) => a.grande);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalFondo} onPress={onClose}>
-        <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+    <HojaModal visible={visible} onClose={onClose}>
           <View style={styles.agarre} />
           {titulo ? <Text style={styles.modalTitulo}>{titulo}</Text> : null}
-          {actions.map((a) => (
-            <Pressable
-              key={a.label}
-              accessibilityRole="button"
-              accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
-              style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.bg }]}
-              onPress={() => {
-                onClose();
-                a.onPress();
-              }}
-            >
-              <View style={styles.fabActionIc}>
-                <Ionicons name={a.icon} size={20} color={c.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fabActionTxt}>{a.label}</Text>
-                {a.subtitle ? <Text style={styles.fabActionSub}>{a.subtitle}</Text> : null}
-              </View>
-            </Pressable>
-          ))}
-          <LinkButton title="Cancelar" onPress={onClose} />
-        </Pressable>
-      </Pressable>
-    </Modal>
+          {grandes.length > 0 && (
+            <View style={styles.hojaGrandes}>
+              {grandes.map((a) => (
+                <Pressable
+                  key={a.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
+                  style={({ pressed }) => [
+                    styles.hojaGrande,
+                    { backgroundColor: tinte(a.grande!, 0.14), borderColor: tinte(a.grande!, 0.3) },
+                    pressed && { opacity: 0.75 },
+                  ]}
+                  onPress={() => tocar(a)}
+                >
+                  <Text style={styles.hojaGrandeEmoji}>{a.emoji}</Text>
+                  <Text style={styles.hojaGrandeTxt} numberOfLines={1}>
+                    {a.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+          {actions
+            .filter((a) => !a.grande)
+            .map((a) => (
+              <Pressable
+                key={a.label}
+                accessibilityRole="button"
+                accessibilityLabel={a.subtitle ? `${a.label}. ${a.subtitle}` : a.label}
+                style={({ pressed }) => [styles.fabAction, pressed && { backgroundColor: c.bg }]}
+                onPress={() => tocar(a)}
+              >
+                <View style={styles.fabActionIc}>
+                  {a.emoji ? (
+                    <Text style={styles.menuEmojiTxt}>{a.emoji}</Text>
+                  ) : (
+                    <Ionicons name={a.icon} size={20} color={c.primary} />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fabActionTxt}>{a.label}</Text>
+                  {a.subtitle ? <Text style={styles.fabActionSub}>{a.subtitle}</Text> : null}
+                </View>
+              </Pressable>
+            ))}
+          <Button title="Cancelar" variant="secondary" onPress={onClose} />
+        </HojaModal>
   );
 }
 
@@ -592,9 +671,7 @@ export function ElegirEmoji({
           <Text style={styles.seccionAccion}>Cambiar</Text>
         </Pressable>
       )}
-      <Modal visible={abierto} transparent animationType="fade" onRequestClose={() => setAbierto(false)}>
-        <Pressable style={styles.modalFondo} onPress={() => setAbierto(false)}>
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+      <HojaModal visible={abierto} onClose={() => setAbierto(false)}>
             <View style={styles.agarre} />
             <Text style={styles.modalTitulo}>Elige un emoji</Text>
             <ScrollView contentContainerStyle={styles.emojiGrilla}>
@@ -619,10 +696,8 @@ export function ElegirEmoji({
               returnKeyType="done"
               onSubmitEditing={() => otro.trim() && elegir(otro.trim())}
             />
-            <LinkButton title="Cancelar" onPress={() => setAbierto(false)} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+            <Button title="Cancelar" variant="secondary" onPress={() => setAbierto(false)} />
+          </HojaModal>
     </>
   );
 }
@@ -1252,12 +1327,17 @@ export function Cuando({
   const elegido = otra ? 'otra' : value === ayer ? 'ayer' : 'hoy';
   return (
     <BloquePaso paso={paso} style={styles.field}>
-      <Question paso={paso}>{label}</Question>
-      <View style={styles.chipsFila}>
-        <Chip label="Hoy" activo={elegido === 'hoy'} onPress={() => { setOtra(false); onChange(hoy); }} />
-        <Chip label="Ayer" activo={elegido === 'ayer'} onPress={() => { setOtra(false); onChange(ayer); }} />
-        <Chip label="Otra fecha" activo={elegido === 'otra'} onPress={() => setOtra(true)} />
-      </View>
+      <Segmented
+        label={label}
+        paso={paso}
+        options={['hoy', 'ayer', 'otra'] as const}
+        value={elegido}
+        formatearOpcion={(v) => ({ hoy: 'Hoy', ayer: 'Ayer', otra: '📅 Otra fecha' })[v]}
+        onChange={(v) => {
+          setOtra(v === 'otra');
+          if (v !== 'otra') onChange(v === 'hoy' ? hoy : ayer);
+        }}
+      />
       {otra && <DateField label="¿Qué día?" value={value} onChange={onChange} />}
     </BloquePaso>
   );
@@ -1271,6 +1351,132 @@ export function Cuando({
 export function Opcional({ titulo, abierto, children }: { titulo: string; abierto?: boolean; children: ReactNode }) {
   const [ver, setVer] = useState(false);
   return ver || abierto ? <>{children}</> : <LinkButton title={`+ ${titulo}`} onPress={() => setVer(true)} />;
+}
+
+/**
+ * G35: varios opcionales juntos (plantilla Formulario). Los cerrados son una
+ * fila de botones de 44 px con emoji ("📝 Detalle", "🔁 Se repite"); al tocar
+ * uno, su campo se abre arriba de la fila. Los que ya traen valor (`abierto`)
+ * se muestran abiertos.
+ */
+export function Opcionales({
+  items,
+}: {
+  items: { clave: string; emoji: string; titulo: string; abierto?: boolean; children: ReactNode }[];
+}) {
+  const styles = useEstilos();
+  const [vistos, setVistos] = useState<string[]>([]);
+  const abiertos = items.filter((it) => it.abierto || vistos.includes(it.clave));
+  const cerrados = items.filter((it) => !abiertos.includes(it));
+  return (
+    <>
+      {abiertos.map((it) => (
+        <View key={it.clave}>{it.children}</View>
+      ))}
+      {cerrados.length > 0 && (
+        <View style={styles.chipsFila}>
+          {cerrados.map((it) => (
+            <Pastilla
+              key={it.clave}
+              label={`${it.emoji} ${it.titulo}`}
+              accessibilityLabel={`Agregar ${it.titulo.toLowerCase()}`}
+              onPress={() => setVistos((v) => [...v, it.clave])}
+            />
+          ))}
+        </View>
+      )}
+    </>
+  );
+}
+
+/** G35: botón en pastilla de 44 px (opcionales, Frecuentes). */
+export function Pastilla({
+  label,
+  onPress,
+  accessibilityLabel,
+  enlace,
+}: {
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+  /** Lleva a otra cosa (p. ej. "🔍 Ver los 5"): sin relleno y en el color del acento. */
+  enlace?: boolean;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={({ pressed }) => [
+        styles.opcionalBoton,
+        enlace && { backgroundColor: 'transparent', borderColor: c.primary, borderStyle: 'dashed' },
+        pressed && { opacity: 0.7 },
+      ]}
+      onPress={onPress}
+    >
+      <Text style={[styles.opcionalTxt, enlace && { color: c.primary }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * G35: el monto protagonista de Registrar movimiento, en una banda del color
+ * de su puerta del "+" (`colorAnotar`), con su emoji. `children` va dentro de
+ * la banda, debajo del monto (los Frecuentes).
+ */
+export function MontoBanda({
+  label = '¿Cuánto?',
+  value,
+  onChange,
+  moneda,
+  paso,
+  color,
+  emoji,
+  children,
+}: {
+  label?: string;
+  value: string;
+  onChange: (canonico: string) => void;
+  moneda?: string;
+  paso?: Paso;
+  color: string;
+  emoji: string;
+  children?: ReactNode;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  return (
+    <BloquePaso paso={paso}>
+      <View style={[styles.banda, { backgroundColor: tinte(color, 0.13), borderColor: tinte(color, 0.28) }]}>
+        <Question paso={paso}>{label}</Question>
+        <View style={styles.bandaFila}>
+          <Text style={styles.bandaEmoji}>{emoji}</Text>
+          <TextInput
+            style={styles.bandaInput}
+            keyboardType="numeric"
+            value={montoVisible(value)}
+            onChangeText={(t) => onChange(montoCanonico(t))}
+            placeholder="0"
+            placeholderTextColor={c.mutedDim}
+            accessibilityLabel={moneda ? `${label} en ${moneda}` : label}
+          />
+          {moneda ? <Text style={styles.montoMoneda}>{moneda}</Text> : null}
+        </View>
+        {children}
+      </View>
+    </BloquePaso>
+  );
+}
+
+/** G35: color de cada puerta del "+" (tarjeta de la hoja y banda del monto). */
+export function colorAnotar(c: Paleta, tipo: string): string {
+  if (tipo === 'GASTO') return c.danger;
+  if (tipo === 'INGRESO') return c.ok;
+  if (tipo === 'TARJETA') return c.primary;
+  return c.tarjetas[5];
 }
 
 /**
@@ -1491,6 +1697,8 @@ export interface OpcionSelect {
   grupo?: string;
   /** Segunda línea de la fila (p. ej. el saldo). */
   sub?: string;
+  /** G35: emoji antes del nombre (también en la caja cuando está elegida). */
+  emoji?: string;
   /** Se muestra atenuada y no se puede elegir; `sub` debería decir por qué. */
   deshabilitada?: boolean;
 }
@@ -1605,6 +1813,7 @@ export function AccountList({
                 >
                   {multiple && on ? <Ionicons name="checkmark" size={14} color={c.primaryText} /> : null}
                 </View>
+                {o.emoji ? <Text style={styles.opcionEmoji}>{o.emoji}</Text> : null}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={styles.listaTitulo} numberOfLines={1}>
                     {o.label}
@@ -1671,6 +1880,7 @@ export function Select({
   permiteOtro,
   opcionNula,
   paso,
+  boton,
 }: {
   label?: string;
   value: string;
@@ -1680,6 +1890,8 @@ export function Select({
   permiteOtro?: boolean;
   opcionNula?: string;
   paso?: Paso;
+  /** En vez de la caja con la pregunta, un botón propio que abre la hoja (p. ej. "Ver todos"). */
+  boton?: (abrir: () => void) => ReactNode;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -1699,6 +1911,64 @@ export function Select({
     setOtro('');
   };
 
+  const hoja = (
+    <HojaModal visible={abierto} onClose={cerrar}>
+          <View style={styles.agarre} />
+          {label ? <Text style={styles.modalTitulo}>{label}</Text> : null}
+          {modoOtro ? (
+            <View style={{ gap: 10 }}>
+              <TextInput
+                style={styles.input}
+                value={otro}
+                onChangeText={setOtro}
+                autoFocus
+                placeholder="Escribe el valor"
+                placeholderTextColor={c.mutedDim}
+              />
+              <Button
+                title="Usar"
+                onPress={() => {
+                  if (otro.trim()) {
+                    onChange(otro.trim());
+                    cerrar();
+                  }
+                }}
+              />
+              <LinkButton title="Volver a la lista" onPress={() => setModoOtro(false)} />
+            </View>
+          ) : (
+            <ListaOpciones
+              options={todas}
+              elegida={(v) => v === value}
+              onElegir={(v) => {
+                onChange(v);
+                cerrar();
+              }}
+              extra={
+                permiteOtro ? (
+                  <Pressable
+                    style={styles.modalOpcion}
+                    accessibilityRole="button"
+                    accessibilityLabel="Otro valor"
+                    onPress={() => setModoOtro(true)}
+                  >
+                    <Text style={[styles.modalOpcionTxt, { fontWeight: '600' }]}>Otro…</Text>
+                  </Pressable>
+                ) : undefined
+              }
+            />
+          )}
+          <Button title="Cancelar" variant="secondary" onPress={cerrar} />
+        </HojaModal>
+  );
+  if (boton) {
+    return (
+      <>
+        {boton(() => setAbierto(true))}
+        {hoja}
+      </>
+    );
+  }
   return (
     <BloquePaso paso={paso} style={styles.field}>
       {label ? <Question paso={paso}>{label}</Question> : null}
@@ -1708,65 +1978,15 @@ export function Select({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${texto}` : texto}
       >
-        <View style={{ flexShrink: 1 }}>
+        {conocida?.emoji ? <Text style={styles.opcionEmoji}>{conocida.emoji}</Text> : null}
+        <View style={{ flexShrink: 1, flexGrow: 1 }}>
           <Text style={{ fontSize: 16, color: conocida || libre ? c.text : c.mutedDim }}>{texto}</Text>
           {conocida?.sub ? <Text style={styles.listaSub}>{conocida.sub}</Text> : null}
         </View>
         <Ionicons name="chevron-down" size={16} color={c.muted} />
       </Pressable>
 
-      <Modal visible={abierto} transparent animationType="slide" onRequestClose={cerrar}>
-        <Pressable style={styles.modalFondo} onPress={cerrar} accessibilityRole="button" accessibilityLabel="Cerrar">
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
-            <View style={styles.agarre} />
-            {label ? <Text style={styles.modalTitulo}>{label}</Text> : null}
-            {modoOtro ? (
-              <View style={{ gap: 10 }}>
-                <TextInput
-                  style={styles.input}
-                  value={otro}
-                  onChangeText={setOtro}
-                  autoFocus
-                  placeholder="Escribe el valor"
-                  placeholderTextColor={c.mutedDim}
-                />
-                <Button
-                  title="Usar"
-                  onPress={() => {
-                    if (otro.trim()) {
-                      onChange(otro.trim());
-                      cerrar();
-                    }
-                  }}
-                />
-                <LinkButton title="Volver a la lista" onPress={() => setModoOtro(false)} />
-              </View>
-            ) : (
-              <ListaOpciones
-                options={todas}
-                elegida={(v) => v === value}
-                onElegir={(v) => {
-                  onChange(v);
-                  cerrar();
-                }}
-                extra={
-                  permiteOtro ? (
-                    <Pressable
-                      style={styles.modalOpcion}
-                      accessibilityRole="button"
-                      accessibilityLabel="Otro valor"
-                      onPress={() => setModoOtro(true)}
-                    >
-                      <Text style={[styles.modalOpcionTxt, { fontWeight: '600' }]}>Otro…</Text>
-                    </Pressable>
-                  ) : undefined
-                }
-              />
-            )}
-            <LinkButton title="Cancelar" onPress={cerrar} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {hoja}
     </BloquePaso>
   );
 }
@@ -1780,6 +2000,7 @@ export function Elegir({
   opcionNula,
   placeholder,
   paso,
+  boton,
 }: {
   label: string;
   value: string | null;
@@ -1788,11 +2009,14 @@ export function Elegir({
   opcionNula?: string;
   placeholder?: string;
   paso?: Paso;
+  /** Un botón propio que abre la hoja, en vez de la caja (ver `Select`). */
+  boton?: (abrir: () => void) => ReactNode;
 }) {
   return (
     <Select
       label={label}
       paso={paso}
+      boton={boton}
       value={value ?? ''}
       options={options}
       opcionNula={opcionNula}
@@ -1846,21 +2070,12 @@ export function ElegirVarios({
         </Text>
         <Ionicons name="chevron-down" size={16} color={c.muted} />
       </Pressable>
-      <Modal visible={abierto} transparent animationType="slide" onRequestClose={() => setAbierto(false)}>
-        <Pressable
-          style={styles.modalFondo}
-          onPress={() => setAbierto(false)}
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar"
-        >
-          <Pressable style={styles.modalHoja} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal>
+      <HojaModal visible={abierto} onClose={() => setAbierto(false)}>
             <View style={styles.agarre} />
             <Text style={styles.modalTitulo}>{label}</Text>
             <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} multiple />
             <Button title="Listo" onPress={() => setAbierto(false)} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+          </HojaModal>
     </BloquePaso>
   );
 }
@@ -2413,6 +2628,20 @@ const crearEstilos = (c: Paleta) => {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    hojaGrandes: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    hojaGrande: {
+      flex: 1,
+      minHeight: 96,
+      borderRadius: radio.tarjeta,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 14,
+      paddingHorizontal: 6,
+    },
+    hojaGrandeEmoji: { fontSize: 30 },
+    hojaGrandeTxt: { fontSize: 15, fontWeight: '700', color: c.text },
     fabActionTxt: { fontSize: 16, color: c.text, fontWeight: '600' },
     fabActionSub: { fontSize: 13, color: c.muted, marginTop: 2 },
     agarre: {
@@ -2867,6 +3096,21 @@ const crearEstilos = (c: Paleta) => {
       justifyContent: 'center',
     },
     menuEmojiTxt: { fontSize: 19 },
+    opcionEmoji: { fontSize: 20 },
+    opcionalBoton: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 14,
+      borderRadius: radio.pastilla,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.bg,
+    },
+    opcionalTxt: { fontSize: 14, fontWeight: '600', color: c.text },
+    banda: { borderRadius: radio.tarjeta, borderWidth: 1, padding: 16, gap: 10 },
+    bandaFila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    bandaEmoji: { fontSize: 34 },
+    bandaInput: { ...tipografia.monto, fontSize: 42, flex: 1, minWidth: 0, color: c.text, paddingVertical: 4 },
     menuBadge: {
       minWidth: 22,
       height: 22,
