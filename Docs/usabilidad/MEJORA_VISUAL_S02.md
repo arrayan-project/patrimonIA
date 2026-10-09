@@ -492,7 +492,7 @@ eso entran las 6 listas y sus formularios de crear y editar.
   - Agrupaciones fuera de Ajustes (los datos quedan). **Pendiente:** usarlas
     para agrupar cuentas en Mi patrimonio (Juan, 2026-10-09), cuando se
     revise esa pantalla. → **Hecho (Juan, 2026-10-09; rama
-    `feat/G35-agrupaciones`):** se llaman **"Mis grupos"**. En Tu plata
+    `feat/G35-agrupaciones`, probada por Juan y mergeada):** se llaman **"Mis grupos"**. En Tu plata
     ("Lo mío"), si hay al menos uno, el selector "🏦 Por tipo · 🗂️ Mis
     grupos": cada grupo con su subtotal y sus cuentas, y "📦 Sin grupo" con
     el resto (los subtotales suman el total de arriba). Al final de Tu plata,
@@ -918,7 +918,7 @@ eso entran las 6 listas y sus formularios de crear y editar.
     encima, con los de esa categoría en el mes del movimiento; con una
     categoría de ingresos muestra lo que entró ("📥 Entró", "1 ingreso", en
     verde). Si el movimiento es de otro miembro (ninguna de sus cuentas es
-    tuya), muestra los del hogar. Rama `feat/G35-categoria-encima`.
+    tuya), muestra los del hogar. Rama `feat/G35-categoria-encima`, probada por Juan y mergeada (2026-10-09).
 - **Verificado:** `tsc` sin errores; e2e de presupuesto 11/11 verdes contra
   `patrimonia_test`; capturas web de la lista, el detalle (también en modo
   oscuro y con la dona, después de que Juan anotó "Curso maquillaje" y
