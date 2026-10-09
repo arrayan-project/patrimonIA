@@ -190,19 +190,17 @@ export function Sparkline({
 
 /**
  * Gráfico de línea simple para una serie temporal. `puntos` en orden; se
- * escala solo al alto/ancho dados. Muestra el valor mín/máx y las fechas
- * de los extremos.
+ * escala solo al alto/ancho dados. Muestra las fechas de los extremos; cuánto
+ * cambió lo dice la pantalla (G35: "Antes → Hoy", sin mín/máx).
  */
 export function GraficoLinea({
   puntos,
   alto = 140,
   color,
-  formatoValor = (n) => n.toLocaleString('es-CL'),
 }: {
   puntos: { etiqueta: string; valor: number }[];
   alto?: number;
   color?: string;
-  formatoValor?: (n: number) => string;
 }) {
   const { c, styles } = useCharts();
   const [gradId] = useState(() => `glg-${Math.random().toString(36).slice(2)}`);
@@ -256,10 +254,6 @@ export function GraficoLinea({
       <View style={styles.ejeFila}>
         <Text style={styles.ejeTxt}>{puntos[0].etiqueta}</Text>
         <Text style={styles.ejeTxt}>{puntos[puntos.length - 1].etiqueta}</Text>
-      </View>
-      <View style={styles.ejeFila}>
-        <Text style={styles.ejeTxt}>mín {formatoValor(min)}</Text>
-        <Text style={styles.ejeTxt}>máx {formatoValor(max)}</Text>
       </View>
     </View>
   );
