@@ -4,7 +4,8 @@ import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
-import { aISO, AmountInput, Button, contadorPasos, Cuando, DateField, ErrorText, Nota, Screen } from '../ui';
+import { EMOJI_ANOTAR } from '../emojis';
+import { aISO, Button, colorAnotar, Cuando, DateField, ErrorText, MontoBanda, Nota, Screen, useC } from '../ui';
 
 /**
  * Editar un movimiento programado o confirmar su pago (plantillas de pantalla,
@@ -12,6 +13,7 @@ import { aISO, AmountInput, Button, contadorPasos, Cuando, DateField, ErrorText,
  * real con lo que efectivamente pasó.
  */
 export function ProgramadoFormScreen() {
+  const c = useC();
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -19,7 +21,10 @@ export function ProgramadoFormScreen() {
   const movimientoId = nav.route.params?.movimientoId as string;
   const planificado = nav.route.params?.monto as number;
   const moneda = nav.route.params?.moneda as string;
+  const tipo = (nav.route.params?.tipo as 'GASTO' | 'INGRESO' | 'TRANSFERENCIA' | undefined) ?? 'GASTO';
+  const cuenta = nav.route.params?.cuenta as string | undefined;
   const confirmar = modo === 'confirmar';
+  const ingreso = tipo === 'INGRESO';
 
   const [monto, setMonto] = useState(String(planificado));
   // Al confirmar, lo normal es que se pagó el día que tocaba (D-6: el aviso puede
@@ -30,7 +35,7 @@ export function ProgramadoFormScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  useTitulo(confirmar ? 'Confirmar pago' : 'Editar programado');
+  useTitulo(confirmar ? (ingreso ? 'Confirmar lo que llegó' : 'Confirmar pago') : 'Cambiar monto o fecha');
 
   const montoOk = Number(monto) > 0;
   const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
@@ -46,7 +51,7 @@ export function ProgramadoFormScreen() {
           { movimientoId, montoEfectivo: Number(monto), fechaEfectiva: fecha },
           token,
         );
-        toast.mostrar('Pago confirmado');
+        toast.mostrar('Listo, quedó anotado');
       } else {
         await api.post(
           '/comandos/ActualizarMovimientoProgramado',
@@ -63,14 +68,15 @@ export function ProgramadoFormScreen() {
     }
   };
 
-  const paso = contadorPasos();
+  // G35: el pie dice qué se anota y dónde.
+  const queSeAnota = `${EMOJI_ANOTAR[tipo]} Se anota ${ingreso ? 'un ingreso' : tipo === 'GASTO' ? 'un gasto' : 'un movimiento'} de ${money(Number(monto), moneda)}${cuenta ? `${ingreso ? ' en ' : ' desde '}${cuenta}` : ''}.`;
   return (
     <Screen
       pie={
         <>
-          {confirmar && montoOk ? <Nota>{`Se registra un movimiento real por ${money(Number(monto), moneda)}.`}</Nota> : null}
+          {confirmar && montoOk ? <Nota>{queSeAnota}</Nota> : null}
           <Button
-            title={confirmar ? 'Confirmar pago' : 'Guardar cambios'}
+            title={confirmar ? (ingreso ? '✅ Sí, llegó' : '✅ Confirmar pago') : '💾 Guardar cambios'}
             onPress={guardar}
             loading={busy}
             disabled={!montoOk || !fechaOk}
@@ -78,17 +84,18 @@ export function ProgramadoFormScreen() {
         </>
       }
     >
-      <AmountInput
+      <MontoBanda
         label={confirmar ? '¿Cuánto fue al final?' : '¿Cuánto será?'}
-        paso={paso({ hecho: montoOk })}
         value={monto}
         onChange={setMonto}
         moneda={moneda}
+        color={colorAnotar(c, tipo)}
+        emoji={EMOJI_ANOTAR[tipo]}
       />
       {confirmar ? (
-        <Cuando label="¿Cuándo se pagó?" paso={paso({ hecho: fechaOk })} value={fecha} onChange={setFecha} />
+        <Cuando label={ingreso ? '¿Cuándo llegó?' : tipo === 'GASTO' ? '¿Cuándo se pagó?' : '¿Cuándo se hizo?'} value={fecha} onChange={setFecha} />
       ) : (
-        <DateField label="¿Para cuándo?" paso={paso({ hecho: fechaOk })} value={fecha} onChange={setFecha} />
+        <DateField label="¿Para cuándo?" value={fecha} onChange={setFecha} />
       )}
       <ErrorText>{error}</ErrorText>
     </Screen>

@@ -1,40 +1,51 @@
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { api, ApiError, type CategoriaMovimientoDTO, type ElementoPatrimonialDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import { money } from '../format';
+import { EMOJI_ANOTAR, emojiCategoria } from '../emojis';
+import { usePreferencias } from '../preferencias';
 import { cadaCuando, OPCIONES_REPITE, type Periodicidad } from '../recurrencia';
 import {
-  AmountInput,
+  colorAnotar,
   Elegir,
   Button,
-  contadorPasos,
   DateField,
   ErrorText,
-  etiqueta,
   fechaLegible,
   Field,
+  MontoBanda,
   Nota,
-  Opcional,
+  Opcionales,
+  Pastilla,
+  Question,
   Screen,
   Segmented,
+  useC,
 } from '../ui';
 
-const TIPOS = ['INGRESO', 'GASTO', 'TRANSFERENCIA'] as const;
+// G35: el gasto primero (es lo que más se programa), con las palabras y emojis del "+".
+const TIPOS = ['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const;
+const NOMBRE_TIPO = { GASTO: 'Gasto', INGRESO: 'Ingreso', TRANSFERENCIA: 'Moví plata' } as const;
+const EMOJI_REPITE: Record<string, string> = { NO: '', MENSUAL: '🔁 ', ANUAL: '📆 ' };
 
 /** Formulario de un movimiento programado nuevo (plantillas de pantalla, R2: ya no vive bajo la lista). */
 export function NuevoProgramadoScreen() {
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
+  const c = useC();
+  const { preferencias } = usePreferencias();
+  const emojis = preferencias.emojis;
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [elementosHogar, setElementosHogar] = useState<ElementoPatrimonialDTO[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>('INGRESO');
+  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>('GASTO');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState('');
   const [origenId, setOrigenId] = useState<string | null>(null);
@@ -127,21 +138,18 @@ export function NuevoProgramadoScreen() {
   const resumen = !puedeCrear
     ? 'Completa monto, cuenta y fecha.'
     : tipo === 'INGRESO'
-      ? `${aviso}${cuando} para confirmar que entraron ${m} a ${nombreDe(destinoId)}.`
+      ? `${EMOJI_ANOTAR[tipo]} ${aviso}${cuando} para confirmar que entraron ${m} a ${nombreDe(destinoId)}.`
       : tipo === 'GASTO'
-        ? `${aviso}${cuando} para confirmar que salieron ${m} de ${nombreDe(origenId)}.`
-        : `${aviso}${cuando} para confirmar el paso de ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}.`;
+        ? `${EMOJI_ANOTAR[tipo]} ${aviso}${cuando} para confirmar que salieron ${m} de ${nombreDe(origenId)}.`
+        : `${EMOJI_ANOTAR[tipo]} ${aviso}${cuando} para confirmar el paso de ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}.`;
 
-  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
-  // paso actual (el primer obligatorio sin completar).
-  const paso = contadorPasos();
   return (
     <Screen
       pie={
         <>
           <Nota>{resumen}</Nota>
           <Button
-            title={`Programar ${etiqueta(tipo).toLowerCase()}`}
+            title={`🗓️ Programar ${tipo === 'TRANSFERENCIA' ? 'movimiento' : NOMBRE_TIPO[tipo].toLowerCase()}`}
             onPress={crear}
             loading={busy}
             disabled={!puedeCrear || !monedaRef}
@@ -149,15 +157,25 @@ export function NuevoProgramadoScreen() {
         </>
       }
     >
-      <Segmented options={TIPOS} value={tipo} onChange={cambiarTipo} />
-      <AmountInput label="¿Cuánto?" paso={paso({ hecho: Number(monto) > 0 })} value={monto} onChange={setMonto} moneda={monedaRef} />
+      <Segmented
+        options={TIPOS}
+        value={tipo}
+        onChange={cambiarTipo}
+        formatearOpcion={(t) => `${EMOJI_ANOTAR[t]} ${NOMBRE_TIPO[t]}`}
+      />
+      <MontoBanda
+        value={monto}
+        onChange={setMonto}
+        moneda={monedaRef}
+        color={colorAnotar(c, tipo)}
+        emoji={EMOJI_ANOTAR[tipo]}
+      />
       {usaOrigen && (
         <Elegir
           label={tipo === 'GASTO' ? '¿Desde qué cuenta sale?' : '¿Desde qué cuenta?'}
-          paso={paso({ hecho: !!origenId })}
           placeholder="Elegir cuenta"
           value={origenId}
-          options={opcionesDeElementos(elementos, { saldo: false })}
+          options={opcionesDeElementos(elementos, { saldo: false, emojis: emojis.elementos })}
           onChange={(v) => {
             setOrigenId(v);
             if (v === destinoId) setDestinoId(null);
@@ -167,12 +185,15 @@ export function NuevoProgramadoScreen() {
       {usaDestino && (
         <Elegir
           label={tipo === 'INGRESO' ? '¿A qué cuenta llega?' : '¿A qué cuenta?'}
-          paso={paso({ hecho: !!destinoId })}
           placeholder="Elegir cuenta"
           value={destinoId}
           options={[
-            ...opcionesDeElementos(elementos, { saldo: false, excluir: usaOrigen ? origenId : null }),
-            ...(tipo === 'TRANSFERENCIA' ? opcionesDeMiembros(deMiembros) : []),
+            ...opcionesDeElementos(elementos, {
+              saldo: false,
+              excluir: usaOrigen ? origenId : null,
+              emojis: emojis.elementos,
+            }),
+            ...(tipo === 'TRANSFERENCIA' ? opcionesDeMiembros(deMiembros, { emojis: emojis.elementos }) : []),
           ]}
           onChange={setDestinoId}
         />
@@ -180,29 +201,56 @@ export function NuevoProgramadoScreen() {
       {tipo !== 'TRANSFERENCIA' && catAplicables.length > 0 && (
         <Elegir
           label="¿De qué categoría? (opcional)"
-          paso={paso({ opcional: true })}
           opcionNula="Sin categoría"
           value={categoriaId}
-          options={catAplicables.map((c) => ({ value: c.id, label: c.nombre }))}
+          options={catAplicables.map((x) => ({
+            value: x.id,
+            label: x.nombre,
+            emoji: emojiCategoria(x) ?? '🏷️',
+            sub: x.categoriaPadreId
+              ? `Dentro de ${categorias.find((p) => p.id === x.categoriaPadreId)?.nombre ?? 'otra'}`
+              : undefined,
+          }))}
           onChange={setCategoriaId}
         />
       )}
-      <Elegir
-        label="¿Se repite?"
-        paso={paso({ hecho: true })}
-        value={repite}
-        options={OPCIONES_REPITE}
-        onChange={(v) => setRepite((v as 'NO' | Periodicidad | null) ?? 'NO')}
-      />
+      <View style={{ gap: 8 }}>
+        <Question>¿Se repite?</Question>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {OPCIONES_REPITE.map((o) => (
+            <Pastilla
+              key={o.value}
+              label={`${EMOJI_REPITE[o.value]}${o.label}`}
+              activo={repite === o.value}
+              onPress={() => setRepite(o.value as 'NO' | Periodicidad)}
+            />
+          ))}
+        </View>
+      </View>
       <DateField
         label={repite !== 'NO' ? '¿Cuándo es la primera vez?' : '¿Para cuándo?'}
-        paso={paso({ hecho: fechaValida })}
         value={fecha}
         onChange={setFecha}
       />
-      <Opcional titulo="Agregar detalle" abierto={!!obs}>
-        <Field label="Detalle (opcional)" value={obs} onChangeText={setObs} autoCapitalize="sentences" placeholder="p. ej. sueldo de octubre" />
-      </Opcional>
+      <Opcionales
+        items={[
+          {
+            clave: 'detalle',
+            emoji: '📝',
+            titulo: 'Detalle',
+            abierto: !!obs,
+            children: (
+              <Field
+                label="Detalle (opcional)"
+                value={obs}
+                onChangeText={setObs}
+                autoCapitalize="sentences"
+                placeholder="p. ej. sueldo de octubre"
+              />
+            ),
+          },
+        ]}
+      />
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
