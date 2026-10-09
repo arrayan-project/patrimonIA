@@ -2,9 +2,15 @@ import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
-import { api, ApiError, type ElementoPatrimonialDTO, type SeriePatrimonialDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type ElementoPatrimonialDTO,
+  type ElementosDelHogarDTO,
+  type SeriePatrimonialDTO,
+} from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { usePreferencias } from '../preferencias';
 import { EMOJI_CATEGORIA_FUNCIONAL, emojiElemento, emojiMoneda, NOMBRE_CATEGORIA_FUNCIONAL } from '../emojis';
@@ -53,8 +59,11 @@ export function PatrimonioSeccionScreen() {
   const categoria = nav.route.params?.categoria as string | undefined;
   const alcance = (nav.route.params?.alcance as 'mios' | 'hogar' | undefined) ?? 'mios';
   const monedaPrin = (nav.route.params?.moneda as string | undefined) ?? 'CLP';
+  const hogarId = nav.route.params?.hogarId as string | undefined;
+  useTitulo(alcance === 'hogar' ? 'Plata del hogar' : undefined);
 
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[] | null>(null);
+  const [ocultosTodos, setOcultos] = useState<ElementosDelHogarDTO['ocultos']>([]);
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [verDesactivadas, setVerDesactivadas] = useState(false);
   const [error, setError] = useState('');
@@ -62,11 +71,16 @@ export function PatrimonioSeccionScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const path =
-        alcance === 'hogar'
-          ? '/elementos-patrimoniales?alcance=hogar'
-          : '/elementos-patrimoniales?propietario=me&incluirInactivos=true';
-      const els = await api.get<ElementoPatrimonialDTO[]>(path, token);
+      // G37: en el hogar, lo mismo que suma su total (de todos, también lo tuyo);
+      // lo que no puedes ver llega sumado aparte, para que la lista cuadre.
+      let els: ElementoPatrimonialDTO[];
+      if (alcance === 'hogar' && hogarId) {
+        const r = await api.get<ElementosDelHogarDTO>(`/hogares/${hogarId}/elementos`, token);
+        els = r.elementos;
+        setOcultos(categoria ? r.ocultos.filter((o) => o.categoriaFuncional === categoria) : r.ocultos);
+      } else {
+        els = await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me&incluirInactivos=true', token);
+      }
       setElementos(categoria ? els.filter((e) => e.categoriaFuncional === categoria) : els);
       if (!categoria && alcance === 'mios') {
         const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
@@ -79,7 +93,7 @@ export function PatrimonioSeccionScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, categoria, alcance]);
+  }, [token, categoria, alcance, hogarId]);
 
   useCargaAlEnfocar(cargar);
 
@@ -99,14 +113,20 @@ export function PatrimonioSeccionScreen() {
   const parte = (e: ElementoPatrimonialDTO) => (e.valorVigente * pctDe(e)) / 100;
   const activas = elementos.filter((e) => e.estado !== 'INACTIVO');
   const desactivadas = elementos.filter((e) => e.estado === 'INACTIVO');
-  const enMoneda = activas.filter((e) => e.moneda === monedaPrin);
-  const subtotal = enMoneda.reduce((s, e) => s + parte(e), 0);
-  const tienes = enMoneda.reduce((s, e) => s + Math.max(parte(e), 0), 0);
-  const debes = enMoneda.reduce((s, e) => s + Math.max(-parte(e), 0), 0);
+  const ocultos = hogar ? ocultosTodos : [];
+  // Cada cifra: lo que ves más lo que no ves (sumado aparte), para cuadrar con el total.
+  const valores = (moneda: string) => [
+    ...activas.filter((e) => e.moneda === moneda).map(parte),
+    ...ocultos.filter((o) => o.moneda === moneda).map((o) => o.valor),
+  ];
+  const enMoneda = valores(monedaPrin);
+  const subtotal = enMoneda.reduce((s, v) => s + v, 0);
+  const tienes = enMoneda.reduce((s, v) => s + Math.max(v, 0), 0);
+  const debes = enMoneda.reduce((s, v) => s + Math.max(-v, 0), 0);
   // Lo que está en otras monedas no se suma: se dice aparte, con su cifra.
-  const otrasMonedas = [...new Set(activas.filter((e) => e.moneda !== monedaPrin).map((e) => e.moneda))].map(
-    (m) => ({ moneda: m, total: activas.filter((e) => e.moneda === m).reduce((s, e) => s + parte(e), 0) }),
-  );
+  const otrasMonedas = [
+    ...new Set([...activas.map((e) => e.moneda), ...ocultos.map((o) => o.moneda)].filter((m) => m !== monedaPrin)),
+  ].map((m) => ({ moneda: m, total: valores(m).reduce((s, v) => s + v, 0) }));
   const ademas = otrasMonedas.length > 0 && (
     <Datos plano>
       {otrasMonedas.map((m) => (
@@ -137,6 +157,21 @@ export function PatrimonioSeccionScreen() {
       onPress={() => nav.go('ElementoDetalle', { elementoId: el.id })}
     />
   );
+
+  // G37: lo que suma al hogar pero su dueño no comparte, en una fila por grupo y moneda.
+  const filasOcultas = (cat: string) =>
+    ocultos
+      .filter((o) => o.categoriaFuncional === cat)
+      .map((o) => (
+        <TxRow
+          key={`oculto-${cat}-${o.moneda}`}
+          title={o.cantidad === 1 ? 'Una que no puedes ver' : `${o.cantidad} que no puedes ver`}
+          subtitle={o.cantidad === 1 ? 'Su dueño no la comparte' : 'Sus dueños no las comparten'}
+          amount={money(o.valor, o.moneda)}
+          negativo={o.valor < 0}
+          logo={{ emoji: '🔒' }}
+        />
+      ));
 
   const grupoDesactivadas = desactivadas.length > 0 && (
     <View style={{ gap: 8 }}>
@@ -183,7 +218,7 @@ export function PatrimonioSeccionScreen() {
           </Section>
         )}
 
-        {elementos.length === 0 ? (
+        {elementos.length === 0 && ocultos.length === 0 ? (
           <EmptyState
             emoji="👛"
             titulo="Aún no tienes cuentas ni bienes"
@@ -195,14 +230,20 @@ export function PatrimonioSeccionScreen() {
           <>
             {CATS.map((cat) => {
               const delCat = activas.filter((e) => e.categoriaFuncional === cat);
-              if (delCat.length === 0) return null;
-              const sub = delCat.filter((e) => e.moneda === monedaPrin).reduce((s, e) => s + parte(e), 0);
+              const ocultasCat = ocultos.filter((o) => o.categoriaFuncional === cat);
+              if (delCat.length === 0 && ocultasCat.length === 0) return null;
+              const sub =
+                delCat.filter((e) => e.moneda === monedaPrin).reduce((s, e) => s + parte(e), 0) +
+                ocultasCat.filter((o) => o.moneda === monedaPrin).reduce((s, o) => s + o.valor, 0);
               return (
                 <View key={cat} style={{ gap: 8 }}>
                   <GroupLabel right={<Text style={{ color: c.muted, fontWeight: '700' }}>{money(sub, monedaPrin)}</Text>}>
                     {tituloCat(cat)}
                   </GroupLabel>
-                  <ListCard>{delCat.map(fila)}</ListCard>
+                  <ListCard>
+                    {delCat.map(fila)}
+                    {filasOcultas(cat)}
+                  </ListCard>
                 </View>
               );
             })}
@@ -225,7 +266,7 @@ export function PatrimonioSeccionScreen() {
     <Screen onRefresh={cargar}>
       <Hero label={tituloCat(categoria)} value={money(subtotal, monedaPrin)} debajo={ademas || undefined} />
 
-      {elementos.length === 0 ? (
+      {elementos.length === 0 && ocultos.length === 0 ? (
         <EmptyState
           emoji={EMOJI_CATEGORIA_FUNCIONAL[categoria] ?? '👛'}
           titulo={`Aún no tienes nada en ${NOMBRE_CATEGORIA_FUNCIONAL[categoria] ?? etiqueta(categoria)}`}
@@ -237,17 +278,25 @@ export function PatrimonioSeccionScreen() {
         <>
           {custodia.length > 0 ? (
             <>
-              {financieras.length > 0 && (
+              {(financieras.length > 0 || ocultos.length > 0) && (
                 <>
                   <GroupLabel>🏦 Con bancos y personas</GroupLabel>
-                  <ListCard>{financieras.map(fila)}</ListCard>
+                  <ListCard>
+                    {financieras.map(fila)}
+                    {filasOcultas(categoria)}
+                  </ListCard>
                 </>
               )}
               <GroupLabel>📦 Encargos y plata de otros</GroupLabel>
               <ListCard>{custodia.map(fila)}</ListCard>
             </>
           ) : (
-            financieras.length > 0 && <ListCard>{financieras.map(fila)}</ListCard>
+            (financieras.length > 0 || ocultos.length > 0) && (
+              <ListCard>
+                {financieras.map(fila)}
+                {filasOcultas(categoria)}
+              </ListCard>
+            )
           )}
           {grupoDesactivadas}
           {agregar}

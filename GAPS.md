@@ -35,12 +35,12 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
-| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30 |
+| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30, G37 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
-| **F** · Planificación: objetivos, reservas, presupuestos y programados | G36 | G2, G13, G14, G15, G16, G26 |
-| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
+| **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
+| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G32, G33, G35 | G25 |
 
@@ -56,7 +56,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
 | — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Quedan: Agrupaciones ⏸ (hasta usarlas en Mi patrimonio) y el ícono de la app (cuando se compile la app propia). | 🟡 |
-| — | **G36** | Pasar un presupuesto ya creado de "Solo mío" a "Del hogar" (o al revés): hoy solo se elige al crearlo. Necesita definición de Juan (ver detalle). | 📋 decisión |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
@@ -86,33 +85,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-### Tema F · Planificación: objetivos, reservas, presupuestos y programados
-
-#### G36 — Cambiar si un presupuesto es tuyo o del hogar  📋 DECISIÓN (abierto 2026-10-09)
-- **Qué pasa**: Juan (2026-10-09) no encontró cómo compartir su presupuesto
-  con el hogar. "Solo mío / Del hogar" se pregunta solo al crear el
-  presupuesto (segunda pregunta, HZ-22); después no se puede cambiar:
-  "Cambiar montos" solo edita montos y `ActualizarPresupuestoDto` no recibe
-  `tipo` ni `hogarId`. Hoy la única salida es crear uno nuevo "Del hogar" y
-  eliminar el propio.
-- **Por qué no está resuelto**: cambiar `tipo` cambia qué cuenta el
-  presupuesto (lo tuyo o lo del hogar) y quién lo ve, y choca con reglas ya
-  vigentes en `presupuesto.service`.
-- **Preguntas para decidir**:
-  1. **Categorías del reparto:** un presupuesto del hogar solo acepta
-     categorías de su hogar; uno individual acepta las de cualquier hogar del
-     usuario. Al pasar de tuyo a compartido, ¿qué pasa con los montos ya
-     repartidos en categorías de otro hogar (se borran, se bloquea el cambio,
-     se pregunta)? Lo mismo con el ahorro por meta: ¿metas propias en un
-     presupuesto del hogar?
-  2. **Quién puede cambiarlo:** ¿cualquier miembro del hogar o solo quien lo
-     creó? ¿Y al revés (de "Del hogar" a "Solo mío"): deja de verse para los
-     demás miembros? ¿Se les avisa?
-- **Opciones**: (a) permitir el cambio con reglas para 1 y 2 (comando
-  nuevo o `tipo` en `ActualizarPresupuesto`, más e2e); (b) no permitirlo y
-  ofrecer en el detalle "Copiar para el hogar" (crea uno nuevo con los mismos
-  montos); (c) dejarlo como está y solo aclararlo en la pantalla.
 
 ### Tema H · Notificaciones
 
@@ -706,9 +678,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   acceso llevan el 🌳 de la marca. **Queda:** Agrupaciones ⏸ (fuera de
   Ajustes hasta usarlas en Mi patrimonio) y el ícono de la app con el árbol,
   que se hace cuando se compile la app propia (con Expo Go no se ve).
-  Anotado fuera de G35: consolidar períodos largos cuando las fechas no son
-  del mes en curso, y la lista de un grupo "Del hogar" que trae solo las
-  cuentas de los otros miembros (ver la ficha 7–9).
+  Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
+  largos cuando las fechas no son del mes en curso (G38) y la lista de un
+  grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
 
 ---
 
@@ -987,6 +959,28 @@ ya cerrados en Fases 50–51).
   una transferencia desde su cuenta a la tuya y luego el gasto completo". El neto
   ya cuadra con ese patrón; un GASTO con aportes de varias cuentas/personas
   seguiría siendo una decisión de dominio pendiente si algún día se pide.
+
+#### G37 — La lista de un grupo "Del hogar" no cuadra con el total  ✅ RESUELTO (2026-10-09)
+- **Qué pasaba**: en el Inicio "Del hogar", al tocar un grupo de "Dónde está
+  la plata del hogar" (o "Ver todo"), la lista usaba
+  `GET /elementos-patrimoniales?alcance=hogar`, que trae solo las cuentas de
+  los **otros** miembros que el actor puede ver y no mira
+  `participa_consolidacion`. La cifra del Inicio, en cambio, suma las cuentas
+  activas que participan de **todos** los miembros (también las propias).
+  Anotado por Juan en G35 (ficha 7–9).
+- **Decidido (Juan, 2026-10-09)**: `GET /hogares/:id/elementos` devuelve el
+  mismo conjunto que `patrimonio-consolidado`. Lo que el actor no puede ver
+  (o ve sin su valor) va sumado por grupo y moneda en `ocultos`, y la app lo
+  muestra como una fila "🔒 Una / N que no puedes ver · Su dueño no la
+  comparte", para que la lista cuadre con el total (esa suma ya se deducía
+  restando lo visible al total).
+- **Implementado** (rama `feat/G37-lista-hogar`): `ConsolidacionService.elementosDelHogar`
+  + e2e en `consolidacion-hogar.e2e-spec.ts` (la suma de la lista, con lo
+  oculto, es igual al neto consolidado, vista desde los dos miembros);
+  `PatrimonioSeccionScreen` en "Del hogar" usa el endpoint (Hero, Tienen /
+  Deben y subtotales incluyen lo oculto) y la barra dice "Plata del hogar".
+  `alcance=hogar` de `/elementos-patrimoniales` sigue igual (lo usan los
+  formularios para elegir cuentas de otros miembros).
 
 ### Tema C · Elementos patrimoniales y visibilidad
 
@@ -1463,6 +1457,44 @@ ya cerrados en Fases 50–51).
   `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
   (cierra del todo G15)?
 
+#### G36 — Cambiar si un presupuesto es tuyo o del hogar  ✅ RESUELTO (2026-10-09)
+- **Qué pasa**: Juan (2026-10-09) no encontró cómo compartir su presupuesto
+  con el hogar. "Solo mío / Del hogar" se pregunta solo al crear el
+  presupuesto (segunda pregunta, HZ-22); después no se puede cambiar:
+  "Cambiar montos" solo edita montos y `ActualizarPresupuestoDto` no recibe
+  `tipo` ni `hogarId`. Hoy la única salida es crear uno nuevo "Del hogar" y
+  eliminar el propio.
+- **Por qué no está resuelto**: cambiar `tipo` cambia qué cuenta el
+  presupuesto (lo tuyo o lo del hogar) y quién lo ve, y choca con reglas ya
+  vigentes en `presupuesto.service`.
+- **Preguntas para decidir**:
+  1. **Categorías del reparto:** un presupuesto del hogar solo acepta
+     categorías de su hogar; uno individual acepta las de cualquier hogar del
+     usuario. Al pasar de tuyo a compartido, ¿qué pasa con los montos ya
+     repartidos en categorías de otro hogar (se borran, se bloquea el cambio,
+     se pregunta)? Lo mismo con el ahorro por meta: ¿metas propias en un
+     presupuesto del hogar?
+  2. **Quién puede cambiarlo:** ¿cualquier miembro del hogar o solo quien lo
+     creó? ¿Y al revés (de "Del hogar" a "Solo mío"): deja de verse para los
+     demás miembros? ¿Se les avisa?
+- **Opciones**: (a) permitir el cambio con reglas para 1 y 2 (comando
+  nuevo o `tipo` en `ActualizarPresupuesto`, más e2e); (b) no permitirlo y
+  ofrecer en el detalle "Copiar para el hogar" (crea uno nuevo con los mismos
+  montos); (c) dejarlo como está y solo aclararlo en la pantalla.
+- **Decidido (Juan, 2026-10-09)**: opción (a), comando nuevo
+  `CambiarAlcancePresupuesto` (APPLICATION_SERVICES #85, API_DESIGN K).
+  1. Líneas que dejan de valer (categoría de otro hogar, ahorro hacia la meta
+     de alguien que queda fuera): **se bloquea** el cambio y se dice cuáles
+     (`PRESUPUESTO_FUERA_DE_ALCANCE` con los nombres); no se borra nada.
+  2. Solo **quien lo creó** puede cambiarlo, en los dos sentidos; a los demás
+     miembros **no se les avisa** (queda en la auditoría). Cerrado: no se
+     cambia.
+- **Implementado** (rama `feat/G36-alcance-presupuesto`): backend + e2e
+  (`presupuesto.e2e-spec.ts`, 3 casos); en el detalle del presupuesto, para
+  quien lo creó, "👥 Compartir con el hogar" o "🙋 Dejarlo solo para mí",
+  con confirmación. El hogar destino es el primero del usuario, igual que al
+  crear.
+
 ### Tema G · Monedas, proyecciones y reportes
 
 #### G21 — Conversión monetaria (Fase 13 + 14c)  ✅ RESUELTO (conversión + triangulación ✅; importación desde mindicador.cl ✅ 2026-09-29)
@@ -1526,6 +1558,30 @@ ya cerrados en Fases 50–51).
     (F1 de `Docs/mockup/casos-dominio-probados.html`).
 - **Para decidir**: ¿comparación automática con el período anterior en el
   endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+
+#### G38 — Anotar una cuenta vieja hacía caer (o subir) el gráfico  ✅ RESUELTO (2026-10-09)
+- **Qué pasaba**: el gráfico de "Cómo ha cambiado" y el % del Inicio
+  reconstruyen el patrimonio a cada fecha con la ventana
+  `[fecha_alta, fecha_baja)` (P10). Si una deuda de 2024 se anotaba hoy sin
+  "Desde cuándo", su `fecha_alta` era hoy: el gráfico la mostraba como una
+  caída de hoy. Con los datos de Demo, el Departamento contaba desde 2024 y
+  el crédito hipotecario desde el 3-10-2026, y el Inicio decía "▼ 57,3%".
+  Anotado por Juan en G35 (ficha 7–9: "consolidar períodos largos").
+- **Decidido (Juan, 2026-10-09)**: opción (a), **anotar no es ganar ni
+  perder**. En la variación y en la serie, una cuenta o bien activo cuenta
+  antes de su `fecha_alta` con el valor con que se anotó; el gráfico solo se
+  mueve con hechos (movimientos, valorizaciones, ajustes). Se descartó (b),
+  dejar el cálculo y permitir editar "Desde cuándo": arregla solo a quien lo
+  corrija.
+  - Los dados de baja siguen la ventana `[fecha_alta, fecha_baja)`, para que
+    el último punto sea el total de hoy.
+  - El patrimonio a una fecha (`/usuarios/me/patrimonio-individual/historico`)
+    y el valor de un elemento a una fecha no cambian: dicen lo que había
+    anotado ese día.
+- **Implementado** (rama `feat/G38-carga-no-es-cambio`):
+  `ReconstruccionService` (`#patrimonioA` con `comparable`) + e2e en
+  `reconstruccion-historica.e2e-spec.ts`. Sin cambios en la app. Con los
+  datos de Demo el Inicio pasa de "▼ 57,3%" a "▲ 9,7%".
 
 ### Tema I · App: preferencias y usabilidad
 

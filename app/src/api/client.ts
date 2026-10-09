@@ -202,6 +202,13 @@ export interface PropietarioDTO {
   porcentaje: number;
 }
 
+/** G37 — lo que suma al total del hogar; lo que no puedes ver, sumado por grupo y moneda. */
+export interface ElementosDelHogarDTO {
+  hogarId: string;
+  elementos: ElementoPatrimonialDTO[];
+  ocultos: { categoriaFuncional: string; moneda: string; cantidad: number; valor: number }[];
+}
+
 export interface ElementoPatrimonialDTO {
   id: string;
   nombre: string;

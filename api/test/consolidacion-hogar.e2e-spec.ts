@@ -224,4 +224,35 @@ describe('Consolidación y métricas del hogar (e2e)', () => {
       .set('Authorization', `Bearer ${otro}`)
       .expect(403);
   });
+  it('G37 — elementos del hogar: lo mismo que suma el total; lo que no ves, sumado aparte', async () => {
+    await elem(tokenB, {
+      nombre: 'Ahorro B',
+      tipo: 'cuenta_ahorro',
+      categoriaFuncional: 'RESERVA',
+      valorInicial: 300_000,
+      moneda: 'CLP',
+      participaConsolidacion: true,
+      visibilidad: 'FAMILIAR',
+    });
+    type Lista = {
+      elementos: { nombre: string; moneda: string; valorVigente: number }[];
+      ocultos: { categoriaFuncional: string; moneda: string; cantidad: number; valor: number }[];
+    };
+    const total = (await A(request(http).get(`/hogares/${hogarId}/patrimonio-consolidado`)).expect(200)).body
+      .porMoneda.find((m: { moneda: string }) => m.moneda === 'CLP').patrimonioNeto;
+    const suma = (l: Lista) =>
+      l.elementos.filter((e) => e.moneda === 'CLP').reduce((s, e) => s + e.valorVigente, 0) +
+      l.ocultos.filter((o) => o.moneda === 'CLP').reduce((s, o) => s + o.valor, 0);
+
+    const deA: Lista = (await A(request(http).get(`/hogares/${hogarId}/elementos`)).expect(200)).body;
+    expect(deA.elementos.map((e) => e.nombre).sort()).toEqual(['Ahorro B', 'Cuenta A', 'Depto', 'Deuda']);
+    expect(deA.ocultos).toEqual([{ categoriaFuncional: 'LIQUIDEZ', moneda: 'CLP', cantidad: 1, valor: 2_000_000 }]);
+    expect(suma(deA)).toBe(total);
+
+    // B no ve las cuentas privadas de A: van sumadas aparte, y también cuadra.
+    const deB: Lista = (await B(request(http).get(`/hogares/${hogarId}/elementos`)).expect(200)).body;
+    expect(deB.elementos.map((e) => e.nombre).sort()).toEqual(['Ahorro B', 'Cuenta B']);
+    expect(deB.ocultos.reduce((s, o) => s + o.cantidad, 0)).toBe(3);
+    expect(suma(deB)).toBe(total);
+  });
 });

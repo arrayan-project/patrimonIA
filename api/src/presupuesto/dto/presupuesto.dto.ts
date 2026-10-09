@@ -100,6 +100,23 @@ export class ActualizarPresupuestoDto {
   ahorroEsperado?: number;
 }
 
+/**
+ * Body de POST /comandos/CambiarAlcancePresupuesto (GAPS.md G36): pasa un
+ * presupuesto de "Solo tuyo" (INDIVIDUAL) a "Del hogar" (FAMILIAR) o al revés.
+ * `hogarId` es obligatorio al pasar a FAMILIAR y no va al pasar a INDIVIDUAL.
+ */
+export class CambiarAlcancePresupuestoDto {
+  @IsUUID()
+  presupuestoId!: string;
+
+  @IsIn(TIPOS_PRESUPUESTO)
+  tipo!: (typeof TIPOS_PRESUPUESTO)[number];
+
+  @IsOptional()
+  @IsUUID()
+  hogarId?: string;
+}
+
 /** Body de POST /comandos/CerrarPresupuesto (AS #51). Solo presupuestos ESPECIFICOs. */
 export class CerrarPresupuestoDto {
   @IsUUID()

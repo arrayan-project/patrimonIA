@@ -164,4 +164,32 @@ describe('Reconstrucción histórica (e2e)', () => {
     expect(post.valor).toBe(0);
     expect(post.existia).toBe(false);
   });
+  it('G38 — anotar algo no es ganar ni perder: la variación y la serie no saltan', async () => {
+    const clp = (b: { porMoneda: { moneda: string }[] }) =>
+      b.porMoneda.find((m) => m.moneda === 'CLP') as Record<string, number>;
+    const variacion = async () =>
+      clp(
+        (await auth(request(http).get('/usuarios/me/variacion-patrimonial?desde=2026-01-01&hasta=2026-04-01')).expect(200))
+          .body,
+      ).variacion;
+    const historicoFeb = async () =>
+      clp((await auth(request(http).get('/usuarios/me/patrimonio-individual/historico?fecha=2026-02-01')).expect(200)).body)
+        .patrimonio;
+
+    const antes = await variacion();
+    const febAntes = await historicoFeb();
+    // Una deuda que ya existía, anotada recién el 1 de marzo.
+    await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+      .send({ nombre: 'Crédito', tipo: 'deuda', categoriaFuncional: 'DEUDA', valorPendiente: 300_000, moneda: 'CLP', fechaAlta: '2026-03-01' })
+      .expect(201);
+
+    // El cambio entre enero y abril es el mismo: la deuda está en los dos extremos.
+    expect(await variacion()).toBe(antes);
+    const s = await auth(
+      request(http).get('/usuarios/me/serie-patrimonial?desde=2026-01-01&hasta=2026-04-01&pasos=4'),
+    ).expect(200);
+    expect(clp(s.body.puntos[0]).patrimonio).toBe(1_100_000 + 500_000 - 300_000);
+    // El patrimonio a una fecha sigue diciendo lo que había anotado ese día.
+    expect(await historicoFeb()).toBe(febAntes);
+  });
 });

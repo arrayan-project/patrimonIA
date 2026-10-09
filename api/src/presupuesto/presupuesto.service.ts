@@ -20,6 +20,7 @@ import {
 } from './presupuesto.dto.js';
 import type {
   ActualizarPresupuestoDto,
+  CambiarAlcancePresupuestoDto,
   CerrarPresupuestoDto,
   CrearPresupuestoDto,
   DefinirLineasAhorroPresupuestoDto,
@@ -187,6 +188,89 @@ export class PresupuestoService {
         entidadId: p.id,
         valorAnterior: anterior,
         valorPosterior: posterior,
+      });
+      return fila;
+    });
+
+    return toPresupuestoDTO(actualizado);
+  }
+
+  /**
+   * CambiarAlcancePresupuesto (GAPS.md G36): "Solo tuyo" ↔ "Del hogar". Solo
+   * quien lo creó; no si está cerrado. Si alguna línea deja de valer en el
+   * nuevo alcance (una categoría de otro hogar, o ahorro hacia la meta de
+   * alguien que queda fuera), se bloquea y se dice cuáles: no se borra nada.
+   * Auditoría: Modificación — tipo y hogar anterior/posterior.
+   */
+  async cambiarAlcance(actorId: string, dto: CambiarAlcancePresupuestoDto): Promise<PresupuestoDTO> {
+    const p = await this.#cargar(dto.presupuestoId, actorId);
+    if (p.usuario_id !== actorId) {
+      throw errorConCodigo(ForbiddenException, 'PRESUPUESTO_SOLO_CREADOR', 'Solo quien creó el presupuesto puede cambiar de quién es');
+    }
+    if (p.estado === 'CERRADO') throw new ConflictException('El presupuesto está cerrado');
+    if (dto.tipo === p.tipo) {
+      throw errorConCodigo(BadRequestException, 'PRESUPUESTO_MISMO_ALCANCE', 'El presupuesto ya es de ese tipo');
+    }
+    let hogarNuevo: string | null = null;
+    if (dto.tipo === 'FAMILIAR') {
+      if (!dto.hogarId) throw new BadRequestException('Un presupuesto FAMILIAR requiere hogarId');
+      await this.exigirMiembroActivo(dto.hogarId, actorId);
+      hogarNuevo = dto.hogarId;
+    } else if (dto.hogarId) {
+      throw new BadRequestException('Un presupuesto INDIVIDUAL no lleva hogarId');
+    }
+
+    // Las mismas reglas de alcance que definirLineas / definirLineasAhorro.
+    const hogaresPermitidos = hogarNuevo
+      ? [hogarNuevo]
+      : (
+          await this.prisma.membresia.findMany({
+            where: { usuario_id: actorId, estado: 'ACTIVA' },
+            select: { hogar_id: true },
+          })
+        ).map((m) => m.hogar_id);
+    const usuariosEnAlcance = await this.#usuariosDelPresupuesto({ ...p, hogar_id: hogarNuevo }, actorId);
+    const [lineas, lineasAhorro] = await Promise.all([
+      this.prisma.presupuesto_linea.findMany({
+        where: { presupuesto_id: p.id },
+        include: { categoria_movimiento: true },
+      }),
+      this.prisma.presupuesto_linea_ahorro.findMany({
+        where: { presupuesto_id: p.id },
+        include: { objetivo_financiero: true },
+      }),
+    ]);
+    const categorias = lineas
+      .filter((l) => !hogaresPermitidos.includes(l.categoria_movimiento.hogar_id))
+      .map((l) => l.categoria_movimiento.nombre);
+    const metas = lineasAhorro
+      .filter((l) => !usuariosEnAlcance.includes(l.objetivo_financiero.usuario_id ?? ''))
+      .map((l) => l.objetivo_financiero.nombre);
+    if (categorias.length > 0 || metas.length > 0) {
+      throw errorConCodigo(
+        BadRequestException,
+        'PRESUPUESTO_FUERA_DE_ALCANCE',
+        'Hay montos en categorías o metas que no son parte del nuevo alcance',
+        { categorias, metas },
+      );
+    }
+
+    const actualizado = await this.prisma.$transaction(async (tx) => {
+      const fila = await tx.presupuesto.update({
+        where: { id: p.id },
+        data: { tipo: dto.tipo, hogar_id: hogarNuevo },
+      });
+      const hogarRelacionado = hogarNuevo ?? p.hogar_id;
+      await this.auditoria.registrar(tx, {
+        comando: 'CambiarAlcancePresupuesto',
+        usuarioId: actorId,
+        entidadTipo: 'PRESUPUESTO',
+        entidadId: p.id,
+        valorAnterior: { tipo: p.tipo, hogar_id: p.hogar_id },
+        valorPosterior: { tipo: dto.tipo, hogar_id: hogarNuevo },
+        ...(hogarRelacionado
+          ? { entidadRelacionadaTipo: 'HOGAR', entidadRelacionadaId: hogarRelacionado }
+          : {}),
       });
       return fila;
     });
