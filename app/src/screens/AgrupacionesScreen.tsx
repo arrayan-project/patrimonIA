@@ -56,24 +56,24 @@ export function AgrupacionesScreen() {
   const contexto = (a: AgrupacionDTO) => {
     const els = elementos.filter((e) => a.elementoIds.includes(e.id));
     const n = els.length;
-    const texto = n === 0 ? 'Vacía' : els.map((e) => e.nombre).join(', ');
+    const texto = n === 0 ? 'Vacío' : els.map((e) => e.nombre).join(', ');
     const monedas = new Set(els.map((e) => e.moneda));
     const suma = monedas.size === 1 ? money(els.reduce((s, e) => s + e.valorVigente, 0), [...monedas][0]) : '';
     return { texto, suma };
   };
 
   return (
-    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva agrupación" onPress={nueva} /> : undefined}>
-      <Ayuda>Ordenan el Inicio; no cambian tu patrimonio.</Ayuda>
+    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="🗂️ Nuevo grupo" onPress={nueva} /> : undefined}>
+      <Ayuda>Ordenan tus cuentas en Tu plata; no cambian tus totales.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
           emoji="🗂️"
-          titulo="Aún no tienes agrupaciones"
-          descripcion="Junta cuentas en carpetas como “Inversiones”."
-          accion="Crear la primera"
+          titulo="Aún no tienes grupos"
+          descripcion="Junta cuentas como “Jubilación” (APV + fondo) o “Viaje”, y verlas juntas en Tu plata."
+          accion="🗂️ Crear el primero"
           onAccion={nueva}
         />
       ) : (

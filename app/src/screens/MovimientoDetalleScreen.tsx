@@ -57,7 +57,7 @@ const VERBO: Record<string, string> = {
 
 export function MovimientoDetalleScreen() {
   const c = useC();
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
   const eventoId = nav.route.params?.eventoId as string;
   const elementoId = nav.route.params?.elementoId as string | undefined;
@@ -68,6 +68,9 @@ export function MovimientoDetalleScreen() {
   const [nombresImpacto, setNombresImpacto] = useState<Record<string, string | null>>({});
   const [presupuesto, setPresupuesto] = useState<PresupuestoDTO | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
+  const [hogarId, setHogarId] = useState<string | null>(null);
+  // ¿Alguna de sus cuentas es tuya? Si no, es un movimiento de otro miembro del hogar.
+  const [esMio, setEsMio] = useState(true);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
@@ -84,13 +87,14 @@ export function MovimientoDetalleScreen() {
               `/elementos-patrimoniales/${im.elementoId}`,
               token,
             );
-            return [im.elementoId, el.nombre] as const;
+            return [im.elementoId, el.nombre, el.propietarios.some((p) => p.usuarioId === usuario.id)] as const;
           } catch {
-            return [im.elementoId, null] as const;
+            return [im.elementoId, null, false] as const;
           }
         }),
       );
-      setNombresImpacto(Object.fromEntries(pares));
+      setNombresImpacto(Object.fromEntries(pares.map(([id, nombre]) => [id, nombre])));
+      setEsMio(pares.length === 0 || pares.some(([, , mio]) => mio));
       // G32 H-05 — un gasto del mes en curso enlaza al presupuesto vigente.
       if (ev.tipo === 'GASTO' && ev.fecha.slice(0, 7) === aISO(new Date()).slice(0, 7)) {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token).catch(() => []);
@@ -101,6 +105,7 @@ export function MovimientoDetalleScreen() {
       }
       if (ev.categoriaId && categorias.length === 0) {
         const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
+        setHogarId(hs[0]?.id ?? null);
         if (hs[0]) {
           setCategorias(
             await api.get<CategoriaMovimientoDTO[]>(
@@ -120,7 +125,7 @@ export function MovimientoDetalleScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [eventoId, elementoId, token]);
+  }, [eventoId, elementoId, token, usuario.id]);
 
   useCargaAlEnfocar(cargar);
 
@@ -183,12 +188,23 @@ export function MovimientoDetalleScreen() {
       title: nombreCategoria,
       subtitle: 'Categoría · ver sus movimientos del mes',
       emoji: emojiCategoria(categoria) ?? '🏷️',
-      onPress: () =>
-        nav.irATab('Movimientos', {
+      // G35 (Juan): se abre encima, con "atrás", como desde el presupuesto.
+      onPress: () => {
+        const [a, m] = evento.fecha.slice(0, 7).split('-').map(Number);
+        const ultimo = new Date(a, m, 0).getDate();
+        nav.go('GastosCategoria', {
           categoriaId: evento.categoriaId,
-          categoriaNombre: nombreCategoria,
-          mes: evento.fecha,
-        }),
+          nombre: nombreCategoria,
+          emoji: emojiCategoria(categoria) ?? '🏷️',
+          tipo: evento.tipo === 'INGRESO' ? 'INGRESO' : 'GASTO',
+          periodo: MESES_LARGO[m - 1],
+          desde: `${evento.fecha.slice(0, 7)}-01`,
+          hasta: `${evento.fecha.slice(0, 7)}-${String(ultimo).padStart(2, '0')}`,
+          moneda: evento.moneda,
+          // De otro miembro: lo del hogar en esa categoría.
+          hogarId: esMio ? undefined : (hogarId ?? undefined),
+        });
+      },
     });
   }
   if (presupuesto) {
