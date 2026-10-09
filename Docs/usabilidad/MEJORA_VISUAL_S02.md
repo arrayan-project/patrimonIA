@@ -229,7 +229,7 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 44. **Notificaciones** (`NotificacionesScreen`) — campana. Lista de avisos;
     abrir uno (marca leído y lleva a su pantalla); marcar todos como leídos.
-45. **Ajustes** (`AjustesScreen`) — engranaje. Tu cuenta (Mi perfil, Cerrar
+45. ✅ **Ajustes** (`AjustesScreen`, revisado 2026-10-09, §6) — engranaje. Tu cuenta (Mi perfil, Cerrar
     sesión); Cómo se ve (Tema, Fechas, Moneda principal en Inicio, Secciones
     del Inicio); Avisos; Hogar (Gestionar hogar, Invitaciones); Tus datos
     (Categorías, Etiquetas, Agrupaciones, Frecuentes, Tipos de cuenta o bien,
@@ -408,3 +408,48 @@ Una ficha por pantalla, en el orden en que se trabajen. Plantilla:
   - "Del hogar": categorías sin jerga (Cuentas, Ahorro, Inversiones, Bienes,
     Te deben, Deudas) y "N% del total".
   - "Lo mío / Del hogar" también en Movimientos (antes "Míos").
+- **Pulido final del Inicio (2026-10-09, rama `feat/G35-P0c-inicio-pulido`):**
+  sin la fila "N avisos sin leer" (la campana ya los cuenta; arriba solo
+  queda lo que pide algo); en "Del hogar", "Metas del hogar" con solo las
+  metas compartidas; porcentaje con coma ("59,4%"); el aviso de total
+  parcial dice "Este total no incluye la plata en USD: falta su valor en
+  CLP". La tarjeta del total sigue llevando a Mi patrimonio sin señal
+  visible (Juan: por ahora).
+- **Orden (Juan, 2026-10-09):** después del Inicio sigue **Ajustes** (ítem
+  45), adelantado desde la tanda 5: es lo segundo que se abre desde el Inicio
+  y lleva a los catálogos.
+
+### 45. Ajustes (`AjustesScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veía:** cinco grupos (Tu cuenta, Hogar, Cómo se ve, Avisos, Tus
+  datos), íconos de línea grises iguales, "Mi perfil · Nombre y correo" sin
+  decir quién eres, "Tus datos" con jerga sin explicar ("Tipos de cuenta o
+  bien", "Agrupaciones", "Tipos de cambio") y en desorden; en "Cómo se ve",
+  tres tipos de control con títulos chicos y botones de opción de 40 px.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-P0c-inicio-pulido`, junto con el pulido del Inicio):
+  - Tarjeta tuya arriba (inicial en círculo lila, nombre, correo, "🏠 hogar ·
+    N personas"); abre Mi perfil. Reemplaza "Tu cuenta".
+  - Emoji por fila (`MenuList` e `Interruptor` aceptan `emoji`): 🏠 ✉️ 🎨 📅
+    💱 🧩, avisos 🎉 🐷 ✉️.
+  - "Tus datos" pasa a "Para ordenar tu plata", por uso y con una línea que
+    dice para qué sirve cada uno: ⚡ Frecuentes, 🏷️ Categorías, 💼 Tipos de
+    cuenta, 🔖 Etiquetas, 🗂️ Agrupaciones, 💵 Tipos de cambio. Los títulos de
+    esas pantallas coinciden ("Categorías", "Tipos de cuenta").
+  - Botones de opción (`Segmented`) de 44 px en toda la app; círculo del
+    interruptor blanco en ambos temas (y en web, que lo pintaba verde).
+- **Verificado:** `tsc` sin errores; capturas web en claro y oscuro; las 10
+  filas abren su pantalla; toda zona tocable ≥ 44 px (el dibujo del
+  interruptor mide 40×20, pero se toca la fila completa, de 62 px).
+- **Ajustes de Juan (2026-10-09):**
+  - Los botones de opción de ancho distinto se veían desordenados:
+    `Segmented` pasa a ser un solo control con las opciones del mismo ancho
+    (fondo suave, la elegida en lila). Es pieza común: aplica en toda la app
+    (Tema, Fechas, Mes/Año/Recientes, Sí/No de los formularios…).
+  - Las pantallas de "Para ordenar tu plata" seguían con íconos genéricos:
+    ahora usan emojis en filas y estados vacíos. Categorías: el de cada
+    categoría; Frecuentes: el de su categoría o el de su tipo; Tipos de
+    cuenta: el de su categoría sugerida; Etiquetas 🔖 y Agrupaciones 🗂️ sobre
+    su color suave; Tipos de cambio: el de la moneda (`emojiMoneda`).
+- **Aprobado por Juan y mergeado a `main` (2026-10-09)**, junto con el pulido
+  final del Inicio.

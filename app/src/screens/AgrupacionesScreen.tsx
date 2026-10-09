@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -69,7 +70,7 @@ export function AgrupacionesScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="folder-outline"
+          emoji="🗂️"
           titulo="Aún no tienes agrupaciones"
           descripcion="Junta cuentas en carpetas como “Inversiones”."
           accion="Crear la primera"
@@ -90,7 +91,7 @@ export function AgrupacionesScreen() {
                     title={a.nombre}
                     subtitle={texto}
                     amount={suma}
-                    logo={{ icon: 'folder-outline', color: a.color ?? undefined }}
+                    logo={{ emoji: '🗂️', color: a.color ?? undefined }}
                     onPress={() => nav.go('CatalogoForm', { catalogo: 'agrupacion', id: a.id })}
                   />
                 );

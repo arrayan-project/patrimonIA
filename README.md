@@ -48,7 +48,9 @@ En resumen:
   en las preferencias del usuario) y textos sin jerga. Inicio rediseñado:
   resumen con "Puedes gastar", cuentas como tarjetas con sus movimientos del
   mes, metas en anillo y "Así va el mes". Sin cambios de backend ni de base.
-  Detalle en `Docs/usabilidad/MEJORA_VISUAL_S02.md`.
+  Detalle en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Después, Ajustes: tarjeta
+  con tus datos arriba, emojis por fila, "Para ordenar tu plata" con una línea
+  que explica cada catálogo, y emojis en las listas de esos catálogos.
 - [x] **G33, bloque 10 de la Fase E (2026-10-08)** — recurrencia de los
   movimientos programados (D-6, HZ-16): "¿Se repite?" (cada mes / cada año) en
   Nuevo programado y en Gasté/Recibí/Moví plata, aviso "¿Se pagó?" con "Sí, se

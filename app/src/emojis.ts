@@ -91,3 +91,23 @@ export function emojiElemento(
 export function emojiMeta(id: string, elegidos: Record<string, string>): string {
   return elegidos[id] ?? EMOJI_META;
 }
+
+/** Emoji de una moneda (tipos de cambio). */
+export function emojiMoneda(moneda: string): string {
+  switch (moneda.toUpperCase()) {
+    case 'USD':
+      return '💵';
+    case 'EUR':
+      return '💶';
+    case 'GBP':
+      return '💷';
+    case 'JPY':
+      return '💴';
+    case 'CLP':
+    case 'CLF':
+    case 'UF':
+      return '🇨🇱';
+    default:
+      return '💱';
+  }
+}

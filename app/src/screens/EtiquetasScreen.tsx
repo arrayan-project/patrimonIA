@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type EtiquetaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -47,7 +48,7 @@ export function EtiquetasScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="pricetags-outline"
+          emoji="🔖"
           titulo="Aún no tienes etiquetas"
           descripcion="Marca movimientos como #reembolsable o #viaje-2026."
           accion="Crear la primera"
@@ -65,7 +66,7 @@ export function EtiquetasScreen() {
                   key={e.id}
                   title={e.nombre}
                   amount=""
-                  logo={{ icon: 'pricetag-outline', color: e.color ?? undefined }}
+                  logo={{ emoji: '🔖', color: e.color ?? undefined }}
                   onPress={() => nav.go('CatalogoForm', { catalogo: 'etiqueta', id: e.id })}
                 />
               ))}

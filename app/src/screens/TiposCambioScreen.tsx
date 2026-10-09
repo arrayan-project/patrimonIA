@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { emojiMoneda } from '../emojis';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type TipoCambioDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -56,7 +57,7 @@ export function TiposCambioScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="swap-horizontal-outline"
+          emoji="💵"
           titulo="Aún no hay tasas"
           descripcion="Registra una a mano solo para otra moneda o una tasa distinta."
           accion="Registrar la primera"
@@ -75,7 +76,7 @@ export function TiposCambioScreen() {
                   title={`${t.monedaOrigen} → ${t.monedaDestino}`}
                   subtitle={`${fechaLegible(t.fechaVigencia)} · ${t.fuente ?? 'a mano'}`}
                   amount={String(t.tasa)}
-                  logo={{ icon: 'swap-horizontal-outline' }}
+                  logo={{ emoji: emojiMoneda(t.monedaOrigen) }}
                 />
               ))}
             </ListCard>
