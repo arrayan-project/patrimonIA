@@ -68,10 +68,14 @@ Nota de diseño: `GET /elementos-patrimoniales/{id}` no expone directamente el m
 
 | Endpoint | Application Service | Body (resumen) |
 | --- | --- | --- |
-| `POST /comandos/CrearMovimientoProgramado` | #13 | monto planificado, fecha programada, elemento destino, observaciones |
-| `POST /comandos/ActualizarMovimientoProgramado` | #14 | id, campos a modificar |
+| `POST /comandos/CrearMovimientoProgramado` | #13 | monto planificado, fecha programada, elemento destino, observaciones, `periodicidad?` (MENSUAL/ANUAL), `categoriaId?` (D-6) |
+| `POST /comandos/ActualizarMovimientoProgramado` | #14 | id, campos a modificar (incluye `categoriaId`) |
 | `POST /comandos/MaterializarMovimientoProgramado` | #15 | id, monto efectivo, fecha efectiva |
-| `POST /comandos/CancelarMovimientoProgramado` | #16 | id, motivo |
+| `POST /comandos/CancelarMovimientoProgramado` | #16 | id, motivo, `serie?` ("Dejar de repetir", D-6) |
+
+El DTO incluye `periodicidad`, `dia`, `serieId` y `categoriaId` (D-6). El aviso
+de una ocurrencia vencida es una notificación `PROGRAMADO_VENCIDO` con
+`entidadTipo = MOVIMIENTO_PROGRAMADO`.
 
 ## Consultas
 

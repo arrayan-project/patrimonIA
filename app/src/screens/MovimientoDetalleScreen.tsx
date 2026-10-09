@@ -170,7 +170,7 @@ export function MovimientoDetalleScreen() {
   return (
     <Screen
       onRefresh={cargar}
-      pie={puedePlantilla ? <Button title="Guardar como plantilla" variant="secondary" onPress={guardarComoPlantilla} /> : undefined}
+      pie={puedePlantilla ? <Button title="Guardar como frecuente" variant="secondary" onPress={guardarComoPlantilla} /> : undefined}
     >
       {contexto ? <Migaja>{contexto}</Migaja> : null}
       <Hero

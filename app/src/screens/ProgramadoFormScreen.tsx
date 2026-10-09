@@ -22,8 +22,11 @@ export function ProgramadoFormScreen() {
   const confirmar = modo === 'confirmar';
 
   const [monto, setMonto] = useState(String(planificado));
-  // Al confirmar, lo normal es que se pagó hoy; al editar, se parte de la fecha programada.
-  const [fecha, setFecha] = useState(confirmar ? aISO(new Date()) : (nav.route.params?.fecha as string).slice(0, 10));
+  // Al confirmar, lo normal es que se pagó el día que tocaba (D-6: el aviso puede
+  // llegar tarde), o hoy si se adelanta; al editar, se parte de la fecha programada.
+  const programada = (nav.route.params?.fecha as string).slice(0, 10);
+  const hoy = aISO(new Date());
+  const [fecha, setFecha] = useState(confirmar && programada > hoy ? hoy : programada);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

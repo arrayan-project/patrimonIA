@@ -80,15 +80,15 @@ export function PlantillasScreen() {
   const visibles = filtrar(lista ?? [], (p) => `${p.nombre} ${p.glosa ?? ''}`, busca);
 
   return (
-    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nueva plantilla" onPress={nueva} /> : undefined}>
-      <Ayuda>Moldes para registrar lo de siempre.</Ayuda>
+    <Screen onRefresh={cargar} pie={total > 0 ? <Button title="Nuevo frecuente" onPress={nueva} /> : undefined}>
+      <Ayuda>Lo de siempre, a un toque al registrar.</Ayuda>
 
       {lista === null ? (
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
           icon="copy-outline"
-          titulo="Aún no tienes plantillas"
+          titulo="Aún no tienes frecuentes"
           descripcion="Aparecen arriba al registrar un movimiento."
           accion="Crear la primera"
           onAccion={nueva}

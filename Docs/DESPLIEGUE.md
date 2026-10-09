@@ -14,6 +14,10 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 **Pendiente**
 
+- [ ] **Migración 028** (`movimiento_programado` recurrencia, G33 D-6) en Neon,
+  **antes** del push que lleva los bloques 10a y 10b a `main` (§1, "Migración
+  nueva"). Sin ella, el backend nuevo falla al listar programados.
+
 - [ ] **Captcha antes del registro** — mientras no exista,
   `AUTH_REGISTRO_TOKEN_REQUERIDO` queda en `false` (GAPS G4).
 - [ ] **Dominio propio para el email** — hoy el remitente es un email verificado

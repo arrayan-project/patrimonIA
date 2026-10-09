@@ -4,6 +4,7 @@ import { api, ApiError, type MovimientoProgramadoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { etiquetaRepite } from '../recurrencia';
 import {
   aISO,
   Ayuda,
@@ -85,7 +86,7 @@ export function MovimientosProgramadosScreen() {
                   <TxRow
                     key={m.id}
                     title={m.observaciones || etiqueta(m.tipo)}
-                    subtitle={`${etiqueta(m.tipo)} · ${fechaLegible(m.fechaProgramada)}${m.estado !== 'PENDIENTE' ? ` · ${etiqueta(m.estado)}` : ''}`}
+                    subtitle={`${etiqueta(m.tipo)} · ${fechaLegible(m.fechaProgramada)}${m.periodicidad ? ` · ${etiquetaRepite(m.periodicidad)}` : ''}${m.estado !== 'PENDIENTE' ? ` · ${etiqueta(m.estado)}` : ''}`}
                     amount={`${m.tipo === 'INGRESO' ? '+' : m.tipo === 'GASTO' ? '−' : ''}${money(m.montoPlanificado, m.moneda)}`}
                     positivo={m.tipo === 'INGRESO'}
                     logo={{ icon: ICONO[m.tipo] }}

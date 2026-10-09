@@ -589,6 +589,12 @@ export interface MovimientoProgramadoDTO {
   elementoDestinoId: string | null;
   observaciones: string | null;
   estado: 'PENDIENTE' | 'MATERIALIZADO' | 'CANCELADO';
+  /** D-6: null = una sola vez. */
+  periodicidad: 'MENSUAL' | 'ANUAL' | null;
+  /** D-6: día del mes pedido (la fecha puede ser menor en un mes corto). */
+  dia: number | null;
+  serieId: string;
+  categoriaId: string | null;
   eventoFinancieroId: string | null;
   createdAt: string;
 }

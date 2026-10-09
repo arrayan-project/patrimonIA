@@ -400,6 +400,7 @@ Cada migración cita el gap de `GAPS.md` que la motivó.
 | # | Cambio | Motivo |
 |---|---|---|
 | 015 | `movimiento_programado.tipo` (NOT NULL, CHECK INGRESO/GASTO/TRANSFERENCIA) + `elemento_origen_id` (FK); `elemento_destino_id` pasa a nullable; CHECK `ck_mov_prog_elementos` amarra los slots al tipo | GAPS G2. Antes solo modelaba INGRESO hacia un destino. Visibilidad/propiedad = heredadas del elemento (decisión, no columna). |
+| 028 | `periodicidad` (MENSUAL/ANUAL, NULL = una vez), `dia` (1–31; CHECK: presente sii hay periodicidad), `serie_id` (NOT NULL; filas previas = su id), `categoria_id` (FK), `avisado` (BOOLEAN); índice único `(serie_id, fecha_programada)` | G33, D-6 (HZ-16). Una fila por ocurrencia. `dia` aparte para que un 31 no se corra a 28 tras febrero. El índice único hace idempotente la generación. |
 
 ## Presupuesto por rubro
 

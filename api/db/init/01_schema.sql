@@ -225,7 +225,15 @@ CREATE TABLE movimiento_programado (
     observaciones        TEXT,
     estado               TEXT NOT NULL CHECK (estado IN ('PENDIENTE', 'MATERIALIZADO', 'CANCELADO')),
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- migración 028 (G33, D-6): recurrencia. Una fila por ocurrencia; las de una
+    -- serie comparten serie_id (el id de la primera). FK de categoria_id en §16.
+    periodicidad         TEXT CONSTRAINT ck_mov_prog_periodicidad CHECK (periodicidad IN ('MENSUAL', 'ANUAL')),
+    dia                  SMALLINT CONSTRAINT ck_mov_prog_dia CHECK (dia BETWEEN 1 AND 31),
+    serie_id             UUID NOT NULL,
+    categoria_id         UUID,
+    avisado              BOOLEAN NOT NULL DEFAULT false,  -- ya se avisó "¿Se pagó?"
 
+    CONSTRAINT ck_mov_prog_recurrencia CHECK ((periodicidad IS NULL) = (dia IS NULL)),
     CONSTRAINT ck_mov_prog_elementos CHECK (
         (tipo = 'INGRESO'       AND elemento_destino_id IS NOT NULL AND elemento_origen_id IS NULL)
      OR (tipo = 'GASTO'         AND elemento_origen_id  IS NOT NULL AND elemento_destino_id IS NULL)
@@ -235,6 +243,7 @@ CREATE TABLE movimiento_programado (
 
 CREATE INDEX ix_movimiento_programado_pendiente ON movimiento_programado (fecha_programada) WHERE estado = 'PENDIENTE';
 CREATE INDEX ix_movimiento_programado_origen ON movimiento_programado (elemento_origen_id) WHERE elemento_origen_id IS NOT NULL;
+CREATE UNIQUE INDEX ux_movimiento_programado_serie_fecha ON movimiento_programado (serie_id, fecha_programada);  -- migración 028
 
 -- Pendiente heredado del DDD (Sección S): sin columnas de visibilidad/propiedad propias — se heredan de los elementos referidos.
 
@@ -513,6 +522,11 @@ CREATE TABLE categoria_movimiento (
 
 CREATE INDEX ix_categoria_movimiento_hogar
     ON categoria_movimiento (hogar_id, estado, orden);
+
+-- migración 028: categoría del movimiento programado (definido en §3, antes que esta tabla).
+ALTER TABLE movimiento_programado
+    ADD CONSTRAINT movimiento_programado_categoria_id_fkey
+    FOREIGN KEY (categoria_id) REFERENCES categoria_movimiento(id);
 
 CREATE INDEX ix_categoria_movimiento_padre
     ON categoria_movimiento (categoria_padre_id) WHERE categoria_padre_id IS NOT NULL;

@@ -44,7 +44,7 @@ verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
 | B — Recorrido | ✅ Cerrada (2026-09-29): `RECORRIDO_ESCENARIOS_S01.md` (28 escenarios T1/T2; peores: A2, M7, A1) |
 | C — Benchmark | ✅ Cerrada (2026-09-29): `BENCHMARK_S01.md` (18 brechas → 5 patrones P-A a P-E; HZ-11 a HZ-17; D-6 y D-7) |
 | D — Rediseño y mockup | ✅ Cerrada (2026-10-02): bloque 1 (decisiones, [`DECISIONES_FASE_D_S01.md`](DECISIONES_FASE_D_S01.md)) y bloque 2 (prototipo v5; Zoily completó 6 de 6, HZ-18 a HZ-23, D-8). Ver [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) |
-| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado y bloque 3 (HZ-24) ✅ y bloque 4 (rediseño visual) ✅ mergeados (2026-10-03); bloque 5 (HZ-13) ✅ mergeado; bloque 6 (C1 + D-2) ✅ mergeado; bloque 7 (D-1 + errores con código) ✅ mergeado; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅ mergeado (2026-10-04); bloque 9 (D-7 + HZ-21) probado por Juan; sigue D-6 (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
+| E — Implementación | ▶ En curso: bloque 1 (D-4, HZ-19, HZ-22) ✅ y bloque 2 (HZ-3, HZ-17) ✅ mergeado y bloque 3 (HZ-24) ✅ y bloque 4 (rediseño visual) ✅ mergeados (2026-10-03); bloque 5 (HZ-13) ✅ mergeado; bloque 6 (C1 + D-2) ✅ mergeado; bloque 7 (D-1 + errores con código) ✅ mergeado; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅ mergeado (2026-10-04); bloque 9 (D-7 + HZ-21) ✅ mergeado; bloque 10 (D-5 + D-6) ✅ probado por Juan (2026-10-08); queda la señal de Zoily (orden en [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5 y en §11) |
 
 ---
 
@@ -551,13 +551,16 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      `feat/G33-E8b-dos-puertas` (app), probadas por Juan y mergeadas
      (2026-10-04). Capturas en `capturas-e8/`. "Compartido con el hogar" y
      "Avisarle a [miembro]" pasan al 9.
-  9. D-7 + HZ-21: solicitud de aporte ("Compartido con el hogar" en Gasté),
+  9. ✅ D-7 + HZ-21: solicitud de aporte ("Compartido con el hogar" en Gasté),
      "Avisarle a [miembro]" en Recibí → De alguien del hogar y "Entre
      [miembro] y tú". Implementado y probado por Juan (2026-10-08)
      (`GAPS.md`, G33, bloque 9). Capturas en `capturas-e9/`.
-  10. D-5 + D-6: recurrencia y destino de otro miembro. D-5 se adelantó
+  10. ✅ D-5 + D-6: recurrencia y destino de otro miembro. D-5 se adelantó
       (2026-10-08) junto con la regla D-2 en el backend: rama
       `feat/G33-D5-destino-miembro`, probada por Juan y mergeada (`GAPS.md`,
-      G33). *Rollback:* `git revert -m 1` del merge. Queda D-6.
+      G33). D-6 en dos ramas: `feat/G33-E10a-recurrencia` (backend, migración
+      028) y `feat/G33-E10b-recurrencia` (app: "¿Se repite?", aviso "¿Se
+      pagó?" y "Frecuentes"), probadas por Juan (2026-10-08) (`GAPS.md`, G33,
+      bloques 10a y 10b). *Rollback:* `git revert -m 1` del merge.
 - [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
       completar sola los mismos seis escenarios.

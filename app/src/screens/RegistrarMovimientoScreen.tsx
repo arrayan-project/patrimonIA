@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
 import {
   api,
@@ -29,7 +29,9 @@ import {
 } from '../personas';
 import { nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
+import { cadaCuando, OPCIONES_REPITE, siguienteFecha, type Periodicidad } from '../recurrencia';
 import {
+  Chip,
   contadorPasos,
   AmountInput,
   Elegir,
@@ -44,6 +46,7 @@ import {
   LinkButton,
   ListCard,
   MoneyField,
+  Question,
   Nota,
   Opcional,
   Section,
@@ -130,6 +133,10 @@ export function RegistrarMovimientoScreen() {
   const [catNombre, setCatNombre] = useState('');
   const [catBusy, setCatBusy] = useState(false);
   const [glosa, setGlosa] = useState('');
+  // D-6: "¿Se repite?" deja programada la próxima vez, con aviso "¿Se pagó?".
+  const [repite, setRepite] = useState<'NO' | Periodicidad>('NO');
+  // El nombre del frecuente usado: sin detalle, nombra la repetición en la lista.
+  const [frecuente, setFrecuente] = useState('');
   // HZ-13: gastar la plata de una meta. Se puede llegar con la meta ya elegida.
   const objetivoInicial = (params.objetivoId as string | undefined) ?? null;
   const [metasCuenta, setMetasCuenta] = useState<MetaEnCuenta[]>([]);
@@ -295,7 +302,12 @@ export function RegistrarMovimientoScreen() {
     if (p.elementoDestinoId) setDestinoId(p.elementoDestinoId);
     setCategoriaId(p.categoriaId);
     setGlosa(p.glosa ?? '');
+    setFrecuente(p.nombre);
   };
+
+  // D-6: las plantillas son "Frecuentes": un toque llena el formulario. Solo las
+  // de esta puerta (Gasté muestra las de gasto; Moví plata, las transferencias).
+  const frecuentes = plantillas.filter((p) => p.tipo === (tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo));
 
   const necesitaOrigen = tipo === 'GASTO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
   const necesitaDestino = tipo === 'INGRESO' || tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
@@ -376,6 +388,8 @@ export function RegistrarMovimientoScreen() {
 
   // D-7: con quiénes se comparte, cuánto le toca a cada uno y dónde te lo transfieren.
   const esCompartido = tipo === 'GASTO' && quien === 'HOGAR';
+  // D-6: se repite lo propio; la plata de otra persona, lo compartido y el cambio de moneda, no.
+  const repiteAplica = !esOtra && !esCompartido && tipo !== 'CONVERSION';
   const compartidoCon =
     otrosMiembros.length === 1
       ? otrosMiembros
@@ -440,6 +454,35 @@ export function RegistrarMovimientoScreen() {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
       setAvisando(false);
+    }
+  };
+
+  /**
+   * D-6: con "¿Se repite?", deja programada la próxima vez (el movimiento de hoy
+   * ya quedó registrado). Devuelve lo que se agrega al aviso. Si falla, el
+   * movimiento sigue registrado y se dice que no quedó programado.
+   */
+  const programarRepeticion = async (): Promise<string> => {
+    if (!repiteAplica || repite === 'NO') return '';
+    try {
+      await api.post(
+        '/comandos/CrearMovimientoProgramado',
+        {
+          tipo,
+          montoPlanificado: Number(monto),
+          moneda: monedaEvento,
+          fechaProgramada: siguienteFecha(fecha, repite),
+          ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
+          ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
+          ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
+          ...(glosa.trim() || frecuente ? { observaciones: glosa.trim() || frecuente } : {}),
+          periodicidad: repite,
+        },
+        token,
+      );
+      return `. Te avisamos ${cadaCuando(repite, fecha)}`;
+    } catch {
+      return ', pero no se pudo dejar programada la repetición';
     }
   };
 
@@ -511,6 +554,7 @@ export function RegistrarMovimientoScreen() {
         token,
         key,
       );
+      const aviso = await programarRepeticion();
       if (meta) {
         const resto = meta.objetivoId
           ? await api
@@ -518,9 +562,9 @@ export function RegistrarMovimientoScreen() {
               .then((o) => `: ahora tiene ${money(o.progreso, o.moneda)}`)
               .catch(() => '')
           : '';
-        toast.mostrar(`Salió de tu meta ${meta.nombre}${resto}`);
+        toast.mostrar(`Salió de tu meta ${meta.nombre}${resto}${aviso}`);
       } else {
-        toast.mostrar('Movimiento registrado');
+        toast.mostrar(`Movimiento registrado${aviso}`);
       }
       permitirSalida();
       nav.back();
@@ -602,6 +646,8 @@ export function RegistrarMovimientoScreen() {
         : tipo === 'TRANSFERENCIA'
           ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
           : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
+  const resumenFinal: ReactNode =
+    typeof resumen === 'string' && puedeEnviar && repiteAplica && repite !== 'NO' ? `${resumen} Te avisamos ${cadaCuando(repite, fecha)}.` : resumen;
   const accion = {
     GASTO: 'Registrar gasto',
     INGRESO: 'Registrar ingreso',
@@ -755,26 +801,24 @@ export function RegistrarMovimientoScreen() {
     <Screen
       pie={
         <>
-          <Nota>{resumen}</Nota>
+          <Nota>{resumenFinal}</Nota>
           <Button title={accionFinal} onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
         </>
       }
     >
-      {plantillas.length > 0 && (
-        <Elegir
-          label="¿Usar una plantilla? (opcional)"
-          placeholder="Elegir una plantilla"
-          value={null}
-          options={plantillas.map((p) => ({
-            value: p.id,
-            label: p.nombre,
-            sub: p.monto != null ? money(p.monto, p.moneda ?? 'CLP') : undefined,
-          }))}
-          onChange={(id) => {
-            const p = plantillas.find((x) => x.id === id);
-            if (p) aplicarPlantilla(p);
-          }}
-        />
+      {frecuentes.length > 0 && (
+        <View style={styles.group}>
+          <Question>Frecuentes</Question>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+            {frecuentes.map((p) => (
+              <Chip
+                key={p.id}
+                label={p.monto != null ? `${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : p.nombre}
+                onPress={() => aplicarPlantilla(p)}
+              />
+            ))}
+          </ScrollView>
+        </View>
       )}
 
       {tipo === 'CONVERSION' && (
@@ -1030,6 +1074,17 @@ export function RegistrarMovimientoScreen() {
           maxLength={140}
         />
       </Opcional>
+
+      {repiteAplica && (
+        <Opcional titulo="Se repite cada mes o año" abierto={repite !== 'NO'}>
+          <Elegir
+            label="¿Se repite?"
+            value={repite}
+            options={OPCIONES_REPITE}
+            onChange={(v) => setRepite((v as 'NO' | Periodicidad | null) ?? 'NO')}
+          />
+        </Opcional>
+      )}
 
       {etiquetas.length > 0 && (
         <Opcional titulo="Agregar etiquetas" abierto={etiquetaIds.length > 0}>
