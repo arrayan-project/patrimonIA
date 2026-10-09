@@ -207,7 +207,7 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     Movimiento. Nombre; tipo; cuánto; cuentas; categoría; detalle; guardar;
     Eliminar frecuente.
 
-### Tanda 4 · Hogar
+### Tanda 4 · Hogar  ✅ (completa, 2026-10-09)
 
 38. ✅ **Hogar** (`HogarScreen`) — pestaña. Plata del hogar (Tienen / Deben);
     lo que suma al hogar (abrir cada cuenta); metas del hogar; "Entre
@@ -218,13 +218,13 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     Deben, plata y metas del hogar por moneda (sin acciones).
 40. ✅ **Movimientos del hogar** (`MovimientosHogarScreen`) — Hogar. Lista por
     mes; abrir un movimiento.
-41. **Entre ustedes** (`EntreMiembrosScreen`) — Hogar. Lista de solicitudes y
+41. ✅ **Entre ustedes** (`EntreMiembrosScreen`) — Hogar. Lista de solicitudes y
     transferencias entre dos miembros; abrir un movimiento; pagar una
     solicitud.
-42. **Pagar** (`PagarSolicitudScreen`) — Inicio, Entre ustedes,
+42. ✅ **Pagar** (`PagarSolicitudScreen`) — Inicio, Entre ustedes,
     Notificaciones. Ver cuánto y a qué cuenta; Transferir (desde qué cuenta);
     No me corresponde.
-43. **Gestionar hogar** (`GestionHogarScreen`) — Hogar, Ajustes. Nombre;
+43. ✅ **Personas del hogar** (antes "Gestionar hogar", `GestionHogarScreen`) — Hogar, Ajustes. Nombre;
     moneda del total; miembros (cambiar rol, Remover); Invitar a alguien;
     Salir del hogar; Eliminar hogar.
 
@@ -1018,3 +1018,53 @@ eso entran las 6 listas y sus formularios de crear y editar.
   Meta; 🐷 Ahorrar → Ahorrar; Personas del hogar → Gestionar hogar;
   Movimientos del hogar → un gasto → atrás → atrás vuelve al Hogar. No se
   guardó nada nuevo en la base local.
+
+### 41–43. Entre ustedes, Pagar y Personas del hogar (`EntreMiembrosScreen`, `PagarSolicitudScreen`, `GestionHogarScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** Entre ustedes en una sola lista (lo que te toca pagar
+  mezclado con lo resuelto), subtítulo cortado ("⏰ Demo te pidió · toca
+  para …"), solicitudes pagadas sin poder tocarse y una nota "Las
+  transferencias son de los últimos 30 días.". Pagar con un párrafo gris,
+  pasos numerados, "Va a" con un ícono gris y dos botones grandes ("No me
+  corresponde" casi con el mismo peso que pagar); una solicitud resuelta,
+  un párrafo y "Listo". Gestionar hogar con campos de formulario, la nota
+  "Cambiarla no recalcula…", el selector de rol cortado ("Miem…"),
+  "Remover" subrayado, "Los cambios se guardan solos." y "Salir" /
+  "Eliminar" como texto rojo.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisiones:
+  el rol se cambia en una **hoja al tocar al miembro**; "No me corresponde"
+  va como **enlace de texto** (zona de 44 px).
+  - **Piezas comunes:** `FilaEntre` lleva `grupo` (toca · espera ·
+    resuelto) y se ordena así; una solicitud pagada abre la transferencia
+    con que se pagó (`eventoPagoId`); `comoVa()` se exporta.
+  - **Entre ustedes:** grupos "⏰ Te toca", "⏳ Esperando a Demo" (o
+    "Esperando que te paguen" con varios miembros) y "✅ Ya resuelto";
+    "⏰ Demo te pidió · 9 oct"; pie "🗓️ Las transferencias, de los últimos
+    30 días.". El Hogar muestra las mismas filas, con lo que te toca arriba.
+  - **Pagar:** banda del color de Moví plata: "🧾 Tu parte de
+    Supermercado" ("Demo pagó 60.000 CLP · 8 oct") o "🔁 Le llegaron a
+    Demo" ("Tuyos, sin anotar · 9 oct"); sin numerar; la cuenta solo se
+    pregunta si hay más de una (con emojis); 🏦 Sale de · 👤 Llega a; la
+    línea "🔁 Es una transferencia: no cuenta como gasto."; pie "✅ Anotar /
+    Transferir X" y el enlace "🙅 No me corresponde". Resuelta o pedida por
+    ti: la misma banda con cómo va ("✅ Le pagaste a Demo · 8 oct"),
+    🏦 Llega a y "🧾 Ver la transferencia".
+  - **Personas del hogar** (antes "Gestionar hogar", título con el nombre
+    del hogar): "🏠 ¿Cómo se llama el hogar?" (se guarda al salir);
+    "👥 Quiénes están" con la inicial en un círculo y "👑 Administra" /
+    "🙋 Miembro"; tocar a otro miembro (si administras) abre la hoja
+    👑 Hacer administrador / 🙋 Dejar como miembro · 🚪 Sacar del hogar;
+    la pastilla "➕ Invitar a alguien"; "💱 ¿En qué moneda ven el total?"
+    en pastillas (🇨🇱 CLP · 💵 USD · 🌍 Otra, que abre la lista) sin la
+    nota; botones "🚪 Salir del hogar" y "🗑️ Eliminar hogar" (solo si
+    administras). Remover pasa a llamarse "Sacar del hogar".
+- **Verificado:** `tsc` sin errores; tests de `solicitudes` 6/6; capturas web
+  de Entre ustedes y Pagar (como Pareja, con una solicitud de prueba
+  pendiente) y Personas del hogar con la hoja del miembro y "Otra" moneda.
+  Destinos: Ver todo → Entre ustedes; "Demo te pidió" → Pagar; solicitud
+  pagada → la transferencia; Personas del hogar → hoja; Invitar a alguien →
+  Confirmar con el correo. Dato de prueba en la base local: solicitud
+  "Transferencia sin anotar" de 15.000 (Demo → Pareja, pendiente).
+- **Pendiente para la tanda 5:** en Ajustes la fila sigue diciendo
+  "🏠 Gestionar hogar" y abre "Personas del hogar"; alinear el nombre al
+  revisar Ajustes.

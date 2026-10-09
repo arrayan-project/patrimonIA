@@ -55,7 +55,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
-| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 59 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); sigue la tanda 4 (Hogar). | 🟡 |
+| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 59 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); sigue la tanda 5 (Avisos, ajustes y cuenta). | 🟡 |
 | — | **G36** | Pasar un presupuesto ya creado de "Solo mío" a "Del hogar" (o al revés): hoy solo se elige al crearlo. Necesita definición de Juan (ver detalle). | 📋 decisión |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
@@ -694,7 +694,13 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Implementado junto con el Inicio en `feat/G35-P0-inicio`, probado por Juan
   y mergeado (2026-10-09). Tanda 1 (lo de todos los días) y tanda 2 (Mi
   plata y mis cuentas) probadas por Juan y mergeadas (2026-10-09); cada
-  pantalla tiene su ficha en el documento. Siguiente: tanda 3 (Planificar).
+  pantalla tiene su ficha en el documento. Tanda 3 (Planificar) y tanda 4
+  (Hogar) probadas por Juan y mergeadas (2026-10-09). En la tanda 4 se
+  corrigió `GET /hogares/:id/metricas`: el avance de objetivos contaba las
+  metas de todos los miembros (también las personales); ahora solo las
+  compartidas con el hogar (requiere deploy en Render). Movimientos del
+  hogar pasó a ser la pestaña Movimientos en "Del hogar" (una sola versión
+  de la lista). Siguiente: tanda 5 (Avisos, ajustes y cuenta).
   Anotado fuera de G35: consolidar períodos largos cuando las fechas no son
   del mes en curso, y la lista de un grupo "Del hogar" que trae solo las
   cuentas de los otros miembros (ver la ficha 7–9).

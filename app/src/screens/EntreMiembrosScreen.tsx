@@ -4,7 +4,7 @@ import { useSession } from '../auth/AuthContext';
 import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { useNav, useTitulo } from '../navigation/navigator';
-import { EmptyState, ErrorText, ListCard, Nota, Screen, Skeleton, TxRow } from '../ui';
+import { EmptyState, ErrorText, ListCard, Nota, Screen, Section, Skeleton, TxRow } from '../ui';
 import type { FilaEntre } from '../solicitudes';
 
 /** Una fila de "Entre [miembro] y tú": abre el pago si te toca, o el movimiento. */
@@ -56,18 +56,34 @@ export function EntreMiembrosScreen() {
         <Skeleton />
       ) : datos.filas.length === 0 ? (
         <EmptyState
-          icon="people-outline"
+          emoji="🤝"
           titulo="Nada entre ustedes todavía"
-          descripcion="Aquí ves lo que se piden y lo que se transfieren entre miembros del hogar."
+          descripcion="Aquí aparece lo que se piden y lo que se transfieren."
         />
       ) : (
         <>
-          <ListCard>
-            {datos.filas.map((f) => (
-              <FilaEntreRow key={f.key} f={f} />
-            ))}
-          </ListCard>
-          <Nota>Las transferencias son de los últimos 30 días.</Nota>
+          {(['toca', 'espera', 'resuelto'] as const).map((g) => {
+            const filas = datos.filas.filter((f) => f.grupo === g);
+            if (filas.length === 0) return null;
+            const titulo =
+              g === 'toca'
+                ? '⏰ Te toca'
+                : g === 'espera'
+                  ? datos.otros.length === 1
+                    ? `⏳ Esperando a ${datos.otros[0].nombre}`
+                    : '⏳ Esperando que te paguen'
+                  : '✅ Ya resuelto';
+            return (
+              <Section key={g} title={titulo}>
+                <ListCard>
+                  {filas.map((f) => (
+                    <FilaEntreRow key={f.key} f={f} />
+                  ))}
+                </ListCard>
+              </Section>
+            );
+          })}
+          <Nota>🗓️ Las transferencias, de los últimos 30 días.</Nota>
         </>
       )}
       <ErrorText>{error}</ErrorText>
