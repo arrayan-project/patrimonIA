@@ -683,7 +683,7 @@ eso entran las 6 listas y sus formularios de crear y editar.
   - Con "Del hogar", la lista de un grupo (desde la composición del Inicio)
     trae solo las cuentas de los otros miembros (`alcance=hogar`), así que no
     cuadra con la cifra del Inicio. Ya pasaba antes; arreglarlo cambia la
-    consulta, no lo visual.
+    consulta, no lo visual. → Resuelto en GAPS G37 (2026-10-09).
 
 ### 10–19. Detalle de cuenta y lo que se abre desde ahí (`ElementoDetalleScreen`, `EditarElementoScreen`, `AjustesElementoScreen`, `ValorizarScreen`, `ValorizacionDetalleScreen`, `RegistrarAjusteScreen`, `AjusteDetalleScreen`, `CorreccionFormScreen`, `ValorEnFechaScreen`, `HistorialScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
 

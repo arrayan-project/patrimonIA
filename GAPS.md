@@ -35,7 +35,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
-| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30 |
+| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30, G37 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
@@ -959,6 +959,28 @@ ya cerrados en Fases 50–51).
   una transferencia desde su cuenta a la tuya y luego el gasto completo". El neto
   ya cuadra con ese patrón; un GASTO con aportes de varias cuentas/personas
   seguiría siendo una decisión de dominio pendiente si algún día se pide.
+
+#### G37 — La lista de un grupo "Del hogar" no cuadra con el total  ✅ RESUELTO (2026-10-09)
+- **Qué pasaba**: en el Inicio "Del hogar", al tocar un grupo de "Dónde está
+  la plata del hogar" (o "Ver todo"), la lista usaba
+  `GET /elementos-patrimoniales?alcance=hogar`, que trae solo las cuentas de
+  los **otros** miembros que el actor puede ver y no mira
+  `participa_consolidacion`. La cifra del Inicio, en cambio, suma las cuentas
+  activas que participan de **todos** los miembros (también las propias).
+  Anotado por Juan en G35 (ficha 7–9).
+- **Decidido (Juan, 2026-10-09)**: `GET /hogares/:id/elementos` devuelve el
+  mismo conjunto que `patrimonio-consolidado`. Lo que el actor no puede ver
+  (o ve sin su valor) va sumado por grupo y moneda en `ocultos`, y la app lo
+  muestra como una fila "🔒 Una / N que no puedes ver · Su dueño no la
+  comparte", para que la lista cuadre con el total (esa suma ya se deducía
+  restando lo visible al total).
+- **Implementado** (rama `feat/G37-lista-hogar`): `ConsolidacionService.elementosDelHogar`
+  + e2e en `consolidacion-hogar.e2e-spec.ts` (la suma de la lista, con lo
+  oculto, es igual al neto consolidado, vista desde los dos miembros);
+  `PatrimonioSeccionScreen` en "Del hogar" usa el endpoint (Hero, Tienen /
+  Deben y subtotales incluyen lo oculto) y la barra dice "Plata del hogar".
+  `alcance=hogar` de `/elementos-patrimoniales` sigue igual (lo usan los
+  formularios para elegir cuentas de otros miembros).
 
 ### Tema C · Elementos patrimoniales y visibilidad
 

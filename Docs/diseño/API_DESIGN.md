@@ -284,6 +284,7 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 | `GET /elementos-patrimoniales/:id/valor-historico?fecha=` | valor del elemento a esa fecha (`existia: bool`) | Fase 9 |
 | `GET /hogares/:id/patrimonio-consolidado` | neto/activos/pasivos/líquido por moneda + `total` en moneda del hogar (o `conversionesFaltantes`) | Fase 10/13 |
 | `GET /hogares/:id/metricas` | distribución por categoría, liquidez, avance de objetivos del hogar | Fase 10 |
+| `GET /hogares/:id/elementos` | las cuentas y bienes que suman al total del hogar (mismo conjunto que `patrimonio-consolidado`); lo que el actor no ve con su valor, sumado en `ocultos` por grupo y moneda | GAPS G37 |
 | `GET /hogares/:id/eventos-financieros` | vista consolidada: 1 fila por evento (transferencia colapsada), filtrada por §M | Fase 10 / G30 |
 | `GET /hogares/:id/categorias-movimiento` · `/tipos-elemento` | catálogos del hogar | Fase 15c / 40 |
 | `GET /usuarios/me/etiquetas` · `/agrupaciones` · `/plantillas-movimiento` | catálogos personales | Fase 15h–j |
