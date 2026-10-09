@@ -1,9 +1,11 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
 import { ConversionService } from '../tipo-cambio/conversion.service.js';
 import {
+  type ElementosDelHogarDTO,
   type EventoConsolidadoDTO,
   type MetricasHogarDTO,
   type PatrimonioConsolidadoDTO,
@@ -27,6 +29,7 @@ export class ConsolidacionService {
     private readonly prisma: PrismaService,
     private readonly progreso: ProgresoService,
     private readonly conversion: ConversionService,
+    private readonly elementosSvc: ElementoService,
   ) {}
 
   async patrimonioConsolidado(
@@ -89,6 +92,39 @@ export class ConsolidacionService {
       total: conversionesFaltantes.length > 0 ? null : total.toNumber(),
       conversionesFaltantes,
     };
+  }
+
+  /**
+   * GAPS.md G37 — las cuentas y bienes que suman al total del hogar. Las que el
+   * actor no puede ver (o ve sin su valor) van sumadas por grupo y moneda en
+   * `ocultos`: la suma ya se deduce del total, y así la lista cuadra con él.
+   */
+  async elementosDelHogar(hogarId: string, actorId: string): Promise<ElementosDelHogarDTO> {
+    await this.#exigirMiembro(hogarId, actorId);
+    const miembros = await this.#miembrosActivos(hogarId);
+    const filas = await this.#elementosConsolidados(miembros);
+
+    const elementos: ElementosDelHogarDTO['elementos'] = [];
+    const ocultos = new Map<string, ElementosDelHogarDTO['ocultos'][number]>();
+    for (const el of filas) {
+      const dto = await this.elementosSvc.obtenerElemento(el.id, actorId).catch(() => null);
+      if (dto && !dto.valorOculto) {
+        elementos.push(dto);
+        continue;
+      }
+      const clave = `${el.categoria_funcional}|${el.moneda}`;
+      const cur = ocultos.get(clave) ?? {
+        categoriaFuncional: el.categoria_funcional,
+        moneda: el.moneda,
+        cantidad: 0,
+        valor: 0,
+      };
+      cur.cantidad += 1;
+      cur.valor = new Prisma.Decimal(cur.valor).plus(el.valor_vigente).toNumber();
+      ocultos.set(clave, cur);
+    }
+    elementos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return { hogarId, elementos, ocultos: [...ocultos.values()] };
   }
 
   async metricas(hogarId: string, actorId: string): Promise<MetricasHogarDTO> {

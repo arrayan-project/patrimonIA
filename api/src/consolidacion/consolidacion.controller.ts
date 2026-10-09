@@ -15,6 +15,11 @@ export class ConsolidacionController {
     return this.consolidacion.patrimonioConsolidado(id, u.id);
   }
 
+  @Get('hogares/:id/elementos')
+  elementosDelHogar(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
+    return this.consolidacion.elementosDelHogar(id, u.id);
+  }
+
   @Get('hogares/:id/metricas')
   metricas(@CurrentUser() u: UsuarioAutenticado, @Param('id', ParseUUIDPipe) id: string) {
     return this.consolidacion.metricas(id, u.id);

@@ -1,3 +1,4 @@
+import type { ElementoPatrimonialDTO } from '../elemento/elemento.dto.js';
 export interface ConsolidadoPorMoneda {
   moneda: string;
   patrimonioNeto: number;
@@ -66,4 +67,16 @@ export interface EventoConsolidadoDTO {
    * o de su propiedad. Ver `ConsolidacionService.eventosDelHogar`.
    */
   elementos: { id: string; nombre: string }[];
+}
+
+/**
+ * GAPS.md G37 — lo que suma al total del hogar, cuenta por cuenta: el mismo
+ * conjunto que `patrimonio-consolidado` (activos, con participa_consolidacion,
+ * de cualquier miembro, sin duplicar). Lo que el actor no puede ver con su
+ * valor va agregado en `ocultos`, para que la lista cuadre con el total.
+ */
+export interface ElementosDelHogarDTO {
+  hogarId: string;
+  elementos: ElementoPatrimonialDTO[];
+  ocultos: { categoriaFuncional: string; moneda: string; cantidad: number; valor: number }[];
 }
