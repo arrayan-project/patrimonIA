@@ -11,11 +11,11 @@ import { setFormatoFecha, type FormatoFecha } from './ui';
  * (categorías, moneda de consolidación, tipos de elemento) tampoco.
  */
 export const SECCIONES_DASHBOARD = [
-  ['composicion', 'Composición'],
-  ['disponibilidad', 'Libre para gastar'],
-  ['flujo', 'Flujo del mes'],
-  ['objetivos', 'Metas'],
-  ['accesos', 'Accesos rápidos'],
+  ['composicion', 'Tus cuentas'],
+  ['disponibilidad', 'Puedes gastar'],
+  ['flujo', 'Así va el mes'],
+  ['objetivos', 'Tus metas'],
+  ['accesos', 'Atajos'],
 ] as const;
 export type SeccionDashboard = (typeof SECCIONES_DASHBOARD)[number][0];
 
@@ -24,13 +24,39 @@ export interface PreferenciasVisualizacion {
   /** Moneda que el Inicio muestra como principal si tienes varias (sin convertir). null = la primera. */
   monedaPreferida: string | null;
   dashboard: Record<SeccionDashboard, boolean>;
+  /**
+   * G35: el emoji que el usuario eligió para cada cuenta o bien y cada meta
+   * (por id). Es personal: otro miembro del hogar ve los suyos. Sin elección,
+   * se usa el de `emojis.ts`. El de las categorías es del hogar
+   * (`categoria_movimiento.icono`).
+   */
+  emojis: { elementos: Record<string, string>; metas: Record<string, string> };
 }
 
 export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
   formatoFecha: 'legible',
   monedaPreferida: null,
   dashboard: { composicion: true, disponibilidad: true, flujo: true, objetivos: true, accesos: true },
+  emojis: { elementos: {}, metas: {} },
 };
+
+/** Las preferencias con el emoji de una cuenta (`elementos`) o una meta (`metas`) cambiado. */
+export function conEmoji(
+  p: PreferenciasVisualizacion,
+  tipo: keyof PreferenciasVisualizacion['emojis'],
+  id: string,
+  emoji: string,
+): PreferenciasVisualizacion {
+  return { ...p, emojis: { ...p.emojis, [tipo]: { ...p.emojis[tipo], [id]: emoji } } };
+}
+
+/** Solo pares id → texto no vacío. */
+function mapaDeTextos(x: unknown): Record<string, string> {
+  if (!x || typeof x !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(x as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && !!e[1]),
+  );
+}
 
 /** Lee `preferencias.visualizacion` completando con defaults lo que falte o no sea válido. */
 function leerVisualizacion(u: UsuarioDTO | null): PreferenciasVisualizacion {
@@ -43,6 +69,7 @@ function leerVisualizacion(u: UsuarioDTO | null): PreferenciasVisualizacion {
     formatoFecha: v.formatoFecha === 'numerico' ? 'numerico' : 'legible',
     monedaPreferida: typeof v.monedaPreferida === 'string' && v.monedaPreferida ? v.monedaPreferida : null,
     dashboard,
+    emojis: { elementos: mapaDeTextos(v.emojis?.elementos), metas: mapaDeTextos(v.emojis?.metas) },
   };
 }
 

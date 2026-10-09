@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import Svg, {
   Circle,
   Defs,

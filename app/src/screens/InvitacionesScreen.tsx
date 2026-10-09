@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type InvitacionDTO, type MembresiaDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';

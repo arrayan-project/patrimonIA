@@ -1,12 +1,16 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { TITULO_ANOTAR, useAnotar } from '../hooks/useAnotar';
 import {
   api,
   ApiError,
+  type CategoriaMovimientoDTO,
   type DesviacionPresupuestariaDTO,
   type ElementoPatrimonialDTO,
+  type EventoFinancieroDTO,
+  type MovimientoReporteDTO,
   type HogarDTO,
   type MetricasHogarDTO,
   type ObjetivoFinancieroDTO,
@@ -25,17 +29,16 @@ import { heroHogar } from '../heroHogar';
 import { useAlcance } from '../ui/alcance';
 import { usePreferencias } from '../preferencias';
 import {
+  AnilloAvance,
   Elegir,
+  fechaLegible,
   EmptyState,
   ErrorText,
   etiqueta,
   FabMenu,
-  GoalCard,
   Hero,
   IconButton,
   ListCard,
-  MoneyText,
-  Nota,
   Panel,
   PillToggle,
   QuickActions,
@@ -46,7 +49,6 @@ import {
   TopRow,
   TxRow,
   useC,
-  type NombreIcono,
   type Paleta,
   tipoDe,
   Dato,
@@ -54,6 +56,13 @@ import {
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
+import {
+  EMOJI_CATEGORIA_FUNCIONAL,
+  emojiCategoria,
+  emojiElemento,
+  emojiMeta,
+  emojiTipoMovimiento,
+} from '../emojis';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -63,14 +72,6 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /** Categorías funcionales, en el orden en que se muestran en la composición. */
 const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
-const ICONO_CAT: Record<(typeof CATS)[number], NombreIcono> = {
-  LIQUIDEZ: 'wallet-outline',
-  RESERVA: 'umbrella-outline',
-  INVERSION: 'trending-up-outline',
-  ACTIVO: 'home-outline',
-  CREDITO: 'arrow-down-circle-outline',
-  DEUDA: 'card-outline',
-};
 
 export function DashboardScreen() {
   const c = useC();
@@ -94,6 +95,9 @@ export function DashboardScreen() {
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
   const [flujo, setFlujo] = useState<{ ingresos: number; gastos: number; moneda: string } | null>(null);
+  // G35: los movimientos del mes (todas tus cuentas) y las categorías, para sus emojis.
+  const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
   const [presuExcedido, setPresuExcedido] = useState<PresupuestoDTO | null>(null);
   const [noLeidas, setNoLeidas] = useState(0);
@@ -164,9 +168,16 @@ export function DashboardScreen() {
         );
         const pm = r.porMoneda[0];
         setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
+        setMovsMes(r.movimientos);
       } catch {
         setFlujo(null);
+        setMovsMes([]);
       }
+      setCategorias(
+        await api
+          .get<CategoriaMovimientoDTO[]>(`/hogares/${activo}/categorias-movimiento`, token)
+          .catch(() => []),
+      );
 
       let objs: ObjetivoFinancieroDTO[] = [];
       try {
@@ -316,28 +327,30 @@ export function DashboardScreen() {
   const enMora = elementos.filter(
     (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
   );
-  const alertas: { texto: string; danger?: boolean; onPress: () => void }[] = porPagar.map((x) => ({
+  const alertas: { texto: string; emoji: string; onPress: () => void }[] = porPagar.map((x) => ({
     texto:
       x.motivo === 'GASTO_COMPARTIDO'
         ? `${x.solicitante.nombre} te pide tu parte: ${money(x.monto, x.moneda)}${x.glosa ? ` · ${x.glosa}` : ''}`
         : `${x.solicitante.nombre} te pide anotar una transferencia de ${money(x.monto, x.moneda)}`,
+    emoji: '🤝',
     onPress: () => nav.go('PagarSolicitud', { solicitudId: x.id }),
   }));
   if (enMora.length > 0)
     alertas.push({
       texto: `${enMora.length} ${enMora.length === 1 ? 'deuda' : 'deudas'} en mora`,
-      danger: true,
+      emoji: '⏰',
       onPress: () => nav.go('ElementoDetalle', { elementoId: enMora[0].id }),
     });
   if (presuExcedido)
     alertas.push({
-      texto: `Presupuesto de ${MESES[hoy.getMonth()]} excedido`,
-      danger: true,
+      texto: `Te pasaste del presupuesto de ${MESES[hoy.getMonth()]}`,
+      emoji: '📊',
       onPress: () => nav.go('PresupuestoDetalle', { presupuestoId: presuExcedido.id }),
     });
   if (noLeidas > 0)
     alertas.push({
-      texto: `${noLeidas} ${noLeidas === 1 ? 'notificación sin leer' : 'notificaciones sin leer'}`,
+      texto: `${noLeidas} ${noLeidas === 1 ? 'aviso sin leer' : 'avisos sin leer'}`,
+      emoji: '🔔',
       onPress: () => nav.go('Notificaciones'),
     });
 
@@ -349,6 +362,13 @@ export function DashboardScreen() {
     void guardar(claveOnb, 'ok');
   };
 
+  // ── G35: tarjetas de cuenta (Lo mío) ───────────────────────────────────
+  const tarjetas = cuentasParaTarjetas(elementos, usuario.id);
+  const emojis = preferencias.emojis;
+  const metasTop = [...enProgreso].sort((a, b) => b.progresoPorcentaje - a.progresoPorcentaje).slice(0, 2);
+  const balance = flujo ? flujo.ingresos - flujo.gastos : 0;
+  const nombre = usuario.nombre.split(' ')[0];
+
   return (
     <Screen
       onRefresh={cargar}
@@ -358,55 +378,48 @@ export function DashboardScreen() {
     >
       <TopRow
         left={
-          <PillToggle
-            options={['mios', 'hogar'] as const}
-            value={alcance}
-            onChange={setAlcance}
-            format={(x) => (x === 'mios' ? 'Míos' : 'Del hogar')}
-          />
+          <View>
+            <Text style={styles.fecha}>{fechaLarga(hoy)}</Text>
+            <Text style={styles.hola}>Hola, {nombre}</Text>
+          </View>
         }
         right={
           <>
             <IconButton
               icon="notifications-outline"
               badge={noLeidas || undefined}
-              accessibilityLabel="Notificaciones"
+              accessibilityLabel="Avisos"
               onPress={() => nav.go('Notificaciones')}
             />
             <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
           </>
         }
       />
-
+      <View style={{ alignSelf: 'flex-start' }}>
+        <PillToggle
+          options={['mios', 'hogar'] as const}
+          value={alcance}
+          onChange={setAlcance}
+          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+        />
+      </View>
       {alertas.length > 0 && (
         <ListCard>
           {alertas.slice(0, 3).map((a, i) => (
-            <Pressable
-              key={i}
-              onPress={a.onPress}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.alerta, pressed && { opacity: 0.6 }]}
-            >
-              <View style={[styles.alertaPunto, { backgroundColor: c.muted }]} />
-              <Text style={styles.alertaTxt}>{a.texto}</Text>
-              <Text style={styles.alertaChev}>›</Text>
-            </Pressable>
+            <TxRow key={i} title={a.texto} amount="" logo={{ emoji: a.emoji }} onPress={a.onPress} />
           ))}
           {alertas.length > 3 && (
-            <Pressable style={styles.alerta} onPress={() => nav.go('Notificaciones')} accessibilityRole="button" accessibilityLabel={`Ver todas las alertas (${alertas.length})`}>
-              <Text style={[styles.alertaTxt, { color: c.muted }]}>Ver todas ({alertas.length})</Text>
-            </Pressable>
+            <TxRow title={`Ver todos los avisos (${alertas.length})`} amount="" logo={{ emoji: '🔔' }} onPress={() => nav.go('Notificaciones')} />
           )}
         </ListCard>
       )}
-
       <Pressable
         onPress={verPatrimonio}
         accessibilityRole="button"
-        accessibilityLabel="Ver mi patrimonio completo"
+        accessibilityLabel="Ver dónde está tu plata"
       >
         <Hero
-          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu patrimonio'}
+          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu plata en total'}
           value={heroValor}
           change={
             alcance === 'mios' && v && v.variacion !== 0
@@ -421,43 +434,46 @@ export function DashboardScreen() {
           substats={
             tienesDebes
               ? [
-                  { label: alcance === 'hogar' ? 'Tienen' : 'Tienes', value: money(tienesDebes.tienes, tienesDebes.moneda) },
-                  { label: alcance === 'hogar' ? 'Deben' : 'Debes', value: money(tienesDebes.debes, tienesDebes.moneda) },
+                  { label: alcance === 'hogar' ? '💰 Tienen' : '💰 Tienes', value: money(tienesDebes.tienes, tienesDebes.moneda) },
+                  { label: alcance === 'hogar' ? '💳 Deben' : '💳 Debes', value: money(tienesDebes.debes, tienesDebes.moneda) },
                 ]
               : undefined
           }
+          debajo={
+            ver.disponibilidad && alcance === 'mios' && principal ? (
+              // Puedes gastar como una resta que cuadra: parte de la plata disponible
+              // y descuenta lo que no se puede gastar.
+              <Datos plano>
+                {principal.reservadoEnLiquidez > 0 || principal.plataAjena > 0 ? (
+                  <Dato etiqueta="💵 Plata disponible" valor={money(principal.valorLiquido, principal.moneda)} />
+                ) : null}
+                {principal.reservadoEnLiquidez > 0 ? (
+                  <Dato
+                    etiqueta="🐷 Guardado para metas"
+                    valor={<Text style={styles.resta}>{`− ${money(principal.reservadoEnLiquidez, principal.moneda)}`}</Text>}
+                  />
+                ) : null}
+                {principal.plataAjena > 0 ? (
+                  <Dato
+                    etiqueta="👥 De otras personas"
+                    valor={<Text style={styles.resta}>{`− ${money(principal.plataAjena, principal.moneda)}`}</Text>}
+                  />
+                ) : null}
+                <Dato
+                  etiqueta="✅ Puedes gastar"
+                  valor={<Text style={styles.libre}>{money(principal.valorLibre, principal.moneda)}</Text>}
+                />
+              </Datos>
+            ) : undefined
+          }
         >
-          {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} /> : null}
+          {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} alto={44} color={c.primary} /> : null}
         </Hero>
       </Pressable>
-      {ver.disponibilidad && alcance === 'mios' && principal ? (
-        // Libre para gastar como una resta que cuadra: parte de la Liquidez (la misma
-        // cifra de "Tu patrimonio") y descuenta lo que no se puede gastar.
-        <Datos>
-          {principal.reservadoEnLiquidez > 0 || principal.plataAjena > 0 ? (
-            <Dato etiqueta="Liquidez" valor={money(principal.valorLiquido, principal.moneda)} />
-          ) : null}
-          {principal.reservadoEnLiquidez > 0 ? (
-            <Dato
-              etiqueta="Guardado para metas"
-              valor={<Text style={styles.resta}>{`− ${money(principal.reservadoEnLiquidez, principal.moneda)}`}</Text>}
-            />
-          ) : null}
-          {principal.plataAjena > 0 ? (
-            <Dato
-              etiqueta="De otras personas"
-              valor={<Text style={styles.resta}>{`− ${money(principal.plataAjena, principal.moneda)}`}</Text>}
-            />
-          ) : null}
-          <Dato etiqueta="Libre para gastar" valor={money(principal.valorLibre, principal.moneda)} />
-        </Datos>
-      ) : null}
-
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
       {hh?.tipo === 'parcial' && (
         <ErrorText>{`Total parcial en ${hh.moneda}: falta tipo de cambio para ${hh.faltantes.join(', ')}.`}</ErrorText>
       )}
-
       {!onbOculto && (
         <Panel>
           <View style={styles.headRow}>
@@ -466,17 +482,16 @@ export function DashboardScreen() {
               <Text style={styles.muted}>Ocultar</Text>
             </Pressable>
           </View>
-          <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta o bien" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
-          <Paso hecho={pasos.movimiento} texto="Registra un movimiento" onPress={anotar.abrir} c={c} styles={styles} />
+          <Paso hecho={pasos.cuenta} texto="Agrega tu primera cuenta" onPress={() => nav.go('AgregarElemento')} c={c} styles={styles} />
+          <Paso hecho={pasos.movimiento} texto="Anota un gasto o un ingreso" onPress={anotar.abrir} c={c} styles={styles} />
           <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('MetaForm')} c={c} styles={styles} />
           <Text style={styles.muted}>
-            Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (ingresos y
-            gastos), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
+            Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
+            sale), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
             compartes con tu familia).
           </Text>
         </Panel>
       )}
-
       {hogares.length > 1 && (
         <Elegir
           label="¿Qué hogar quieres ver?"
@@ -485,24 +500,33 @@ export function DashboardScreen() {
           onChange={(id) => id && elegirHogar(id)}
         />
       )}
-
-      {ver.composicion && (
-        <Section
-          title={alcance === 'hogar' ? 'Patrimonio del hogar' : 'Tu patrimonio'}
-          accion="Ver todo"
-          onAccion={composicion.length > 0 ? verPatrimonio : undefined}
-        >
-          {composicion.length === 0 && alcance === 'mios' ? (
+      {ver.composicion && alcance === 'mios' && (
+        <Section title="Tus cuentas" accion="Ver todas" onAccion={tarjetas.length > 0 ? verPatrimonio : undefined}>
+          {tarjetas.length === 0 ? (
             <EmptyState
               icon="wallet-outline"
-              titulo="Aún no tienes cuentas ni bienes"
-              descripcion="Agrega tu primera cuenta, inversión o deuda para empezar."
+              titulo="Aún no tienes cuentas"
+              descripcion="Agrega tu cuenta, tarjeta, inversión o deuda para empezar."
               accion="Agregar mi primera cuenta"
               onAccion={() => nav.go('AgregarElemento')}
             />
-          ) : composicion.length === 0 ? (
+          ) : (
+            <CuentasYMovimientos
+              tarjetas={tarjetas}
+              emojis={emojis.elementos}
+              movsMes={movsMes}
+              categorias={categorias}
+              mes={MESES[hoy.getMonth()]}
+              onVerTodas={verPatrimonio}
+            />
+          )}
+        </Section>
+      )}
+      {ver.composicion && alcance === 'hogar' && (
+        <Section title="Dónde está la plata del hogar" accion="Ver todo" onAccion={composicion.length > 0 ? verPatrimonio : undefined}>
+          {composicion.length === 0 ? (
             <Panel>
-              <Text style={styles.muted}>Sin desglose disponible para el patrimonio del hogar.</Text>
+              <Text style={styles.muted}>Todavía no hay cuentas que sumen al hogar.</Text>
             </Panel>
           ) : (
             <ListCard>
@@ -513,7 +537,7 @@ export function DashboardScreen() {
                   subtitle={x.sub}
                   amount={money(Math.abs(x.valor), monedaPrin)}
                   negativo={x.valor < 0}
-                  logo={{ icon: ICONO_CAT[x.cat] }}
+                  logo={{ emoji: EMOJI_CATEGORIA_FUNCIONAL[x.cat] }}
                   onPress={() => nav.go('PatrimonioSeccion', { categoria: x.cat, alcance, moneda: monedaPrin })}
                 />
               ))}
@@ -521,62 +545,289 @@ export function DashboardScreen() {
           )}
         </Section>
       )}
-
-      {ver.objetivos && enProgreso.length > 0 && (
-        <Section title="Metas" accion="Ver todas" onAccion={() => nav.go('Planificar')}>
-          {enProgreso.slice(0, 3).map((o) => (
-            <GoalCard
-              key={o.id}
-              name={o.nombre}
-              hint={`${Math.round(o.progresoPorcentaje)}%`}
-              pct={o.progresoPorcentaje}
-              footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
-              onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-              accion={
-                o.puedoModificar
-                  ? { label: 'Ahorrar', onPress: () => nav.go('Ahorrar', { objetivoId: o.id }) }
-                  : undefined
-              }
-            />
-          ))}
+      {ver.objetivos && metasTop.length > 0 && (
+        <Section
+          title="Tus metas"
+          accion={enProgreso.length > 2 ? `Ver todas (${enProgreso.length})` : 'Ver todas'}
+          onAccion={() => nav.go('Objetivos')}
+        >
+          <View style={styles.metas}>
+            {metasTop.map((o) => (
+              <Pressable
+                key={o.id}
+                style={({ pressed }) => [styles.meta, pressed && { opacity: 0.7 }]}
+                onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.nombre}: ${Math.round(o.progresoPorcentaje)}%`}
+              >
+                <AnilloAvance pct={o.progresoPorcentaje}>
+                  <Text style={styles.metaEmoji}>{emojiMeta(o.id, emojis.metas)}</Text>
+                </AnilloAvance>
+                <Text style={styles.metaNombre} numberOfLines={2}>
+                  {o.nombre}
+                </Text>
+                <Text style={styles.metaSub}>
+                  <Text style={styles.metaPct}>{Math.round(o.progresoPorcentaje)}%</Text>
+                  {o.montoObjetivo > o.progreso ? ` · faltan ${money(o.montoObjetivo - o.progreso, o.moneda)}` : ' · ¡lista!'}
+                </Text>
+              </Pressable>
+            ))}
+            {metasTop.length === 1 ? <View style={styles.metaVacia} /> : null}
+          </View>
         </Section>
       )}
-
       {ver.flujo && (
-        <Section title={`Flujo de ${MESES[hoy.getMonth()]}`} accion="Ver todos" onAccion={() => nav.go('Movimientos')}>
+        <Section title={`Así va ${MESES[hoy.getMonth()]}`} accion="Ver todo" onAccion={() => nav.go('Movimientos')}>
           <Panel gap={0}>
             {flujo ? (
               <>
-                <Row left="Ingresos" right={money(flujo.ingresos, flujo.moneda)} />
-                <Row left="Gastos" right={money(flujo.gastos, flujo.moneda)} />
+                <Row left="📥 Te entró" right={money(flujo.ingresos, flujo.moneda)} />
+                <Row left="📤 Gastaste" right={money(flujo.gastos, flujo.moneda)} />
                 <Row
-                  left="Balance"
-                  right={<MoneyText monto={flujo.ingresos - flujo.gastos} moneda={flujo.moneda} style={styles.balance} />}
+                  left={balance >= 0 ? '🎉 Te sobra' : '⚠️ Gastaste de más'}
+                  right={
+                    <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
+                      {money(Math.abs(balance), flujo.moneda)}
+                    </Text>
+                  }
                 />
               </>
             ) : (
-              <Text style={styles.muted}>Sin movimientos este mes.</Text>
+              <Text style={styles.muted}>Todavía no anotas nada este mes.</Text>
             )}
           </Panel>
         </Section>
       )}
-
       {ver.accesos && (
-        <Section title="Accesos rápidos">
+        <Section title="Atajos">
           <QuickActions
             items={[
-              { icon: 'swap-vertical-outline', label: 'Movimiento', onPress: anotar.abrir },
+              { icon: 'add-circle-outline', label: 'Anotar', onPress: anotar.abrir },
               { icon: 'flag-outline', label: 'Metas', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
-              { icon: 'wallet-outline', label: 'Mi patrimonio', onPress: verPatrimonio },
+              { icon: 'wallet-outline', label: 'Tu plata', onPress: verPatrimonio },
             ]}
           />
         </Section>
       )}
-
       <ErrorText>{error}</ErrorText>
       {anotar.hoja}
     </Screen>
+  );
+}
+
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const fechaLarga = (d: Date) => {
+  const t = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+/** Orden de las tarjetas: primero lo del día a día (cuentas y tarjetas), después lo demás. */
+const ORDEN_TARJETA = ['LIQUIDEZ', 'DEUDA', 'CREDITO', 'INVERSION', 'RESERVA', 'ACTIVO'];
+
+type Tarjeta = { el: ElementoPatrimonialDTO; valor: number };
+
+/** Cuentas activas con tu parte del valor, en el orden de las tarjetas. */
+function cuentasParaTarjetas(elementos: ElementoPatrimonialDTO[], usuarioId: string): Tarjeta[] {
+  return elementos
+    .filter((e) => e.estado !== 'INACTIVO')
+    .map((el) => ({
+      el,
+      valor: (el.valorVigente * (el.propietarios.find((p) => p.usuarioId === usuarioId)?.porcentaje ?? 100)) / 100,
+    }))
+    .sort(
+      (a, b) =>
+        ORDEN_TARJETA.indexOf(a.el.categoriaFuncional) - ORDEN_TARJETA.indexOf(b.el.categoriaFuncional) ||
+        Math.abs(b.valor) - Math.abs(a.valor),
+    );
+}
+
+
+const MAX_TARJETAS = 3;
+const MAX_MOVIMIENTOS = 4;
+
+/**
+ * G35: las cuentas como tarjetas de color (3 + "Ver todas") y, debajo, los
+ * movimientos del mes de la que está elegida, con un interruptor para ver los
+ * de todas tus cuentas. Solo 4 filas: el resto vive en la pestaña Movimientos.
+ */
+function CuentasYMovimientos({
+  tarjetas,
+  emojis,
+  movsMes,
+  categorias,
+  mes,
+  onVerTodas,
+}: {
+  tarjetas: Tarjeta[];
+  emojis: Record<string, string>;
+  movsMes: MovimientoReporteDTO[];
+  categorias: CategoriaMovimientoDTO[];
+  mes: string;
+  onVerTodas: () => void;
+}) {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
+  const nav = useNav();
+  const { token } = useSession();
+  const visibles = tarjetas.slice(0, MAX_TARJETAS);
+  const [selId, setSelId] = useState(visibles[0].el.id);
+  const [soloCuenta, setSoloCuenta] = useState(true);
+  const [eventos, setEventos] = useState<EventoFinancieroDTO[] | null>(null);
+  const sel = visibles.find((t) => t.el.id === selId) ?? visibles[0];
+
+  useEffect(() => {
+    if (!soloCuenta) return;
+    let vivo = true;
+    setEventos(null);
+    api
+      .get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${sel.el.id}`, token)
+      .then((evs) => vivo && setEventos(evs))
+      .catch(() => vivo && setEventos([]));
+    return () => {
+      vivo = false;
+    };
+  }, [sel.el.id, soloCuenta, token]);
+
+  const catPorId = new Map(categorias.map((x) => [x.id, x]));
+  const emojiDe = (categoriaId: string | null, tipo: string) =>
+    emojiCategoria(categoriaId ? catPorId.get(categoriaId) : null) ?? emojiTipoMovimiento(tipo);
+  const subDe = (categoriaId: string | null, tipo: string, fecha: string) =>
+    `${fechaLegible(fecha)} · ${categoriaId ? (catPorId.get(categoriaId)?.nombre ?? etiqueta(tipo)) : etiqueta(tipo)}`;
+
+  const hoy = new Date();
+  const delMes = (f: string) => {
+    const d = new Date(`${f}T00:00:00`);
+    return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth();
+  };
+
+  let filas: { id: string; titulo: string; sub: string; emoji: string; monto: number; moneda: string }[] = [];
+  if (soloCuenta) {
+    // Como en el detalle de la cuenta: la corrección se junta con su original.
+    const evs = eventos ?? [];
+    const correccionDe = new Map(evs.filter((e) => e.correccionDeId).map((e) => [e.correccionDeId as string, e]));
+    filas = evs
+      .filter((e) => !e.correccionDeId && !e.anulado && delMes(e.fecha))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha))
+      .slice(0, MAX_MOVIMIENTOS)
+      .map((e) => {
+        const corr = correccionDe.get(e.id);
+        const monto =
+          (e.impactos.find((i) => i.elementoId === sel.el.id)?.monto ?? e.monto) +
+          (corr?.impactos.find((i) => i.elementoId === sel.el.id)?.monto ?? 0);
+        return {
+          id: e.id,
+          titulo: e.glosa || etiqueta(e.tipo),
+          sub: subDe(e.categoriaId, e.tipo, e.fecha),
+          emoji: emojiDe(e.categoriaId, e.tipo),
+          monto,
+          moneda: e.moneda,
+        };
+      });
+  } else {
+    filas = [...movsMes]
+      .sort((a, b) => b.fecha.localeCompare(a.fecha))
+      .slice(0, MAX_MOVIMIENTOS)
+      .map((m) => ({
+        id: m.eventoId,
+        titulo: m.glosa || etiqueta(m.tipo),
+        sub: subDe(m.categoriaId, m.tipo, m.fecha),
+        emoji: emojiDe(m.categoriaId, m.tipo),
+        monto: m.tipo === 'GASTO' ? -m.monto : m.tipo === 'INGRESO' || m.tipo === 'SALDO_INICIAL' ? m.monto : (m.efectoPropio ?? 0),
+        moneda: m.moneda,
+      }));
+  }
+
+  return (
+    <>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carrusel} contentContainerStyle={styles.carruselFila}>
+        {visibles.map((t, i) => {
+          const on = t.el.id === sel.el.id;
+          return (
+            <Pressable
+              key={t.el.id}
+              onPress={() => {
+                setSelId(t.el.id);
+                setSoloCuenta(true);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${t.el.nombre}: ${money(t.valor, t.el.moneda)}. Ver sus movimientos`}
+              style={[
+                styles.tarjeta,
+                // Por posición: tarjetas vecinas nunca repiten color.
+                { backgroundColor: c.tarjetas[i % c.tarjetas.length] },
+                on ? { borderColor: c.primary } : { opacity: 0.6 },
+              ]}
+            >
+              <View style={styles.tarjetaCirculo} />
+              <Text style={styles.tarjetaEmoji}>{emojiElemento(t.el, emojis)}</Text>
+              <Text style={styles.tarjetaNombre} numberOfLines={1}>
+                {t.el.nombre}
+              </Text>
+              <Text style={styles.tarjetaValor} numberOfLines={1}>
+                {money(t.valor, t.el.moneda)}
+              </Text>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          onPress={onVerTodas}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver todas tus cuentas (${tarjetas.length})`}
+          style={[styles.tarjeta, styles.tarjetaMas]}
+        >
+          <Text style={styles.tarjetaMasTxt}>Ver todas{tarjetas.length > MAX_TARJETAS ? ` (${tarjetas.length})` : ''}</Text>
+        </Pressable>
+      </ScrollView>
+
+      <ListCard>
+        <View style={styles.swFila}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.swTitulo} numberOfLines={1}>
+              {soloCuenta ? `Solo ${sel.el.nombre}` : 'Todas tus cuentas'} · {mes}
+            </Text>
+            {soloCuenta ? (
+              <Pressable
+                onPress={() => nav.go('ElementoDetalle', { elementoId: sel.el.id })}
+                hitSlop={6}
+                accessibilityRole="button"
+              >
+                <Text style={styles.swLink}>Ver la cuenta</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          <Switch
+            value={soloCuenta}
+            onValueChange={setSoloCuenta}
+            trackColor={{ true: c.primary, false: c.faint }}
+            thumbColor={c.bg}
+            ios_backgroundColor={c.faint}
+            accessibilityLabel="Ver solo los movimientos de la cuenta elegida"
+          />
+        </View>
+        {soloCuenta && eventos === null ? (
+          <Text style={styles.swVacio}>Cargando…</Text>
+        ) : filas.length === 0 ? (
+          <Text style={styles.swVacio}>Sin movimientos este mes.</Text>
+        ) : (
+          filas.map((f) => (
+            <TxRow
+              key={f.id}
+              title={f.titulo}
+              subtitle={f.sub}
+              amount={`${f.monto < 0 ? '−' : f.monto > 0 ? '+' : ''}${money(Math.abs(f.monto), f.moneda)}`}
+              positivo={f.monto > 0}
+              logo={{ emoji: f.emoji }}
+              onPress={() => nav.go('MovimientoDetalle', { eventoId: f.id })}
+            />
+          ))
+        )}
+        <Pressable onPress={() => nav.irATab('Movimientos')} accessibilityRole="button" style={styles.verMovs}>
+          <Text style={styles.swLink}>Ver todos los movimientos</Text>
+        </Pressable>
+      </ListCard>
+    </>
   );
 }
 
@@ -595,7 +846,7 @@ function Paso({
 }) {
   return (
     <Pressable style={styles.paso} onPress={onPress} accessibilityRole="button" accessibilityLabel={texto} accessibilityState={{ checked: hecho }}>
-      <Text style={{ fontSize: 15 }}>{hecho ? '✓' : '○'}</Text>
+      <Text style={{ fontSize: 15 }}>{hecho ? '✅' : '⬜'}</Text>
       <Text style={[styles.pasoTxt, hecho && { color: c.mutedDim, textDecorationLine: 'line-through' }]}>{texto}</Text>
     </Pressable>
   );
@@ -606,19 +857,65 @@ const crearEstilos = (c: Paleta) =>
     section: tipoDe(c).seccion,
     muted: tipoDe(c).nota,
     headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    balance: { fontSize: 14, fontWeight: '700' },
+    fecha: { fontSize: 12, color: c.muted, fontWeight: '600' },
+    hola: { fontSize: 20, color: c.text, fontWeight: '800' },
+    balance: { fontSize: 14, fontWeight: '800' },
     resta: { fontSize: 14, color: c.muted, textAlign: 'right' },
+    libre: { fontSize: 15, fontWeight: '800', color: c.ok, textAlign: 'right' },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     pasoTxt: { fontSize: 14, color: c.text },
-    alerta: {
+    carrusel: { marginHorizontal: -16 },
+    carruselFila: { paddingHorizontal: 16, paddingVertical: 4, gap: 10 },
+    tarjeta: {
+      width: 168,
+      height: 108,
+      borderRadius: 20,
+      padding: 12,
+      justifyContent: 'flex-end',
+      overflow: 'hidden',
+      borderWidth: 3,
+      borderColor: 'transparent',
+    },
+    tarjetaCirculo: {
+      position: 'absolute',
+      right: -24,
+      top: -24,
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: 'rgba(255,255,255,0.15)',
+    },
+    tarjetaEmoji: { fontSize: 22, marginBottom: 'auto' },
+    tarjetaNombre: { fontSize: 13, color: '#fff', fontWeight: '600', opacity: 0.92 },
+    tarjetaValor: { fontSize: 16, color: '#fff', fontWeight: '800' },
+    tarjetaMas: { backgroundColor: c.acentoSuave, alignItems: 'center', justifyContent: 'center', width: 110 },
+    tarjetaMasTxt: { fontSize: 14, color: c.primary, fontWeight: '800', textAlign: 'center' },
+    swFila: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
-      paddingVertical: 12,
+      paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
-    alertaPunto: { width: 7, height: 7, borderRadius: 4 },
-    alertaTxt: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
-    alertaChev: { fontSize: 18, color: c.mutedDim },
+    swTitulo: { fontSize: 14, fontWeight: '700', color: c.text },
+    swLink: { fontSize: 13, fontWeight: '700', color: c.primary, marginTop: 2 },
+    swVacio: { fontSize: 13, color: c.muted, paddingVertical: 14 },
+    verMovs: { alignItems: 'center', paddingVertical: 12 },
+    metas: { flexDirection: 'row', gap: 12 },
+    meta: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 6,
+      padding: 14,
+      borderRadius: 22,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    metaVacia: { flex: 1 },
+    metaEmoji: { fontSize: 28 },
+    metaNombre: { fontSize: 14, fontWeight: '700', color: c.text, textAlign: 'center' },
+    metaSub: { fontSize: 12, color: c.muted, textAlign: 'center' },
+    metaPct: { fontWeight: '800', color: c.text },
   });

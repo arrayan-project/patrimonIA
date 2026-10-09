@@ -34,7 +34,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
-| **A** · Cuenta y autenticación | G4 (captcha), G34 | G31 |
+| **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
 | **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G25 (densidad), G32, G33 | — |
+| **I** · App: preferencias y usabilidad | G32, G33, G35 | G25 |
 
 ---
 
@@ -55,9 +55,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
-| — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
+| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 59 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); siguen las demás pantallas por tandas. | 🟡 |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
-| — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
 | — | **G31** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
@@ -86,15 +85,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-#### G34 — El login distingue mayúsculas en el email  ✅ RESUELTO (2026-10-03)
-- **Qué pasa**: `POST /auth/login` busca el email tal cual llega
-  (`auth.service.ts`, `login`), pero el registro y la recuperación de contraseña
-  lo pasan a minúsculas. Quien se registró como `juan@…` y entra escribiendo
-  `Juan@…` recibe "Credenciales inválidas". Verificado contra el backend local.
-- **Arreglo**: el login pasa el email a minúsculas en `auth.controller.ts`,
-  como el registro y el reset. Test e2e en
-  `api/test/reset-password.e2e-spec.ts` ("G34: …").
 
 ### Tema H · Notificaciones
 
@@ -125,48 +115,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   devuelve null (no rompe nada).
 
 ### Tema I · App: preferencias y usabilidad
-
-#### G25 — Sección de Ajustes / preferencias de visualización  🟡 PARCIAL (tema + hub ✅; preferencias v1 ✅ 2026-09-29; densidad ⬜)
-- ✅ (2026-09-29) **Preferencias v1** en `usuario.preferencias.visualizacion`
-  (sin migración: el JSONB ya existía y `ActualizarDatosUsuario` lo acepta):
-  `formatoFecha` (`legible` "15 mar 2026" | `numerico` "15-03-2026"),
-  `monedaPreferida` (qué moneda muestra el Inicio como principal si hay varias —
-  **no convierte**) y `dashboard` (mostrar/ocultar Composición, Disponibilidad,
-  Flujo del mes, Objetivos, Accesos rápidos). Defaults en el cliente
-  (`app/src/preferencias.tsx`, `PreferenciasProvider`); pantalla Ajustes ›
-  Apariencia › Visualización. Al guardar se parte del objeto vigente para no
-  pisar `notificaciones`. `fechaLegible()` lee la preferencia, así que aplica a
-  toda la app.
-- **Decisión usuario vs. hogar**: lo personal va en `usuario.preferencias`; lo
-  del hogar ya tiene su lugar normalizado (`categoria_movimiento`,
-  `tipo_elemento`, `hogar.moneda_consolidacion`), así que **no** se agrega
-  `hogar.configuracion JSONB`. El tema sigue siendo del dispositivo.
-- ⬜ Densidad (compacta/cómoda): toca los estilos de todos los componentes de
-  `ui/`; se deja para cuando se revise el sistema de diseño.
-- `GET /usuarios/me` ya devuelve `preferencias`; hay pantalla Ajustes (hub) y
-  selector de tema (Fase 28). Falta: darle forma al objeto de preferencias
-  (formato de fecha, secciones visibles del dashboard, densidad, moneda de
-  despliegue) — cada toggle es chico — y 📋 decidir qué es del usuario y qué del
-  hogar (`hogar.configuracion JSONB` vs. tablas).
-- **Qué falta**: un lugar para administrar de forma granular lo que se muestra —
-  categorías, etiquetas, agrupaciones, formato de fecha, secciones visibles del
-  dashboard, tema, densidad, moneda de despliegue preferida, tipos de elemento
-  sugeridos.
-- **Estado actual**: `usuario.preferencias JSONB` **ya existe** en el esquema
-  (DATABASE_DESIGN §87) y `ActualizarDatosUsuario` (#44) ya la acepta (reemplazo
-  del objeto completo). DDD Sección B lista "Preferencias globales" como
-  responsabilidad del Usuario. El lado de lectura ya está: `GET /usuarios/me`
-  devuelve `preferencias`.
-- **Recomendación**:
-  - Darle forma a `preferencias` (esquema de
-    preferencias conocido, con defaults en el cliente).
-  - Preferencias **personales** → `usuario.preferencias`. Config **del hogar**
-    (categorías, moneda de consolidación, tipos de elemento sugeridos) → tabla
-    propia o `hogar` (hoy `hogar` solo tiene `nombre` + `moneda_consolidacion`).
-  - Pantalla **Ajustes** con sub-secciones: Perfil · Categorías · Etiquetas ·
-    Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
-- **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
-  ¿`hogar.configuracion JSONB` o tablas normalizadas?
 
 #### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ y ajustes ✅ 2026-09-29; validación con persona nueva ✅ 2026-09-29, resultado negativo → G33)
 - ✅ (2026-09-29) **Revisión heurística** en
@@ -701,6 +649,23 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
+#### G35 — Mejora visual pantalla por pantalla  ⬜ PENDIENTE (abierto 2026-10-09; V-1 a V-3 decididas)
+- **Qué pasa**: después de G33 la interfaz mejoró, pero Juan la siente poco
+  amigable y demasiado corporativa.
+- **Plan**: [`Docs/usabilidad/MEJORA_VISUAL_S02.md`](Docs/usabilidad/MEJORA_VISUAL_S02.md)
+  (fuente de verdad): inventario de las 59 pantallas con sus acciones,
+  agrupadas en 6 tandas por uso. Visual y textos: no cambian dominio,
+  backend, comandos ni flujos. Paso 0: elegir una dirección visual común sobre el
+  Inicio y aplicarla a las piezas de `app/src/ui/`; después, pantalla por
+  pantalla, cada una con su ficha (cómo se ve, qué mejorar, decisión de Juan).
+- **Decidido (Juan, 2026-10-09)**: V-1 primero la dirección común; V-2 los
+  textos entran; V-3 se mergea a medida que se prueba (el mes de Zoily aún no
+  empieza). Paso 0 elegido tras tres rondas (2026-10-09): resumen de
+  siempre con textos nuevos, cuentas como tarjetas con sus movimientos,
+  metas en anillo, paleta lila pastel, letra Nunito y emojis configurables.
+  Implementado junto con el Inicio en `feat/G35-P0-inicio`, probado por Juan
+  y mergeado (2026-10-09). Siguiente: el resto de la tanda 1 del documento.
+
 ---
 
 # Parte 2 · Implementado / decisión cerrada
@@ -751,7 +716,7 @@ desplegado en Render después de aplicar la migración 026 en Neon (2026-09-29).
 |---|-----|------------------------|--------|
 | 1 | **G31** | Código de 6 dígitos en vez del JWT: tabla `codigo_verificacion` (migración 026), HMAC, 15 min, 5 intentos. | ✅ |
 | 2 | **G4** | Mismo mecanismo para el registro: `POST /auth/verificar-codigo-registro` canjea el código por el token. | ✅ (captcha sigue 🔒) |
-| 3 | **G25** | Preferencias v1 en `usuario.preferencias.visualizacion`; lo del hogar se queda en sus tablas. Densidad pendiente. | 🟡 |
+| 3 | **G25** | Preferencias v1 en `usuario.preferencias.visualizacion`; lo del hogar se queda en sus tablas. Densidad descartada (2026-10-09). | ✅ |
 | 4 | **G14** | Consumo parcial: se divide la reserva (sin migración). | ✅ |
 | 5 | **G11** | Anular/corregir intermedias: impacto compensatorio en la siguiente (`valorizacion` sigue inmutable). | ✅ |
 | 6 | **U3** | Se deja diferido a propósito (aporta poco). | — |
@@ -883,6 +848,15 @@ Planificar).
     requiere configurar el scheme/universal links en la app.
 - **Nota**: sin dominio propio los correos pueden caer en spam; si hay dominio,
   autenticarlo en Brevo (SPF/DKIM) y cambiar `EMAIL_REMITENTE`.
+
+#### G34 — El login distingue mayúsculas en el email  ✅ RESUELTO (2026-10-03)
+- **Qué pasa**: `POST /auth/login` busca el email tal cual llega
+  (`auth.service.ts`, `login`), pero el registro y la recuperación de contraseña
+  lo pasan a minúsculas. Quien se registró como `juan@…` y entra escribiendo
+  `Juan@…` recibe "Credenciales inválidas". Verificado contra el backend local.
+- **Arreglo**: el login pasa el email a minúsculas en `auth.controller.ts`,
+  como el registro y el reset. Test e2e en
+  `api/test/reset-password.e2e-spec.ts` ("G34: …").
 
 ### Tema B · Hogar, membresías y consolidación
 
@@ -1113,8 +1087,8 @@ ya cerrados en Fases 50–51).
   (`#editarCampos` extendido). Solo se persisten/leen para categoría DEUDA/CREDITO.
 
 #### G17 — Deuda/Crédito: signo del valor_vigente y relación con valor_pendiente (Fase 8)  ✅ RESUELTO (intereses vía Ajuste, Fase 37, P8)
-- Signo, invariante y pago-por-transferencia: ✅. Abierto (📋): ¿intereses como
-  Ajuste o como evento propio? (con §B3 ya está el campo `tasa_interes`).
+- Signo, invariante y pago-por-transferencia: ✅. Intereses: ✅ como Ajuste
+  (Fase 37, P8; con §B3 ya está el campo `tasa_interes`).
 - **Qué falta**: ni el DDD ni DATABASE_DESIGN fijan el signo de
   `elemento_patrimonial.valor_vigente` para una DEUDA, ni cómo se relaciona con
   `valor_pendiente` cuando cambian por evento/ajuste.
@@ -1217,8 +1191,8 @@ ya cerrados en Fases 50–51).
 
 #### G23 — Categorización de movimientos: categoría vs. etiqueta  ✅ RESUELTO (categorías 15c + jerárquicas Fase 39/P7; etiquetas 15i; agrupaciones 15j)
 - Categorías (15c), etiquetas (15i), agrupaciones de elementos (15j), presupuesto
-  por rubro (15d): ✅. Abierto (📋): **categorías jerárquicas** (`categoria_padre_id`,
-  §B9) — hoy lista plana.
+  por rubro (15d): ✅. Categorías jerárquicas (`categoria_padre_id`, §B9): ✅
+  (Fase 39, P7).
 - **Qué falta**: no hay forma de clasificar un gasto/ingreso ("Mercado",
   "Servicios", "Sueldo"). El presupuesto (Agregado K) solo compara totales de
   ingreso/gasto, no por rubro. No hay registro rápido de gastos recurrentes.
@@ -1373,7 +1347,7 @@ ya cerrados en Fases 50–51).
 
 #### G15 — Propiedad de Presupuesto (migración 002) y "asignaciones esperadas"  ✅ RESUELTO (propiedad: migración 002; ahorro por objetivo: Fase 41, P6)
 - Propiedad: ✅ (migración 002). "Asignaciones esperadas" / línea de ahorro por
-  objetivo: 📋 DECISIÓN (§B7) — el presupuesto por rubro de gasto ya existe (G26).
+  objetivo: ✅ (Fase 41, P6; §B7) — el presupuesto por rubro de gasto ya existe (G26).
 - **Qué falta**: el esquema de `presupuesto` no tiene columna de propiedad, pero
   AS #49 audita "usuario/hogar" y `tipo` INDIVIDUAL/FAMILIAR implica dueños
   distintos. Además el input de AS #49 menciona "asignaciones esperadas" y el
@@ -1410,8 +1384,9 @@ ya cerrados en Fases 50–51).
   ya está bien así?
 
 #### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO (Fase 15d; línea de ahorro por objetivo, Fase 41/P6)
-- Líneas por categoría de gasto: ✅. Abierto (📋): ¿la suma de líneas debe cuadrar
-  con `gastos_esperados`? ¿líneas de ahorro por objetivo (cierra G15)?
+- Líneas por categoría de gasto: ✅. Líneas de ahorro por objetivo: ✅ (Fase 41,
+  P6; cierra G15). Sin decidir y sin urgencia: ¿la suma de líneas debe cuadrar
+  con `gastos_esperados`? (hoy son independientes).
 - **Qué falta**: el Presupuesto (Agregado K) solo compara totales de
   ingreso/gasto/ahorro (`ingresos_esperados`, `gastos_esperados`,
   `ahorro_esperado`). No hay forma de fijar cuánto se espera por categoría
@@ -1505,3 +1480,54 @@ ya cerrados en Fases 50–51).
     (F1 de `Docs/mockup/casos-dominio-probados.html`).
 - **Para decidir**: ¿comparación automática con el período anterior en el
   endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+
+### Tema I · App: preferencias y usabilidad
+
+#### G25 — Sección de Ajustes / preferencias de visualización  ✅ DECISIÓN CERRADA (tema + hub ✅; preferencias v1 ✅ 2026-09-29; densidad descartada 2026-10-09)
+- ✅ (2026-09-29) **Preferencias v1** en `usuario.preferencias.visualizacion`
+  (sin migración: el JSONB ya existía y `ActualizarDatosUsuario` lo acepta):
+  `formatoFecha` (`legible` "15 mar 2026" | `numerico` "15-03-2026"),
+  `monedaPreferida` (qué moneda muestra el Inicio como principal si hay varias —
+  **no convierte**) y `dashboard` (mostrar/ocultar Composición, Disponibilidad,
+  Flujo del mes, Objetivos, Accesos rápidos). Defaults en el cliente
+  (`app/src/preferencias.tsx`, `PreferenciasProvider`); pantalla Ajustes ›
+  Apariencia › Visualización. Al guardar se parte del objeto vigente para no
+  pisar `notificaciones`. `fechaLegible()` lee la preferencia, así que aplica a
+  toda la app.
+- **Decisión usuario vs. hogar**: lo personal va en `usuario.preferencias`; lo
+  del hogar ya tiene su lugar normalizado (`categoria_movimiento`,
+  `tipo_elemento`, `hogar.moneda_consolidacion`), así que **no** se agrega
+  `hogar.configuracion JSONB`. El tema sigue siendo del dispositivo.
+- ✅ (2026-10-09) **Densidad (compacta/cómoda): descartada** por decisión de
+  Juan. Nadie la pidió (venía de la lista del backlog de UI/UX) y suma una
+  elección más al usuario, en contra de la simplicidad que exige G33; el modo
+  compacto además achica las zonas táctiles. Costo alto para el valor: no hay
+  escala de espacios en `ui/tema.ts` (≈130 espacios fijos en `ui/index.tsx` y
+  ≈40 en `screens/`). Si la señal de Zoily muestra una pantalla muy apretada o
+  muy suelta, se ajusta el espaciado por defecto de esa pantalla, sin
+  preferencia. Pasar los espacios a una escala queda como mejora interna para
+  cuando se revise el sistema de diseño, no como ajuste de usuario.
+- `GET /usuarios/me` ya devuelve `preferencias`; hay pantalla Ajustes (hub) y
+  selector de tema (Fase 28). Falta: darle forma al objeto de preferencias
+  (formato de fecha, secciones visibles del dashboard, densidad, moneda de
+  despliegue) — cada toggle es chico — y 📋 decidir qué es del usuario y qué del
+  hogar (`hogar.configuracion JSONB` vs. tablas).
+- **Qué falta**: un lugar para administrar de forma granular lo que se muestra —
+  categorías, etiquetas, agrupaciones, formato de fecha, secciones visibles del
+  dashboard, tema, densidad, moneda de despliegue preferida, tipos de elemento
+  sugeridos.
+- **Estado actual**: `usuario.preferencias JSONB` **ya existe** en el esquema
+  (DATABASE_DESIGN §87) y `ActualizarDatosUsuario` (#44) ya la acepta (reemplazo
+  del objeto completo). DDD Sección B lista "Preferencias globales" como
+  responsabilidad del Usuario. El lado de lectura ya está: `GET /usuarios/me`
+  devuelve `preferencias`.
+- **Recomendación**:
+  - Darle forma a `preferencias` (esquema de
+    preferencias conocido, con defaults en el cliente).
+  - Preferencias **personales** → `usuario.preferencias`. Config **del hogar**
+    (categorías, moneda de consolidación, tipos de elemento sugeridos) → tabla
+    propia o `hogar` (hoy `hogar` solo tiene `nombre` + `moneda_consolidacion`).
+  - Pantalla **Ajustes** con sub-secciones: Perfil · Categorías · Etiquetas ·
+    Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
+- **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
+  ¿`hogar.configuracion JSONB` o tablas normalizadas?

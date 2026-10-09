@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "main": "index.ts",
   "dependencies": {
+    "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-navigation/bottom-tabs": "^7.18.18",

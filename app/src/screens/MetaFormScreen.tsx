@@ -4,10 +4,13 @@ import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
+import { emojiMeta } from '../emojis';
+import { conEmoji, usePreferencias } from '../preferencias';
 import {
   AmountInput,
   Button,
   contadorPasos,
+  ElegirEmoji,
   ElegirVarios,
   ErrorText,
   Field,
@@ -30,6 +33,7 @@ export function MetaFormScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
   const toast = useToast();
+  const { preferencias, guardarPreferencias } = usePreferencias();
   const objetivoId = nav.route.params?.objetivoId as string | undefined;
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
@@ -44,6 +48,8 @@ export function MetaFormScreen() {
   const [cargado, setCargado] = useState(!objetivoId);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // G35: el emoji es una preferencia personal (no un dato de la meta).
+  const [emoji, setEmoji] = useState(() => emojiMeta(objetivoId ?? '', preferencias.emojis.metas));
 
   useTitulo(objetivoId ? 'Editar meta' : undefined);
 
@@ -74,8 +80,16 @@ export function MetaFormScreen() {
     })();
   }, [token, objetivoId, usuario.id]);
 
+  /** Guarda el emoji elegido si cambió; si falla, la meta igual quedó guardada. */
+  const guardarEmoji = async (id: string) => {
+    if (emoji === emojiMeta(id, preferencias.emojis.metas)) return;
+    await guardarPreferencias(conEmoji(preferencias, 'metas', id, emoji)).catch(() =>
+      toast.mostrar('No se pudo guardar el emoji', 'error'),
+    );
+  };
+
   const crear = async () => {
-    await api.post(
+    const creada = await api.post<ObjetivoFinancieroDTO>(
       '/comandos/CrearObjetivoFinanciero',
       {
         nombre: nombre.trim(),
@@ -85,6 +99,7 @@ export function MetaFormScreen() {
       },
       token,
     );
+    await guardarEmoji(creada.id);
     toast.mostrar('Meta creada');
   };
 
@@ -106,6 +121,7 @@ export function MetaFormScreen() {
       );
     if (o.esMio && compartida && [...designados].sort().join() !== [...o.designados].sort().join())
       await api.post('/comandos/DefinirDesignadosObjetivo', { objetivoId: o.id, usuarioIds: designados }, token);
+    await guardarEmoji(o.id);
     toast.mostrar('Meta guardada');
   };
 
@@ -156,6 +172,7 @@ export function MetaFormScreen() {
         autoCapitalize="sentences"
         placeholder="Pie vivienda"
       />
+      <ElegirEmoji value={emoji} onChange={setEmoji} />
       {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
       {puedeCompartir && (
         <Segmented

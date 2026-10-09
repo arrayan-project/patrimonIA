@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from '../ui/Text';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useC } from '../ui/tema';
 
