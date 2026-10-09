@@ -90,6 +90,8 @@ export interface FilaEntre {
   detalle: string;
   monto: string;
   fecha: string;
+  /** toca: te pidieron y no has pagado · espera: pediste y no te pagan · resuelto: lo demás. */
+  grupo: 'toca' | 'espera' | 'resuelto';
   /** Recibida y pendiente: se puede pagar. */
   solicitudId?: string;
   eventoId?: string;
@@ -98,7 +100,7 @@ export interface FilaEntre {
 }
 
 /** Cómo va una solicitud, desde el punto de vista de quien la mira. */
-function comoVa(s: SolicitudDTO): string {
+export function comoVa(s: SolicitudDTO): string {
   const otro = s.direccion === 'ENVIADA' ? s.destinatario.nombre : s.solicitante.nombre;
   if (s.direccion === 'ENVIADA') {
     if (s.estado === 'PENDIENTE') return `⏰ Le pediste a ${otro}`;
@@ -106,7 +108,7 @@ function comoVa(s: SolicitudDTO): string {
     if (s.estado === 'RECHAZADA') return `❌ A ${otro} no le correspondía`;
     return '❌ Anulado';
   }
-  if (s.estado === 'PENDIENTE') return `⏰ ${otro} te pidió · toca para pagar`;
+  if (s.estado === 'PENDIENTE') return `⏰ ${otro} te pidió`;
   if (s.estado === 'PAGADA') return `✅ Le pagaste a ${otro}`;
   if (s.estado === 'RECHAZADA') return '❌ No te correspondía';
   return '❌ Anulado';
@@ -143,7 +145,10 @@ export function filasEntre(
       detalle: `${comoVa(s)} · ${diaCorto(fecha)}`,
       monto: formato(s.monto, s.moneda),
       fecha,
+      grupo: s.estado !== 'PENDIENTE' ? 'resuelto' : s.direccion === 'RECIBIDA' ? 'toca' : 'espera',
       solicitudId: s.direccion === 'RECIBIDA' && s.estado === 'PENDIENTE' ? s.id : undefined,
+      // Ya pagada: abre la transferencia con que se pagó.
+      eventoId: s.eventoPagoId ?? undefined,
       positivo: s.direccion === 'ENVIADA',
     };
   });
@@ -157,9 +162,14 @@ export function filasEntre(
       detalle: `${t.cuentaPropia.nombre} · ${diaCorto(t.fecha)}`,
       monto: formato(t.monto, t.moneda),
       fecha: t.fecha,
+      grupo: 'resuelto',
       eventoId: t.eventoId,
       positivo: llega,
     });
   }
-  return filas.sort((a, b) => b.fecha.localeCompare(a.fecha) || a.key.localeCompare(b.key));
+  // Lo que te toca primero; dentro de cada grupo, lo más nuevo arriba.
+  const orden = { toca: 0, espera: 1, resuelto: 2 };
+  return filas.sort(
+    (a, b) => orden[a.grupo] - orden[b.grupo] || b.fecha.localeCompare(a.fecha) || a.key.localeCompare(b.key),
+  );
 }

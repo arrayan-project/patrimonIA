@@ -69,6 +69,22 @@ test('Entre ustedes: solicitudes y transferencias con miembros, sin repetir el p
     ],
   );
   assert.equal(filas[1].solicitudId, undefined);
+  assert.equal(filas[1].eventoId, 'pago');
+});
+
+test('Entre ustedes: lo que te toca primero, después lo que esperas y al final lo resuelto', () => {
+  const filas = filasEntre(
+    [
+      sol({ id: 'r', estado: 'PAGADA', fecha: '2026-03-25' }),
+      sol({ id: 'e', direccion: 'ENVIADA', fecha: '2026-03-24' }),
+      sol({ id: 't', fecha: '2026-03-01' }),
+    ],
+    [],
+    fmt,
+  );
+  assert.deepEqual(filas.map((f) => [f.key, f.grupo]), [['s-t', 'toca'], ['s-e', 'espera'], ['s-r', 'resuelto']]);
+  assert.equal(filas[0].solicitudId, 't');
+  assert.equal(filas[0].detalle, `⏰ Juan te pidió · ${diaCorto('2026-03-01')}`);
 });
 
 test('diaCorto: el año solo si no es el actual', () => {

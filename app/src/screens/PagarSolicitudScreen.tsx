@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
@@ -6,22 +7,27 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { opcionesDeElementos } from '../opciones';
-import { ESTADO_TEXTO, explicacionPago, tituloSolicitud, type SolicitudDTO } from '../solicitudes';
+import { usePreferencias } from '../preferencias';
+import { emojiElemento } from '../emojis';
+import { comoVa, diaCorto, type SolicitudDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
+import { Text } from '../ui/Text';
 import {
   aISO,
+  BandaDetalle,
   Button,
-  contadorPasos,
+  colorAnotar,
   Cuando,
+  Dato,
+  Datos,
   Elegir,
   ErrorText,
-  ListCard,
+  MenuList,
   Nota,
-  Paragraph,
   Screen,
-  Section,
   Skeleton,
-  TxRow,
+  useC,
+  type Paleta,
 } from '../ui';
 
 /**
@@ -31,9 +37,12 @@ import {
  * la que eligió quien la pidió; "No me corresponde" la rechaza.
  */
 export function PagarSolicitudScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const toast = useToast();
+  const { preferencias } = usePreferencias();
   const { key } = useIdempotencyKey();
   const solicitudId = nav.route.params?.solicitudId as string;
 
@@ -95,13 +104,41 @@ export function PagarSolicitudScreen() {
   const origen = cuentas.find((e) => e.id === origenId);
   // Una transferencia sin anotar lleva el día en que llegó la plata; un pago, el de hoy.
   const fechaPago = fecha ?? (sinAnotar ? s.fecha : aISO(new Date()));
+  const otro = s.direccion === 'ENVIADA' ? s.destinatario.nombre : nombre;
+
+  // Qué es y cuánto, en una banda: tu parte de un gasto o plata que llegó sin anotar.
+  const banda = (sub: string) => (
+    <BandaDetalle
+      color={colorAnotar(c, 'TRANSFERENCIA')}
+      titulo={
+        s.motivo === 'GASTO_COMPARTIDO'
+          ? `🧾 ${s.direccion === 'ENVIADA' ? `Parte de ${otro}` : 'Tu parte'}${s.glosa ? ` de ${s.glosa}` : ''}`
+          : `🔁 ${s.direccion === 'ENVIADA' ? `Te llegaron de ${otro}` : `Le llegaron a ${nombre}`}`
+      }
+      monto={m}
+      sub={sub}
+    />
+  );
 
   // La que pediste, o una ya resuelta (p. ej. desde una notificación vieja): solo se informa.
   if (s.direccion === 'ENVIADA' || s.estado !== 'PENDIENTE') {
     return (
-      <Screen pie={<Button title="Listo" onPress={() => nav.back()} />}>
-        <Paragraph>{s.direccion === 'ENVIADA' ? tituloSolicitud(s) : explicacionPago(s, money)}</Paragraph>
-        <Nota>{`${m} a ${s.cuentaDestino.nombre} · ${ESTADO_TEXTO[s.estado]}`}</Nota>
+      <Screen>
+        {banda(`${comoVa(s)} · ${diaCorto(s.fecha)}`)}
+        <Datos>
+          <Dato etiqueta="🏦 Llega a" valor={s.cuentaDestino.nombre} />
+        </Datos>
+        {s.eventoPagoId ? (
+          <MenuList
+            items={[
+              {
+                title: 'Ver la transferencia',
+                emoji: '🧾',
+                onPress: () => nav.go('MovimientoDetalle', { eventoId: s.eventoPagoId }),
+              },
+            ]}
+          />
+        ) : null}
       </Screen>
     );
   }
@@ -135,46 +172,61 @@ export function PagarSolicitudScreen() {
     }
   };
 
-  const paso = contadorPasos();
-  const pDesde = paso({ hecho: !!origenId });
-  const pFecha = sinAnotar ? paso({ hecho: true }) : undefined;
-
   return (
     <Screen
       pie={
         <>
-          {origen && s.cuentaDisponible ? (
-            <Nota>{`Pasas ${m} de ${origen.nombre} a ${s.cuentaDestino.nombre}. No cuenta como gasto.`}</Nota>
-          ) : null}
           <Button
-            title={sinAnotar ? `Anotar ${m}` : `Transferir ${m}`}
+            title={sinAnotar ? `✅ Anotar ${m}` : `✅ Transferir ${m}`}
             onPress={pagar}
             loading={busy === 'pagar'}
             disabled={!origenId || !s.cuentaDisponible || busy !== null}
           />
-          <Button title="No me corresponde" variant="secondary" onPress={rechazar} loading={busy === 'rechazar'} disabled={busy !== null} />
+          <Pressable
+            onPress={rechazar}
+            disabled={busy !== null}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.noMe, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.noMeTxt}>{busy === 'rechazar' ? 'Avisando…' : '🙅 No me corresponde'}</Text>
+          </Pressable>
         </>
       }
     >
-      <Paragraph>{explicacionPago(s, money)}</Paragraph>
-      <Elegir
-        label={sinAnotar ? '¿Desde qué cuenta salió?' : '¿Desde qué cuenta le transfieres?'}
-        paso={pDesde}
-        placeholder={cuentas.length ? 'Elegir cuenta' : `No tienes cuentas en ${s.moneda}`}
-        value={origenId}
-        options={opcionesDeElementos(cuentas)}
-        onChange={setOrigenId}
-      />
-      {pFecha && <Cuando value={fechaPago} onChange={setFecha} paso={pFecha} />}
-      <Section title="Va a">
-        <ListCard>
-          <TxRow title={s.cuentaDestino.nombre} subtitle={`Cuenta de ${nombre}`} amount="" logo={{ icon: 'person-outline' }} />
-        </ListCard>
-        {!s.cuentaDisponible && (
-          <ErrorText>{`${nombre} dejó de compartir esta cuenta. Pídele que la comparta con "Que puedan transferirte".`}</ErrorText>
-        )}
-      </Section>
+      {banda(
+        s.motivo === 'GASTO_COMPARTIDO'
+          ? `${nombre} pagó${s.totalGasto != null ? ` ${money(s.totalGasto, s.moneda)}` : ''} · ${diaCorto(s.fecha)}`
+          : `Tuyos, sin anotar · ${diaCorto(s.fecha)}`,
+      )}
+      {/* La cuenta solo se pregunta si hay más de una. */}
+      {cuentas.length !== 1 && (
+        <Elegir
+          label={sinAnotar ? '¿Desde qué cuenta salió?' : '¿Desde qué cuenta le transfieres?'}
+          placeholder={cuentas.length ? 'Elegir cuenta' : `No tienes cuentas en ${s.moneda}`}
+          value={origenId}
+          options={opcionesDeElementos(cuentas, { emojis: preferencias.emojis.elementos })}
+          onChange={setOrigenId}
+        />
+      )}
+      {sinAnotar && <Cuando value={fechaPago} onChange={setFecha} />}
+      <Datos>
+        <Dato
+          etiqueta={`${origen ? emojiElemento(origen, preferencias.emojis.elementos) : '🏦'} Sale de`}
+          valor={origen?.nombre ?? '—'}
+        />
+        <Dato etiqueta="👤 Llega a" valor={`${s.cuentaDestino.nombre} de ${nombre}`} />
+      </Datos>
+      <Nota>🔁 Es una transferencia: no cuenta como gasto.</Nota>
+      {!s.cuentaDisponible && (
+        <ErrorText>{`${nombre} dejó de compartir esta cuenta. Pídele que la comparta con "Que puedan transferirte".`}</ErrorText>
+      )}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    noMe: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    noMeTxt: { fontSize: 15, fontWeight: '700', color: c.muted },
+  });
