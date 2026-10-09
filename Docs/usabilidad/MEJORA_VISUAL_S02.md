@@ -112,13 +112,13 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 ### Tanda 2 · Mi plata y mis cuentas
 
-7. **Mi patrimonio** (`PatrimonioSeccionScreen`) — Inicio. Lista de cuentas y
+7. 🟡 **Tu plata** (`PatrimonioSeccionScreen`, antes "Mi patrimonio", §6) — Inicio. Lista de cuentas y
    bienes por categoría; gráfico del último año; "Consultar otra fecha o
    período"; abrir una cuenta; Agregar cuenta o bien.
-8. **Evolución de mi patrimonio** (`EvolucionPatrimonioScreen`) — Mi
-   patrimonio. Elegir período; ver la evolución y el total en otras monedas.
-9. **Agregar cuenta o bien** (`AgregarElementoScreen`) — hoja "+", Mi
-   patrimonio, Inicio vacío. Qué es; tipo (y crear uno nuevo); nombre;
+8. 🟡 **¿Cómo ha cambiado tu plata?** (`EvolucionPatrimonioScreen`, antes
+   "Evolución de mi patrimonio", §6) — Tu plata. Elegir período; ver la evolución y el total en otras monedas.
+9. 🟡 **Agregar cuenta o bien** (`AgregarElementoScreen`, §6) — hoja "+", Tu
+   plata, Inicio vacío. Qué es; tipo (y crear uno nuevo); nombre;
    moneda; de quién es; desde cuándo; cuota y vencimiento (deudas); si se
    valoriza; después de crear: qué compartes con el hogar (o "Ahora no").
 10. **Detalle de cuenta** (`ElementoDetalleScreen`, título "Detalle") —
@@ -613,3 +613,71 @@ eso entran las 6 listas y sus formularios de crear y editar.
     atrás.
   - Al abrir Movimientos, todas las consultas se hacían dos veces (guardar el
     hogar cambiaba la función de carga); el hogar queda en un `ref`.
+
+### 7–9. Tu plata, ¿Cómo ha cambiado tu plata? y Agregar cuenta o bien (`PatrimonioSeccionScreen`, `EvolucionPatrimonioScreen`, `AgregarElementoScreen`)  🟡 (implementado, falta la prueba de Juan)
+
+- **Cómo se veían:** "Mi patrimonio" no había seguido al Inicio del Paso 0:
+  "Tu patrimonio" donde el Inicio dice "Tu plata en total", grupos con jerga
+  ("Liquidez", "Activo", "Ahorro / fondo de emergencia") e íconos de línea
+  (todas las deudas con el mismo), filas "Cuenta corriente · Cuenta
+  corriente", "Vigente" / "Parcialmente pagada" y "tuyo el 60% de 112.0…"
+  cortado; el gráfico con "mín / máx" y el enlace subrayado "Consultar otra
+  fecha o período ›"; "También hay elementos en USD." sin cifra. Evolución:
+  "3M 6M 1A 3A", "▼ 46.892.490 CLP (59.4%)" con punto y "▲ 0 USD (0%)".
+  Agregar: preguntas numeradas en gris, el monto como "0" con línea, dos
+  enlaces subrayados, tipos sin emoji y "¿Qué tipo es?" dos veces.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-tu-plata`):
+  - **Tu plata** (título nuevo, igual que el Inicio y su acceso "Tu plata"):
+    Hero "Tu plata en total" con 💰 Tienes y 💳 Debes (la misma cifra del
+    Inicio) y, en la parte blanca, "💵 Además, en USD 2.500 USD" por cada otra
+    moneda. "📈 Cómo ha cambiado" con "Ver más" (→ Evolución): el gráfico del
+    año sin mín/máx y debajo la resta que cuadra, 🗓️ Hace un año → 📍 Hoy =
+    📉 Bajó / 📈 Subió (`CambioPeriodo`, pieza común). No se repite la
+    variación de 3 meses del Inicio: dos variaciones distintas en la misma
+    pantalla confunden.
+  - Grupos con emoji y nombre sin jerga (🏦 Cuentas · 🐷 Ahorro · 📈
+    Inversiones · 🏠 Bienes · 🤝 Te deben · 💳 Deudas) y su subtotal; filas
+    con el emoji de la cuenta (`emojiElemento`, como las tarjetas del Inicio);
+    el tipo solo si no repite el nombre; "Tu parte: 60%"; el estado solo si
+    pide algo ("⏰ En mora").
+  - Cuentas desactivadas: "🗄️ Ver desactivadas (N)" al final, con sus filas
+    ("… · Desactivada"). Antes no aparecían en ninguna parte de la app (la
+    lista no pedía `incluirInactivos`), así que no había cómo llegar a
+    Reactivar. No suman en ningún total.
+  - "➕ Agregar cuenta o bien". La vista de un solo grupo (desde la
+    composición del Inicio) usa las mismas filas; en Deudas / Te deben,
+    "🏦 Con bancos y personas" y "📦 Encargos y plata de otros".
+  - **¿Cómo ha cambiado tu plata?**: "3 meses · 6 meses · 1 año · 3 años";
+    Hero "Tu plata en total hoy" con el gráfico y, en la parte blanca, la
+    misma resta (Hace 6 meses → Hoy = Bajó 46.892.490 CLP (59,4%)); "💱 En
+    otras monedas" con "Sin cambios" o "📈 Subió / 📉 Bajó X".
+  - **Agregar** (Juan: "¿Qué es?" primero): seis tarjetas 🏦 Cuenta · 🐷
+    Ahorro · 📈 Inversión · 🏠 Bien · 💳 Deuda · 🤝 Te deben, con ejemplos;
+    el resto del formulario aparece al elegir y las tarjetas quedan en una
+    fila con "Cambiar". Después: "¿De qué tipo?" (solo los tipos de lo
+    elegido, con emoji y "➕ Nuevo tipo" al final), "¿Cómo se llama?" (con un
+    ejemplo de lo elegido), el monto en `MontoBanda` (rojo en deudas, verde
+    en Te deben, lila en lo demás) con su nota dentro. En deudas: "¿Es una
+    deuda de verdad?" 💳 Sí, la debo / 📦 Es un encargo. Opcionales
+    (`Opcionales`): 💱 Otra moneda · 📅 Desde cuándo · 📈 Cambia de valor (o,
+    en deudas, 🏛️ A quién le debes · 💵 Cuota · 🏁 Hasta cuándo) · 👥 Es de
+    varios; se abren solos si tienen un error. Sin numerar. Botón "🏦 Agregar
+    cuenta / 🐷 ahorro / 📈 inversión / 🏠 bien / 💳 deuda / 🤝 lo que te
+    deben". Al crear: "🎉 [nombre] quedó agregada".
+  - El orden del formulario es lo único que cambia en comportamiento; los
+    datos que se guardan son los mismos.
+- **Verificado:** `tsc` sin errores; capturas web de Tu plata (claro y
+  oscuro), desactivadas cerradas y abiertas, Evolución, Agregar vacío, con
+  Cuenta, con Deuda y sus opcionales, la lista de tipos y "Nuevo tipo"; se
+  creó una inversión de prueba hasta "¿Qué compartes…?" y se desactivó
+  ("Prueba G35 fondo", queda en la base local); los totales no cambian con
+  las desactivadas.
+- **Fuera de este frente (anotado):**
+  - Juan (2026-10-09): ver cómo consolidar períodos largos cuando las fechas
+    no son del mes en curso (p. ej. un crédito de 2024 que entró al
+    patrimonio en 2026 hace caer el gráfico un 59%).
+  - Con "Del hogar", la lista de un grupo (desde la composición del Inicio)
+    trae solo las cuentas de los otros miembros (`alcance=hogar`), así que no
+    cuadra con la cifra del Inicio. Ya pasaba antes; arreglarlo cambia la
+    consulta, no lo visual.
