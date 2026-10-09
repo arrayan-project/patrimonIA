@@ -678,9 +678,9 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   acceso llevan el 🌳 de la marca. **Queda:** Agrupaciones ⏸ (fuera de
   Ajustes hasta usarlas en Mi patrimonio) y el ícono de la app con el árbol,
   que se hace cuando se compile la app propia (con Expo Go no se ve).
-  Anotado fuera de G35: consolidar períodos largos cuando las fechas no son
-  del mes en curso, y la lista de un grupo "Del hogar" que trae solo las
-  cuentas de los otros miembros (ver la ficha 7–9).
+  Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
+  largos cuando las fechas no son del mes en curso (G38) y la lista de un
+  grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
 
 ---
 

@@ -679,7 +679,8 @@ eso entran las 6 listas y sus formularios de crear y editar.
 - **Fuera de este frente (anotado):**
   - Juan (2026-10-09): ver cómo consolidar períodos largos cuando las fechas
     no son del mes en curso (p. ej. un crédito de 2024 que entró al
-    patrimonio en 2026 hace caer el gráfico un 59%).
+    patrimonio en 2026 hace caer el gráfico un 59%). → Resuelto en GAPS G38
+    (2026-10-09): anotar no es ganar ni perder.
   - Con "Del hogar", la lista de un grupo (desde la composición del Inicio)
     trae solo las cuentas de los otros miembros (`alcance=hogar`), así que no
     cuadra con la cifra del Inicio. Ya pasaba antes; arreglarlo cambia la
