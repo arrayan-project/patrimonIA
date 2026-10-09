@@ -260,20 +260,20 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     Desactivar, Remover, Invitar, Cerrar presupuesto, Dejar de repetir…);
     confirmar.
 
-### Tanda 6 · Acceso y primer uso
+### Tanda 6 · Acceso y primer uso  ✅ (completa, 2026-10-09)
 
-55. **Login** (`LoginScreen`) — Email; contraseña; Entrar; ¿Olvidaste tu
+55. ✅ **Login** (`LoginScreen`) — Email; contraseña; Entrar; ¿Olvidaste tu
     contraseña?; registrarme.
-56. **Registro** (`RegistroScreen`) — Nombre, email, contraseña; Crear cuenta;
+56. ✅ **Registro** (`RegistroScreen`) — Nombre, email, contraseña; Crear cuenta;
     código de registro; Confirmar registro; volver; ya tengo cuenta.
-57. **Recuperar contraseña** (`RecuperarPasswordScreen`) — Email; Enviar
+57. ✅ **Recuperar contraseña** (`RecuperarPasswordScreen`) — Email; Enviar
     código; código; nueva contraseña; Cambiar contraseña; volver a pedirlo;
     volver a iniciar sesión.
-58. **Bienvenido** (`BienvenidaScreen`) — sin hogar. Crear un hogar nuevo;
+58. ✅ **Bienvenido** (`BienvenidaScreen`) — sin hogar. Crear un hogar nuevo;
     Tengo una invitación pendiente; Cerrar sesión.
-59. **Crear hogar** (`CrearHogarScreen`) — Bienvenida. Nombre; moneda del
+59. ✅ **Crear hogar** (`CrearHogarScreen`) — Bienvenida. Nombre; moneda del
     total; crear hogar.
-60. **Invitaciones pendientes** (`InvitacionesScreen`) — Bienvenida, Hogar,
+60. ✅ **Invitaciones pendientes** (`InvitacionesScreen`) — Bienvenida, Hogar,
     Ajustes. Aceptar; Rechazar.
 
 (La hoja del "+", ítem 2, no es una pantalla, y Gastos de una categoría
@@ -1113,3 +1113,65 @@ eso entran las 6 listas y sus formularios de crear y editar.
   prender. Dato de prueba: 2 avisos de Demo marcados como no leídos en la
   base local.
 - **Rama y estado:** `feat/G35-tanda5` · probada por Juan y mergeada (2026-10-09).
+
+### 55–60. Acceso y primer uso (`LoginScreen`, `RegistroScreen`, `RecuperarPasswordScreen`, `BienvenidaScreen`, `CrearHogarScreen`, `InvitacionesScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** con la paleta y la letra del Paso 0, pero sin emojis ni
+  marca: título, párrafo gris, campos "Email" / "Contraseña" y enlaces
+  subrayados con raya ("No tengo cuenta — registrarme"). Bienvenido con dos
+  botones entre dos párrafos; Crear hogar con pasos numerados; cada
+  invitación con solo el nombre del hogar y Aceptar / Rechazar como dos
+  botones grandes. Sin sesión, la app abría en Crear cuenta (también al
+  cerrar sesión).
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisiones:
+  sin sesión se entra por **Entrar** (Login primero en la pila, porque al
+  cerrar sesión se toma la primera pantalla); una sola rama para las seis;
+  textos y emojis tal cual la propuesta.
+  - **Piezas comunes** (`ui/acceso.tsx`): cabecera de marca (🌳 en un
+    círculo lila como símbolo de crecimiento familiar, Juan 2026-10-09;
+    "PatrimonIA", "Tu plata y la de tu hogar, en orden" y el título, que
+    lleva el emoji de cada pantalla); banda 📬 del acento; enlace sin subrayar de 44 px; pie con la
+    pastilla que lleva a la otra pantalla ("¿Primera vez? ✨ Crear cuenta" /
+    "¿Ya tienes cuenta? 👋 Entrar").
+  - **Entrar:** "👋 ¡Hola de nuevo!" · "📧 Tu correo" · "🔒 Tu contraseña" ·
+    Entrar · "¿Olvidaste tu contraseña?".
+  - **Crear cuenta:** "✨ Crea tu cuenta" · "✏️ ¿Cómo te llamamos?" primero ·
+    "📧 Tu correo" · "🔒 Elige una contraseña". Paso del código: "Revisa tu
+    correo", banda "📬 Te mandamos un código a … · vence en 15 min", "🔢
+    Escribe el código", "✅ Confirmar" y "← Cambiar mis datos" (los datos se
+    ocultan en vez de quedar deshabilitados).
+  - **Recuperar:** "🔑 ¿Olvidaste tu contraseña?" con la banda 📬 en los dos
+    pasos, "📬 Mandar código", "🔒 Cambiar contraseña", "No me llegó, pedir
+    otro"; pie "¿Te acordaste? 👋 Entrar". Listo: "✅ Listo, ya tienes
+    contraseña nueva", banda "🔐 Cerramos tu sesión en todos tus teléfonos." y
+    "👋 Entrar".
+  - **Bienvenido:** "👋 Hola, {nombre}" · "¿Cómo quieres empezar?" y dos
+    tarjetas con "›": 🏠 Crear mi hogar ("Aunque vivas solo: ahí se ordena tu
+    plata") y ✉️ Me invitaron ("Únete al hogar de otra persona"). Al pie,
+    "🚪 Cerrar sesión".
+  - **Crear hogar:** sin números de paso; "🏠 ¿Cómo se llama tu hogar?" (Ej.:
+    Casa), "💱 ¿En qué moneda quieres ver el total?", pie "👑 Quedas a cargo
+    del hogar; después invitas a los demás." y "🏠 Crear mi hogar".
+  - **Invitaciones:** tarjeta "🏠 {hogar}" + "Te invitaron · {fecha}", "✅
+    Unirme" y "No, gracias" como enlace. Vacío: "📭 Todavía no te invitan" +
+    "Pídele a quien te quiera sumar que te invite con tu correo: {correo}".
+    Quién invitó no se muestra: la API solo entrega su id (backend fuera de
+    G35).
+  - Error de correo: "Escribe un correo válido." (antes "email").
+- **Verificado:** `tsc` sin errores; capturas web. Destinos: la app abre en
+  Entrar; pie → Crear cuenta y vuelta; ¿Olvidaste…? → Recuperar; Mandar
+  código → paso del código; No me llegó → vuelve al correo; código correcto →
+  Listo → Entrar; Bienvenido → Crear hogar y → Invitaciones (con la
+  invitación de prueba); Cerrar sesión → Entrar. Zonas de toque ≥44 px
+  (pastillas del pie, enlaces, tarjetas de 88 px). El paso del código de
+  Crear cuenta no aparece en local (sin correo configurado, el token llega
+  directo): revisado solo en el código. Datos de prueba en la base local:
+  usuario `nuevo.g35@patrimonia.cl` (clave demo1234, sin hogar) con una
+  invitación pendiente a "Casa Riquelme".
+- **Ícono de la app (descartado por ahora, Juan 2026-10-09):** se evaluó
+  cambiar el ícono del teléfono (hoy el de Expo por defecto, `app/assets/`)
+  por el árbol. No se hace: con Expo Go el teléfono muestra el ícono de Expo
+  Go, así que solo se vería el favicon web. Se retoma cuando se compile la
+  app propia (EAS Build / APK / TestFlight): `icon.png`, las tres capas del
+  ícono adaptable de Android, `favicon.png` y `splash-icon.png`.
+- **Rama y estado:** `feat/G35-tanda6` · aprobada por Juan y mergeada (2026-10-09).

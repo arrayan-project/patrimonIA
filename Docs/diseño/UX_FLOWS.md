@@ -118,9 +118,10 @@ Decisión de UX explícita: el paso 5 requiere que la capa de presentación sepa
 
  [Pantalla: Bienvenida / Elegir camino]
   "Todo usuario debe pertenecer a un hogar" (mensaje explicativo — REQUISITES Sección B)
-  Opción A: [Crear un hogar nuevo]
-  Opción B: [Tengo una invitación pendiente]
-  Opción C: [Esperar invitación] (estado pasivo, sin acción)
+  Opción A: [🏠 Crear mi hogar]
+  Opción B: [✉️ Me invitaron]
+  Opción C: [Esperar invitación] (estado pasivo, sin acción; desde G35 la
+            pantalla no lo dice en texto: Bienvenida es ese estado)
 
   → Opción A: [Pantalla: Crear Hogar]
   → Opción B: [Pantalla: Ingresar código/ver invitaciones]
