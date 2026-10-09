@@ -19,6 +19,15 @@ export interface MovimientoReporteDTO {
    * NULL para INGRESO/GASTO. No se suma a ningún total del período.
    */
   efectoPropio: number | null;
+  /**
+   * G39: la cuenta de donde salió la plata (impacto negativo) y a donde llegó
+   * (impacto positivo); null si no hay. La app recuerda con esto la última
+   * cuenta usada en cada puerta del "+".
+   */
+  elementoOrigenId: string | null;
+  elementoDestinoId: string | null;
+  /** G39: cuándo se anotó (no la fecha del movimiento). */
+  registradoEn: string;
 }
 
 export interface TotalesPorMoneda {
