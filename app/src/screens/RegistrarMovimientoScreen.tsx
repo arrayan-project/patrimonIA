@@ -27,6 +27,7 @@ import {
   type Previo,
   type ResultadoPlataDTO,
 } from '../personas';
+import { nombres, parteIgual, type SolicitudDTO, type TransferenciaHogarDTO } from '../solicitudes';
 import { useToast } from '../ui/Toast';
 import {
   contadorPasos,
@@ -42,8 +43,10 @@ import {
   Field,
   LinkButton,
   ListCard,
+  MoneyField,
   Nota,
   Opcional,
+  Section,
   Skeleton,
   Screen,
   TxRow,
@@ -60,8 +63,13 @@ const TITULOS: Record<Tipo, string> = {
   CONVERSION: 'Moví plata',
 };
 
-/** D-8 — paso 2 de Gasté y Recibí: de quién es la plata. */
+/**
+ * D-8 — paso 2 de Gasté y Recibí: de quién es la plata. HOGAR es "Compartido
+ * con el hogar" en Gasté (D-7) y "De alguien del hogar" en Recibí.
+ */
 type Quien = 'MIO' | 'OTRA' | 'HOGAR';
+/** Cuentas donde se recibe una transferencia de un miembro (como en el backend). */
+const RECIBEN = ['LIQUIDEZ', 'RESERVA'];
 const NUEVA = '__nueva__';
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -137,6 +145,16 @@ export function RegistrarMovimientoScreen() {
   // Movimientos de tus cuentas: los ingresos a corregir (HZ-20) y lo que te
   // transfirió alguien del hogar (D-8). Se cargan solo si hacen falta.
   const [eventosCuentas, setEventosCuentas] = useState<EventoFinancieroDTO[] | null>(null);
+  const [transferenciasHogar, setTransferenciasHogar] = useState<TransferenciaHogarDTO[] | null>(null);
+  // D-7: "Compartido con el hogar". `conQuienes` null = todos los miembros.
+  const [reparto, setReparto] = useState<'MITAD' | 'OTRO'>('MITAD');
+  const [parteOtro, setParteOtro] = useState('');
+  const [conQuienes, setConQuienes] = useState<string[] | null>(null);
+  const [recibeId, setRecibeId] = useState<string | null>(null);
+  const [compartiendo, setCompartiendo] = useState(false);
+  // Recibí → De alguien del hogar: "Avisarle a [miembro]" si la transferencia no aparece.
+  const [avisarA, setAvisarA] = useState<string | null>(null);
+  const [avisando, setAvisando] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   useTitulo((params.titulo as string | undefined) ?? TITULOS[tipo]);
@@ -194,14 +212,23 @@ export function RegistrarMovimientoScreen() {
       .catch(() => setPersonas([]));
   }, [token]);
 
-  // "De alguien del hogar" solo existe en Recibí; fuera de Gasté y Recibí no hay paso 2.
+  // Fuera de Gasté y Recibí no hay paso 2.
   useEffect(() => {
-    if ((tipo !== 'GASTO' && tipo !== 'INGRESO') || (tipo === 'GASTO' && quien === 'HOGAR')) {
-      setQuien('MIO');
-    }
-  }, [tipo, quien]);
+    if (tipo !== 'GASTO' && tipo !== 'INGRESO') setQuien('MIO');
+  }, [tipo]);
 
-  const necesitaEventos = (tipo === 'INGRESO' && quien === 'HOGAR') || previo === 'ANOTADA';
+  // D-8: los movimientos de una cuenta no dicen de quién es el otro lado; las
+  // transferencias con miembros las arma el backend.
+  const verDelHogar = tipo === 'INGRESO' && quien === 'HOGAR';
+  useEffect(() => {
+    if (!verDelHogar || transferenciasHogar) return;
+    api
+      .get<TransferenciaHogarDTO[]>('/usuarios/me/transferencias-hogar?dias=30', token)
+      .then(setTransferenciasHogar)
+      .catch(() => setTransferenciasHogar([]));
+  }, [verDelHogar, transferenciasHogar, token]);
+
+  const necesitaEventos = previo === 'ANOTADA';
   useEffect(() => {
     if (!necesitaEventos || eventosCuentas || !elementos) return;
     const cuentas = elementos.filter(
@@ -347,6 +374,75 @@ export function RegistrarMovimientoScreen() {
   const meta = tipo === 'GASTO' && !esOtra ? metasCuenta.find((m) => m.asignacionId === asignacionId) : undefined;
   const cuentaOrigen = elementos?.find((e) => e.id === origenId);
 
+  // D-7: con quiénes se comparte, cuánto le toca a cada uno y dónde te lo transfieren.
+  const esCompartido = tipo === 'GASTO' && quien === 'HOGAR';
+  const compartidoCon =
+    otrosMiembros.length === 1
+      ? otrosMiembros
+      : otrosMiembros.filter((x) => (conQuienes ?? otrosMiembros.map((y) => y.usuarioId)).includes(x.usuarioId));
+  const nombresCompartido = nombres(compartidoCon.map((x) => x.nombre));
+  const parte =
+    otrosMiembros.length === 1 && reparto === 'OTRO'
+      ? Number(parteOtro) || 0
+      : parteIgual(Number(monto) || 0, compartidoCon.length, monedaEvento);
+  const errParte =
+    !esCompartido || !(Number(monto) > 0)
+      ? ''
+      : compartidoCon.length === 0
+        ? 'Elige con quién lo compartes.'
+        : parte <= 0 || parte * compartidoCon.length > Number(monto)
+          ? `Revisa cuánto le toca a ${nombresCompartido}.`
+          : '';
+  const cuentasRecibe = (elementos ?? []).filter(
+    (e) => RECIBEN.includes(e.categoriaFuncional) && e.naturaleza !== 'CUSTODIA_INFORMAL' && e.moneda === monedaEvento,
+  );
+  // Viene elegida la cuenta del gasto si puede recibir plata.
+  const recibe =
+    cuentasRecibe.find((e) => e.id === recibeId) ?? cuentasRecibe.find((e) => e.id === origenId) ?? null;
+  // D-2: en "Nada", los demás no ven la cuenta y no pueden transferirte.
+  const oculta = (e: ElementoPatrimonialDTO | null | undefined) =>
+    !!e && (e.visibilidadPorTipo?.EXISTENCIA ?? e.visibilidad) === 'PRIVADA';
+
+  /** D-2: sube la cuenta a "Que puedan transferirte" sin tocar lo demás que comparte. */
+  const dejarTransferir = async (elementoId: string) => {
+    setCompartiendo(true);
+    setError('');
+    try {
+      await api.post(
+        '/comandos/DefinirVisibilidadElementoPatrimonial',
+        { elementoId, niveles: { EXISTENCIA: 'FAMILIAR' } },
+        token,
+      );
+      setElementos(await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setCompartiendo(false);
+    }
+  };
+
+  /** Recibí → De alguien del hogar: la transferencia no aparece y se le avisa al miembro. */
+  const avisar = async (usuarioId: string, nombre: string) => {
+    if (!destinoId) return;
+    setAvisando(true);
+    setError('');
+    try {
+      await api.comando<SolicitudDTO>(
+        '/comandos/AvisarTransferenciaSinAnotar',
+        { usuarioId, monto: Number(monto), cuentaDestinoId: destinoId, fecha },
+        token,
+        key,
+      );
+      toast.mostrar(`Le avisamos a ${nombre}`);
+      permitirSalida();
+      nav.back();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    } finally {
+      setAvisando(false);
+    }
+  };
+
   const onSubmit = async () => {
     if (errMonto || errMismo || !puedeEnviar) return;
     setError('');
@@ -371,6 +467,29 @@ export function RegistrarMovimientoScreen() {
         toast.mostrar(
           `${saldoTexto(r.persona, r.saldo, r.moneda, money)}${r.anuladoId ? '. Corregimos el ingreso' : ''}`,
         );
+        permitirSalida();
+        nav.back();
+        return;
+      }
+      if (esCompartido && recibe) {
+        await api.comando(
+          '/comandos/RegistrarGastoCompartido',
+          {
+            monto: Number(monto),
+            moneda: monedaEvento,
+            fecha,
+            elementoOrigenId: origenId,
+            ...(categoriaId ? { categoriaId } : {}),
+            ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
+            ...(etiquetaIds.length ? { etiquetaIds } : {}),
+            ...(meta ? { asignacionId: meta.asignacionId } : {}),
+            partes: compartidoCon.map((x) => ({ usuarioId: x.usuarioId, monto: parte })),
+            cuentaDestinoId: recibe.id,
+          },
+          token,
+          key,
+        );
+        toast.mostrar(`Le pedimos su parte a ${nombresCompartido}`);
         permitirSalida();
         nav.back();
         return;
@@ -448,24 +567,14 @@ export function RegistrarMovimientoScreen() {
     (!necesitaOrigen || !!origenId) &&
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId &&
+    (!esCompartido || (!errParte && !!recibe && !oculta(recibe))) &&
     (!esOtra ||
       (!!nombrePersona &&
         !esMiembro &&
         (!pidePrevio || (previo !== null && (previo !== 'ANOTADA' || !!ingreso)))));
 
   // D-8: lo que alguien del hogar te transfirió en los últimos 30 días.
-  const desde30 = Date.now() - 30 * DIA;
-  const delHogar = (eventosCuentas ?? [])
-    .filter((ev) => ev.tipo === 'TRANSFERENCIA' && !ev.anulado && new Date(ev.fecha).getTime() >= desde30)
-    .map((ev) => {
-      const sale = ev.impactos.find((i) => i.monto < 0 && !propios.has(i.elementoId));
-      const llega = ev.impactos.find((i) => i.monto > 0 && propios.has(i.elementoId));
-      if (!sale || !llega) return null;
-      const remitente =
-        elementosHogar.find((e) => e.id === sale.elementoId)?.propietarios[0]?.nombre ?? nombreMiembro;
-      return { ev, remitente, cuenta: nombreDe(llega.elementoId) };
-    })
-    .filter((x) => x !== null);
+  const delHogar = (transferenciasHogar ?? []).filter((t) => t.direccion === 'RECIBIDA');
 
   // Resumen fijo abajo: una frase dice qué va a pasar (plantilla Formulario).
   const m = money(Number(monto) || 0, monedaEvento);
@@ -478,10 +587,14 @@ export function RegistrarMovimientoScreen() {
       : `${tipo === 'GASTO' ? `Salen ${m} de ${nombreDe(origenId)}` : `Entran ${m} a ${nombreDe(destinoId)}`}. No es ${
           tipo === 'GASTO' ? 'gasto' : 'ingreso'
         } tuyo. ${saldoTexto(nombrePersona, saldoQueda, monedaEvento, money)}.`
+    : !puedeEnviar && esCompartido && (errParte || oculta(recibe))
+    ? errParte || `${nombresCompartido} tiene que poder transferirte a ${recibe?.nombre}.`
     : !puedeEnviar
     ? necesitaOrigen && necesitaDestino
       ? 'Completa monto, origen y destino.'
       : 'Completa monto y cuenta.'
+    : esCompartido
+      ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}. Le pedimos a ${nombresCompartido} su parte: ${money(parte, monedaEvento)}${compartidoCon.length > 1 ? ' cada uno' : ''}.`
     : tipo === 'GASTO'
       ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}.`
       : tipo === 'INGRESO'
@@ -501,6 +614,15 @@ export function RegistrarMovimientoScreen() {
     tipo === 'GASTO'
       ? [
           { value: 'MIO', label: 'Mío' },
+          ...(otrosMiembros.length > 0
+            ? [
+                {
+                  value: 'HOGAR',
+                  label: otrosMiembros.length === 1 ? `Compartido con ${nombreMiembro}` : 'Compartido con el hogar',
+                  sub: `Pagaste algo de ${otrosMiembros.length === 1 ? 'los dos' : 'todos'} y te transfieren su parte`,
+                },
+              ]
+            : []),
           { value: 'OTRA', label: 'De otra persona', sub: 'Pagaste por alguien, o usaste o devolviste su plata' },
         ]
       : [
@@ -518,11 +640,13 @@ export function RegistrarMovimientoScreen() {
   // HZ-22: la decisión que cambia el significado del registro va en el paso 2.
   const pQuien = puedeCategorizar ? paso({ hecho: true }) : undefined;
   const delHogarModo = tipo === 'INGRESO' && quien === 'HOGAR';
+  const pParte = esCompartido ? paso({ hecho: Number(monto) > 0 && !errParte }) : undefined;
   const pPersona = esOtra ? paso({ hecho: !!nombrePersona }) : undefined;
   const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
   const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
   const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
+  const pRecibe = esCompartido ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
   const pA = necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
   const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
   const pFecha = paso({ hecho: !!fecha });
@@ -539,6 +663,11 @@ export function RegistrarMovimientoScreen() {
 
   // D-8: "De alguien del hogar" no crea nada; la transferencia la anota quien la envía.
   if (delHogarModo) {
+    const cuentasDeMiembro = elementos.filter(
+      (e) => RECIBEN.includes(e.categoriaFuncional) && e.naturaleza !== 'CUSTODIA_INFORMAL',
+    );
+    const cuentaLlegada = cuentasDeMiembro.find((e) => e.id === destinoId);
+    const avisado = otrosMiembros.length === 1 ? otrosMiembros[0] : otrosMiembros.find((x) => x.usuarioId === avisarA);
     return (
       <Screen
         pie={
@@ -561,27 +690,62 @@ export function RegistrarMovimientoScreen() {
             otrosMiembros.length === 1 ? nombreMiembro : 'tu hogar'
           } en los últimos 30 días:`}
         </Nota>
-        {eventosCuentas === null ? (
+        {transferenciasHogar === null ? (
           <Skeleton filas={2} />
         ) : delHogar.length === 0 ? (
-          <Nota>{`No llegó nada. Si falta una, pídele a ${nombreMiembro} que la anote en «Moví plata».`}</Nota>
+          <Nota>No llegó nada.</Nota>
         ) : (
-          <>
-            <ListCard>
-              {delHogar.map(({ ev, remitente, cuenta }) => (
-                <TxRow
-                  key={ev.id}
-                  title={`De ${remitente}`}
-                  subtitle={`${cuenta} · ${ev.fecha.slice(0, 10)}`}
-                  amount={money(ev.monto, ev.moneda)}
-                  positivo
-                  logo={{ icon: 'people-outline' }}
-                />
-              ))}
-            </ListCard>
-            <Nota>{`Si no aparece, pídele a ${nombreMiembro} que la anote en «Moví plata».`}</Nota>
-          </>
+          <ListCard>
+            {delHogar.map((t) => (
+              <TxRow
+                key={t.eventoId}
+                title={`De ${t.miembro.nombre}`}
+                subtitle={`${t.cuentaPropia.nombre} · ${t.fecha}`}
+                amount={money(t.monto, t.moneda)}
+                positivo
+                logo={{ icon: 'people-outline' }}
+              />
+            ))}
+          </ListCard>
         )}
+        <Section title="¿No aparece?">
+          <Nota>{`Le avisamos a ${otrosMiembros.length === 1 ? nombreMiembro : 'quien te la envió'} para que la anote.`}</Nota>
+          {otrosMiembros.length > 1 && (
+            <Elegir
+              label="¿Quién te la transfirió?"
+              placeholder="Elegir"
+              value={avisarA}
+              options={otrosMiembros.map((x) => ({ value: x.usuarioId, label: x.nombre }))}
+              onChange={setAvisarA}
+            />
+          )}
+          <Elegir
+            label="¿A qué cuenta te llegó?"
+            placeholder="Elegir cuenta"
+            value={destinoId}
+            options={opcionesDeElementos(cuentasDeMiembro)}
+            onChange={setDestinoId}
+          />
+          {oculta(cuentaLlegada) && cuentaLlegada ? (
+            <>
+              <Nota>{`${avisado?.nombre ?? 'Tu hogar'} no ve esta cuenta, así que no puede anotar la transferencia.`}</Nota>
+              <Button
+                title={`Que ${avisado ? `${avisado.nombre} pueda` : 'puedan'} transferirme aquí`}
+                variant="secondary"
+                onPress={() => dejarTransferir(cuentaLlegada.id)}
+                loading={compartiendo}
+              />
+            </>
+          ) : null}
+          <Cuando value={fecha} onChange={setFecha} />
+          <Button
+            title={`Avisarle a ${avisado?.nombre ?? 'quien te la envió'}`}
+            variant="secondary"
+            onPress={() => avisado && avisar(avisado.usuarioId, avisado.nombre)}
+            loading={avisando}
+            disabled={!(Number(monto) > 0) || !avisado || !cuentaLlegada || oculta(cuentaLlegada)}
+          />
+        </Section>
         <ErrorText>{error}</ErrorText>
       </Screen>
     );
@@ -619,6 +783,54 @@ export function RegistrarMovimientoScreen() {
       <AmountInput label="¿Cuánto?" paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} />
 
       {pasoQuien}
+
+      {pParte && (
+        <BloquePaso paso={pParte} style={styles.group}>
+          {otrosMiembros.length === 1 ? (
+            <>
+              <Elegir
+                label={`¿Cuánto le toca a ${nombreMiembro}?`}
+                paso={pParte}
+                value={reparto}
+                options={[
+                  {
+                    value: 'MITAD',
+                    label: 'La mitad',
+                    sub: Number(monto) > 0 ? money(parteIgual(Number(monto), 1, monedaEvento), monedaEvento) : undefined,
+                  },
+                  { value: 'OTRO', label: 'Otro monto' },
+                ]}
+                onChange={(v) => setReparto((v as 'MITAD' | 'OTRO' | null) ?? 'MITAD')}
+              />
+              {reparto === 'OTRO' && (
+                <MoneyField
+                  label={`Monto de ${nombreMiembro}`}
+                  value={parteOtro}
+                  onChange={setParteOtro}
+                  moneda={monedaEvento}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <ElegirVarios
+                label="¿Con quiénes?"
+                values={conQuienes ?? otrosMiembros.map((x) => x.usuarioId)}
+                onChange={setConQuienes}
+                options={otrosMiembros.map((x) => ({ value: x.usuarioId, label: x.nombre }))}
+              />
+              {compartidoCon.length > 0 && Number(monto) > 0 ? (
+                <Nota>{`Partes iguales: ${money(parte, monedaEvento)} cada uno.`}</Nota>
+              ) : null}
+            </>
+          )}
+          {errParte && (reparto === 'OTRO' ? !!parteOtro : true) ? (
+            <ErrorText>{errParte}</ErrorText>
+          ) : (
+            <Nota>{`Le pedimos su parte a ${nombresCompartido || 'tu hogar'} y te la transfiere. Lo ves en la pestaña Hogar.`}</Nota>
+          )}
+        </BloquePaso>
+      )}
 
       {pPersona && (
         <BloquePaso paso={pPersona} style={styles.group}>
@@ -733,6 +945,30 @@ export function RegistrarMovimientoScreen() {
             <Nota>
               {`${meta.nombre} tiene ${money(meta.monto, monedaEvento)} en ${cuentaOrigen?.nombre ?? 'esta cuenta'}: se descuenta eso de la meta y ${money(Number(monto) - meta.monto, monedaEvento)} de lo libre.`}
             </Nota>
+          ) : null}
+        </BloquePaso>
+      )}
+
+      {pRecibe && (
+        <BloquePaso paso={pRecibe} style={styles.group}>
+          <Elegir
+            label={`¿A qué cuenta te ${compartidoCon.length > 1 ? 'transfieren' : 'transfiere'}?`}
+            paso={pRecibe}
+            placeholder="Elegir cuenta"
+            value={recibe?.id ?? null}
+            options={opcionesDeElementos(cuentasRecibe)}
+            onChange={setRecibeId}
+          />
+          {oculta(recibe) && recibe ? (
+            <>
+              <Nota>{`${nombresCompartido || 'Tu hogar'} no ve esta cuenta, así que no puede transferirte.`}</Nota>
+              <Button
+                title={`Que ${otrosMiembros.length === 1 ? `${nombreMiembro} pueda` : 'puedan'} transferirme aquí`}
+                variant="secondary"
+                onPress={() => dejarTransferir(recibe.id)}
+                loading={compartiendo}
+              />
+            </>
           ) : null}
         </BloquePaso>
       )}

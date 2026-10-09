@@ -64,6 +64,8 @@ import { CorreccionFormScreen } from '../screens/CorreccionFormScreen';
 import { CorregirMovimientoScreen } from '../screens/CorregirMovimientoScreen';
 import { ProgramadoFormScreen } from '../screens/ProgramadoFormScreen';
 import { SacarPlataScreen } from '../screens/SacarPlataScreen';
+import { PagarSolicitudScreen } from '../screens/PagarSolicitudScreen';
+import { EntreMiembrosScreen } from '../screens/EntreMiembrosScreen';
 import { ValorEnFechaScreen } from '../screens/ValorEnFechaScreen';
 import { AjustesElementoScreen } from '../screens/AjustesElementoScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
@@ -179,6 +181,8 @@ const TITULOS: Record<string, string> = {
   CorregirMovimiento: 'Editar movimiento',
   ProgramadoForm: 'Editar programado',
   SacarPlata: 'Sacar',
+  PagarSolicitud: 'Pagar',
+  EntreMiembros: 'Entre ustedes',
   ValorEnFecha: 'Valor en otra fecha',
   AjustesElemento: 'Ajustes de la cuenta',
 };
@@ -232,6 +236,8 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['CorregirMovimiento', CorregirMovimientoScreen],
   ['ProgramadoForm', ProgramadoFormScreen],
   ['SacarPlata', SacarPlataScreen],
+  ['PagarSolicitud', PagarSolicitudScreen],
+  ['EntreMiembros', EntreMiembrosScreen],
   ['ValorEnFecha', ValorEnFechaScreen],
   ['AjustesElemento', AjustesElementoScreen],
 ];

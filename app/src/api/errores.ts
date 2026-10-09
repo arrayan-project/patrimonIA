@@ -32,6 +32,16 @@ const MENSAJES: Record<string, (d: Record<string, unknown>) => string> = {
   META_SIN_CUENTA: () => 'Elige en qué cuenta se guarda la plata de la meta.',
   MONEDA_DISTINTA: () => 'Todas las cuentas tienen que estar en la moneda de la meta.',
   ORIGEN_REPETIDO: () => 'Elegiste la misma cuenta dos veces.',
+  // G33 bloque 9: solicitudes entre miembros (D-7, "Avisarle a [miembro]").
+  DESTINO_NO_VISIBLE: () =>
+    'Tu hogar no puede transferir a esa cuenta. Compártela con "Que puedan transferirte".',
+  DESTINO_AJENO: () => 'La cuenta donde recibes tiene que ser tuya.',
+  PARTES_SUPERAN_TOTAL: () => 'Las partes suman más que el gasto.',
+  PARTES_NO_VALIDAS: () => 'Revisa con quién compartes el gasto.',
+  NO_ES_MIEMBRO: () => 'Esa persona no es de tu hogar.',
+  SOLICITUD_NO_ENCONTRADA: () => 'No encontramos esa solicitud.',
+  SOLICITUD_AJENA: () => 'Esta solicitud la responde el otro miembro.',
+  SOLICITUD_RESUELTA: () => 'Esta solicitud ya está resuelta.',
 };
 
 export function traducirError(codigo: unknown, datos: unknown, mensaje: string): string {
