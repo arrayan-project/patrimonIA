@@ -782,6 +782,17 @@ a opcional (GAPS G2). **Visibilidad y propiedad se heredan del elemento**
 afectado — no hay columnas ni reglas propias. Materializar dispara un
 `RegistrarEventoFinanciero` del tipo correspondiente.
 
+**Recurrencia** (G33, D-6 / HZ-16). Un programado puede repetirse cada mes o
+cada año, el mismo día, y lleva categoría (solo INGRESO y GASTO, G23). Cada
+ocurrencia es su propio movimiento programado (1 programado → 1 evento); las de
+una serie comparten `serie_id`. Cuando la última ocurrencia llega a su fecha se
+genera la siguiente, aunque las anteriores sigan sin respuesta. **Ninguna se
+materializa sola**: al llegar la fecha se avisa "¿Se pagó?" (o "¿Llegó?" en un
+ingreso; Principio 4) y queda PENDIENTE hasta que el usuario confirma (puede
+ajustar el monto), la cancela ("Este mes no") o deja de repetir la serie. La
+ocurrencia generada deriva de la serie, como el aviso: no es un comando del
+usuario y no se audita; su materialización sí.
+
 ## X.5 · Objetivo Financiero y Asignación (§H, §J)
 
 **Propiedad** (GAPS G13). Son **personales** del creador por defecto. Un objetivo

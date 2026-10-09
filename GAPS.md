@@ -299,6 +299,20 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   cuentas de los miembros agrupadas por persona en Nueva plantilla y Nuevo
   programado (solo en Transferencia); la lista de plantillas y el detalle del
   programado muestran el nombre de la cuenta ajena. D-6 sigue en el bloque 10.
+- **Bloque 10a de la Fase E — `DOMINIO` D-6 (HZ-16), recurrencia de
+  programados en el backend (rama `feat/G33-E10a-recurrencia`, sin probar por
+  Juan)**: migración 028 (`periodicidad`, `dia`, `serie_id`, `categoria_id`,
+  `avisado`). Una fila por ocurrencia; la serie siempre tiene una futura y las
+  vencidas sin respuesta quedan pendientes. Revisión idempotente (cron cada
+  hora, al arrancar y al listar; Render free duerme, así que el aviso puede
+  llegar al abrir la app) que genera la siguiente ocurrencia y avisa una vez
+  `PROGRAMADO_VENCIDO` ("Luz · 35.000 CLP — ¿Se pagó?"; "¿Llegó?" en un
+  ingreso). "Hoy" es la fecha de Chile. Materializar pasa categoría y detalle
+  al evento. `CancelarMovimientoProgramado` con `serie` = "Dejar de repetir".
+  Las filas existentes quedan como serie de una vez; las pendientes vencidas
+  reciben su primer aviso. Sigue el 10b (app: "¿Se repite?" en Nuevo
+  programado y en Gasté/Recibí/Moví plata, aviso con Sí, se pagó · Cambiar
+  monto · Este mes no, y plantillas como "Frecuentes" en chips).
 - **Bloque 8b de la Fase E — `UI` D-8 + HZ-23, las dos puertas y "¿de quién
   es?" (✅ mergeado, 2026-10-04)**: el menú `+` del
   Inicio pasa a Gasté · Recibí · Moví plata · Ahorrar para una meta · Pagar

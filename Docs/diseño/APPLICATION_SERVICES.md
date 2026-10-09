@@ -117,15 +117,22 @@ Convención: “Recalcula (W)” significa que dispara la Política transversal 
 
 ## 13. CrearMovimientoProgramado
 
-- Input: monto planificado, fecha programada, elemento(s) destino, observaciones.
-- Validaciones: ninguna sobre patrimonio — no es un hecho económico todavía.
-- Orquestación: ninguna sobre patrimonio.
+- Input: monto planificado, fecha programada, elemento(s) destino, observaciones; periodicidad opcional (MENSUAL / ANUAL) y categoría opcional (G33, D-6).
+- Validaciones: ninguna sobre patrimonio — no es un hecho económico todavía. La categoría sigue la regla de RegistrarEventoFinanciero (G23): activa, de un hogar del actor, aplicable al tipo; solo INGRESO y GASTO.
+- Orquestación: ninguna sobre patrimonio. Con periodicidad, la fila abre una serie (`serie_id` = su id) y el día del mes queda guardado.
 - Output: MovimientoProgramadoDTO (id, estado = pendiente).
-- Auditoría: Creación — usuario, monto planificado, fecha programada, elemento(s) destino.
+- Auditoría: Creación — usuario, monto planificado, fecha programada, elemento(s) destino, periodicidad, categoría.
+
+**Política de recurrencia y aviso (D-6).** Una revisión idempotente (cada hora,
+al arrancar el servidor y al listar) genera la siguiente ocurrencia de cada
+serie cuya última ocurrencia llegó a su fecha, y avisa una sola vez
+(`PROGRAMADO_VENCIDO`, "¿Se pagó?" / "¿Llegó?") a los dueños del lado propio de
+cada ocurrencia pendiente vencida. No materializa nada. Las ocurrencias
+generadas no se auditan (derivan de la serie); su materialización sí.
 
 ## 14. ActualizarMovimientoProgramado
 
-- Input: id, campos a modificar (monto, fecha, elemento destino, observaciones).
+- Input: id, campos a modificar (monto, fecha, elemento destino, observaciones, categoría). En una serie cambia esa ocurrencia; las siguientes se copian de la última.
 - Validaciones: el movimiento debe estar en estado pendiente (no materializado ni cancelado).
 - Orquestación: ninguna sobre patrimonio.
 - Output: MovimientoProgramadoDTO actualizado.
@@ -135,14 +142,14 @@ Convención: “Recalcula (W)” significa que dispara la Política transversal 
 
 - Input: id del movimiento programado, datos confirmados/ajustados al momento de materializar (monto efectivo, fecha efectiva).
 - Validaciones: el movimiento debe estar en estado pendiente y con fecha programada alcanzada.
-- Orquestación: dispara RegistrarEventoFinanciero (caso de uso #10) con los datos confirmados/ajustados.
+- Orquestación: dispara RegistrarEventoFinanciero (caso de uso #10) con los datos confirmados/ajustados; el evento lleva la categoría y, como glosa, las observaciones del programado (D-6).
 - Output: EventoFinancieroDTO generado + referencia al movimiento programado origen.
 - Auditoría: Materialización — referencia al movimiento programado origen. Se registra bajo el mismo comando (aparece también referenciado desde el agregado Evento Financiero, Sección T — es un único caso de uso compartido entre ambos agregados).
 
 ## 16. CancelarMovimientoProgramado
 
-- Input: id del movimiento, motivo.
-- Validaciones: el movimiento debe estar en estado pendiente.
+- Input: id del movimiento, motivo; `serie` opcional (D-6, "Dejar de repetir").
+- Validaciones: el movimiento debe estar en estado pendiente. Con `serie`, debe repetirse (`NO_SE_REPITE`); cancela las ocurrencias pendientes que aún no llegan y la serie deja de generar (periodicidad NULL). Las vencidas sin respuesta siguen pendientes.
 - Orquestación: ninguna sobre patrimonio — no afecta saldos ni métricas históricas.
 - Output: confirmación de cancelación.
 - Auditoría: Cancelación — motivo.
