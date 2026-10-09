@@ -4,18 +4,20 @@ import { api, ApiError, type SeriePatrimonialDTO, type VariacionPatrimonialDTO }
 import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { usePreferencias } from '../preferencias';
-import { aISO, Dato, Datos, ErrorText, fechaLegible, Hero, Nota, Screen, Section, Segmented, Skeleton } from '../ui';
+import { emojiMoneda } from '../emojis';
+import { aISO, CambioPeriodo, Dato, Datos, ErrorText, fechaLegible, Hero, Nota, Screen, Section, Segmented, Skeleton } from '../ui';
 import { GraficoLinea } from '../ui/charts';
 
 const PERIODOS = ['3M', '6M', '1A', '3A'] as const;
 type Periodo = (typeof PERIODOS)[number];
 const MESES: Record<Periodo, number> = { '3M': 3, '6M': 6, '1A': 12, '3A': 36 };
-const EN: Record<Periodo, string> = { '3M': 'en 3 meses', '6M': 'en 6 meses', '1A': 'en un año', '3A': 'en 3 años' };
+const NOMBRE: Record<Periodo, string> = { '3M': '3 meses', '6M': '6 meses', '1A': '1 año', '3A': '3 años' };
+const HACE: Record<Periodo, string> = { '3M': 'Hace 3 meses', '6M': 'Hace 6 meses', '1A': 'Hace un año', '3A': 'Hace 3 años' };
 
 /**
- * Evolución de mi patrimonio (plantilla Resumen, R6): una cifra — cuánto
- * tienes hoy — y cuánto cambió en el período elegido, con el gráfico. Sin
- * campos de fecha: el período se elige con un toque.
+ * ¿Cómo ha cambiado tu plata? (plantilla Resumen, R6): una cifra — cuánto
+ * tienes hoy — con el gráfico y, debajo, la resta que cuadra (antes → hoy =
+ * subió / bajó). Sin campos de fecha: el período se elige con un toque.
  */
 export function EvolucionPatrimonioScreen() {
   const { token } = useSession();
@@ -50,12 +52,10 @@ export function EvolucionPatrimonioScreen() {
   const principal =
     data?.porMoneda.find((m) => m.moneda === preferencias.monedaPreferida) ?? data?.porMoneda[0] ?? null;
   const otras = data?.porMoneda.filter((m) => m !== principal) ?? [];
-  const cambio = (v: number, pct: number | null, moneda: string) =>
-    `${v >= 0 ? '▲' : '▼'} ${money(Math.abs(v), moneda)}${pct === null ? '' : ` (${Math.abs(pct)}%)`}`;
 
   return (
     <Screen>
-      <Segmented options={PERIODOS} value={periodo} onChange={setPeriodo} formatearOpcion={(v) => v} />
+      <Segmented options={PERIODOS} value={periodo} onChange={setPeriodo} formatearOpcion={(v) => NOMBRE[v]} />
 
       {!data ? (
         error ? <ErrorText>{error}</ErrorText> : <Skeleton filas={2} />
@@ -64,10 +64,16 @@ export function EvolucionPatrimonioScreen() {
       ) : (
         <>
           <Hero
-            label="Tu patrimonio hoy"
+            label="Tu plata en total hoy"
             value={money(principal.patrimonioHasta, principal.moneda)}
-            change={`${cambio(principal.variacion, principal.variacionPorcentaje, principal.moneda)} ${EN[periodo]}`}
-            changeDir={principal.variacion < 0 ? 'neg' : 'pos'}
+            debajo={
+              <CambioPeriodo
+                desde={HACE[periodo]}
+                antes={principal.patrimonioDesde}
+                hoy={principal.patrimonioHasta}
+                formato={(n) => money(n, principal.moneda)}
+              />
+            }
           >
             {serie && serie.puntos.length >= 2 ? (
               <View style={{ marginTop: 8 }}>
@@ -76,21 +82,23 @@ export function EvolucionPatrimonioScreen() {
                     etiqueta: fechaLegible(p.fecha),
                     valor: p.porMoneda.find((m) => m.moneda === principal.moneda)?.patrimonio ?? 0,
                   }))}
-                  formatoValor={(n) => money(n, principal.moneda)}
                 />
               </View>
             ) : null}
           </Hero>
-          <Nota>{`Hace ${EN[periodo].replace('en ', '')} tenías ${money(principal.patrimonioDesde, principal.moneda)}.`}</Nota>
 
           {otras.length > 0 && (
-            <Section title="En otras monedas">
+            <Section title="💱 En otras monedas">
               <Datos>
                 {otras.map((m) => (
                   <Dato
                     key={m.moneda}
-                    etiqueta={money(m.patrimonioHasta, m.moneda)}
-                    valor={cambio(m.variacion, m.variacionPorcentaje, m.moneda)}
+                    etiqueta={`${emojiMoneda(m.moneda)} ${money(m.patrimonioHasta, m.moneda)}`}
+                    valor={
+                      m.variacion === 0
+                        ? 'Sin cambios'
+                        : `${m.variacion > 0 ? '📈 Subió' : '📉 Bajó'} ${money(Math.abs(m.variacion), m.moneda)}`
+                    }
                   />
                 ))}
               </Datos>

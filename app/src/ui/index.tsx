@@ -2378,6 +2378,47 @@ export function Dato({ etiqueta: nombre, valor }: { etiqueta: string; valor: Rea
 }
 
 /**
+ * G35: cuánto cambió una cifra en un período, como una resta que cuadra:
+ * "Hace un año" → "Hoy" = "Subió / Bajó". Sin tarjeta propia (va bajo un
+ * gráfico o en `Hero debajo`).
+ */
+export function CambioPeriodo({
+  desde,
+  antes,
+  hoy,
+  formato,
+}: {
+  /** Cómo se dice el inicio del período ("Hace un año"). */
+  desde: string;
+  antes: number;
+  hoy: number;
+  formato: (n: number) => string;
+}) {
+  const c = useC();
+  const styles = useEstilos();
+  const dif = hoy - antes;
+  const pct = antes !== 0 && dif !== 0 ? Math.round((Math.abs(dif) / Math.abs(antes)) * 1000) / 10 : null;
+  return (
+    <Datos plano>
+      <Dato etiqueta={`🗓️ ${desde}`} valor={formato(antes)} />
+      <Dato etiqueta="📍 Hoy" valor={formato(hoy)} />
+      {dif === 0 ? (
+        <Dato etiqueta="➖ Sin cambios" valor="" />
+      ) : (
+        <Dato
+          etiqueta={dif > 0 ? '📈 Subió' : '📉 Bajó'}
+          valor={
+            <Text style={[styles.dataRight, { color: dif > 0 ? c.ok : c.danger }]}>
+              {formato(Math.abs(dif)) + (pct !== null ? ` (${String(pct).replace('.', ',')}%)` : '')}
+            </Text>
+          }
+        />
+      )}
+    </Datos>
+  );
+}
+
+/**
  * Acción destructiva de una pantalla (Eliminar, Cerrar sesión): texto rojo,
  * al final de todo el contenido. La confirmación la pide quien la usa.
  */
