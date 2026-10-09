@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -50,8 +50,11 @@ const MESES_LARGO = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-const iso = (y: number, m: number, d: number) =>
-  `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+/** Fecha ISO de (año, mes 0-11, día); normaliza meses y días fuera de rango (mes -1 = diciembre anterior, día 0 = último del mes previo). */
+const iso = (y: number, m: number, d: number) => {
+  const f = new Date(y, m, d);
+  return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
+};
 
 type Periodo = 'Mes' | 'Año' | 'Recientes';
 // G35: los filtros hablan como las puertas del "+".
@@ -90,7 +93,8 @@ export function MovimientosScreen() {
   const [anchor, setAnchor] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() });
   const [mesesAtras, setMesesAtras] = useState(3);
 
-  const [hogarId, setHogarId] = useState<string | null>(null);
+  // En un ref: guardarlo no debe cambiar `cargar` (si no, la pantalla carga dos veces al abrirse).
+  const hogarIdRef = useRef<string | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [error, setError] = useState('');
@@ -140,11 +144,11 @@ export function MovimientosScreen() {
     setError('');
     setCargando(true);
     try {
-      let hid = hogarId;
+      let hid = hogarIdRef.current;
       if (!hid) {
         const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         hid = hs[0]?.id ?? null;
-        setHogarId(hid);
+        hogarIdRef.current = hid;
       }
       const q = alcance === 'hogar' && hid ? `&alcance=hogar&hogarId=${hid}` : '&alcance=mios';
 
@@ -195,7 +199,7 @@ export function MovimientosScreen() {
     } finally {
       setCargando(false);
     }
-  }, [token, periodo, anchor, ventana, alcance, hogarId]);
+  }, [token, periodo, anchor, ventana, alcance]);
 
   useCargaAlEnfocar(cargar);
 
