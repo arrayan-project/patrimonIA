@@ -54,7 +54,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (en rama `feat/G33-D5-destino-miembro`, por probar); siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); siguiente: bloque 9 (D-7 + HZ-21). | ⬜ |
 | — | **G34** | El login distingue mayúsculas en el email. Resuelto: el login pasa el email a minúsculas, como el registro (2026-10-03). | ✅ |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | — | **G25** | v1 hecha (formato de fecha, moneda principal, secciones del Inicio). Queda: densidad. | 🟡 parcial |
@@ -253,8 +253,8 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (`feat/G33-E8b-dos-puertas`) ✅ probada por Juan y mergeada (2026-10-04).
   Bloque 8 cerrado; sigue el bloque 9 (D-7 + HZ-21).
 - **D-5 adelantado del bloque 10 — `DOMINIO` destino de otro miembro + D-2 en
-  el backend (en rama `feat/G33-D5-destino-miembro`, 2026-10-08; por probar
-  en el teléfono)**: plantillas y programados aceptan como destino de una
+  el backend (rama `feat/G33-D5-destino-miembro`, probada por Juan y
+  mergeada, 2026-10-08)**: plantillas y programados aceptan como destino de una
   TRANSFERENCIA la cuenta de otro miembro; el origen sigue siendo propio y un
   INGRESO sigue yendo a una cuenta propia. La regla es una sola,
   `ElementoService.puedeRecibirTransferencia`, que usan también los eventos:
