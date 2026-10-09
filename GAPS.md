@@ -974,7 +974,7 @@ ya cerrados en Fases 50–51).
   muestra como una fila "🔒 Una / N que no puedes ver · Su dueño no la
   comparte", para que la lista cuadre con el total (esa suma ya se deducía
   restando lo visible al total).
-- **Implementado** (rama `feat/G37-lista-hogar`): `ConsolidacionService.elementosDelHogar`
+- **Implementado** (rama `feat/G37-lista-hogar`, probada por Juan y mergeada 2026-10-09): `ConsolidacionService.elementosDelHogar`
   + e2e en `consolidacion-hogar.e2e-spec.ts` (la suma de la lista, con lo
   oculto, es igual al neto consolidado, vista desde los dos miembros);
   `PatrimonioSeccionScreen` en "Del hogar" usa el endpoint (Hero, Tienen /
@@ -1489,7 +1489,7 @@ ya cerrados en Fases 50–51).
   2. Solo **quien lo creó** puede cambiarlo, en los dos sentidos; a los demás
      miembros **no se les avisa** (queda en la auditoría). Cerrado: no se
      cambia.
-- **Implementado** (rama `feat/G36-alcance-presupuesto`): backend + e2e
+- **Implementado** (rama `feat/G36-alcance-presupuesto`, probada por Juan y mergeada 2026-10-09): backend + e2e
   (`presupuesto.e2e-spec.ts`, 3 casos); en el detalle del presupuesto, para
   quien lo creó, "👥 Compartir con el hogar" o "🙋 Dejarlo solo para mí",
   con confirmación. El hogar destino es el primero del usuario, igual que al
@@ -1578,7 +1578,7 @@ ya cerrados en Fases 50–51).
   - El patrimonio a una fecha (`/usuarios/me/patrimonio-individual/historico`)
     y el valor de un elemento a una fecha no cambian: dicen lo que había
     anotado ese día.
-- **Implementado** (rama `feat/G38-carga-no-es-cambio`):
+- **Implementado** (rama `feat/G38-carga-no-es-cambio`, probada por Juan y mergeada 2026-10-09):
   `ReconstruccionService` (`#patrimonioA` con `comparable`) + e2e en
   `reconstruccion-historica.e2e-spec.ts`. Sin cambios en la app. Con los
   datos de Demo el Inicio pasa de "▼ 57,3%" a "▲ 9,7%".
