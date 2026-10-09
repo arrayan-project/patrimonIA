@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G32, G33, G35 | G25 |
+| **I** · App: preferencias y usabilidad | G32, G33, G35, G39 | G25 |
 
 ---
 
@@ -56,6 +56,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 |---|-----|-----------|------|
 | U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
 | — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Agrupaciones ✅ como "Mis grupos" en Tu plata; la categoría de un movimiento se abre encima, como en Presupuesto. Queda: el ícono de la app (cuando se compile la app propia). | 🟡 |
+| — | **G39** | Flujos simples después de G35: los 33 escenarios recorridos sobre el diseño nuevo, con conteo de toques y flujo objetivo por escenario (`Docs/usabilidad/FLUJOS_SIMPLES_S03.md`). Decidido: S3-1, S3-2, S3-3 (T1 en ≤ 4 toques + monto, T2 en ≤ 8) y S3-5 (pasos claros). M1–M3 (cuenta recordada y categoría en botones, F-1 y F-2) aprobados por Juan y mergeados (2026-10-09); incluyen un dato nuevo de solo lectura en `resumen-financiero` (requiere deploy en Render). | 🟡 |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
 | P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
@@ -684,6 +685,25 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
   largos cuando las fechas no son del mes en curso (G38) y la lista de un
   grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
+
+#### G39 — Flujos simples después de G35  🟡 PARCIAL (abierto 2026-10-09)
+- **Qué pasa**: G35 cambió lo visual pero no los flujos; registrar y accionar
+  cosas todavía pide muchos toques (un gasto diario, 7 a 10).
+- **Plan**: [`Docs/usabilidad/FLUJOS_SIMPLES_S03.md`](Docs/usabilidad/FLUJOS_SIMPLES_S03.md)
+  (fuente de verdad): los 33 escenarios de `USABILIDAD_REAL_S01.md` §5
+  recorridos sobre el diseño actual, en tablas paso a paso con conteo; por
+  cada uno, Claude propone el flujo objetivo, Juan decide, se implementa y se
+  valida en el teléfono. Patrones candidatos F-1 a F-8.
+- **Decidido (Juan, 2026-10-09)**: S3-1 todos los escenarios; S3-2 entra la
+  estructura de los flujos y lo visual de G35 se mantiene; S3-3 T1 en ≤ 4
+  toques + monto, T2 en ≤ 8; S3-5 los pasos tienen que quedar muy claros (lo
+  que viene elegido se ve como paso hecho y se cambia ahí mismo).
+  S3-6: la cuenta recordada sale del último movimiento anotado; para eso
+  `GET /usuarios/me/resumen-financiero` suma la cuenta de salida y de llegada
+  de cada movimiento (solo lectura, sin migración; requiere deploy).
+- **Hecho**: M1–M3 (F-1 cuenta recordada, F-2 categorías en botones) en la
+  rama `feat/G39-formulario-base`, verificado con capturas, aprobado por Juan
+  y mergeado (2026-10-09). Requiere deploy de la API en Render.
 
 ---
 
