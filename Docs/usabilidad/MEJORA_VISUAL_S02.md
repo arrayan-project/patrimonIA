@@ -198,9 +198,9 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 35. **Editar programado / Confirmar pago** (`ProgramadoFormScreen`) —
     Movimiento programado. Monto y fecha ("¿Para cuándo?" o "¿Cuándo se
     pagó?"); guardar.
-36. **Frecuentes** (`PlantillasScreen`) — Planificar, Ajustes. Lista y
+36. ✅ **Frecuentes** (`PlantillasScreen`) — Planificar, Ajustes. Lista y
     buscador; abrir uno; Nuevo frecuente.
-37. **Nuevo frecuente / Editar** (`PlantillaFormScreen`) — Frecuentes,
+37. ✅ **Nuevo frecuente / Editar** (`PlantillaFormScreen`) — Frecuentes,
     Movimiento. Nombre; tipo; cuánto; cuentas; categoría; detalle; guardar;
     Eliminar frecuente.
 
@@ -238,17 +238,17 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
     Mostrar u ocultar cada sección; Mostrar todas.
 47. **Mi perfil** (`PerfilScreen`) — Ajustes. Nombre y correo; Desactivar mi
     cuenta.
-48. **Categorías de movimiento** (`CategoriasScreen`) — Ajustes. Lista y
+48. ✅ **Categorías de movimiento** (`CategoriasScreen`) — Ajustes. Lista y
     buscador; ordenar (subir / bajar); abrir una; Nueva categoría.
-49. **Etiquetas** (`EtiquetasScreen`) — Ajustes. Lista y buscador; abrir una;
+49. ✅ **Etiquetas** (`EtiquetasScreen`) — Ajustes. Lista y buscador; abrir una;
     Nueva etiqueta.
-50. **Agrupaciones** (`AgrupacionesScreen`) — Ajustes. Lista y buscador; abrir
+50. ⏸ **Agrupaciones** (fuera de Ajustes hasta usarlas en Mi patrimonio, §6) (`AgrupacionesScreen`) — Ajustes. Lista y buscador; abrir
     una; Nueva agrupación.
-51. **Tipos de elemento patrimonial** (`TiposElementoScreen`) — Ajustes. Lista
+51. ✅ **Tipos de elemento patrimonial** (`TiposElementoScreen`) — Ajustes. Lista
     y buscador; ordenar; abrir uno; Nuevo tipo.
-52. **Tipos de cambio** (`TiposCambioScreen`) — Ajustes. Lista de tasas y
+52. ✅ **Tipos de cambio** (`TiposCambioScreen`) — Ajustes. Lista de tasas y
     buscador; Registrar tasa.
-53. **Nuevo / Editar (catálogo)** (`CatalogoFormScreen`) — las cinco
+53. ✅ **Nuevo / Editar (catálogo)** (`CatalogoFormScreen`) — las cinco
     anteriores. Según el catálogo: nombre, categoría padre, para qué
     movimientos, categoría sugerida, cuentas dentro de una agrupación, monedas
     y tasa; guardar; Archivar o Eliminar.
@@ -453,3 +453,42 @@ Una ficha por pantalla, en el orden en que se trabajen. Plantilla:
     su color suave; Tipos de cambio: el de la moneda (`emojiMoneda`).
 - **Aprobado por Juan y mergeado a `main` (2026-10-09)**, junto con el pulido
   final del Inicio.
+
+### 36–37, 48–53. Para ordenar tu plata (catálogos de Ajustes)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+Juan (2026-10-09): si se ataca una pantalla, se cubren todos sus puntos; por
+eso entran las 6 listas y sus formularios de crear y editar.
+
+- **Cómo se veían:** flechas ▲▼ de 18×20 px en todas las filas de Categorías
+  (24) y Tipos de cuenta (32); ayudas con otras palabras que Ajustes; "Archivar";
+  Tipos de cuenta con grupos "Liquidez", "Ahorro / fondo de emergencia",
+  "Activo" y la pregunta "¿Qué categoría sugiere?", y el mismo emoji para
+  todos los tipos de un grupo; en Categorías el emoji como fila suelta, "Ingresos
+  y ga…" cortado y "Ninguna (categoría principal)"; en Frecuentes "¿De qué
+  tipo?" para elegir una categoría; círculos de color de unos 30 px; tipos de
+  cambio con el código de moneda escrito a mano y filas "USD → CLP · 960";
+  Agrupaciones sin uso visible en ninguna pantalla.
+- **Implementado (rama `feat/G35-ordenar-tu-plata`):**
+  - Ordenar: botón "↕️ Cambiar orden" / "✓ Listo" (`ModoOrden`); las flechas
+    solo aparecen al ordenar y miden 44 px (`Ordenar`).
+  - Ayudas con las palabras de Ajustes; "Archivar" pasa a "Dejar de usar"
+    (con su explicación y "Listo, ya no aparece").
+  - Tipos de cuenta: grupos 🏦 Cuentas, 🐷 Ahorro, 📈 Inversiones, 🏠 Bienes,
+    💳 Deudas, 🤝 Te deben (`NOMBRE_CATEGORIA_FUNCIONAL`, compartido con el
+    Inicio); "¿Qué tipo de plata es?" con esas opciones y una línea que las
+    explica; emoji propio por tipo según su nombre (`emojiTipoElemento`: 💵
+    Efectivo, 📱 Billetera digital, ⏳ Depósito a plazo, 📊 Fondo mutuo, 🪙
+    Criptomonedas, 🏡 Crédito hipotecario…), que también usan las tarjetas
+    del Inicio.
+  - Categorías: el emoji es un botón junto al nombre (`ElegirEmoji
+    compacto`); "Gastos / Ingresos / Ambos"; "No, es una categoría principal".
+  - Frecuentes: "¿De qué categoría?" con el emoji de cada una.
+  - Etiquetas: círculos de color que se tocan en 44 px.
+  - Tipos de cambio: monedas elegidas de una lista con emoji (incluye UF);
+    filas "1 USD = 960 CLP · anotada por ti / se actualiza sola".
+  - Agrupaciones fuera de Ajustes (los datos quedan). **Pendiente:** usarlas
+    para agrupar cuentas en Mi patrimonio (Juan, 2026-10-09), cuando se
+    revise esa pantalla.
+- **Verificado:** `tsc` sin errores; capturas web de listas, modo ordenar y
+  formularios; ninguna zona tocable bajo 44 px en Categorías (normal y
+  ordenando), Tipos de cuenta y Nueva etiqueta.

@@ -50,7 +50,10 @@ En resumen:
   mes, metas en anillo y "Así va el mes". Sin cambios de backend ni de base.
   Detalle en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Después, Ajustes: tarjeta
   con tus datos arriba, emojis por fila, "Para ordenar tu plata" con una línea
-  que explica cada catálogo, y emojis en las listas de esos catálogos.
+  que explica cada catálogo, y emojis en las listas de esos catálogos. Luego
+  los catálogos por dentro: ordenar solo con "Cambiar orden", tipos de cuenta
+  por "tipo de plata" con emoji propio, monedas elegidas de una lista y
+  Agrupaciones fuera de Ajustes hasta usarlas en Mi patrimonio.
 - [x] **G33, bloque 10 de la Fase E (2026-10-08)** — recurrencia de los
   movimientos programados (D-6, HZ-16): "¿Se repite?" (cada mes / cada año) en
   Nuevo programado y en Gasté/Recibí/Moví plata, aviso "¿Se pagó?" con "Sí, se
