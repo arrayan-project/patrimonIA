@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { api, type HogarDTO, type InvitacionDTO, type UsuarioDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -6,6 +7,7 @@ import { MONEDAS_FRECUENTES } from '../labels';
 import { useNav } from '../navigation/navigator';
 import { usePreferencias } from '../preferencias';
 import { confirmar } from '../ui/confirmar';
+import { Text } from '../ui/Text';
 import {
   AccionDestructiva,
   Elegir,
@@ -16,8 +18,11 @@ import {
   Screen,
   Section,
   Segmented,
+  radio,
+  useC,
   useGuardarAlInstante,
   useTema,
+  type Paleta,
   type FormatoFecha,
   type ModoTema,
 } from '../ui';
@@ -32,9 +37,9 @@ const OPC_MONEDA = [
   ...MONEDAS_FRECUENTES.map((m) => ({ value: m, label: m })),
 ];
 const AVISOS = [
-  ['OBJETIVO_COMPLETADO', 'Meta completada', 'Cuando una meta llega al 100%'],
-  ['RESERVA_CONSUMIDA', 'Plata de una meta que se usó', 'Cuando un gasto sale de una meta'],
-  ['INVITACION_RECIBIDA', 'Invitación a un hogar', 'Cuando alguien te invita'],
+  ['OBJETIVO_COMPLETADO', 'Meta completada', 'Cuando una meta llega al 100%', '🎉'],
+  ['RESERVA_CONSUMIDA', 'Plata de una meta que se usó', 'Cuando un gasto sale de una meta', '🐷'],
+  ['INVITACION_RECIBIDA', 'Invitación a un hogar', 'Cuando alguien te invita', '✉️'],
 ] as const;
 
 const avisosDe = (u: UsuarioDTO | null): Record<string, boolean> =>
@@ -45,8 +50,10 @@ const avisosDe = (u: UsuarioDTO | null): Record<string, boolean> =>
  * tocarlo y se revierte con aviso si falla. Sin botón Guardar.
  */
 export function AjustesScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
   const nav = useNav();
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const { cerrarSesion } = useAuth();
   const { modo, setModo } = useTema();
   const { preferencias, guardarPreferencias } = usePreferencias();
@@ -94,11 +101,32 @@ export function AjustesScreen() {
 
   return (
     <Screen onRefresh={cargar}>
-      <Section title="Tu cuenta">
-        <MenuList
-          items={[{ title: 'Mi perfil', subtitle: 'Nombre y correo', icon: 'person-outline', onPress: () => nav.go('Perfil') }]}
-        />
-      </Section>
+      {/* G35: quién eres, arriba. Abre Mi perfil. */}
+      <Pressable
+        onPress={() => nav.go('Perfil')}
+        accessibilityRole="button"
+        accessibilityLabel={`${usuario.nombre}. ${usuario.email}. Ver mi perfil`}
+        style={({ pressed }) => [styles.perfil, pressed && { opacity: 0.7 }]}
+      >
+        <View style={styles.inicial}>
+          <Text style={styles.inicialTxt}>{usuario.nombre.trim().charAt(0).toUpperCase()}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.nombre} numberOfLines={1}>
+            {usuario.nombre}
+          </Text>
+          <Text style={styles.dato} numberOfLines={1}>
+            {usuario.email}
+          </Text>
+          {hogar ? (
+            <Text style={styles.dato} numberOfLines={1}>
+              🏠 {hogar.nombre}
+              {personas ? ` · ${personas} ${personas === 1 ? 'persona' : 'personas'}` : ''}
+            </Text>
+          ) : null}
+        </View>
+        <Text style={styles.chev}>›</Text>
+      </Pressable>
 
       <Section title="Hogar">
         <MenuList
@@ -107,8 +135,8 @@ export function AjustesScreen() {
               ? [
                   {
                     title: 'Gestionar hogar',
-                    subtitle: personas ? `${hogar.nombre} · ${personas} ${personas === 1 ? 'persona' : 'personas'}` : hogar.nombre,
-                    icon: 'home-outline' as const,
+                    subtitle: 'Nombre, personas y moneda del hogar',
+                    emoji: '🏠',
                     onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
                   },
                 ]
@@ -117,7 +145,7 @@ export function AjustesScreen() {
               title: 'Invitaciones',
               subtitle: pendientes > 0 ? `${pendientes} pendiente${pendientes === 1 ? '' : 's'}` : 'Ninguna pendiente',
               badge: pendientes || undefined,
-              icon: 'mail-outline' as const,
+              emoji: '✉️',
               onPress: () => nav.go('Invitaciones'),
             },
           ]}
@@ -125,16 +153,16 @@ export function AjustesScreen() {
       </Section>
 
       <Section title="Cómo se ve">
-        <Segmented label="Tema" options={OPC_TEMA} value={modo} onChange={setModo} formatearOpcion={(v) => ETIQUETA_TEMA[v]} />
+        <Segmented label="🎨 Tema" options={OPC_TEMA} value={modo} onChange={setModo} formatearOpcion={(v) => ETIQUETA_TEMA[v]} />
         <Segmented
-          label="Fechas"
+          label="📅 Fechas"
           options={OPC_FECHA}
           value={preferencias.formatoFecha}
           onChange={(formatoFecha) => cambiarPreferencias({ ...preferencias, formatoFecha })}
           formatearOpcion={(v) => ETIQUETA_FECHA[v]}
         />
         <Elegir
-          label="Moneda principal en Inicio"
+          label="💱 Moneda principal en el Inicio"
           value={preferencias.monedaPreferida ?? SIN_PREFERENCIA}
           options={OPC_MONEDA}
           onChange={(v) => cambiarPreferencias({ ...preferencias, monedaPreferida: v || null })}
@@ -144,7 +172,7 @@ export function AjustesScreen() {
             {
               title: 'Secciones del Inicio',
               subtitle: 'Qué se muestra en el Inicio',
-              icon: 'grid-outline',
+              emoji: '🧩',
               onPress: () => nav.go('AjustesVisualizacion'),
             },
           ]}
@@ -153,21 +181,22 @@ export function AjustesScreen() {
 
       <Section title="Avisos">
         <ListCard>
-          {AVISOS.map(([k, titulo, sub]) => (
-            <Interruptor key={k} titulo={titulo} sub={sub} value={avisos[k] !== false} onChange={(v) => cambiarAviso(k, v)} />
+          {AVISOS.map(([k, titulo, sub, emoji]) => (
+            <Interruptor key={k} titulo={titulo} sub={sub} emoji={emoji} value={avisos[k] !== false} onChange={(v) => cambiarAviso(k, v)} />
           ))}
         </ListCard>
       </Section>
 
-      <Section title="Tus datos">
+      {/* G35: por uso, y cada uno dice para qué sirve. */}
+      <Section title="Para ordenar tu plata">
         <MenuList
           items={[
-            { title: 'Categorías', icon: 'list-outline', onPress: () => nav.go('Categorias') },
-            { title: 'Tipos de cuenta o bien', icon: 'pricetag-outline', onPress: () => nav.go('TiposElemento') },
-            { title: 'Etiquetas', icon: 'pricetags-outline', onPress: () => nav.go('Etiquetas') },
-            { title: 'Frecuentes', icon: 'copy-outline', onPress: () => nav.go('Plantillas') },
-            { title: 'Tipos de cambio', icon: 'swap-horizontal-outline', onPress: () => nav.go('TiposCambio') },
-            { title: 'Agrupaciones', icon: 'folder-outline', onPress: () => nav.go('Agrupaciones') },
+            { title: 'Frecuentes', subtitle: 'Lo que anotas seguido, a un toque', emoji: '⚡', onPress: () => nav.go('Plantillas') },
+            { title: 'Categorías', subtitle: 'Mercado, luz, sueldo… con su emoji', emoji: '🏷️', onPress: () => nav.go('Categorias') },
+            { title: 'Tipos de cuenta', subtitle: 'Corriente, tarjeta, fondo mutuo…', emoji: '💼', onPress: () => nav.go('TiposElemento') },
+            { title: 'Etiquetas', subtitle: "Marcas libres, como 'vacaciones 2026'", emoji: '🔖', onPress: () => nav.go('Etiquetas') },
+            { title: 'Agrupaciones', subtitle: "Juntar cuentas, como 'todo lo del auto'", emoji: '🗂️', onPress: () => nav.go('Agrupaciones') },
+            { title: 'Tipos de cambio', subtitle: 'Cuánto vale el dólar o la UF', emoji: '💵', onPress: () => nav.go('TiposCambio') },
           ]}
         />
       </Section>
@@ -177,3 +206,29 @@ export function AjustesScreen() {
     </Screen>
   );
 }
+
+const crearEstilos = (c: Paleta) =>
+  StyleSheet.create({
+    perfil: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      padding: 16,
+      borderRadius: radio.tarjeta,
+      backgroundColor: c.bg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    inicial: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    inicialTxt: { fontSize: 24, fontWeight: '800', color: c.primaryText },
+    nombre: { fontSize: 18, fontWeight: '800', color: c.text },
+    dato: { fontSize: 13, color: c.muted, marginTop: 2 },
+    chev: { fontSize: 22, color: c.mutedDim },
+  });

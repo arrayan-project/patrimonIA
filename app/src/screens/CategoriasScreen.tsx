@@ -1,4 +1,5 @@
 import { useCallback, useState, type ReactNode } from 'react';
+import { emojiCategoria } from '../emojis';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type CategoriaMovimientoDTO, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -81,7 +82,7 @@ export function CategoriasScreen() {
           padre ? `Dentro de ${padre.nombre}` : hijos ? `${hijos} subcategoría${hijos === 1 ? '' : 's'}` : undefined
         }
         amount=""
-        logo={{ color: cat.color ?? undefined }}
+        logo={{ emoji: emojiCategoria(cat) ?? '🏷️' }}
         accesorio={accesorio}
         onPress={() => nav.go('CatalogoForm', { catalogo: 'categoria', id: cat.id })}
       />
@@ -99,7 +100,7 @@ export function CategoriasScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="pricetag-outline"
+          emoji="🏷️"
           titulo="Aún no hay categorías"
           descripcion="Sirven para ver en qué se va la plata (Mercado, Servicios, Sueldo…)."
           accion="Crear la primera"

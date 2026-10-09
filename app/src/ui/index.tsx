@@ -682,7 +682,8 @@ export function TxRow({
           styles.txLogo,
           virtual
             ? { backgroundColor: c.panelAlt, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }
-            : { backgroundColor: logo?.color ?? c.panelAlt },
+            : // Con emoji, el color propio (etiqueta, agrupación) va suave detrás.
+              { backgroundColor: logo?.color ? (logo.emoji ? tinte(logo.color, 0.22) : logo.color) : c.panelAlt },
         ]}
       >
         {logo?.emoji ? (
@@ -1437,7 +1438,7 @@ export function Segmented<T extends string>({
             accessibilityState={{ selected: value === opt }}
             style={[styles.segment, value === opt && styles.segmentActive]}
           >
-            <Text style={[styles.segmentText, value === opt && styles.segmentTextActive]}>
+            <Text style={[styles.segmentText, value === opt && styles.segmentTextActive]} numberOfLines={1}>
               {formatearOpcion(opt)}
             </Text>
           </Pressable>
@@ -1987,6 +1988,9 @@ export function Row({ left, right }: { left: string; right: ReactNode }) {
  * Plantilla Ajustes: guarda al instante. Quien llama ya mostró el valor nuevo;
  * si el comando falla, `revertir` vuelve al anterior y se avisa.
  */
+/** El círculo del interruptor es blanco en ambos temas; en web hay que decirlo aparte (si no, sale verde). */
+export const thumbWeb = (_c: Paleta) => (Platform.OS === 'web' ? ({ activeThumbColor: '#ffffff' } as object) : {});
+
 export function useGuardarAlInstante() {
   const toast = useToast();
   return async (fn: () => Promise<unknown>, revertir: () => void, aviso = 'Guardado') => {
@@ -2006,11 +2010,13 @@ export function useGuardarAlInstante() {
 export function Interruptor({
   titulo,
   sub,
+  emoji,
   value,
   onChange,
 }: {
   titulo: string;
   sub?: string;
+  emoji?: string;
   value: boolean;
   onChange: (v: boolean) => void;
 }) {
@@ -2024,6 +2030,11 @@ export function Interruptor({
       accessibilityLabel={titulo}
       style={styles.interruptor}
     >
+      {emoji ? (
+        <View style={styles.menuEmoji}>
+          <Text style={styles.menuEmojiTxt}>{emoji}</Text>
+        </View>
+      ) : null}
       <View style={{ flex: 1 }}>
         <Text style={styles.listItemTitle}>{titulo}</Text>
         {sub ? <Text style={styles.nota}>{sub}</Text> : null}
@@ -2032,8 +2043,9 @@ export function Interruptor({
         value={value}
         onValueChange={onChange}
         trackColor={{ true: c.primary, false: c.faint }}
-        thumbColor={c.bg}
+        thumbColor="#ffffff"
         ios_backgroundColor={c.faint}
+        {...thumbWeb(c)}
       />
     </Pressable>
   );
@@ -2201,6 +2213,8 @@ export function MenuList({
     title: string;
     subtitle?: string;
     icon?: NombreIcono;
+    /** G35: emoji en lugar del ícono de línea. */
+    emoji?: string;
     badge?: number;
     onPress: () => void;
   }[];
@@ -2221,7 +2235,11 @@ export function MenuList({
             pressed && { backgroundColor: c.faint },
           ]}
         >
-          {it.icon ? (
+          {it.emoji ? (
+            <View style={styles.menuEmoji}>
+              <Text style={styles.menuEmojiTxt}>{it.emoji}</Text>
+            </View>
+          ) : it.icon ? (
             <Ionicons name={it.icon} size={16} color={c.muted} style={{ width: 20, textAlign: 'center' }} />
           ) : null}
           <View style={{ flex: 1 }}>
@@ -2296,12 +2314,15 @@ export function Skeleton({ filas = 3 }: { filas?: number }) {
 /** Estado vacío con ícono, texto y (opcional) una acción para empezar. */
 export function EmptyState({
   icon,
+  emoji,
   titulo,
   descripcion,
   accion,
   onAccion,
 }: {
   icon?: NombreIcono;
+  /** G35: emoji en lugar del ícono de línea. */
+  emoji?: string;
   titulo: string;
   descripcion?: string;
   accion?: string;
@@ -2311,7 +2332,7 @@ export function EmptyState({
   const styles = useEstilos();
   return (
     <View style={styles.empty}>
-      {icon ? <Ionicons name={icon} size={36} color={c.mutedDim} /> : null}
+      {emoji ? <Text style={{ fontSize: 40 }}>{emoji}</Text> : icon ? <Ionicons name={icon} size={36} color={c.mutedDim} /> : null}
       <Text style={styles.emptyTitulo}>{titulo}</Text>
       {descripcion ? <Text style={styles.emptyDesc}>{descripcion}</Text> : null}
       {accion && onAccion ? (
@@ -2668,19 +2689,27 @@ const crearEstilos = (c: Paleta) => {
     buttonText: { ...tipografia.boton, color: c.primaryText },
     error: { color: c.danger, fontSize: 14 },
     link: { color: c.text, fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
-    segmented: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    segment: {
-      borderWidth: 1,
-      borderColor: c.mutedDim, // HZ-24: contraste de lo editable
+    // G35: un solo control con las opciones del mismo ancho (antes, botones
+    // sueltos de ancho distinto).
+    segmented: {
+      flexDirection: 'row',
+      gap: 4,
+      padding: 4,
       borderRadius: radio.pastilla,
-      backgroundColor: c.bg,
-      paddingVertical: 9,
-      paddingHorizontal: 14,
-      minHeight: 40,
-      justifyContent: 'center',
+      backgroundColor: c.faint,
+      borderWidth: 1,
+      borderColor: c.border,
     },
-    segmentActive: { backgroundColor: c.primary, borderColor: c.primary },
-    segmentText: { fontSize: 14, color: c.text, fontWeight: '500' },
+    segment: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 8,
+      borderRadius: radio.pastilla,
+    },
+    segmentActive: { backgroundColor: c.primary },
+    segmentText: { fontSize: 14, color: c.text, fontWeight: '600', textAlign: 'center' },
     segmentTextActive: { color: c.primaryText },
     selectRow: { borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 12 },
     selectRowActive: { borderColor: c.primary, backgroundColor: c.faint },
@@ -2779,6 +2808,15 @@ const crearEstilos = (c: Paleta) => {
     },
     menuListTxt: { ...tipografia.fila, color: c.text },
     menuListChev: { fontSize: 15, color: c.mutedDim },
+    menuEmoji: {
+      width: 38,
+      height: 38,
+      borderRadius: radio.icono,
+      backgroundColor: c.panelAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    menuEmojiTxt: { fontSize: 19 },
     menuBadge: {
       minWidth: 22,
       height: 22,

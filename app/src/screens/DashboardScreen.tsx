@@ -30,6 +30,7 @@ import { useAlcance } from '../ui/alcance';
 import { usePreferencias } from '../preferencias';
 import {
   AnilloAvance,
+  thumbWeb,
   Elegir,
   fechaLegible,
   EmptyState,
@@ -331,7 +332,10 @@ export function DashboardScreen() {
   }
 
   // ── Objetivos ──────────────────────────────────────────────────────────
-  const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
+  // En "Del hogar", solo las metas compartidas con el hogar.
+  const enProgreso = objetivos.filter(
+    (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' || o.hogarId === hogarId),
+  );
 
   // ── Alertas (máx 3, por prioridad) ─────────────────────────────────────
   const enMora = elementos.filter(
@@ -357,12 +361,7 @@ export function DashboardScreen() {
       emoji: '📊',
       onPress: () => nav.go('PresupuestoDetalle', { presupuestoId: presuExcedido.id }),
     });
-  if (noLeidas > 0)
-    alertas.push({
-      texto: `${noLeidas} ${noLeidas === 1 ? 'aviso sin leer' : 'avisos sin leer'}`,
-      emoji: '🔔',
-      onPress: () => nav.go('Notificaciones'),
-    });
+  // Los avisos sin leer ya los cuenta la campana: acá solo lo que pide algo.
 
   // G32 H-03/H-08 — una sola entrada a "Mi patrimonio" (todas las cuentas y bienes + evolución).
   const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin });
@@ -435,7 +434,7 @@ export function DashboardScreen() {
             alcance === 'mios' && v && v.variacion !== 0
               ? `${v.variacion >= 0 ? '▲' : '▼'} ${
                   v.variacionPorcentaje != null
-                    ? `${Math.abs(v.variacionPorcentaje)}%`
+                    ? `${String(Math.abs(v.variacionPorcentaje)).replace('.', ',')}%`
                     : money(Math.abs(v.variacion), monedaPrin)
                 }`
               : undefined
@@ -482,7 +481,7 @@ export function DashboardScreen() {
       </Pressable>
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
       {hh?.tipo === 'parcial' && (
-        <ErrorText>{`Total parcial en ${hh.moneda}: falta tipo de cambio para ${hh.faltantes.join(', ')}.`}</ErrorText>
+        <ErrorText>{`Este total no incluye la plata en ${hh.faltantes.join(', ')}: falta su valor en ${hh.moneda}.`}</ErrorText>
       )}
       {!onbOculto && (
         <Panel>
@@ -558,7 +557,7 @@ export function DashboardScreen() {
       )}
       {ver.objetivos && metasTop.length > 0 && (
         <Section
-          title="Tus metas"
+          title={alcance === 'hogar' ? 'Metas del hogar' : 'Tus metas'}
           accion={enProgreso.length > 2 ? `Ver todas (${enProgreso.length})` : 'Ver todas'}
           onAccion={() => nav.go('Objetivos')}
         >
@@ -820,8 +819,9 @@ function CuentasYMovimientos({
               <Switch
                 value={soloCuenta}
                 trackColor={{ true: c.primary, false: c.faint }}
-                thumbColor={c.bg}
+                thumbColor="#ffffff"
                 ios_backgroundColor={c.faint}
+                {...thumbWeb(c)}
               />
             </View>
           </Pressable>

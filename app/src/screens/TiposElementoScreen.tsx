@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { EMOJI_CATEGORIA_FUNCIONAL } from '../emojis';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type HogarDTO, type TipoElementoDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -74,7 +75,7 @@ export function TiposElementoScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="albums-outline"
+          emoji="💼"
           titulo="Aún no hay tipos"
           descripcion="Nombran tus cuentas y bienes: cuenta corriente, APV, propiedad…"
           accion="Crear el primero"
@@ -94,7 +95,7 @@ export function TiposElementoScreen() {
                       key={t.id}
                       title={t.nombre}
                       amount=""
-                      logo={{ icon: 'albums-outline' }}
+                      logo={{ emoji: (t.categoriaSugerida && EMOJI_CATEGORIA_FUNCIONAL[t.categoriaSugerida]) || '💼' }}
                       accesorio={
                         filtrando ? undefined : (
                           <Ordenar

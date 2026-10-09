@@ -167,8 +167,8 @@ const TITULOS: Record<string, string> = {
   Ajustes: 'Ajustes',
   AjustesVisualizacion: 'Secciones del Inicio',
   PatrimonioSeccion: 'Mi patrimonio',
-  Categorias: 'Categorías de movimiento',
-  TiposElemento: 'Tipos de elemento patrimonial',
+  Categorias: 'Categorías',
+  TiposElemento: 'Tipos de cuenta',
   Etiquetas: 'Etiquetas',
   Agrupaciones: 'Agrupaciones',
   // CatalogoForm y PlantillaForm ponen su título con useTitulo (crear o editar).

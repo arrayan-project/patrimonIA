@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { emojiCategoria, emojiTipoMovimiento } from '../emojis';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
@@ -23,14 +24,13 @@ import {
   Section,
   Skeleton,
   TxRow,
-  type NombreIcono,
 } from '../ui';
 
 /** Catálogos por tipo (plantilla Lista). */
-const GRUPOS: [PlantillaMovimientoDTO['tipo'], string, NombreIcono][] = [
-  ['GASTO', 'Gastos', 'arrow-up-outline'],
-  ['INGRESO', 'Ingresos', 'arrow-down-outline'],
-  ['TRANSFERENCIA', 'Transferencias', 'swap-horizontal-outline'],
+const GRUPOS: [PlantillaMovimientoDTO['tipo'], string][] = [
+  ['GASTO', 'Gastos'],
+  ['INGRESO', 'Ingresos'],
+  ['TRANSFERENCIA', 'Transferencias'],
 ];
 
 export function PlantillasScreen() {
@@ -87,7 +87,7 @@ export function PlantillasScreen() {
         <Skeleton />
       ) : total === 0 ? (
         <EmptyState
-          icon="copy-outline"
+          emoji="⚡"
           titulo="Aún no tienes frecuentes"
           descripcion="Aparecen arriba al registrar un movimiento."
           accion="Crear la primera"
@@ -96,7 +96,7 @@ export function PlantillasScreen() {
       ) : (
         <>
           <Buscador total={total} value={busca} onChange={setBusca} />
-          {GRUPOS.map(([tipo, titulo, icono]) => {
+          {GRUPOS.map(([tipo, titulo]) => {
             const filas = visibles.filter((p) => p.tipo === tipo);
             return filas.length ? (
               <Section key={tipo} title={titulo}>
@@ -115,7 +115,11 @@ export function PlantillasScreen() {
                           .join(' · ') || 'Molde en blanco'
                       }
                       amount={p.monto != null ? money(p.monto, p.moneda ?? 'CLP') : ''}
-                      logo={{ icon: icono }}
+                      logo={{
+                        emoji: p.categoriaId
+                          ? (emojiCategoria(categorias.find((x) => x.id === p.categoriaId)) ?? emojiTipoMovimiento(p.tipo))
+                          : emojiTipoMovimiento(p.tipo),
+                      }}
                       onPress={() => nav.go('PlantillaForm', { plantillaId: p.id })}
                     />
                   ))}
