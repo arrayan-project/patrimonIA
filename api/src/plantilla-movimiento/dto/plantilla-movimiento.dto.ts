@@ -24,7 +24,7 @@ export class CrearPlantillaMovimientoDto {
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
-  monto?: number;
+  monto?: number | null;
 
   @IsOptional()
   @IsString()

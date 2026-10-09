@@ -203,4 +203,11 @@ describe('Plantillas de movimiento (e2e)', () => {
       .send({ nombre: 'Ingreso ajeno', tipo: 'INGRESO', elementoDestinoId: compartida })
       .expect(403);
   });
+
+  it('crea una plantilla sin monto cuando la app manda monto null', async () => {
+    const r = await auth(request(http).post('/comandos/CrearPlantillaMovimiento'))
+      .send({ nombre: 'Farmacia', tipo: 'GASTO', monto: null })
+      .expect(201);
+    expect(r.body.monto).toBeNull();
+  });
 });

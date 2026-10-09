@@ -85,7 +85,8 @@ export class PlantillaMovimientoService {
           usuario_id: actorId,
           nombre,
           tipo: dto.tipo,
-          monto: dto.monto === undefined ? null : new Prisma.Decimal(dto.monto),
+          // La app manda `null` cuando el monto queda vacío.
+          monto: dto.monto == null ? null : new Prisma.Decimal(dto.monto),
           moneda: dto.moneda?.toUpperCase() ?? null,
           elemento_origen_id: dto.elementoOrigenId ?? null,
           elemento_destino_id: dto.elementoDestinoId ?? null,
