@@ -260,33 +260,60 @@ lista de destino.
 
 #### M5 — Pago cuentas fijas (luz, Spotify) todos los meses
 
-**Actual — la primera vez**
+**Actual — la primera vez** (ya con la cuenta recordada y las categorías en
+botones de M1–M3)
 
 | # | Dónde | Qué hace | Toques |
 |---|-------|----------|--------|
 | 1 | Inicio | Toca "+" | 1 |
 | 2 | Hoja "+" | Toca 💸 Gasté | 1 |
 | 3 | Gasté | Escribe el monto | campo |
-| 4 | Gasté | Cuenta | 2 |
-| 5 | Gasté | Categoría | 2 |
-| 6 | Gasté | 🔁 Se repite → Cada mes | 3 |
+| 4 | Gasté | "¿En qué?" → 💡 Luz (botón) | 1 |
+| 5 | Gasté | Cuenta: viene la de la última vez | 0 |
+| 6 | Gasté | 🔁 Se repite → abre "¿Se repite?" → Cada mes | 3 |
 | 7 | Gasté | "Anotar gasto" | 1 |
 
-**Actual — cada mes**
+**Actual — cada mes** (corregido al revisar el código: "Sí, se pagó" ya
+confirma sin pasar por otra pantalla)
 
 | # | Dónde | Qué hace | Toques |
 |---|-------|----------|--------|
 | 1 | Inicio | Toca la campana | 1 |
 | 2 | Notificaciones | Toca el aviso "¿Se pagó?" | 1 |
-| 3 | Programado | "✅ Sí, se pagó" | 1 |
-| 4 | Confirmar pago | "✅ Confirmar pago" | 1 |
+| 3 | Programado | "✅ Sí, se pagó" (anota con el monto y la fecha previstos) | 1 |
 
-**Conteo:** primera vez 2 pantallas · 10 toques · 1 campo; cada mes 4
-pantallas · 4 toques.
-**Lo que cuesta:** confirmar atraviesa dos pantallas aunque el monto no
-cambie; Frecuentes (montos variables) y Programados (fijos) siguen siendo dos
-ideas que el usuario tiene que distinguir.
-**Objetivo:** *por definir.*
+**Conteo:** primera vez 2 pantallas · 7 toques · 1 campo; cada mes 3
+pantallas · 3 toques.
+**Lo que cuesta:** lo que hay que confirmar vive en la campana, que se ve
+como un número, no como una pregunta; "Se repite" abre una lista para elegir
+entre dos opciones.
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-3 y F-8 (§6).
+
+*La primera vez*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe 32.000 | campo |
+| 4 | Gasté | "¿En qué?" con botones | Toca 💡 Luz | 1 |
+| 5 | Gasté | La cuenta de la última vez, ya elegida | Nada | 0 |
+| 6 | Gasté | 🔁 Se repite: al tocarlo aparecen dos botones, **🔁 Cada mes · 📆 Cada año** (sin lista) | Toca 🔁 Se repite y 🔁 Cada mes | 2 |
+| 7 | Gasté | Pie: "💸 Salen 32.000 de Cuenta corriente · Luz · hoy. Te avisamos cada mes, el día 9." | "Anotar gasto" | 1 |
+
+*Cada mes*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | Arriba, en los avisos: "⏰ ¿Pagaste Luz?" y debajo "32.000 CLP · era el 9 nov", con el botón **✅ Sí** | Toca ✅ Sí | 1 |
+| 2 | Inicio | "Listo, quedó anotado"; el aviso desaparece | — | 0 |
+
+Si fue otro monto o este mes no se paga, toca la fila (no el botón) y llega al
+Programado de siempre ("✏️ Fue otro monto", "⏭️ Este mes no").
+
+**Conteo objetivo:** primera vez 2 pantallas · **6 toques + monto** (se hace
+una vez); cada mes 1 pantalla · **1 toque** (meta ✅). Antes: 7 y 3.
 
 #### M6 — Compro con la tarjeta de crédito y después pago la tarjeta
 
@@ -683,11 +710,28 @@ pantallas · 5 a 7 toques · 1 campo.
 **Otra ruta:** Planificar → 🗓️ Movimientos programados → Programar
 movimiento → 🔁 Moví plata → monto → cuentas → "¿Se repite?" Cada mes →
 "¿Cuándo es la primera vez?" → Programar (≈ 12 toques).
-**Cada mes:** confirmar como M5 (4 toques).
-**Conteo:** 2 pantallas · 10 toques · 1 campo.
+**Cada mes:** confirmar como M5 (3 toques).
+**Conteo:** 2 pantallas · 10 toques · 1 campo (con M1–M3, la cuenta de salida
+viene elegida: 8).
 **Lo que cuesta:** era "No se completa" en S01 (D-5); hoy resuelto. Quedan
 dos caminos para lo mismo.
-**Objetivo:** *por definir.*
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — igual que M5, en Moví plata.
+
+*La primera vez*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 🔁 Moví plata | 1 |
+| 3 | Moví plata | Banda del monto resaltada | Escribe el monto | campo |
+| 4 | Moví plata | Las cuentas de la última vez | Si "¿A qué cuenta?" no es la Falabella de Zoily, la elige (bajo 👥) | 0 o 2 |
+| 5 | Moví plata | 🔁 Se repite con dos botones | Toca 🔁 Se repite y 🔁 Cada mes | 2 |
+| 6 | Moví plata | Pie: "🔁 Pasas X de Cuenta corriente a Falabella (de Zoily) · hoy. … Te avisamos cada mes, el día 9." | "Anotar movimiento" | 1 |
+
+*Cada mes:* como M5, "✅ Sí" en los avisos del Inicio (1 toque).
+**Conteo objetivo:** primera vez **5 a 7 toques + monto**; cada mes **1
+toque** (meta ✅). Antes: 8 a 10 y 3.
 
 #### H4 — Decido qué ve mi pareja de mis cuentas y qué suma al hogar
 
@@ -881,11 +925,37 @@ del formulario.
 | 7 | Programar | "¿Para cuándo?" → fecha | 3 |
 | 8 | Programar | "🗓️ Programar gasto" | 1 |
 
-**Cuando llega la fecha:** como M5 (4 toques).
+**Cuando llega la fecha:** como M5 (3 toques).
 **Conteo:** 3 pantallas · 11 toques · 1 campo.
-**Lo que cuesta:** no se puede iniciar desde el "+" con una fecha futura
-*(verificar qué hace Gasté con una fecha futura)*.
-**Objetivo:** *por definir.*
+**Lo que cuesta:** hay que saber que "lo que viene" vive en Planificar, en
+otra pestaña. Gasté no distinguía una fecha futura ("Otra fecha" deja elegir
+cualquier día): la anotaba como si ya hubiera pasado.
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-8: el "+" anota lo que pasó y deja programado lo que
+viene.
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe el arriendo | campo |
+| 4 | Gasté | "¿En qué?" con botones | Toca 🏠 Arriendo (o 🔍 Otra) | 1 |
+| 5 | Gasté | La cuenta de la última vez | Nada | 0 |
+| 6 | Gasté | ¿Cuándo? Hoy · Ayer · 📅 Otra fecha | 📅 Otra fecha → 5 nov | 3 |
+| 7 | Gasté | Como la fecha es futura, la banda dice **"🗓️ Para el 5 nov: se anota ese día"** y el pie: "🗓️ Lo dejamos anotado para el 5 nov. Ese día te preguntamos si se pagó." | "🗓️ Programar gasto" | 1 |
+
+Con una fecha futura solo se programa lo tuyo: lo de otra persona, lo
+compartido, un cambio de moneda o la plata de una meta se anotan el día que
+pasan (el pie lo dice y el botón queda desactivado). Las etiquetas no se
+ofrecen, porque el programado no las guarda.
+
+Si además se repite (dividendo), 🔁 Se repite → Cada mes (+2): la primera vez
+es el 5 nov. Llegada la fecha, "✅ Sí" en los avisos del Inicio, como M5.
+"Programar movimiento" en Planificar sigue existiendo para quien lo busque
+ahí.
+
+**Conteo objetivo:** 2 pantallas · **7 toques + monto** (meta T2 ≤ 8 ✅).
+Antes: 3 pantallas · 11.
 
 ## 6. Lectura del recorrido y patrones candidatos
 
@@ -901,12 +971,12 @@ elegir en hojas cosas que el usuario repite siempre igual.
 |---|--------|---------------------|-----------------|--------|
 | F-1 | **Cuenta recordada:** la cuenta (o el par de cuentas, en Moví plata) del último movimiento del mismo tipo viene elegida, se ve como paso hecho y se cambia tocándola. | M1, M2, M3, M6, M7, M8, M10, P2 | −2 toques por cuenta | ✅ en M1–M3 (§9) |
 | F-2 | **Categoría en chips:** las 4 categorías más usadas de ese tipo, a un toque, y "🔍 Otra" para la lista completa. | M1, M2, M5, M7, A5, P2 | −1 toque | ✅ en M1–M2 (§9) |
-| F-3 | **Confirmar en un toque:** "✅ Sí, se pagó" en el aviso o en la fila del programado anota con el monto previsto, sin pasar por Confirmar. | M5, H3, P2, H5 | −2 a −3 toques por mes | ⬜ |
+| F-3 | **Confirmar desde el Inicio en un toque:** lo programado que ya venció aparece en los avisos del Inicio con "✅ Sí", que anota con el monto y la fecha previstos; la fila abre el Programado para los otros casos. | M5, H3, P2, H5 | −2 toques por mes | ✅ en M5 y H3 (§9) |
 | F-4 | **Personas como respuesta directa:** "¿De quién es?" ofrece las personas recientes (Noira, Papás) junto a Mío y Compartido. | M8, M10 | −2 toques | ⬜ |
 | F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+", con el monto que debes sugerido. | M6, H5 | −2 toques y 0 campos | ⬜ |
 | F-6 | **Tipo opcional** al agregar: se deja en el genérico sin preguntar. | C1, C2, C3 | −2 toques | ⬜ |
 | F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
-| F-8 | **Un solo camino para lo que se repite:** "🔁 Se repite" en el formulario como puerta principal (Programar queda para lo futuro que no se anota hoy). | M5, H3, P2 | menos ideas que aprender | ⬜ |
+| F-8 | **El "+" para todo lo que se repite o viene:** "🔁 Se repite" muestra Cada mes · Cada año como botones, y una fecha futura en Gasté / Recibí / Moví plata deja el movimiento programado en vez de anotarlo. Programar en Planificar sigue existiendo. | M5, H3, P2 | −1 a −4 toques; una sola puerta | ✅ en M5, H3 y P2 (§9) |
 
 ## 7. Orden de trabajo
 
@@ -914,7 +984,7 @@ Frecuencia primero; los primeros fijan los patrones.
 
 1. **M1, M2, M3** — el formulario base (F-1, F-2). Lo que se decida aquí
    cambia 15 escenarios. ✅ implementado y mergeado (§9).
-2. **M5, H3, P2** — lo que se repite (F-3, F-8).
+2. **M5, H3, P2** — lo que se repite (F-3, F-8). ✅ implementado y mergeado (§10).
 3. **M6, H5** — tarjetas y deudas (F-5).
 4. **M4, M7, M9** — entre miembros del hogar.
 5. **M8, M10** — plata de otras personas (F-4).
@@ -934,7 +1004,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3. | 🟡 F-1 y F-2 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2. | 🟡 F-1, F-2, F-3 y F-8 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -972,3 +1042,40 @@ requiere deploy en Render.
   base local) y al volver a abrir Gasté vino la misma cuenta.
 - **Conteo logrado:** M1 4 toques + monto (7 con el 18-sep) · M2 4 + monto ·
   M3 3 + monto. Meta S3-3 ✅ en los tres.
+
+## 10. Implementación de M5, H3 y P2 (rama `feat/G39-repite`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). Solo app
+(sin cambios en la API).
+
+- **F-3 · "✅ Sí" en el Inicio** (`DashboardScreen`): los programados
+  pendientes cuya fecha ya llegó entran a los avisos del Inicio, los más
+  antiguos primero: "⏰ ¿Pagaste / ¿Te llegó / ¿Hiciste [nombre]?" y debajo
+  "monto · era el [día]". "✅ Sí" los anota con el monto y la fecha previstos
+  (`MaterializarMovimientoProgramado`, igual que "Sí, se pagó" del
+  Programado); la fila abre el Programado ("Fue otro monto", "Este mes no").
+  Los avisos siguen mostrando 3 como máximo.
+- **F-8 · "🔁 Se repite" con botones** (`RegistrarMovimientoScreen`): al
+  abrirlo aparecen 🔁 Cada mes · 📆 Cada año; tocar el elegido lo quita.
+- **F-8 · fecha futura = programar** (`RegistrarMovimientoScreen`): con una
+  fecha posterior a hoy, Gasté / Recibí / Moví plata crean un movimiento
+  programado (`CrearMovimientoProgramado`, con categoría, detalle y "se
+  repite") en vez de anotarlo. La banda dice "🗓️ Para el 5 nov: se anota ese
+  día", el pie "🗓️ Lo dejamos anotado para el 5 nov. Ese día te preguntamos
+  si se pagó." y el botón "🗓️ Programar gasto / ingreso / movimiento / pago".
+  Lo que el programado no guarda (de otra persona, compartido, cambio de
+  moneda, plata de una meta) no se puede programar: el pie lo dice y el botón
+  queda desactivado. Sin Etiquetas con fecha futura.
+- **Verificado:** `tsc` sin errores; capturas web como Demo:
+  - Inicio con un programado vencido de prueba (18.000, 7 oct): "✅ Sí" lo
+    anotó (queda MATERIALIZADO con su movimiento) y el aviso desapareció; con
+    otro (8 oct), tocar la fila abre el Programado ("Tocaba pagar · ¿se
+    pagó?"). Este segundo queda pendiente en la base local para probar en el
+    teléfono.
+  - Gasté con "Se repite → Cada mes": pie "… · hoy. Te avisamos el 9 de cada
+    mes." (no se anotó).
+  - Gasté de 450.000 con fecha 5 nov: pie y botón de programar; al tocarlo
+    quedó un programado PENDIENTE para el 5 nov (sin movimiento) en la base
+    local.
+- **Conteo logrado:** confirmar cada mes (M5, H3) 1 toque · M5 la primera vez
+  6 + monto · P2 7 + monto.
