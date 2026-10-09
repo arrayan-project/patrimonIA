@@ -278,8 +278,8 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 |---|---|---|
 | `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL) | Fase 16 / G27 |
 | `GET /usuarios/me/resumen-anual?anio=&alcance=&hogarId=` | 12 baldes `{mes, porMoneda}` | Fase 16 / G27 |
-| `GET /usuarios/me/serie-patrimonial?desde=&hasta=&pasos=` | N puntos equiespaciados del patrimonio individual | Fase 15g |
-| `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` | patrimonio en 2 fechas + variación (abs / %) | Fase 9 |
+| `GET /usuarios/me/serie-patrimonial?desde=&hasta=&pasos=` | N puntos equiespaciados del patrimonio individual; lo anotado después de un punto cuenta en él con su valor al anotarse (GAPS G38) | Fase 15g |
+| `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` | patrimonio en 2 fechas + variación (abs / %), con la misma regla de G38 (anotar no es ganar ni perder) | Fase 9 |
 | `GET /usuarios/me/patrimonio-individual/historico?fecha=` | patrimonio reconstruido a esa fecha | Fase 9 / G18 |
 | `GET /elementos-patrimoniales/:id/valor-historico?fecha=` | valor del elemento a esa fecha (`existia: bool`) | Fase 9 |
 | `GET /hogares/:id/patrimonio-consolidado` | neto/activos/pasivos/líquido por moneda + `total` en moneda del hogar (o `conversionesFaltantes`) | Fase 10/13 |

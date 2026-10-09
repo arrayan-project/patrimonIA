@@ -40,7 +40,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
-| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27 |
+| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G32, G33, G35 | G25 |
 
@@ -1558,6 +1558,30 @@ ya cerrados en Fases 50–51).
     (F1 de `Docs/mockup/casos-dominio-probados.html`).
 - **Para decidir**: ¿comparación automática con el período anterior en el
   endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+
+#### G38 — Anotar una cuenta vieja hacía caer (o subir) el gráfico  ✅ RESUELTO (2026-10-09)
+- **Qué pasaba**: el gráfico de "Cómo ha cambiado" y el % del Inicio
+  reconstruyen el patrimonio a cada fecha con la ventana
+  `[fecha_alta, fecha_baja)` (P10). Si una deuda de 2024 se anotaba hoy sin
+  "Desde cuándo", su `fecha_alta` era hoy: el gráfico la mostraba como una
+  caída de hoy. Con los datos de Demo, el Departamento contaba desde 2024 y
+  el crédito hipotecario desde el 3-10-2026, y el Inicio decía "▼ 57,3%".
+  Anotado por Juan en G35 (ficha 7–9: "consolidar períodos largos").
+- **Decidido (Juan, 2026-10-09)**: opción (a), **anotar no es ganar ni
+  perder**. En la variación y en la serie, una cuenta o bien activo cuenta
+  antes de su `fecha_alta` con el valor con que se anotó; el gráfico solo se
+  mueve con hechos (movimientos, valorizaciones, ajustes). Se descartó (b),
+  dejar el cálculo y permitir editar "Desde cuándo": arregla solo a quien lo
+  corrija.
+  - Los dados de baja siguen la ventana `[fecha_alta, fecha_baja)`, para que
+    el último punto sea el total de hoy.
+  - El patrimonio a una fecha (`/usuarios/me/patrimonio-individual/historico`)
+    y el valor de un elemento a una fecha no cambian: dicen lo que había
+    anotado ese día.
+- **Implementado** (rama `feat/G38-carga-no-es-cambio`):
+  `ReconstruccionService` (`#patrimonioA` con `comparable`) + e2e en
+  `reconstruccion-historica.e2e-spec.ts`. Sin cambios en la app. Con los
+  datos de Demo el Inicio pasa de "▼ 57,3%" a "▲ 9,7%".
 
 ### Tema I · App: preferencias y usabilidad
 
