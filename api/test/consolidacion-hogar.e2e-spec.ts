@@ -108,12 +108,16 @@ describe('Consolidación y métricas del hogar (e2e)', () => {
       participaConsolidacion: true,
     });
 
-    // objetivo del hogar (personal de A) con reserva
+    // objetivo del hogar (de A, compartido) con reserva
     const objId = (
       await A(request(http).post('/comandos/CrearObjetivoFinanciero'))
-        .send({ nombre: 'Viaje', montoObjetivo: 10_000_000 })
+        .send({ nombre: 'Viaje', montoObjetivo: 10_000_000, hogarId })
         .expect(201)
     ).body.id;
+    // una meta personal de B no es del hogar: no cuenta en las métricas
+    await B(request(http).post('/comandos/CrearObjetivoFinanciero'))
+      .send({ nombre: 'Personal de B', montoObjetivo: 1_000_000 })
+      .expect(201);
     const asgId = (
       await A(request(http).post('/comandos/CrearAsignacion'))
         .send({ nombre: 'Viaje', objetivoId: objId })

@@ -209,14 +209,14 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 ### Tanda 4 · Hogar
 
-38. **Hogar** (`HogarScreen`) — pestaña. Plata del hogar (Tienen / Deben);
+38. ✅ **Hogar** (`HogarScreen`) — pestaña. Plata del hogar (Tienen / Deben);
     lo que suma al hogar (abrir cada cuenta); metas del hogar; "Entre
     [miembro] y tú"; Para transferir (→ Registrar movimiento); Personas;
     invitaciones recibidas; Más del hogar (Patrimonio del hogar, Movimientos
     del hogar, Gestionar hogar); campana; engranaje.
-39. **Patrimonio del hogar** (`HogarConsolidadoScreen`) — Hogar. Ver Tienen /
+39. ✅ **Patrimonio del hogar** (`HogarConsolidadoScreen`) — Hogar. Ver Tienen /
     Deben, plata y metas del hogar por moneda (sin acciones).
-40. **Movimientos del hogar** (`MovimientosHogarScreen`) — Hogar. Lista por
+40. ✅ **Movimientos del hogar** (`MovimientosHogarScreen`) — Hogar. Lista por
     mes; abrir un movimiento.
 41. **Entre ustedes** (`EntreMiembrosScreen`) — Hogar. Lista de solicitudes y
     transferencias entre dos miembros; abrir un movimiento; pagar una
@@ -959,3 +959,62 @@ eso entran las 6 listas y sus formularios de crear y editar.
   Cancelar → formulario de motivo → cancelado; Programar gasto → vuelve a la
   lista con el nuevo en "⏰ Por confirmar". Dato de prueba en la base local:
   "Prueba G35 vencido" (12.000, 1 oct), creado y cancelado.
+
+### 38–40. Hogar, Patrimonio del hogar y Movimientos del hogar (`HogarScreen`, `HogarConsolidadoScreen`, `MovimientosHogarScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Tanda 4 en dos bloques** (Juan, 2026-10-09): A (38–40) y B (41–43:
+  Entre ustedes, Pagar, Gestionar hogar).
+- **Cómo se veían:** el Hogar con "Plata del hogar" sin emojis y un párrafo
+  debajo; "Entre Pareja y tú" con íconos grises, fechas "2026-10-08" y
+  subtítulos cortados ("Pagado · 20…"); todas las cuentas con la misma
+  billetera; "Para transferir" con un párrafo; la meta sin emoji y "3.8%";
+  menús con jerga ("moneda de consolidación", "activos y pasivos",
+  "patrimonio consolidado") e "Invitaciones recibidas" siempre visible.
+  Patrimonio del hogar repetía el mismo recuadro, "Disponible en cuentas",
+  "Parte que está en cuentas 3%", una dona "Activo / Liquidez" y "Deuda
+  100%". Movimientos del hogar era una lista aparte (recuadro explicativo,
+  flechas grises, títulos "Gasto" / "Transferencia", sin totales).
+- **Cifra que no cuadraba:** Patrimonio del hogar decía "Metas: 3 (3 en
+  progreso)" y "1.500.055 CLP de 11.001.500 CLP" mientras el Hogar mostraba
+  una sola meta del hogar: `/hogares/:id/metricas` contaba las metas de
+  **todos** los miembros, también las personales, y sumaba monedas
+  distintas como CLP. **Juan aprobó arreglarlo:** ahora cuenta solo las
+  metas compartidas con ese hogar (`consolidacion.service`, e2e de
+  consolidación actualizado con una meta personal que no cuenta). Requiere
+  deploy en Render.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisión:
+  Movimientos del hogar **es la pestaña Movimientos en "Del hogar"** (encima,
+  con atrás, sin el selector), para que haya una sola versión de esa lista y
+  sus cifras cuadren.
+  - **Piezas comunes:** `cargarCuentasHogar()` y `deQuien()` en
+    `cuentasHogar.ts` (lo que suma al hogar y lo que se puede transferir,
+    ordenado como el Inicio; "🙋 Tuya" / "👥 Tú y Pareja" / "👤 De Pareja"),
+    que usan Hogar y Patrimonio del hogar. `FilaEntre` lleva emoji (🧾 / 🔁)
+    y `diaCorto()` ("8 oct", con año si no es el actual).
+  - **Hogar:** "🏠 Plata del hogar" con 💰 Tienen · 💳 Deben (abre
+    Patrimonio del hogar), sin el párrafo. "🤝 Entre Pareja y tú" con
+    "✅ Pareja te pagó · 8 oct", "⏰ Le pediste a Pareja", "⏰ Pareja te
+    pidió · toca para pagar"; las transferencias con la cuenta y la fecha.
+    "🏠 Lo que suma al hogar" con el emoji de cada cuenta y de quién es.
+    "🔁 Para transferirles" sin el párrafo. "🎯 Metas del hogar" con la
+    tarjeta de Planificar (emoji, "3,8%", 🐷 Ahorrar). "Más del hogar":
+    👥 Personas del hogar · 🧾 Movimientos del hogar · 📩 Te invitaron a
+    otro hogar (solo si hay invitaciones). Sale "Patrimonio del hogar" del
+    menú (lo abre la cifra).
+  - **Patrimonio del hogar:** la cifra con la resta debajo, en la misma
+    tarjeta: 🏦 Cuentas · 🏠 Bienes · 💰 Tienen · 💳 Deudas (−) · 🏠 Plata
+    del hogar (con varias monedas, una resta por moneda). "🏦 Las cuentas y
+    bienes del hogar" (cada una abre su detalle) y "🎯 Metas del hogar" con
+    las mismas tarjetas.
+  - **Movimientos del hogar:** la pestaña en "Del hogar". De paso, las
+    transferencias en "Del hogar" decían "Entre tus cuentas" aunque una
+    cuenta fuera de Pareja: ahora "Entre cuentas del hogar" / "Salió del
+    hogar" / "Entró al hogar" (también en la pestaña).
+- **Verificado:** `tsc` sin errores; tests de `solicitudes` 5/5; e2e de
+  consolidación 5/5 contra `patrimonia_test`; capturas web del Hogar,
+  Patrimonio del hogar (también en modo oscuro) y Movimientos del hogar.
+  Destinos: cifra → Patrimonio del hogar; transferencia de "Entre" →
+  Movimiento; cuenta → su detalle; Para transferirles → Moví plata; meta →
+  Meta; 🐷 Ahorrar → Ahorrar; Personas del hogar → Gestionar hogar;
+  Movimientos del hogar → un gasto → atrás → atrás vuelve al Hogar. No se
+  guardó nada nuevo en la base local.

@@ -1,55 +1,77 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
+  type ElementoPatrimonialDTO,
   type MetricasHogarDTO,
+  type ObjetivoFinancieroDTO,
   type PatrimonioConsolidadoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
+import { EMOJI_CATEGORIA_FUNCIONAL, NOMBRE_CATEGORIA_FUNCIONAL, emojiElemento } from '../emojis';
+import { usePreferencias } from '../preferencias';
+import { cargarCuentasHogar, deQuien } from '../cuentasHogar';
+import { TarjetaMeta } from './ObjetivosScreen';
 import {
-  Skeleton,
-  colorCategoria,
+  Dato,
+  Datos,
   ErrorText,
-  etiqueta,
   Hero,
-  MoneyText,
+  ListCard,
   Nota,
-  ProgressBar,
-  Row,
+  Panel,
   Screen,
   Section,
-  Panel,
+  Skeleton,
+  TxRow,
   useC,
   type Paleta,
-  tipoDe,
 } from '../ui';
-import { Dona } from '../ui/charts';
 
+type PorMoneda = MetricasHogarDTO['porMoneda'][number];
+
+// En el orden del Inicio: Cuentas, Ahorro, Inversiones, Bienes, Te deben, Deudas.
+const ORDEN = Object.keys(EMOJI_CATEGORIA_FUNCIONAL);
+const enOrden = <T extends { categoria: string }>(xs: T[]) =>
+  [...xs].sort((a, b) => ORDEN.indexOf(a.categoria) - ORDEN.indexOf(b.categoria));
+
+/**
+ * Patrimonio del hogar (G35): la plata del hogar como una resta que cuadra
+ * —cada grupo del Inicio, Tienen, lo que deben y el total—, las cuentas y
+ * bienes que suman (cada una abre su detalle) y las metas del hogar.
+ */
 export function HogarConsolidadoScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
+  const { preferencias } = usePreferencias();
   const hogarId = nav.route.params?.hogarId as string;
 
   const [cons, setCons] = useState<PatrimonioConsolidadoDTO | null>(null);
   const [met, setMet] = useState<MetricasHogarDTO | null>(null);
+  const [suman, setSuman] = useState<ElementoPatrimonialDTO[]>([]);
+  const [metas, setMetas] = useState<ObjetivoFinancieroDTO[]>([]);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [c, m] = await Promise.all([
+      const [c, m, cuentas, objs] = await Promise.all([
         api.get<PatrimonioConsolidadoDTO>(`/hogares/${hogarId}/patrimonio-consolidado`, token),
         api.get<MetricasHogarDTO>(`/hogares/${hogarId}/metricas`, token),
+        cargarCuentasHogar(token),
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
       ]);
       setCons(c);
       setMet(m);
+      setSuman(cuentas.suman);
+      setMetas(objs.filter((o) => o.hogarId === hogarId && o.estado !== 'CANCELADO'));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -66,101 +88,80 @@ export function HogarConsolidadoScreen() {
     );
   }
 
+  const unaMoneda = met.porMoneda.length === 1;
+
+  // Cada grupo de lo que tienen, Tienen, cada grupo de lo que deben y el total de esa moneda.
+  const resta = (pm: PorMoneda) => (
+    <Datos plano={unaMoneda}>
+      {enOrden(pm.distribucionPorActivo).map((d) => (
+        <Dato
+          key={d.categoria}
+          etiqueta={`${EMOJI_CATEGORIA_FUNCIONAL[d.categoria] ?? '💼'} ${NOMBRE_CATEGORIA_FUNCIONAL[d.categoria] ?? d.categoria}`}
+          valor={money(d.valor, pm.moneda)}
+        />
+      ))}
+      {pm.distribucionPorPasivo.length > 0 && (
+        <Dato etiqueta="💰 Tienen" valor={<Text style={styles.total}>{money(pm.activos, pm.moneda)}</Text>} />
+      )}
+      {enOrden(pm.distribucionPorPasivo).map((d) => (
+        <Dato
+          key={d.categoria}
+          etiqueta={`${EMOJI_CATEGORIA_FUNCIONAL[d.categoria] ?? '💳'} ${NOMBRE_CATEGORIA_FUNCIONAL[d.categoria] ?? d.categoria}`}
+          valor={<Text style={styles.resta}>{`− ${money(d.valor, pm.moneda)}`}</Text>}
+        />
+      ))}
+      <Dato
+        etiqueta={unaMoneda ? '🏠 Plata del hogar' : `🏠 En ${pm.moneda}`}
+        valor={<Text style={styles.total}>{money(pm.patrimonioNeto, pm.moneda)}</Text>}
+      />
+    </Datos>
+  );
+
   return (
     <Screen onRefresh={cargar}>
       <Hero
-        label="Plata del hogar"
+        label="🏠 Plata del hogar"
         value={cons.total != null ? money(cons.total, cons.monedaConsolidacion) : '—'}
-        substats={
-          // Tienen − Deben = total; solo si cuadra (una moneda, la del hogar).
-          cons.porMoneda.length === 1 &&
-          cons.porMoneda[0].moneda === cons.monedaConsolidacion &&
-          Math.abs(cons.porMoneda[0].activos - Math.abs(cons.porMoneda[0].pasivos) - cons.porMoneda[0].patrimonioNeto) < 1
-            ? [
-                { label: 'Tienen', value: money(cons.porMoneda[0].activos, cons.monedaConsolidacion) },
-                { label: 'Deben', value: money(Math.abs(cons.porMoneda[0].pasivos), cons.monedaConsolidacion) },
-              ]
-            : undefined
-        }
+        debajo={unaMoneda ? resta(met.porMoneda[0]) : undefined}
       />
       {cons.total == null && (
-        <Nota>
-          Falta tipo de cambio para: {cons.conversionesFaltantes.join(', ')}. Regístralo en "Tipos
-          de cambio".
-        </Nota>
+        <ErrorText>{`Falta el valor de ${cons.conversionesFaltantes.join(', ')} en ${cons.monedaConsolidacion} para sumar todo.`}</ErrorText>
       )}
-
-      {cons.porMoneda.map((pm) => {
-        const metricas = met.porMoneda.find((x) => x.moneda === pm.moneda);
-        return (
-          <Section key={pm.moneda} title={cons.porMoneda.length > 1 ? `En ${pm.moneda}` : 'Cómo se compone'}>
-            <Panel>
-              {/* Con una sola moneda, total, tienen y deben ya están arriba. */}
-              {cons.porMoneda.length > 1 && (
-                <>
-                  <Row
-                    left="Total"
-                    right={<MoneyText monto={pm.patrimonioNeto} moneda={pm.moneda} style={styles.montoRow} />}
-                  />
-                  <Row left="Tienen" right={money(pm.activos, pm.moneda)} />
-                  <Row left="Deben" right={money(Math.abs(pm.pasivos), pm.moneda)} />
-                </>
-              )}
-              <Row
-                left="Disponible en cuentas"
-                right={<MoneyText monto={pm.valorLiquido} moneda={pm.moneda} style={styles.montoRow} />}
-              />
-              {metricas?.liquidez != null && (
-                <Row left="Parte que está en cuentas" right={`${Math.round(metricas.liquidez * 100)}%`} />
-              )}
-
-              {metricas && metricas.distribucionPorActivo.length > 0 && (
-                <>
-                  <Text style={styles.subTitle}>En qué está lo que tienen</Text>
-                  <Dona
-                    segmentos={metricas.distribucionPorActivo.map((d, i) => ({
-                      label: etiqueta(d.categoria),
-                      valor: d.valor,
-                      color: colorCategoria(null, i),
-                    }))}
-                    centro={money(pm.activos, pm.moneda).replace(` ${pm.moneda}`, '')}
-                    formatoValor={(n) => money(n, pm.moneda)}
-                  />
-                </>
-              )}
-              {metricas && metricas.distribucionPorPasivo.length > 0 && (
-                <>
-                  <Text style={styles.subTitle}>Qué deben</Text>
-                  {metricas.distribucionPorPasivo.map((d) => (
-                    <Row
-                      key={d.categoria}
-                      left={etiqueta(d.categoria)}
-                      right={`${money(d.valor, pm.moneda)} · ${d.porcentaje}%`}
-                    />
-                  ))}
-                </>
-              )}
-            </Panel>
+      {!unaMoneda &&
+        met.porMoneda.map((pm) => (
+          <Section key={pm.moneda} title={`💱 En ${pm.moneda}`}>
+            {resta(pm)}
           </Section>
-        );
-      })}
+        ))}
 
-      <Section title="Metas del hogar">
-        <Panel>
-          <Row
-            left="Metas"
-            right={`${met.objetivos.total} (${met.objetivos.enProgreso} en progreso, ${met.objetivos.completados} completadas)`}
-          />
-          {met.objetivos.avancePorcentaje != null && (
-            <>
-              <ProgressBar pct={met.objetivos.avancePorcentaje} />
-              <Text style={styles.muted}>
-                {money(met.objetivos.progresoTotal, 'CLP')} de{' '}
-                {money(met.objetivos.montoObjetivoTotal, 'CLP')} · {met.objetivos.avancePorcentaje}%
-              </Text>
-            </>
-          )}
-        </Panel>
+      <Section title="🏦 Las cuentas y bienes del hogar">
+        {suman.length === 0 ? (
+          <Nota>Ninguna cuenta ni bien suma al hogar por ahora.</Nota>
+        ) : (
+          <ListCard>
+            {suman.map((e) => (
+              <TxRow
+                key={e.id}
+                title={e.nombre}
+                subtitle={deQuien(e, usuario.id)}
+                amount={e.valorOculto ? '—' : money(e.valorVigente, e.moneda)}
+                negativo={!e.valorOculto && e.valorVigente < 0}
+                logo={{ emoji: emojiElemento(e, preferencias.emojis.elementos) }}
+                onPress={() => nav.go('ElementoDetalle', { elementoId: e.id })}
+              />
+            ))}
+          </ListCard>
+        )}
+      </Section>
+
+      <Section title="🎯 Metas del hogar">
+        {metas.length === 0 ? (
+          <Panel>
+            <Text style={styles.muted}>Ninguna meta compartida con el hogar.</Text>
+          </Panel>
+        ) : (
+          metas.map((o) => <TarjetaMeta key={o.id} o={o} ahorrar />)
+        )}
       </Section>
 
       <ErrorText>{error}</ErrorText>
@@ -169,7 +170,7 @@ export function HogarConsolidadoScreen() {
 }
 
 const crearEstilos = (c: Paleta) => StyleSheet.create({
-  subTitle: { fontSize: 13, fontWeight: '700', color: c.muted, marginTop: 8 },
-  muted: tipoDe(c).nota,
-  montoRow: { fontSize: 14, fontWeight: '600' },
+  total: { fontSize: 15, fontWeight: '800', color: c.text, textAlign: 'right' },
+  resta: { fontSize: 14, color: c.muted, textAlign: 'right' },
+  muted: { fontSize: 14, color: c.muted },
 });

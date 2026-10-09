@@ -85,6 +85,7 @@ export interface TransferenciaHogarDTO {
 
 export interface FilaEntre {
   key: string;
+  emoji: string;
   titulo: string;
   detalle: string;
   monto: string;
@@ -94,6 +95,31 @@ export interface FilaEntre {
   eventoId?: string;
   /** La plata te llegó a ti. */
   positivo: boolean;
+}
+
+/** Cómo va una solicitud, desde el punto de vista de quien la mira. */
+function comoVa(s: SolicitudDTO): string {
+  const otro = s.direccion === 'ENVIADA' ? s.destinatario.nombre : s.solicitante.nombre;
+  if (s.direccion === 'ENVIADA') {
+    if (s.estado === 'PENDIENTE') return `⏰ Le pediste a ${otro}`;
+    if (s.estado === 'PAGADA') return `✅ ${otro} te pagó`;
+    if (s.estado === 'RECHAZADA') return `❌ A ${otro} no le correspondía`;
+    return '❌ Anulado';
+  }
+  if (s.estado === 'PENDIENTE') return `⏰ ${otro} te pidió · toca para pagar`;
+  if (s.estado === 'PAGADA') return `✅ Le pagaste a ${otro}`;
+  if (s.estado === 'RECHAZADA') return '❌ No te correspondía';
+  return '❌ Anulado';
+}
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/** 'YYYY-MM-DD' → "8 oct" (con el año si no es el actual). */
+export function diaCorto(iso: string, hoy: Date = new Date()): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const dia = `${Number(m[3])} ${MESES_CORTOS[Number(m[2]) - 1]}`;
+  return Number(m[1]) === hoy.getFullYear() ? dia : `${dia} ${m[1]}`;
 }
 
 /**
@@ -107,23 +133,28 @@ export function filasEntre(
   formato: Formato,
 ): FilaEntre[] {
   const pagos = new Set(solicitudes.map((s) => s.eventoPagoId).filter((x): x is string => !!x));
-  // Arriba en qué fue (corto, no se corta); abajo quién la pidió y cómo va.
-  const filas: FilaEntre[] = solicitudes.map((s) => ({
-    key: `s-${s.id}`,
-    titulo: s.glosa ?? (s.motivo === 'GASTO_COMPARTIDO' ? 'Gasto compartido' : 'Transferencia sin anotar'),
-    detalle: `${s.direccion === 'ENVIADA' ? `Le pediste a ${s.destinatario.nombre}` : `Te pidió ${s.solicitante.nombre}`} · ${ESTADO_TEXTO[s.estado]} · ${s.fecha.slice(0, 10)}`,
-    monto: formato(s.monto, s.moneda),
-    fecha: s.fecha.slice(0, 10),
-    solicitudId: s.direccion === 'RECIBIDA' && s.estado === 'PENDIENTE' ? s.id : undefined,
-    positivo: s.direccion === 'ENVIADA',
-  }));
+  // Arriba en qué fue (corto, no se corta); abajo cómo va, con quién y cuándo.
+  const filas: FilaEntre[] = solicitudes.map((s) => {
+    const fecha = s.fecha.slice(0, 10);
+    return {
+      key: `s-${s.id}`,
+      emoji: '🧾',
+      titulo: s.glosa ?? (s.motivo === 'GASTO_COMPARTIDO' ? 'Gasto compartido' : 'Transferencia sin anotar'),
+      detalle: `${comoVa(s)} · ${diaCorto(fecha)}`,
+      monto: formato(s.monto, s.moneda),
+      fecha,
+      solicitudId: s.direccion === 'RECIBIDA' && s.estado === 'PENDIENTE' ? s.id : undefined,
+      positivo: s.direccion === 'ENVIADA',
+    };
+  });
   for (const t of transferencias) {
     if (pagos.has(t.eventoId)) continue;
     const llega = t.direccion === 'RECIBIDA';
     filas.push({
       key: `e-${t.eventoId}`,
-      titulo: llega ? `${t.miembro.nombre} te transfirió` : `Le transferiste a ${t.miembro.nombre}`,
-      detalle: `${t.glosa ? `${t.glosa} · ` : ''}${t.cuentaPropia.nombre} · ${t.fecha}`,
+      emoji: '🔁',
+      titulo: t.glosa ?? (llega ? `${t.miembro.nombre} te transfirió` : `Le transferiste a ${t.miembro.nombre}`),
+      detalle: `${t.cuentaPropia.nombre} · ${diaCorto(t.fecha)}`,
       monto: formato(t.monto, t.moneda),
       fecha: t.fecha,
       eventoId: t.eventoId,

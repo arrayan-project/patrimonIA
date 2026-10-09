@@ -80,13 +80,18 @@ export function nombreDia(fecha: string, hoy: Date): string {
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }
 
-export function MovimientosScreen() {
+/**
+ * Pestaña Movimientos. Con `soloHogar` es "Movimientos del hogar" abierto desde
+ * el Hogar (encima, con atrás): la misma lista en "Del hogar", sin el selector.
+ */
+export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean } = {}) {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const anotar = useAnotar();
-  const { alcance, setAlcance } = useAlcance();
+  const ctxAlcance = useAlcance();
+  const alcance = soloHogar ? 'hogar' : ctxAlcance.alcance;
 
   const hoy = useMemo(() => new Date(), []);
   const [periodo, setPeriodo] = useState<Periodo>('Mes');
@@ -94,7 +99,7 @@ export function MovimientosScreen() {
   const [mesesAtras, setMesesAtras] = useState(3);
 
   // En un ref: guardarlo no debe cambiar `cargar` (si no, la pantalla carga dos veces al abrirse).
-  const hogarIdRef = useRef<string | null>(null);
+  const hogarIdRef = useRef<string | null>((nav.route.params?.hogarId as string | undefined) ?? null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [noLeidas, setNoLeidas] = useState(0);
   const [error, setError] = useState('');
@@ -291,29 +296,33 @@ export function MovimientosScreen() {
   };
 
   return (
-    <Screen onRefresh={cargar} fab={<FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
-      <TopRow
-        left={<Title>Movimientos</Title>}
-        right={
-          <>
-            <IconButton
-              icon="notifications-outline"
-              badge={noLeidas || undefined}
-              accessibilityLabel="Notificaciones"
-              onPress={() => nav.go('Notificaciones')}
+    <Screen onRefresh={cargar} fab={soloHogar ? undefined : <FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
+      {!soloHogar && (
+        <>
+          <TopRow
+            left={<Title>Movimientos</Title>}
+            right={
+              <>
+                <IconButton
+                  icon="notifications-outline"
+                  badge={noLeidas || undefined}
+                  accessibilityLabel="Notificaciones"
+                  onPress={() => nav.go('Notificaciones')}
+                />
+                <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+              </>
+            }
+          />
+          <View style={styles.controles}>
+            <PillToggle
+              options={['mios', 'hogar'] as const}
+              value={alcance}
+              onChange={ctxAlcance.setAlcance}
+              format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
             />
-            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
-          </>
-        }
-      />
-      <View style={styles.controles}>
-        <PillToggle
-          options={['mios', 'hogar'] as const}
-          value={alcance}
-          onChange={setAlcance}
-          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
-        />
-      </View>
+          </View>
+        </>
+      )}
 
       <View style={styles.selectorFila}>
         <Pressable
@@ -481,6 +490,7 @@ export function MovimientosScreen() {
                       m={m}
                       categoria={m.categoriaId ? catPorId.get(m.categoriaId) : undefined}
                       emoji={emojiDe(m.categoriaId, m.tipo)}
+                      hogar={hogar}
                       onPress={() => nav.go('MovimientoDetalle', { eventoId: m.eventoId })}
                     />
                   ))}
@@ -505,9 +515,12 @@ function FilaMovimiento({
   m,
   categoria,
   emoji,
+  hogar,
   onPress,
 }: {
   m: MovimientoReporteDTO;
+  /** En "Del hogar", `efectoPropio` es sobre las cuentas del hogar, no solo las tuyas. */
+  hogar: boolean;
   categoria: CategoriaMovimientoDTO | undefined;
   emoji: string;
   onPress: () => void;
@@ -518,7 +531,9 @@ function FilaMovimiento({
   let signo = '';
   if (interno) {
     const e = m.efectoPropio ?? 0;
-    sub = e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
+    sub = hogar
+      ? e === 0 ? 'Entre cuentas del hogar' : e < 0 ? 'Salió del hogar' : 'Entró al hogar'
+      : e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
     signo = e === 0 ? '' : e < 0 ? '−' : '+';
   } else if (m.tipo === 'SALDO_INICIAL') {
     sub = 'Con lo que empezó la cuenta';
