@@ -189,16 +189,16 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 31b. ✅ **Gastos de una categoría** (`GastosCategoriaScreen`, nueva en G35) —
     Presupuesto. Ver cuánto pensabas, llevas y quedan; los gastos de esa
     categoría en el período; abrir uno.
-32. **Movimientos programados** (`MovimientosProgramadosScreen`) — Planificar,
+32. ✅ **Movimientos programados** (`MovimientosProgramadosScreen`) — Planificar,
     Inicio. Lista; abrir uno; Programar movimiento.
-33. **Programar movimiento** (`NuevoProgramadoScreen`) — Movimientos
+33. ✅ **Programar movimiento** (`NuevoProgramadoScreen`) — Movimientos
     programados. Tipo; cuánto; cuentas; categoría; fecha; detalle; "¿Se
     repite?"; guardar.
-34. **Movimiento programado** (`MovimientoProgramadoDetalleScreen`) —
+34. ✅ **Movimiento programado** (`MovimientoProgramadoDetalleScreen`) —
     Movimientos programados, aviso "¿Se pagó?". Ver datos y si se repite;
     Confirmar pago; Cambiar monto; ver el movimiento generado; ir a la
     cuenta; Editar; Dejar de repetir; Cancelar movimiento.
-35. **Editar programado / Confirmar pago** (`ProgramadoFormScreen`) —
+35. ✅ **Editar programado / Confirmar pago** (`ProgramadoFormScreen`) —
     Movimiento programado. Monto y fecha ("¿Para cuándo?" o "¿Cuándo se
     pagó?"); guardar.
 36. ✅ **Frecuentes** (`PlantillasScreen`) — Planificar, Ajustes. Lista y
@@ -910,3 +910,52 @@ eso entran las 6 listas y sus formularios de crear y editar.
   presupuesto; Educación; Mercado vacío) y la dona del Hogar. Destinos:
   categoría → Gastos de la categoría → un gasto → atrás → atrás vuelve al
   presupuesto; meta → Meta; Cambiar montos; Eliminar; Repartir.
+
+### 32–35. Movimientos programados (`MovimientosProgramadosScreen`, `NuevoProgramadoScreen`, `MovimientoProgramadoDetalleScreen`, `ProgramadoFormScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
+
+- **Cómo se veían:** la lista con el recuadro "Se confirman cuando llega la
+  fecha.", flechas grises ↑ ↓ ⇄, subtítulos cortados ("Gasto · 5 nov 2026 ·
+  cada m…"), filas sin detalle llamadas "Gasto" o "Transferencia" y un sueldo
+  que ya llegó como "Pago confirmado". El detalle con "Editar" cortado arriba,
+  "Gasto · pendiente", una ficha con "Fecha programada" y "Observaciones: Luz"
+  (repetía el nombre) y "Este mes no" en rojo como si fuera peligroso.
+  Confirmar / Editar numerados y con el monto como un "0" con línea. Programar
+  numerado, gris, con Ingreso elegido de entrada y "¿Se repite?" en lista.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada** (rama
+  `feat/G35-programados`). Decisiones: Programar parte en **Gasto**; **sin**
+  resumen del mes arriba de la lista (serían cifras nuevas que cuadrar con el
+  Inicio).
+  - **Programados:** sin el recuadro; cada fila con el emoji de su categoría
+    (o 💸 💰 🔁 del "+"); nombre = detalle, si no la categoría, si no "Gasto
+    desde Cuenta corriente" / "Ingreso a …" / "De … a …"
+    (`tituloProgramado`). Subtítulo corto: "📅 5 nov · 🔁 Cada mes", "⏰ Era
+    el 1 oct · ¿se pagó?" (¿llegó? en un ingreso), "✅ Pagado / Llegó / Hecho
+    · 5 oct", "❌ Cancelado · 8 nov". Grupos "⏰ Por confirmar" (primero) y
+    "✅ Ya resueltos". Pie "🗓️ Programar movimiento".
+  - **Programado:** el título de la pantalla es su nombre. Banda del color
+    del tipo: "💸 Vas a pagar" / "💰 Te va a llegar" / "🔁 Vas a mover" con
+    "📅 5 nov 2026 · faltan 27 días"; vencido "Tocaba pagar" con "⏰ Era el
+    1 oct · ¿se pagó?"; hecho "Pagaste" con "✅ fecha"; cancelado en gris
+    "No se hizo". Debajo: 🔁 Se repite · 🏦 Sale de / Llega a (tocable) · la
+    categoría con su emoji. Acciones en lista: 🧾 Ver lo que quedó anotado ·
+    ✏️ Cambiar monto o fecha · ⏭️ Este mes no ("No se anota nada esta
+    vez"). Botón "🛑 Dejar de repetir" o "🗑️ Cancelar este movimiento".
+    Pie: "✅ Sí, se pagó" + "✏️ Fue otro monto" si venció; "✅ Ya lo pagué"
+    (Ya llegó / Ya lo hice) si no.
+  - **Confirmar / Cambiar monto o fecha:** sin numerar; el monto en la banda
+    del tipo (`MontoBanda`); "Editar programado" pasa a "Cambiar monto o
+    fecha"; al confirmar, el pie dice "💸 Se anota un gasto de 35.000 CLP
+    desde Cuenta corriente." y "✅ Confirmar pago" ("✅ Sí, llegó" en un
+    ingreso).
+  - **Programar:** sin numerar; "💸 Gasto · 💰 Ingreso · 🔁 Moví plata";
+    monto en banda; cuentas y categorías con emoji (las subcategorías dicen
+    "Dentro de …"); "¿Se repite?" en pastillas (No · 🔁 Cada mes · 📆 Cada
+    año); "📝 Detalle" como opcional; resumen con el emoji y "🗓️ Programar
+    gasto / ingreso / movimiento".
+- **Verificado:** `tsc` sin errores; capturas web de la lista, el detalle
+  (pendiente, vencido, hecho y cancelado), Confirmar, Cambiar monto o fecha y
+  Programar (vacío y lleno). Destinos: fila → detalle; Cambiar monto o fecha;
+  Ya lo pagué / Fue otro monto → Confirmar; Ver lo que quedó anotado;
+  Cancelar → formulario de motivo → cancelado; Programar gasto → vuelve a la
+  lista con el nuevo en "⏰ Por confirmar". Dato de prueba en la base local:
+  "Prueba G35 vencido" (12.000, 1 oct), creado y cancelado.
