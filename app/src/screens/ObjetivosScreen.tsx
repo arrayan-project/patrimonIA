@@ -3,8 +3,46 @@ import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { api, ApiError, type ObjetivoFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
-import { money } from '../format';
-import { Ayuda, Button, EmptyState, ErrorText, etiqueta, GoalCard, Skeleton, Screen } from '../ui';
+import { cuantoFalta, money, porcentaje } from '../format';
+import { emojiMeta } from '../emojis';
+import { usePreferencias } from '../preferencias';
+import { Button, EmptyState, ErrorText, GoalCard, Skeleton, Screen } from '../ui';
+
+/**
+ * G35: la tarjeta de una meta (Planificar y Metas): su emoji, si es del hogar,
+ * el avance y, al pie, cuánto falta para la fecha o cómo terminó.
+ */
+export function TarjetaMeta({ o, ahorrar }: { o: ObjetivoFinancieroDTO; ahorrar?: boolean }) {
+  const nav = useNav();
+  const { preferencias } = usePreferencias();
+  const lista = o.estado === 'COMPLETADO' || o.progresoPorcentaje >= 100;
+  const pie =
+    o.estado === 'CANCELADO'
+      ? '❌ Cancelada'
+      : lista
+        ? '✅ ¡Lista!'
+        : o.fechaObjetivo
+          ? `⏳ ${cuantoFalta(o.fechaObjetivo)}`
+          : undefined;
+  return (
+    <GoalCard
+      name={o.nombre}
+      emoji={emojiMeta(o.id, preferencias.emojis.metas)}
+      tag={o.hogarId ? '👥 Del hogar' : undefined}
+      hint={porcentaje(o.progresoPorcentaje)}
+      pct={o.progresoPorcentaje}
+      ok={lista}
+      footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
+      footRight={pie}
+      accion={
+        ahorrar && o.estado === 'EN_PROGRESO' && o.puedoModificar
+          ? { label: '🐷 Ahorrar', onPress: () => nav.go('Ahorrar', { objetivoId: o.id }) }
+          : undefined
+      }
+      onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
+    />
+  );
+}
 
 export function ObjetivosScreen() {
   const { token } = useSession();
@@ -27,9 +65,7 @@ export function ObjetivosScreen() {
   const hay = (objetivos?.length ?? 0) > 0;
 
   return (
-    <Screen onRefresh={cargar} pie={hay ? <Button title="Nueva meta" onPress={nueva} /> : undefined}>
-      <Ayuda>Plata que juntas para algo concreto.</Ayuda>
-
+    <Screen onRefresh={cargar} pie={hay ? <Button title="🎯 Nueva meta" onPress={nueva} /> : undefined}>
       {objetivos === null ? (
         <Skeleton />
       ) : objetivos.length === 0 ? (
@@ -41,42 +77,8 @@ export function ObjetivosScreen() {
           onAccion={nueva}
         />
       ) : (
-        (() => {
-          const enProgreso = objetivos.filter((o) => o.estado === 'EN_PROGRESO');
-          const monedas = new Set(enProgreso.map((o) => o.moneda));
-          const meta = enProgreso.reduce((s, o) => s + o.montoObjetivo, 0);
-          const avance = enProgreso.reduce((s, o) => s + o.progreso, 0);
-          const pct = meta > 0 ? Math.round((avance / meta) * 100) : 0;
-          return enProgreso.length > 1 && monedas.size === 1 ? (
-            <GoalCard
-              name={`Avance total · ${enProgreso.length} metas activas`}
-              hint={`${pct}%`}
-              pct={pct}
-              footLeft={`${money(avance, [...monedas][0])} de ${money(meta, [...monedas][0])}`}
-            />
-          ) : null;
-        })()
+        objetivos.map((o) => <TarjetaMeta key={o.id} o={o} ahorrar />)
       )}
-
-      {objetivos !== null &&
-        objetivos.length > 0 &&
-        objetivos.map((o) => (
-          <GoalCard
-            key={o.id}
-            name={o.hogarId ? `${o.nombre} · hogar` : o.nombre}
-            hint={`${o.progresoPorcentaje}%`}
-            pct={o.progresoPorcentaje}
-            ok={o.estado === 'COMPLETADO' || o.progresoPorcentaje >= 100}
-            footLeft={`${money(o.progreso, o.moneda)} de ${money(o.montoObjetivo, o.moneda)}`}
-            footRight={etiqueta(o.estado)}
-            accion={
-              o.estado === 'EN_PROGRESO' && o.puedoModificar
-                ? { label: 'Ahorrar', onPress: () => nav.go('Ahorrar', { objetivoId: o.id }) }
-                : undefined
-            }
-            onPress={() => nav.go('ObjetivoDetalle', { objetivoId: o.id })}
-          />
-        ))}
 
       <ErrorText>{error}</ErrorText>
     </Screen>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { api, ApiError, type HogarDTO, type MiembroDTO, type ObjetivoFinancieroDTO } from '../api/client';
 import { MONEDAS_FRECUENTES, NOMBRE_MONEDA } from '../labels';
 import { useSession } from '../auth/AuthContext';
@@ -7,22 +8,29 @@ import { useToast } from '../ui/Toast';
 import { emojiMeta } from '../emojis';
 import { conEmoji, usePreferencias } from '../preferencias';
 import {
-  AmountInput,
   Button,
-  contadorPasos,
   ElegirEmoji,
   ElegirVarios,
   ErrorText,
   Field,
+  MontoBanda,
   Nota,
   Screen,
   Segmented,
   Select,
   Skeleton,
+  useC,
 } from '../ui';
 
 const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({ value: m, label: `${m} — ${NOMBRE_MONEDA[m] ?? m}` }));
 const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
+const NOMBRE_ESTADO: Record<(typeof ESTADOS)[number], string> = {
+  EN_PROGRESO: '⏳ En camino',
+  COMPLETADO: '✅ Lograda',
+  CANCELADO: '❌ Cancelada',
+};
+// G35: las monedas de siempre a un toque; "Otra" abre la lista completa.
+const MONEDAS_RAPIDAS = ['CLP', 'USD', 'Otra'] as const;
 
 /**
  * Formulario de una meta (plantillas de pantalla, R2 y R3). Sin `objetivoId`
@@ -30,6 +38,8 @@ const ESTADOS = ['EN_PROGRESO', 'COMPLETADO', 'CANCELADO'] as const;
  * comparte y quiénes más pueden modificarla.
  */
 export function MetaFormScreen() {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(), []);
   const { token, usuario } = useSession();
   const nav = useNav();
   const toast = useToast();
@@ -41,6 +51,7 @@ export function MetaFormScreen() {
   const [monto, setMonto] = useState('');
   const [compartir, setCompartir] = useState<'No' | 'Sí'>('No');
   const [moneda, setMoneda] = useState('CLP');
+  const [otraMoneda, setOtraMoneda] = useState(false);
   const [estado, setEstado] = useState<(typeof ESTADOS)[number]>('EN_PROGRESO');
   const [designados, setDesignados] = useState<string[]>([]);
   const [hogarId, setHogarId] = useState<string | null>(null);
@@ -150,78 +161,92 @@ export function MetaFormScreen() {
   }
 
   const puedeCompartir = !!hogarId && (!obj || obj.esMio);
-  // HZ-19 y HZ-24: numera las preguntas en el orden en que se muestran y marca el
-  // paso actual (el primer obligatorio sin completar).
-  const paso = contadorPasos();
+  // G35: sin numerar; la moneda se elige antes del monto (al crear).
   return (
     <Screen
       pie={
         <Button
-          title={obj ? 'Guardar meta' : 'Crear meta'}
+          title={obj ? '✏️ Guardar meta' : '🎯 Crear meta'}
           onPress={guardar}
           loading={busy}
           disabled={!!(errNombre || errMonto)}
         />
       }
     >
-      <Field
-        label="¿Cómo se llama la meta?"
-        paso={paso({ hecho: !errNombre })}
-        value={nombre}
-        onChangeText={setNombre}
-        autoCapitalize="sentences"
-        placeholder="Pie vivienda"
-      />
-      <ElegirEmoji value={emoji} onChange={setEmoji} />
-      {/* HZ-22: la decisión que cambia el significado del registro va en el paso 2. */}
+      {/* El emoji va pegado al nombre; se toca para cambiarlo. */}
+      <View style={styles.nombreConEmoji}>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="¿Para qué juntas?"
+            value={nombre}
+            onChangeText={setNombre}
+            autoCapitalize="sentences"
+            placeholder="p. ej. Pie vivienda"
+          />
+        </View>
+        <ElegirEmoji compacto label="Emoji de la meta" value={emoji} onChange={setEmoji} />
+      </View>
+      {/* HZ-22: la decisión que cambia el significado del registro va segunda. */}
       {puedeCompartir && (
         <Segmented
-          label="¿Compartir con el hogar?"
-          paso={paso({ hecho: true })}
+          label="¿La comparten en el hogar?"
           options={['No', 'Sí'] as const}
           value={compartir}
           onChange={setCompartir}
-          formatearOpcion={(v) => v}
+          formatearOpcion={(v) => (v === 'Sí' ? '👥 Sí' : '🙋 No, es mía')}
         />
       )}
       {compartir === 'Sí' && !obj && (
-        <Nota>Todos los miembros la verán. Podrás designar quiénes pueden modificarla.</Nota>
+        <Nota>Todos en el hogar la verán. Después puedes elegir quiénes más pueden cambiarla.</Nota>
       )}
       {compartir === 'Sí' && obj?.esMio && miembros.length > 0 && (
         <ElegirVarios
-          label="¿Quién más puede modificarla? (opcional)"
-          paso={paso()}
+          label="¿Quién más puede cambiarla? (opcional)"
           values={designados}
           onChange={setDesignados}
           options={miembros.map((m) => ({ value: m.usuarioId, label: m.nombre }))}
         />
       )}
-      <AmountInput
+      {!obj && (
+        <>
+          <Segmented
+            label="¿En qué moneda?"
+            options={MONEDAS_RAPIDAS}
+            value={otraMoneda ? 'Otra' : moneda === 'CLP' || moneda === 'USD' ? moneda : 'Otra'}
+            onChange={(v) => {
+              setOtraMoneda(v === 'Otra');
+              if (v !== 'Otra') setMoneda(v);
+            }}
+            formatearOpcion={(v) => (v === 'Otra' ? '🌍 Otra' : v === 'USD' ? '💵 USD' : '🇨🇱 CLP')}
+          />
+          {otraMoneda && (
+            <Select label="¿Cuál?" options={OPC_MONEDA} value={moneda} onChange={setMoneda} permiteOtro />
+          )}
+        </>
+      )}
+      <MontoBanda
         label="¿Cuánto quieres juntar?"
-        paso={paso({ hecho: !errMonto })}
         value={monto}
         onChange={setMonto}
         moneda={obj?.moneda ?? moneda}
+        color={c.primary}
+        emoji={emoji}
       />
-      {obj ? (
+      {obj && (
         <Segmented
-          label="¿En qué estado está?"
-          paso={paso({ hecho: true })}
+          label="¿Cómo va?"
           options={ESTADOS}
           value={estado}
           onChange={setEstado}
-        />
-      ) : (
-        <Select
-          label="¿En qué moneda?"
-          paso={paso({ hecho: !!moneda })}
-          options={OPC_MONEDA}
-          value={moneda}
-          onChange={setMoneda}
-          permiteOtro
+          formatearOpcion={(v) => NOMBRE_ESTADO[v]}
         />
       )}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );
 }
+
+const crearEstilos = () =>
+  StyleSheet.create({
+    nombreConEmoji: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  });

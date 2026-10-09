@@ -151,29 +151,29 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
 
 ### Tanda 3 · Planificar
 
-20. **Planificar** (`PlanificarScreen`) — pestaña. Resumen de metas y ahorro
+20. ✅ **Planificar** (`PlanificarScreen`) — pestaña. Resumen de metas y ahorro
     sin meta; presupuesto del mes; accesos a Metas, Presupuestos, Movimientos
     programados y Frecuentes; abrir una meta o el presupuesto; crear la
     primera meta; campana; engranaje.
-21. **Metas** (`ObjetivosScreen`) — Planificar, Inicio. Lista de metas; abrir
+21. ✅ **Metas** (`ObjetivosScreen`) — Planificar, Inicio. Lista de metas; abrir
     una; Nueva meta; Ahorrar.
-22. **Meta** (`ObjetivoDetalleScreen`) — Metas, Inicio, Planificar, Hogar. Ver
+22. ✅ **Meta** (`ObjetivoDetalleScreen`) — Metas, Inicio, Planificar, Hogar. Ver
     avance (llevas, faltan, %); dónde está la plata (abrir cada parte);
     Aportar a esta meta; Usar plata de la meta; Agregar parte; Editar;
     Historial; Eliminar meta.
-23. **Nueva meta / Editar meta** (`MetaFormScreen`) — Metas, Planificar,
+23. ✅ **Nueva meta / Editar meta** (`MetaFormScreen`) — Metas, Planificar,
     Inicio, Ahorrar. Nombre; cuánto juntar; moneda; compartir con el hogar;
     quién más puede modificarla; estado (al editar); guardar.
-24. **Ahorrar para una meta** (`AhorrarScreen`) — hoja "+", Inicio, Metas,
+24. ✅ **Ahorrar para una meta** (`AhorrarScreen`) — hoja "+", Inicio, Metas,
     Meta, Ahorro. Para qué meta (o crear una); para qué parte; en qué cuenta
     está la plata; cuánto (o "Todo lo libre"); sumar otra cuenta o quitarla;
     guardar.
-25. **Ahorro sin meta** (`AsignacionesScreen`) — Planificar. Lista; abrir uno;
+25. ✅ **Ahorro sin meta** (`AsignacionesScreen`) — Planificar. Lista; abrir uno;
     crear una meta.
-26. **Ahorro** (`AsignacionDetalleScreen`) — Meta, Ahorro sin meta, Detalle de
+26. ✅ **Ahorro** (`AsignacionDetalleScreen`) — Meta, Ahorro sin meta, Detalle de
     cuenta. Ver ahorrado y en qué cuentas; Ahorrar; Sacar; Historial;
     Eliminar esta parte / este ahorro.
-27. **Sacar** (`SacarPlataScreen`) — Ahorro. De qué cuenta; cuánto; por qué;
+27. ✅ **Sacar** (`SacarPlataScreen`) — Ahorro. De qué cuenta; cuánto; por qué;
     guardar.
 28. **Presupuestos** (`PresupuestosScreen`) — Planificar. Lista; abrir uno;
     Nuevo presupuesto.
@@ -769,3 +769,67 @@ eso entran las 6 listas y sus formularios de crear y editar.
   monto, Corregir el saldo con un monto, Sumar intereses, Cambio de valor,
   Corrección de saldo (deuda), Corregir, ¿Cuánto valía antes? y el Historial
   de tres cuentas. No se guardó nada nuevo en la base local.
+
+### 20–27. Planificar, metas y ahorro (`PlanificarScreen`, `ObjetivosScreen`, `ObjetivoDetalleScreen`, `MetaFormScreen`, `AhorrarScreen`, `AsignacionesScreen`, `AsignacionDetalleScreen`, `SacarPlataScreen`)  ✅ (aprobado por Juan y mergeado, 2026-10-09)
+
+- **Tanda 3 en tres bloques** (Juan, 2026-10-09): A (20–27, metas y ahorro),
+  B (28–31, presupuestos) y C (32–35, programados).
+- **Cómo se veían:** Planificar con "Ahorrado en tus metas" y un párrafo
+  ("Además: 0 USD de 1.500 USD"); metas sin su emoji, "· hogar" pegado al
+  nombre, "3.8%" y "3647d"; el presupuesto "Gasto total" con el "de" en
+  verde; íconos grises. Metas con "Plata que juntas para algo concreto.". La
+  Meta con "Editar" cortado arriba, una ficha (Estado, Compartida, Dónde está
+  la plata), partes con bandera gris, "Agregar parte" como enlace, "Eliminar
+  meta" en texto rojo y "Aportar a esta meta". Nueva meta numerada, la fila
+  "Emoji / Cambiar" y la moneda después del monto. Ahorrar con dos párrafos
+  ("Lo libre de cada cuenta no lo descuenta…") y "+ Sumar otra cuenta". El
+  Ahorro con una miga y un recuadro que explica; Sacar numerado.
+- **Propuesta aprobada por Juan (2026-10-09) e implementada.** Decisiones:
+  la acción se llama **"🐷 Ahorrar"** en todas partes (sale "Aportar a esta
+  meta"); el plazo va como **"⏳ Faltan 10 años"** en las tarjetas y
+  **"📅 Para el 3 oct 2036 · faltan 10 años"** en la Meta.
+  - **Piezas comunes:** `GoalCard` acepta `emoji` y `tag`; `porcentaje()`
+    ("3,8%") y `cuantoFalta()` en `format.ts`; `TarjetaMeta` (en
+    `ObjetivosScreen`) la usan Planificar y Metas.
+  - **Planificar:** "🐷 Guardado para metas" con la barra y, debajo, 🎯
+    Quieres juntar · ⏳ Te faltan · 💱 Además, en USD (cada otra moneda en su
+    línea) · ✅ Metas cumplidas. Sale la tarjeta "Avance total" (ya está
+    arriba). Presupuesto: "🧾 Llevas gastado" con "✅ Te quedan X" (o "⚠️ Te
+    pasaste X") bajo el título. 🗓️ Movimientos programados y ⚡ Frecuentes.
+    Se corrige la doble "›" de "Sin presupuesto vigente".
+  - **Metas:** sin el recuadro; tarjetas con emoji, "👥 Del hogar" y
+    "🐷 Ahorrar"; "🎯 Nueva meta".
+  - **Meta:** banda lila (verde si está lista) "🎯 Llevas", "40% de la meta",
+    la barra y 🏁 Quieres juntar · ⏳ Te faltan. Debajo solo lo que dice
+    algo: ❌ Cancelada, 👥 Con el hogar, 🏦 Se guarda en, 📅 Para el.
+    "🧩 Partes" con 🐷 y la pastilla "➕ Agregar parte". Acciones en lista
+    (✏️ Editar · 🕓 Historial de cambios), botón "🗑️ Eliminar meta" y pie
+    "🐷 Ahorrar" / "💸 Usar plata de la meta". Meta del hogar que no puedes
+    cambiar: aviso "👀" arriba.
+  - **Nueva / Editar meta:** sin numerar; "¿Para qué juntas?" con el emoji
+    al lado; "¿La comparten en el hogar?" sigue segunda (HZ-22) con
+    "🙋 No, es mía / 👥 Sí"; la moneda en botones (🇨🇱 CLP · 💵 USD ·
+    🌍 Otra, que abre la lista) antes del monto; el monto en banda con el
+    emoji; al editar "¿Cómo va?" (⏳ En camino · ✅ Lograda · ❌ Cancelada).
+  - **Ahorrar:** sin numerar; banda de la meta (Llevas, % y dónde se guarda)
+    que en vivo suma 🐷 Ahorras y ✅ Quedarías en; la plata ajena en una
+    línea ("👥 90.000 CLP de tus cuentas son de otras personas: no los
+    ahorres."); "💯 Todo lo libre", "✕ Quitar" y la pastilla "➕ Sumar otra
+    cuenta"; en el pie solo "🔁 Se mueven X de A a B" cuando la plata cambia
+    de cuenta.
+  - **Ahorro (la parte) y Ahorro sin meta:** banda "🐷 Ahorrado" con
+    "🎯 Para Fondo de emergencia" (o "Sin meta"), sin miga ni recuadro;
+    "🏦 En qué cuentas está" con el emoji de cada cuenta, que abre su
+    detalle; 🕓 Historial; botón "🗑️ Eliminar esta parte"; pie "🐷 Ahorrar"
+    / "💸 Sacar de la meta". En la lista sin meta, el monto va en su moneda
+    (antes decía CLP siempre).
+  - **Sacar:** sin numerar; la cuenta solo se pregunta si hay más de una; la
+    resta 🐷 En la meta − 💸 Sacas de la cuenta = ✅ Queda ahorrado, una
+    línea ("La plata no se mueve: vuelve a quedar libre en …") y "💸 Sacar X".
+- **Verificado:** `tsc` sin errores; capturas web de Planificar, Metas, Meta
+  (propia y del hogar, también en modo oscuro), Nueva meta (y "Otra"
+  moneda), Editar meta, Ahorrar con un monto, Ahorro y Sacar. Destino de
+  cada acción: presupuesto, Ver todos, Programados, Frecuentes, Agregar
+  parte, Historial (meta y parte), Usar plata, Eliminar meta / parte,
+  Ahorrar desde la parte y la cuenta desde la parte. No se guardó nada nuevo
+  en la base local.

@@ -825,6 +825,8 @@ export function TxRow({
  */
 export function GoalCard({
   name,
+  emoji,
+  tag,
   hint,
   pct,
   footLeft,
@@ -834,6 +836,10 @@ export function GoalCard({
   onPress,
 }: {
   name: string;
+  /** G35: el emoji de la meta, a la izquierda del nombre. */
+  emoji?: string;
+  /** G35: una etiqueta bajo el nombre (p. ej. "👥 Del hogar"). */
+  tag?: string;
   hint?: string;
   pct: number;
   footLeft?: string;
@@ -849,9 +855,17 @@ export function GoalCard({
   const cuerpo = (
     <>
       <View style={styles.goalTop}>
-        <Text style={styles.goalName} numberOfLines={1}>
-          {name}
-        </Text>
+        {emoji ? (
+          <View style={[styles.txLogo, { backgroundColor: c.panelAlt }]}>
+            <Text style={styles.txEmoji}>{emoji}</Text>
+          </View>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.goalName} numberOfLines={1}>
+            {name}
+          </Text>
+          {tag ? <Text style={styles.goalTag}>{tag}</Text> : null}
+        </View>
         {hint ? <Text style={[styles.goalHint, ok && { color: c.ok }]}>{hint}</Text> : null}
       </View>
       <View style={styles.goalBar}>
@@ -2984,9 +2998,10 @@ const crearEstilos = (c: Paleta) => {
       borderRadius: radio.tarjeta,
       padding: 14,
     },
-    goalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+    goalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
     goalName: { ...tipografia.fila, color: c.text, flex: 1 },
     goalHint: { fontSize: 13, color: c.muted },
+    goalTag: { fontSize: 13, color: c.muted, marginTop: 2 },
     goalBar: { height: 4, backgroundColor: c.panelAlt, borderRadius: 2, marginTop: 10, overflow: 'hidden' },
     goalBarFill: { height: 4 },
     goalFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 10 },
