@@ -1084,7 +1084,7 @@ entrando por el detalle de la deuda); con "Se repite", 1 toque al mes.
 **Conteo:** 2 pantallas · 7 a 8 toques · 2 campos.
 **Lo que cuesta:** "¿De qué tipo?" (corriente, vista, RUT…) es obligatoria y
 no cambia nada para el usuario común.
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-6 (§6).
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-6 (§6).
 
 | # | Dónde | Qué ve | Qué hace | Toques |
 |---|-------|--------|----------|--------|
@@ -1118,7 +1118,7 @@ no cambia nada para el usuario común.
 **Conteo:** 2 pantallas · 8 a 9 toques · 2 campos.
 **Lo que cuesta:** no hay cupo ni día de pago, que es lo que el usuario
 conoce de su tarjeta; "¿Es una deuda de verdad?" sobra para una tarjeta.
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-6 (§6). Cupo y día de pago
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-6 (§6). Cupo y día de pago
 quedan fuera: son datos nuevos del dominio (⬜ Juan decide si se abren como
 gap aparte).
 
@@ -1153,7 +1153,7 @@ gap aparte).
 **Actual — cada año:** como A4 (3 toques, 1 campo).
 **Conteo:** agregar 2 pantallas · ≈ 9 toques · 2 campos.
 **Lo que cuesta:** nada le recuerda actualizar el valor.
-**Objetivo (✅ aprobado por Juan, 2026-10-09, con F-19)** — F-6 y F-19 (§6).
+**Objetivo (✅ aprobado por Juan, 2026-10-09, con F-19; ✅ implementado y mergeado)** — F-6 y F-19 (§6).
 
 *Agregar:* como C2 con 🏠 Bien y el tipo en botones (🏠 Propiedad ·
 🚗 Vehículo · ➕ Otro, sin nada elegido); "📈 Cambia de valor" ya viene en Sí
@@ -1274,7 +1274,7 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-3 | **Confirmar desde el Inicio en un toque:** lo programado que ya venció aparece en los avisos del Inicio con "✅ Sí", que anota con el monto y la fecha previstos; la fila abre el Programado para los otros casos. | M5, H3, P2, H5 | −2 toques por mes | ✅ en M5 y H3 (§9) |
 | F-4 | **Personas como botones:** "¿De quién?" muestra a las personas con algo pendiente primero (máx. 4) y "➕ Otra persona", con una línea del saldo de la elegida ("💵 Tienes 30.000 de Noira"). | M8, M10 | −1 toque | ✅ en M8 y M10 (§13) |
 | F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+": la deuda y la cuenta de la última vez, y botones con "Todo lo que debes" y "La cuota"; el pie dice cuánto queda por pagar. Gasté ya no ofrece bienes ni "te deben" como cuenta de pago. | M6, H5 | −1 a −3 toques y 0 campos | ✅ en M6 y H5 (§11) |
-| F-6 | **Tipo opcional** al agregar: se deja en el genérico sin preguntar. | C1, C2, C3 | −2 toques | ⬜ |
+| F-6 | **"¿De qué tipo?" en botones** al agregar; en Cuenta, Ahorro e Inversión viene elegido el primero (no cambia nada para el usuario); en Bien, Deuda y Te deben se elige (cambia lo que se pregunta y cómo se paga). | C1, C2, C3 | −1 a −2 toques | ✅ en C1–C3 (§15) |
 | F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
 | F-8 | **El "+" para todo lo que se repite o viene:** "🔁 Se repite" muestra Cada mes · Cada año como botones, y una fecha futura en Gasté / Recibí / Moví plata deja el movimiento programado en vez de anotarlo. Programar en Planificar sigue existiendo. | M5, H3, P2 | −1 a −4 toques; una sola puerta | ✅ en M5, H3 y P2 (§9) |
 | F-9 | **"¿A dónde va la plata?" en Moví plata:** 🙋 A otra cuenta mía · 👤 A [miembro] como botones antes de la cuenta; si el miembro no deja ver ninguna cuenta, se dice qué tiene que hacer en su teléfono. El pie recuerda que la transferencia se hace en el banco y que el otro no anota nada. | M4, M9, H3 | −1 toque; deja claro quién anota qué | ✅ en M4 (§12) |
@@ -1287,7 +1287,7 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-16 | **La cuenta de tu último ahorro para esa meta** viene elegida en "¿De dónde sale la plata?"; el pie recuerda que la plata se mueve en el banco. | A1, A2, A7 | −2 toques | ✅ en A1 y A2 (§14) |
 | F-17 | **"No se mueve" dicho en el pie** cuando la plata queda en la misma cuenta. | A6 | claridad | ✅ en A6 (§14) |
 | F-18 | **"¿Quién más puede ahorrar en ella?"** (antes "¿Quién más puede cambiarla? (opcional)") con todos los del hogar marcados al compartir; si a alguien no lo agregaron, la Meta se lo dice. | A7 | claridad; evita que la pareja no pueda aportar | ✅ en A7 (§14) |
-| F-19 | **Recordar actualizar el valor:** un aviso en el Inicio para bienes e inversiones que cambian de valor y no se actualizan hace más de un año. Requiere un dato de solo lectura en la API. | C3, A4 | la app lo recuerda | ⬜ propuesto en C3 (opcional) |
+| F-19 | **Recordar actualizar el valor:** un aviso en el Inicio para bienes e inversiones que cambian de valor y no se actualizan hace más de un año. Requiere un dato de solo lectura en la API. | C3, A4 | la app lo recuerda | ✅ en C3 (§15) |
 
 ## 7. Orden de trabajo
 
@@ -1300,7 +1300,7 @@ Frecuencia primero; los primeros fijan los patrones.
 4. **M4, M7, M9** — entre miembros del hogar (F-9 a F-12). ✅ implementado y mergeado (§12).
 5. **M8, M10** — plata de otras personas (F-4, F-13, F-14). ✅ implementado y mergeado (§13).
 6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). ✅ implementado y mergeado (§14).
-7. **C1, C2, C3** — agregar (F-6, F-19). **← propuesta en §5.4.** C4 (cerrar) pasa al bloque 8, con F-7.
+7. **C1, C2, C3** — agregar (F-6, F-19). ✅ implementado y mergeado (§15). C4 (cerrar) pasa al bloque 8, con F-7.
 8. **M12, M13, C4, M11** — corregir, borrar, cerrar y monedas (F-7).
 9. **H1, H2, H4, H6, P1** — consultas y configuración.
 
@@ -1315,7 +1315,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10; F-15 a F-18 con las metas. | 🟡 F-1 a F-5 y F-8 a F-18 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10; F-15 a F-18 con las metas; F-6 y F-19 con C1–C3. | 🟡 F-1 a F-6 y F-8 a F-19 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1522,3 +1522,28 @@ requiere deploy en Render.
   ella elegida → Cuenta corriente y 300.000 → pie "no se mueve" (no se
   guardó el ahorro). Como Pareja, "Prueba G39 vacaciones" aparece en Ahorrar
   (puede aportar). La meta queda en la base local.
+
+## 15. Implementación de C1, C2 y C3 (rama `feat/G39-agregar`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). **Incluye
+un dato nuevo de solo lectura en la API (requiere deploy en Render).**
+
+- **F-6 · "¿De qué tipo?" en botones** (`AgregarElementoScreen`): los tipos de
+  lo elegido con su emoji (hasta 5; "🔍 Ver todos (N)" si hay más) y "➕ Otro"
+  (crea un tipo nuevo). En 🏦 Cuenta, 🐷 Ahorro y 📈 Inversión viene elegido el
+  primero de la lista; en 🏠 Bien, 💳 Deuda y 🤝 Te deben no viene ninguno.
+- **F-19 · aviso anual:**
+  - API: cada cuenta trae `fechaUltimaValorizacion` (la última valorización
+    vigente, solo si admite valorización y quien pregunta ve el valor;
+    `elemento.service`, `elemento.dto`). Sin migración. e2e de valorización
+    6/6 con una aserción nueva.
+  - App (`DashboardScreen`): en los avisos del Inicio, "📈 ¿Cuánto vale hoy tu
+    [bien]?" con "Lo actualizaste hace N años" (o "No lo actualizas desde que
+    lo agregaste") para bienes e inversiones activos que cambian de valor y no
+    se actualizan hace más de un año. Tocarlo abre "Actualizar cuánto vale".
+- **Verificado:** `tsc` sin errores (app y `src` de la API); capturas web como
+  Demo: el aviso del Departamento (última valorización 3 oct 2025) → abre
+  "Actualizar cuánto vale"; Agregar › Cuenta con "Cuenta corriente" elegida y
+  Agregar › Deuda sin tipo elegido. No se guardó nada.
+- **Conteo logrado:** C1 5 toques + 2 campos · C2 6 + 2 · C3 6 + 2 y, cada año,
+  2 + valor desde el aviso.
