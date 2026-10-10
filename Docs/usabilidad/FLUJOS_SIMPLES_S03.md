@@ -13,6 +13,60 @@ Es la fuente de verdad de este frente (G39 en `GAPS.md`).
   la Fase E de G33 y de G35) y `MEJORA_VISUAL_S02.md` (inventario de las 60
   pantallas y sus acciones).
 
+## 0. Estado al cierre del 2026-10-09 y lo que sigue
+
+**Hecho:** bloques 1 a 7 (24 de los 33 escenarios) aprobados por Juan,
+mergeados a `main` (último merge `482605f`), con push y deploy en Render
+hechos por Juan. Patrones F-1 a F-6 y F-8 a F-19 decididos (§6). La
+recuperación de contraseña en la nube quedó probada por Juan (llega el
+código de 6 dígitos).
+
+| Bloque | Escenarios | Sección |
+|--------|------------|---------|
+| 1 | M1, M2, M3 · formulario base | §9 |
+| 2 | M5, H3, P2 · lo que se repite | §10 |
+| 3 | M6, H5 · tarjetas y deudas | §11 |
+| 4 | M4, M7, M9 · entre miembros del hogar | §12 |
+| 5 | M8, M10 · plata de otras personas | §13 |
+| 6 | A1–A8 · metas y ahorro (A3, A4, A5, A8 se mantienen) | §14 |
+| 7 | C1, C2, C3 · agregar cuentas y aviso anual de valor | §15 |
+
+**Lo siguiente: bloque 8 — M12, M13, C4 y M11** (corregir, borrar, cerrar y
+monedas). Hay que proponer el flujo objetivo de cada uno (método del §2: Claude
+propone en tablas paso a paso, Juan decide, se implementa en una rama, se
+valida con capturas y en el teléfono). Puntos de partida:
+
+- **F-7 · motivo opcional** en "Editar movimiento" (M12), "Eliminar
+  movimiento" (M13) y "Desactivar" una cuenta (C4). Antes de proponer:
+  verificar en la API si `CorregirEventoFinanciero`, `AnularEventoFinanciero`
+  y `DesactivarElementoPatrimonial` exigen el motivo (si lo exige el backend,
+  es una decisión de dominio: auditoría §U de `DDD.md`). Alternativa sin tocar
+  el dominio: un motivo sugerido a un toque ("Me equivoqué al anotarlo", "Ya
+  no la uso").
+- **M12:** hoy solo se corrigen monto, detalle y etiquetas; cambiar la cuenta
+  o el tipo obliga a eliminar y anotar de nuevo. Evaluar "Anotar de nuevo"
+  con el formulario prellenado.
+- **C4:** verificar qué pasa si la cuenta todavía tiene saldo (¿lo pide en
+  cero, ofrece moverlo?).
+- **M11:** verificar qué pasa en Moví plata entre monedas si no hay tasa
+  vigente en Ajustes › Tipos de cambio (la tasa vive lejos del formulario).
+
+**Después: bloque 9 — H1, H2, H4, H6 y P1** (consultas y configuración). Pistas
+del recorrido: H4 no tiene una vista para revisar qué comparte cada cuenta de
+una vez; P1 pasa por la lista vacía de Presupuestos antes del formulario.
+
+**Datos de prueba que quedaron en la base local** (`patrimonia`, Demo y
+Pareja): un gasto de 1.000 CLP sin categoría (Cuenta corriente de Demo); el
+programado "Prueba G39 internet" (18.000, 7 oct, confirmado) y otro igual del
+8 oct pendiente; un programado de 450.000 para el 5 nov; un gasto compartido de
+30.000 con su solicitud de 15.000 a Pareja pendiente; la meta compartida
+"Prueba G39 vacaciones" (1.500.000, Pareja puede ahorrar).
+
+**Para retomar en local:** `./scripts/db.sh`, `./scripts/api.sh` y
+`./scripts/app-local.sh` (Docs/CORRER_EN_LOCAL.md). En local los correos no se
+envían: sin `BREVO_API_KEY` en `api/.env`, el código de registro o de
+recuperación aparece en la terminal de `api.sh`.
+
 ---
 
 ## 1. Por qué (Juan, 2026-10-09)
