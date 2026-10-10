@@ -72,7 +72,16 @@ export function MetaFormScreen() {
       try {
         const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []);
         setHogarId(hs[0]?.id ?? null);
-        if (!objetivoId) return;
+        if (!objetivoId) {
+          // G39 (F-18): al crear, los del hogar quedan marcados para ahorrar en ella.
+          if (hs[0]) {
+            const h = await api.get<HogarDTO>(`/hogares/${hs[0].id}`, token).catch(() => null);
+            const otros = (h?.miembros ?? []).filter((m) => m.usuarioId !== usuario.id);
+            setMiembros(otros);
+            setDesignados(otros.map((m) => m.usuarioId));
+          }
+          return;
+        }
         const o = await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${objetivoId}`, token);
         setObj(o);
         setNombre(o.nombre);
@@ -110,6 +119,10 @@ export function MetaFormScreen() {
       },
       token,
     );
+    if (compartir === 'Sí' && hogarId && designados.length > 0)
+      await api
+        .post('/comandos/DefinirDesignadosObjetivo', { objetivoId: creada.id, usuarioIds: designados }, token)
+        .catch(() => toast.mostrar('La meta quedó creada, pero no se pudo elegir quién ahorra en ella', 'error'));
     await guardarEmoji(creada.id);
     toast.mostrar('Meta creada');
   };
@@ -196,12 +209,11 @@ export function MetaFormScreen() {
           formatearOpcion={(v) => (v === 'Sí' ? '👥 Sí' : '🙋 No, es mía')}
         />
       )}
-      {compartir === 'Sí' && !obj && (
-        <Nota>Todos en el hogar la verán. Después puedes elegir quiénes más pueden cambiarla.</Nota>
-      )}
-      {compartir === 'Sí' && obj?.esMio && miembros.length > 0 && (
+      {compartir === 'Sí' && !obj && <Nota>👥 Todos en el hogar la verán.</Nota>}
+      {/* G39 (F-18): sin estar aquí, alguien del hogar ve la meta pero no puede ahorrar en ella. */}
+      {compartir === 'Sí' && (!obj || obj.esMio) && miembros.length > 0 && (
         <ElegirVarios
-          label="¿Quién más puede cambiarla? (opcional)"
+          label="¿Quién más puede ahorrar en ella?"
           values={designados}
           onChange={setDesignados}
           options={miembros.map((m) => ({ value: m.usuarioId, label: m.nombre }))}
