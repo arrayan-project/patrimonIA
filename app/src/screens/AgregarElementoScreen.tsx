@@ -37,6 +37,7 @@ import {
   Nota,
   Opcionales,
   Panel,
+  Pastilla,
   Question,
   Screen,
   Segmented,
@@ -101,6 +102,9 @@ const OPC_MONEDA = MONEDAS_FRECUENTES.map((m) => ({
   label: `${m} — ${NOMBRE_MONEDA[m] ?? m}`,
   emoji: emojiMoneda(m),
 }));
+/** G39 (F-6): cuántos tipos van como botones y en qué categorías viene uno elegido. */
+const TIPOS_A_LA_VISTA = 5;
+const TIPO_POR_DEFECTO: Categoria[] = ['LIQUIDEZ', 'RESERVA', 'INVERSION'];
 const valorizaPorDefecto = (c: Categoria) => (c === 'ACTIVO' || c === 'INVERSION' ? 'Sí' : 'No');
 
 /** Solo dígitos, máx 2 decimales, en [0, 100]. */
@@ -194,6 +198,19 @@ export function AgregarElementoScreen() {
       : OPC_TIPO_FALLBACK),
     ...(hogarId ? [{ value: NUEVO_TIPO, label: 'Nuevo tipo', emoji: '➕' }] : []),
   ];
+  // G39 (F-6): los tipos como botones; con muchos, el resto en "Ver todos".
+  const tiposBotones: { value: string; label: string; emoji?: string }[] = opcTipo.filter((o) => o.value !== NUEVO_TIPO);
+  const tiposALaVista = tiposBotones.slice(0, TIPOS_A_LA_VISTA);
+
+  // G39 (F-6): en Cuenta, Ahorro e Inversión el tipo no cambia nada para el
+  // usuario: viene el primero de lo elegido (se cambia con un toque). En Bien,
+  // Deuda y Te deben se elige, porque cambia lo que se pregunta y cómo se paga.
+  useEffect(() => {
+    if (!catElegida || tipo || !TIPO_POR_DEFECTO.includes(catElegida)) return;
+    const primero = delaCat.find((t) => t.categoriaSugerida === catElegida) ?? delaCat[0];
+    if (primero) setTipo(primero.nombre);
+    else if (tiposCat.length === 0 && OPC_TIPO_FALLBACK[0]) setTipo(OPC_TIPO_FALLBACK[0].value);
+  }, [catElegida, tipo, delaCat, tiposCat.length]);
 
   const elegirCategoria = (cat: Categoria) => {
     if (cat === catElegida) return;
@@ -470,13 +487,32 @@ export function AgregarElementoScreen() {
 
       {que && (
         <>
-          <Select
-            label="¿De qué tipo?"
-            placeholder="Elegir tipo"
-            value={tipo}
-            options={opcTipo}
-            onChange={elegirTipo}
-          />
+          <View style={{ gap: 8 }}>
+            <Question>¿De qué tipo?</Question>
+            <View style={styles.botones}>
+              {tiposALaVista.map((o) => (
+                <Pastilla
+                  key={o.value}
+                  label={`${o.emoji ? `${o.emoji} ` : ''}${o.label}`}
+                  activo={tipo === o.value}
+                  onPress={() => elegirTipo(o.value)}
+                />
+              ))}
+              {tipo && !tiposALaVista.some((o) => o.value === tipo) ? (
+                <Pastilla label={tipo} activo onPress={() => undefined} />
+              ) : null}
+              {tiposBotones.length > TIPOS_A_LA_VISTA && (
+                <Select
+                  label="¿De qué tipo?"
+                  value={tipo}
+                  options={tiposBotones}
+                  onChange={elegirTipo}
+                  boton={(abrir) => <Pastilla label={`🔍 Ver todos (${tiposBotones.length})`} enlace onPress={abrir} />}
+                />
+              )}
+              {hogarId ? <Pastilla label="➕ Otro" enlace onPress={() => elegirTipo(NUEVO_TIPO)} /> : null}
+            </View>
+          </View>
           {mostrar(errTipo) ? <ErrorText>{errTipo}</ErrorText> : null}
           {crearTipo ? (
             <View style={{ gap: 8 }}>
@@ -750,6 +786,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   cambiar: { fontSize: 15, fontWeight: '700', color: c.primary },
   bandaNota: { fontSize: 13, color: c.muted },
   fila: { flexDirection: 'row', gap: 12 },
+  botones: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   muted: tipoDe(c).nota,
   reparto: { gap: 10 },
   filaPct: { flexDirection: 'row', alignItems: 'center', gap: 8 },

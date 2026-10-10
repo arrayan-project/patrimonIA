@@ -248,6 +248,8 @@ export interface ElementoPatrimonialDTO {
   estadoOperativo: string | null;
   /** §G28: solo DEUDA/CREDITO — 'FINANCIERA' · 'CUSTODIA_INFORMAL'. null en el resto. */
   naturaleza: string | null;
+  /** G39 (F-19): fecha de la última valorización vigente (null si no hay o no ves el valor). */
+  fechaUltimaValorizacion?: string | null;
 }
 
 export interface EventoFinancieroDTO {

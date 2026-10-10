@@ -395,6 +395,24 @@ export function DashboardScreen() {
       ),
     });
   }
+  // G39 (F-19): bienes e inversiones que cambian de valor y no se actualizan hace más de un año.
+  const haceUnAnio = aISO(new Date(Date.now() - 365 * 86_400_000));
+  for (const e of elementos) {
+    if (e.estado !== 'ACTIVO' || !e.admiteValorizacion || e.valorOculto) continue;
+    if (!['ACTIVO', 'INVERSION'].includes(e.categoriaFuncional)) continue;
+    const ultima = e.fechaUltimaValorizacion ?? e.fechaAlta;
+    if (!ultima || ultima > haceUnAnio) continue;
+    const anios = Math.max(1, Math.floor((Date.now() - new Date(`${ultima}T00:00:00`).getTime()) / (365 * 86_400_000)));
+    alertas.push({
+      texto: `¿Cuánto vale hoy tu ${e.nombre}?`,
+      sub: e.fechaUltimaValorizacion
+        ? `Lo actualizaste hace ${anios === 1 ? '1 año' : `${anios} años`}`
+        : `No lo actualizas desde que lo agregaste`,
+      emoji: '📈',
+      onPress: () =>
+        nav.go('Valorizar', { elementoId: e.id, valorActual: e.valorVigente, moneda: e.moneda, contexto: e.nombre }),
+    });
+  }
   if (enMora.length > 0)
     alertas.push({
       texto: `${enMora.length} ${enMora.length === 1 ? 'deuda' : 'deudas'} en mora`,
