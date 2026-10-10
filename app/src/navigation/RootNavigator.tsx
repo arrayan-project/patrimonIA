@@ -70,6 +70,7 @@ import { PagarSolicitudScreen } from '../screens/PagarSolicitudScreen';
 import { EntreMiembrosScreen } from '../screens/EntreMiembrosScreen';
 import { ValorEnFechaScreen } from '../screens/ValorEnFechaScreen';
 import { AjustesElementoScreen } from '../screens/AjustesElementoScreen';
+import { QueCompartesScreen } from '../screens/QueCompartesScreen';
 import { TiposElementoScreen } from '../screens/TiposElementoScreen';
 import { EtiquetasScreen } from '../screens/EtiquetasScreen';
 import { AgrupacionesScreen } from '../screens/AgrupacionesScreen';
@@ -189,6 +190,7 @@ const TITULOS: Record<string, string> = {
   EntreMiembros: 'Entre ustedes',
   ValorEnFecha: '¿Cuánto valía antes?',
   AjustesElemento: 'Ajustes de la cuenta',
+  QueCompartes: 'Qué compartes',
 };
 
 /** Pantallas que se apilan sobre los Tabs, con header nativo (título + atrás). */
@@ -245,6 +247,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['EntreMiembros', EntreMiembrosScreen],
   ['ValorEnFecha', ValorEnFechaScreen],
   ['AjustesElemento', AjustesElementoScreen],
+  ['QueCompartes', QueCompartesScreen],
 ];
 
 export function RootNavigator() {

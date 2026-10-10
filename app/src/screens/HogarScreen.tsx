@@ -19,6 +19,7 @@ import { cargarCuentasHogar, deQuien } from '../cuentasHogar';
 import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
 import { FilaEntreRow } from './EntreMiembrosScreen';
 import { TarjetaMeta } from './ObjetivosScreen';
+import { invitarAlHogar } from './GestionHogarScreen';
 import {
   ErrorText,
   Hero,
@@ -52,6 +53,10 @@ export function HogarScreen() {
   const [cons, setCons] = useState<PatrimonioConsolidadoDTO | null>(null);
   // HZ-21: "Entre [miembro] y tú".
   const [entre, setEntre] = useState<EntreMiembros | null>(null);
+  // G39 (H1, H4): cuántas de tus cuentas suman a la plata del hogar.
+  const [mias, setMias] = useState<ElementoPatrimonialDTO[] | null>(null);
+  // G39 (H6): cuántas personas más hay en el hogar.
+  const [otros, setOtros] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -82,6 +87,14 @@ export function HogarScreen() {
       }
 
       setEntre(await cargarEntreMiembros(token, usuario.id, h.id).catch(() => null));
+      api
+        .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
+        .then((xs) => setMias(xs.filter((e) => e.estado === 'ACTIVO' && e.naturaleza !== 'CUSTODIA_INFORMAL')))
+        .catch(() => setMias(null));
+      api
+        .get<HogarDTO>(`/hogares/${h.id}`, token)
+        .then((d) => setOtros((d.miembros ?? []).filter((m) => m.usuarioId !== usuario.id).length))
+        .catch(() => setOtros(null));
       api
         .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
         .then(({ noLeidas: n }) => setNoLeidas(n))
@@ -144,6 +157,33 @@ export function HogarScreen() {
           }
         />
       </Pressable>
+
+      {/* G39 (H6): solo en el hogar, invitar va arriba; con más personas, en "Más del hogar". */}
+      {otros === 0 && (
+        <MenuList
+          items={[
+            {
+              title: 'Invita a quien vive contigo',
+              subtitle: 'Le llega un correo para unirse a tu hogar',
+              emoji: '👥',
+              onPress: () => invitarAlHogar(nav, hogar.id),
+            },
+          ]}
+        />
+      )}
+      {/* G39 (H1): la plata del hogar es lo que suma; de un vistazo, cuánto de lo tuyo. */}
+      {mias && mias.length > 0 && (
+        <MenuList
+          items={[
+            {
+              title: `De lo tuyo suman ${mias.filter((e) => e.participaConsolidacion).length} de ${mias.length}`,
+              subtitle: 'Revisa qué compartes',
+              emoji: '🔐',
+              onPress: () => nav.go('QueCompartes'),
+            },
+          ]}
+        />
+      )}
 
       {entre && entre.otros.length > 0 && (
         <Section
@@ -221,7 +261,7 @@ export function HogarScreen() {
           items={[
             {
               title: 'Personas del hogar',
-              subtitle: 'Nombre, quiénes están e invitar a alguien',
+              subtitle: 'Nombre y quiénes están',
               emoji: '👥',
               onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
             },
@@ -231,6 +271,22 @@ export function HogarScreen() {
               emoji: '🧾',
               onPress: () => nav.go('MovimientosHogar', { hogarId: hogar.id }),
             },
+            {
+              title: 'Qué compartes',
+              subtitle: 'Qué ve el hogar de cada cuenta tuya y qué suma',
+              emoji: '🔐',
+              onPress: () => nav.go('QueCompartes'),
+            },
+            ...(otros
+              ? [
+                  {
+                    title: 'Invitar a alguien',
+                    subtitle: 'Le llega un correo para unirse',
+                    emoji: '➕',
+                    onPress: () => invitarAlHogar(nav, hogar.id),
+                  },
+                ]
+              : []),
             ...(invitaciones > 0
               ? [
                   {

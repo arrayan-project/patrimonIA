@@ -69,7 +69,8 @@ export type RouteName =
   | 'PagarSolicitud'
   | 'EntreMiembros'
   | 'ValorEnFecha'
-  | 'AjustesElemento';
+  | 'AjustesElemento'
+  | 'QueCompartes';
 
 export interface Route {
   name: string;
