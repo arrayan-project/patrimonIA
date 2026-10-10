@@ -5,7 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, type elemento_patrimonial as ElementoRow } from '@prisma/client';
+import {
+  Prisma,
+  type elemento_patrimonial as ElementoRow,
+  type evento_financiero as EventoRow,
+  type impacto_patrimonial as ImpactoRow,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { ProgresoService } from '../planificacion/progreso.service.js';
@@ -396,7 +401,39 @@ export class EventoFinancieroService {
       throw new NotFoundException('Evento no encontrado');
     }
     const etqs = (await this.etiquetas.deEventos([eventoId])).get(eventoId) ?? [];
-    return toEventoDTO(evento, impactos, etqs);
+    const dto = toEventoDTO(evento, impactos, etqs);
+    const vigente = await this.#vigente(evento, impactos);
+    return vigente ? { ...dto, vigente } : dto;
+  }
+
+  /**
+   * G39 (M12): sigue la cadena lineal de correcciones vivas y devuelve cómo
+   * quedó el evento (monto = original + cada delta con su signo; fecha y
+   * glosa de la última corrección), igual que la fila de la lista.
+   */
+  async #vigente(
+    evento: EventoRow,
+    impactos: ImpactoRow[],
+  ): Promise<EventoFinancieroDTO['vigente'] | undefined> {
+    const correccionIds: string[] = [];
+    let monto = Number(evento.monto);
+    let ultima = evento;
+    for (;;) {
+      const corr = await this.prisma.evento_financiero.findFirst({
+        where: { correccion_de_id: ultima.id, anulado: false },
+      });
+      if (!corr) break;
+      const imps = await this.prisma.impacto_patrimonial.findMany({
+        where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: corr.id },
+      });
+      const comp = imps[0];
+      const orig = comp && impactos.find((i) => i.elemento_id === comp.elemento_id);
+      if (comp && orig) monto += Number(comp.monto) * (Number(orig.monto) < 0 ? -1 : 1);
+      correccionIds.push(corr.id);
+      ultima = corr;
+    }
+    if (correccionIds.length === 0) return undefined;
+    return { monto, fecha: ultima.fecha.toISOString().slice(0, 10), glosa: ultima.glosa, correccionIds };
   }
 
   /**
@@ -525,6 +562,9 @@ export class EventoFinancieroService {
       if (el.estado !== 'ACTIVO') throw new BadRequestException('El elemento no está activo');
       return el;
     };
+    if (dto.montoDestino != null && dto.tipo !== 'CONVERSION') {
+      throw new BadRequestException('montoDestino solo aplica a CONVERSION');
+    }
 
     if (dto.tipo === 'INGRESO') {
       if (!dto.elementoDestinoId || dto.elementoOrigenId) {
@@ -569,12 +609,11 @@ export class EventoFinancieroService {
       if (origen.moneda === destino.moneda) {
         throw new BadRequestException('CONVERSION requiere monedas distintas — usa TRANSFERENCIA');
       }
-      const montoDestino = await this.conversion.convertir(
-        monto,
-        origen.moneda,
-        destino.moneda,
-        fecha,
-      );
+      // G39 (M11): si el usuario dice cuánto llegó, manda sobre la tasa vigente.
+      const montoDestino =
+        dto.montoDestino != null
+          ? new Prisma.Decimal(dto.montoDestino)
+          : await this.conversion.convertir(monto, origen.moneda, destino.moneda, fecha);
       return [
         { elemento: origen, monto: monto.negated() },
         { elemento: destino, monto: montoDestino },

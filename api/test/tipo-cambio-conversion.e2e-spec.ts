@@ -107,6 +107,28 @@ describe('Tipos de cambio y CONVERSION (e2e)', () => {
       .expect(400); // no hay USD→EUR
   });
 
+  it('G39 (M11): con montoDestino llega lo que dijo el usuario, aunque no haya tasa', async () => {
+    const gbp = (
+      await auth(request(http).post('/comandos/RegistrarElementoPatrimonial'))
+        .send({ nombre: 'GBP M11', tipo: 'x', categoriaFuncional: 'LIQUIDEZ', valorInicial: 0, moneda: 'GBP' })
+        .expect(201)
+    ).body.id;
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'CONVERSION', monto: 10, moneda: 'USD', montoDestino: 7.5, elementoOrigenId: cuentaUsd, elementoDestinoId: gbp })
+      .expect(201);
+    const el = await auth(request(http).get(`/elementos-patrimoniales/${gbp}`)).expect(200);
+    expect(el.body.valorVigente).toBe(7.5);
+    // Se devuelve a la cuenta en USD para no cambiar los totales de los demás tests.
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'CONVERSION', monto: 7.5, moneda: 'GBP', montoDestino: 10, elementoOrigenId: gbp, elementoDestinoId: cuentaUsd })
+      .expect(201);
+    await auth(request(http).post('/comandos/DesactivarElementoPatrimonial')).send({ elementoId: gbp }).expect(200);
+    // Fuera de CONVERSION no se acepta.
+    await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+      .send({ tipo: 'GASTO', monto: 1, moneda: 'USD', montoDestino: 1, elementoOrigenId: cuentaUsd })
+      .expect(400);
+  });
+
   it('patrimonio-consolidado entrega el total en la moneda del hogar', async () => {
     const c = await auth(request(http).get(`/hogares/${hogarId}/patrimonio-consolidado`)).expect(200);
     expect(c.body.monedaConsolidacion).toBe('CLP');
@@ -122,6 +144,15 @@ describe('Tipos de cambio y CONVERSION (e2e)', () => {
     const c = await auth(request(http).get(`/hogares/${hogarId}/patrimonio-consolidado`)).expect(200);
     expect(c.body.total).toBeNull();
     expect(c.body.conversionesFaltantes).toContain('GBP');
+  });
+
+  it('G39 (M11): tipos-cambio/tasa dice la tasa de la conversión, o null', async () => {
+    const t = await auth(request(http).get('/tipos-cambio/tasa?origen=USD&destino=CLP&fecha=2026-07-01')).expect(200);
+    expect(t.body.tasa).toBe(1000);
+    const inv = await auth(request(http).get('/tipos-cambio/tasa?origen=CLP&destino=USD&fecha=2026-07-01')).expect(200);
+    expect(inv.body.tasa).toBeCloseTo(0.001, 6);
+    const no = await auth(request(http).get('/tipos-cambio/tasa?origen=USD&destino=JPY')).expect(200);
+    expect(no.body.tasa).toBeNull();
   });
 
   it('el inverso se usa cuando no hay par directo', async () => {

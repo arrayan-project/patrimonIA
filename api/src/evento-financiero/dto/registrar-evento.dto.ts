@@ -27,6 +27,16 @@ export class RegistrarEventoDto {
   @IsPositive()
   monto!: number;
 
+  /**
+   * G39 (M11): solo CONVERSION — cuánto llegó a la cuenta destino, en su moneda
+   * (lo que dio el banco o la casa de cambio). Sin él se usa el tipo de cambio
+   * vigente; con él la tasa queda implícita (montoDestino / monto).
+   */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsPositive()
+  montoDestino?: number;
+
   @Length(3, 3)
   moneda!: string;
 
