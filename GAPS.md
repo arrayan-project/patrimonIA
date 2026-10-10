@@ -21,7 +21,14 @@ resuelve inventando una regla de negocio (BUILD_INSTRUCTIONS §4).
 **Estado de cada gap:** `✅ RESUELTO` · `✅ DECISIÓN CERRADA` (se decidió no
 cambiar nada o dejarlo como está) · `🟡 PARCIAL` (núcleo hecho, quedan
 sub-ítems) · `⬜ PENDIENTE` (accionable ya, sin decisión) · `📋 DECISIÓN`
-(necesita definición del usuario) · `🔒 EXTERNO` (bloqueado por proveedor externo).
+(necesita definición del usuario) · `🔒 EXTERNO` (bloqueado por proveedor externo) ·
+`⏸ EN PAUSA` (detenido por decisión de Juan) · `💡 A FUTURO` (idea anotada:
+se hace si un usuario la pide).
+
+**Dentro de un gap:** "Pregunta original" es lo que estaba abierto cuando se
+anotó (se conserva como registro) y "Cómo se resolvió" dice qué se decidió;
+"A futuro" es una idea anotada, no un pendiente. Lo abierto de verdad está solo
+en la Parte 1.
 
 **Cómo está ordenado este archivo**: primero lo **pendiente** (Parte 1), después
 lo **implementado o cerrado como decisión** (Parte 2). Dentro de cada parte, los
@@ -37,12 +44,12 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
 | **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30, G37 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
-| **D** · Deuda / Crédito | — | G1, G-J, G17, G28 |
+| **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G32, G33, G35 | G25, G39 |
+| **I** · App: preferencias y usabilidad | G33 | G25, G32, G35, G39 |
 
 ---
 
@@ -54,13 +61,13 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. **Señal de Zoily (2026-10-10):** mejora notoria en diseño, flujos y orden; ahora le es fácil registrar un gasto o un ingreso y ver y entender una meta y de dónde sale su plata. Va bien encaminado, pero no se da por cerrado. | 🟡 |
-| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Agrupaciones ✅ como "Mis grupos" en Tu plata; la categoría de un movimiento se abre encima, como en Presupuesto. Queda solo el ícono de la app, en pausa junto con compilar la app propia (Juan, 2026-10-10). | 🟡 (⏸ ícono) |
-| U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
+| U5 | **G33** | Validar con personas reales que la app quedó simple, después de la Fase E de G33, G35 (visual) y G39 (flujos). Señal de Zoily (2026-10-10): mejora notoria, no definitiva; sus observaciones ya se ajustaron (Inicio con "📅 Octubre", plata entre miembros por persona, frecuentes en una fila). **Falta:** seguir su uso y, cuando pueda, una prueba guiada con los 33 escenarios de `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`. Historial completo en el detalle de G33. | 🟡 |
+| — | **Operación** | Dominio propio para los correos (hoy pueden caer en spam) y backups propios de la base (hoy solo el historial de 24 h de Neon). Ver `Docs/DESPLIEGUE.md` § Estado. | ⬜ |
 | P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | ⏸ en pausa (Juan, 2026-10-10) |
-| P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). Va junto con compilar la app propia. | ⏸ en pausa (Juan, 2026-10-10) |
-| — | **G31** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
+| P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
+| — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
+| — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
 
@@ -85,6 +92,20 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
+
+### Tema D · Deuda / Crédito
+
+#### G40 — Cupo (y día de pago) de la tarjeta de crédito  💡 A FUTURO (anotado 2026-10-10)
+- **Qué falta**: al agregar una tarjeta (C2) solo se pide cuánto debes. Lo
+  que el usuario conoce de su tarjeta es el cupo y el día de pago, y la app no
+  puede decir "te quedan X de cupo".
+- **Día de pago**: ya se cubre sin datos nuevos: al pagar la tarjeta con
+  "🔁 Se repite → Cada mes", la app avisa cada mes con "✅ Sí" (G39, M5 y M6).
+- **Cupo**: es un dato nuevo del dominio (una columna nullable en
+  `elemento_patrimonial`, solo para tarjetas, más su comando de edición), con
+  el que la tarjeta mostraría "Cupo disponible = cupo − lo que debes".
+- **Decisión (Juan, 2026-10-10)**: queda anotado a futuro; se abre si un
+  usuario lo pide. Origen: `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`, C2.
 
 ### Tema H · Notificaciones
 
@@ -115,59 +136,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   devuelve null (no rompe nada).
 
 ### Tema I · App: preferencias y usabilidad
-
-#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  🟡 PARCIAL (evaluación heurística ✅ y ajustes ✅ 2026-09-29; validación con persona nueva ✅ 2026-09-29, resultado negativo → G33)
-- ✅ (2026-09-29) **Revisión heurística** en
-  [`Docs/diseño/EVALUACION_USABILIDAD.md`](Docs/diseño/EVALUACION_USABILIDAD.md):
-  mapa de navegación real, flujos 1–6 con pasos, 14 hallazgos (4 de severidad
-  alta: "Reserva" con dos significados, apartar para una meta en 7 pasos, sin
-  lista de cuentas y bienes, onboarding que deja solo al usuario) y propuesta
-  de ajustes en 7 puntos.
-- ✅ (2026-09-29) **Los 7 puntos de la propuesta aplicados** en la app (detalle
-  en `EVALUACION_USABILIDAD.md` §5): vocabulario "Apartado" + glosario,
-  "Apartar dinero" en un paso desde el objetivo, detalles conectados, "Mi
-  patrimonio", programados y plantillas en Planificar, onboarding que lleva a
-  la primera cuenta, y pulido (categoría resuelta, "+" de Planificar,
-  engranaje en todas las tabs, icono de Movimientos, fuente de los tipos de
-  cambio). Sin cambios de modelo ni migraciones.
-- ✅ (2026-09-29) **Validación con persona nueva: falló.** La usuaria no
-  completó ningún flujo sola. La navegación (tabs, Ajustes, hogar) se entiende;
-  lo que se rompe es la operación (registrar, ahorrar, transferir). Además, el
-  punto 2 ("Apartar en un paso") resolvió el caso menos frecuente (ahorro
-  virtual): el usuario piensa ahorrar como transferir a la meta. Se continúa en
-  **G33**.
-- **Qué faltaba**: una evaluación de **todo el flujo gráfico** de la app desde
-  el punto de vista de un usuario **nuevo y sin experiencia**: qué tan fácil
-  le resulta entender para qué sirve cada sección, cómo se relacionan entre
-  sí y cómo sacarle el máximo provecho a la app.
-- **Por qué surge** (usuario, 2026-09-27): la app tiene muchas funcionalidades
-  útiles, pero incluso quien la modeló y diseñó "cuesta seguirle el paso a las
-  secciones" y no se siente que todo esté **conectado** ni que sea
-  "facilísimo de usar". Si le cuesta al autor, a un usuario nuevo le va a
-  costar más. Las revisiones anteriores de UI/UX (Fase 15,
-  `Docs/retirado/UI_UX_BACKLOG.md`, U1–U3) fueron **por pantalla**
-  (validación, accesibilidad, listas), no sobre el recorrido completo.
-- **Qué evaluar**:
-  - **Primer uso / onboarding**: registro → Bienvenida → primer hogar →
-    primer elemento → primer movimiento. ¿El usuario sabe qué hacer después de
-    cada paso? ¿Entiende los conceptos (elemento patrimonial, reserva,
-    asignación, ajuste, valorización…) sin conocer el modelo de dominio?
-  - **Mapa de navegación**: tabs, secciones y pantallas de detalle. ¿Hay
-    pantallas huérfanas, caminos duplicados o funcionalidades difíciles de
-    encontrar? ¿Los nombres de las secciones se entienden para alguien que no
-    conoce el modelo?
-  - **Conexión entre funcionalidades**: ¿se ve la relación entre elementos,
-    movimientos, presupuestos, objetivos/reservas, movimientos programados y
-    reportes? ¿Desde una pantalla se llega naturalmente a lo relacionado
-    (p. ej. del objetivo a la reserva que lo financia, del presupuesto a los
-    movimientos que lo consumen)?
-  - **Tareas clave**: medir cuántos pasos y cuánta fricción tienen los flujos
-    principales (`UX_FLOWS.md`, flujos 1–6) hechos en la app real.
-- **Método sugerido**: recorrido de las tareas clave con alguien que no conozca
-  la app (o simulando un usuario novato), un mapa de navegación
-  actual y un chequeo contra heurísticas de usabilidad. Resultado: una lista
-  priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
-  una propuesta de ajustes al flujo, antes de tocar pantallas.
 
 #### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  🟡 PARCIAL (abierto 2026-09-29; Fase D cerrada 2026-10-02; señal de Zoily positiva 2026-10-10, no definitiva)
 - **Señal de Zoily (2026-10-10)**, después de G35 y G39: exploró la app y ve
@@ -262,7 +230,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   la lista de Recibí → De alguien del hogar salía siempre vacía, porque los
   movimientos de una cuenta solo traen el impacto de esa cuenta y no dicen de
   quién es el otro lado; ahora la arma el backend
-  (`transferencias-hogar`). Capturas en `Docs/usabilidad/capturas-e9/`.
+  (`transferencias-hogar`). Capturas en `Docs/usabilidad/capturas/e9/`.
 - **D-5 adelantado del bloque 10 — `DOMINIO` destino de otro miembro + D-2 en
   el backend (rama `feat/G33-D5-destino-miembro`, probada por Juan y
   mergeada, 2026-10-08)**: plantillas y programados aceptan como destino de una
@@ -342,7 +310,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   usa el mismo desglose. En Ahorrar, lo libre por cuenta no puede restar la
   plata ajena (la deuda no está ligada a una cuenta) y se avisa el total. Textos y cálculo del saldo
   en `app/src/personas.ts` (con test; `node --test` necesita Node 22).
-  Capturas en `Docs/usabilidad/capturas-e8/`.
+  Capturas en `Docs/usabilidad/capturas/e8/`.
 - **Bloque 8a de la Fase E — `DOMINIO` D-3 (HZ-11) + `PROYECCIÓN` HZ-18 +
   `FLUJO` HZ-20, backend (✅ mergeado, 2026-10-04)**:
   plan aprobado por Juan: bloque 8 en dos ramas (8a backend, 8b app); en 8b,
@@ -495,7 +463,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   cuentas se eligen en la hoja, HZ-3); reemplaza el formulario de ahorro del
   detalle de la meta; "Ahorrar" en Inicio y en Metas abre esta pantalla.
   Tests en `api/test/ahorrar-meta.e2e-spec.ts`. Capturas en
-  `Docs/usabilidad/capturas-e7/`.
+  `Docs/usabilidad/capturas/e7/`.
 - **Bloque 6 de la Fase E — `UI` C1 + D-2, alta de cuenta y qué compartes con
   el hogar (✅ mergeado, 2026-10-03)**: "Agregar cuenta o bien" pasa de asistente de 2–3 pasos a una
   pantalla con tres preguntas (nombre, tipo, saldo de hoy obligatorio y sin 0
@@ -511,7 +479,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   niveles se eligen en la hoja (HZ-3), no en chips ni en línea; se mantiene
   "Saldo actual" (D-4). Sin dominio nuevo; guardar un nivel son dos comandos
   existentes (visibilidad y consolidación), no una transacción. Capturas en
-  `Docs/usabilidad/capturas-e6/`. **Completado después (2026-10-03, rama
+  `Docs/usabilidad/capturas/e6/`. **Completado después (2026-10-03, rama
   `fix/G33-rapidos`):** C2 (la tarjeta de crédito no pregunta "Financiera /
   Encargo": siempre es financiera) y HZ-10 (3) (en Hogar, "Para transferir"
   lista las cuentas de otros miembros que no suman; al tocarlas se abre una
@@ -525,7 +493,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   cuentas (decisión de Juan). Backend: "Consumir reserva" ya no descuenta
   reservas de otras cuentas (ver G14). En el detalle de la meta, "Usar esta
   plata" abre el gasto con la meta (y la cuenta, si es una sola) elegidas.
-  Capturas en `Docs/usabilidad/capturas-e5/`. **Límite resuelto (2026-10-03):**
+  Capturas en `Docs/usabilidad/capturas/e5/`. **Límite resuelto (2026-10-03):**
   el backend solo dejaba usar asignaciones propias; ahora también las de una
   meta del hogar que el actor puede modificar (dueño o designado), como al
   ahorrar (test en `objetivo-compartido.e2e-spec.ts`).
@@ -546,7 +514,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   (Registrar movimiento, Inicio, Movimientos, Planificar, Hogar, Agregar
   cuenta o bien, Notificaciones, Metas, Meta, Patrimonio del hogar,
   Movimientos del hogar, Mi patrimonio). Capturas antes/después en
-  `Docs/usabilidad/capturas-e4/`. Contradicciones prototipo vs. HZ, resueltas
+  `Docs/usabilidad/capturas/e4/`. Contradicciones prototipo vs. HZ, resueltas
   a favor del HZ: (1) `Question` conserva el número y el paso actual
   (HZ-19, HZ-24); (2) las cuentas se eligen en la hoja, no en línea (HZ-3);
   (3) se mantienen los términos de D-4 ("¿Desde qué cuenta?", "Saldo
@@ -681,42 +649,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
-#### G35 — Mejora visual pantalla por pantalla  🟡 PARCIAL (abierto 2026-10-09; las 6 tandas completas el 2026-10-09)
-- **Qué pasa**: después de G33 la interfaz mejoró, pero Juan la siente poco
-  amigable y demasiado corporativa.
-- **Plan**: [`Docs/usabilidad/MEJORA_VISUAL_S02.md`](Docs/usabilidad/MEJORA_VISUAL_S02.md)
-  (fuente de verdad): inventario de las 60 pantallas con sus acciones,
-  agrupadas en 6 tandas por uso. Visual y textos: no cambian dominio,
-  backend, comandos ni flujos. Paso 0: elegir una dirección visual común sobre el
-  Inicio y aplicarla a las piezas de `app/src/ui/`; después, pantalla por
-  pantalla, cada una con su ficha (cómo se ve, qué mejorar, decisión de Juan).
-- **Decidido (Juan, 2026-10-09)**: V-1 primero la dirección común; V-2 los
-  textos entran; V-3 se mergea a medida que se prueba (el mes de Zoily aún no
-  empieza). Paso 0 elegido tras tres rondas (2026-10-09): resumen de
-  siempre con textos nuevos, cuentas como tarjetas con sus movimientos,
-  metas en anillo, paleta lila pastel, letra Nunito y emojis configurables.
-  Implementado junto con el Inicio en `feat/G35-P0-inicio`, probado por Juan
-  y mergeado (2026-10-09). Tanda 1 (lo de todos los días) y tanda 2 (Mi
-  plata y mis cuentas) probadas por Juan y mergeadas (2026-10-09); cada
-  pantalla tiene su ficha en el documento. Tanda 3 (Planificar) y tanda 4
-  (Hogar) probadas por Juan y mergeadas (2026-10-09). En la tanda 4 se
-  corrigió `GET /hogares/:id/metricas`: el avance de objetivos contaba las
-  metas de todos los miembros (también las personales); ahora solo las
-  compartidas con el hogar (requiere deploy en Render). Movimientos del
-  hogar pasó a ser la pestaña Movimientos en "Del hogar" (una sola versión
-  de la lista). Tanda 5 (Avisos, ajustes y cuenta) y tanda 6 (Acceso y
-  primer uso) probadas por Juan y mergeadas (2026-10-09); en la tanda 6, sin
-  sesión la app abre en Entrar (antes en Crear cuenta) y las pantallas de
-  acceso llevan el 🌳 de la marca. Después (2026-10-09): Agrupaciones
-  pasan a "Mis grupos" y se ven en Tu plata (selector "Por tipo / Mis
-  grupos"), y la categoría de un movimiento abre sus movimientos del mes
-  encima, con "atrás", como en Presupuesto. **Queda:** el ícono de la app
-  con el árbol, que se hace cuando se compile la app propia (con Expo Go no
-  se ve). ⏸ En pausa junto con la app compilada (Juan, 2026-10-10).
-  Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
-  largos cuando las fechas no son del mes en curso (G38) y la lista de un
-  grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
-
 ---
 
 # Parte 2 · Implementado / decisión cerrada
@@ -784,7 +716,7 @@ mindicador.cl + `@nestjs/schedule`; captcha (G4) y push remoto (G20) pospuestos.
 
 | # | Gap | Decisión y qué se hizo | Estado |
 |---|-----|------------------------|--------|
-| 1 | **G32** | Revisión heurística: `Docs/diseño/EVALUACION_USABILIDAD.md` (mapa, flujos, 14 hallazgos, propuesta). | 🟡 (ajustes pendientes) |
+| 1 | **G32** | Revisión heurística: `Docs/usabilidad/EVALUACION_USABILIDAD.md` (mapa, flujos, 14 hallazgos, propuesta). | 🟡 (ajustes pendientes) |
 | 2 | **G21** | Importación de USD/EUR/UF→CLP desde mindicador.cl al arrancar y cada hora; env `TIPOS_CAMBIO_IMPORTACION`. Sin migración. | ✅ |
 | 3 | **G4** captcha | Pospuesto. | 🔒 |
 | 4 | **G20** push | Pospuesto (EAS + teléfono físico). | 🔒 |
@@ -846,7 +778,7 @@ Planificar).
 - **Recomendación**: (a) para no bloquear el despliegue — cierra el gap crítico
   con cambios acotados; evaluar (b) más adelante si se quiere sumar MFA/login
   social o dejar de mantener credenciales propias.
-- **Para decidir**: ¿(a) o (b)? Si es (a): ¿el token de reset es de un solo uso
+- **Pregunta original** (resuelta en la Decisión de abajo): ¿(a) o (b)? Si es (a): ¿el token de reset es de un solo uso
   (requiere tabla) o basta con la ventana corta de expiración, como en G4?
   ¿se invalidan las sesiones (JWT de 7 días) ya emitidas al resetear la
   contraseña?
@@ -925,8 +857,10 @@ Planificar).
 - **Por qué es aceptable**: es el mismo patrón que BUILD_INSTRUCTIONS §4 autoriza
   para el % de Deuda/Crédito — placeholder trivial + comentario en código.
   Bloquear todo el flujo vertical por la moneda inicial sería desproporcionado.
-- **Para decidir**: ¿la pantalla de alta debería pedir la moneda?, ¿o el default
+- **Pregunta original**: ¿la pantalla de alta debería pedir la moneda?, ¿o el default
   es una regla de producto legítima ("hogar chileno → CLP")?
+- **Cómo se resolvió**: Crear hogar pide la moneda (CLP por defecto) y Gestionar
+  hogar la cambia (Fase 36, P1; ver el primer punto).
 
 #### G5 — Consulta "mis invitaciones recibidas"  ✅ RESUELTO
 - **Qué falta**: la pantalla del invitado (UX_FLOWS Flujo 2, paso 4) necesita
@@ -970,7 +904,8 @@ Planificar).
   - `GET /hogares/:id/eventos-financieros` (no `?hogar=` como en API_DESIGN):
     una fila por evento (colapsa transferencias) con `montoEfectivo` neto de
     correcciones vivas (colapsa el par original+compensatorio).
-- **Para decidir**: ¿`elemento.hogar_consolidacion_id` explícito?
+- **Pregunta original**: ¿`elemento.hogar_consolidacion_id` explícito?
+- **Cómo se resolvió**: no; sin esa columna y sin multi-hogar (P13).
 
 #### G30 — Cierre de los hallazgos del análisis de dominio  ✅ RESUELTO (Fase 52)
 
@@ -1104,8 +1039,10 @@ ya cerrados en Fases 50–51).
     aparece en el patrimonio histórico aunque estuviera activo en X).
   - Un evento hoy anulado se considera inexistente en toda la línea de tiempo
     (la anulación no tiene fecha de hecho económico).
-- **Para decidir**: ¿agregar `fecha_alta` / `fecha_baja` al elemento? ¿fecha a la
+- **Pregunta original**: ¿agregar `fecha_alta` / `fecha_baja` al elemento? ¿fecha a la
   anulación para reconstruirla en el tiempo?
+- **Cómo se resolvió**: sí a `fecha_alta` / `fecha_baja` (migración 020, Fase 42,
+  P10); la fecha de anulación quedó fuera (más compleja, poco valor).
 
 #### G29 — El saldo inicial de una cuenta como hecho económico  ✅ RESUELTO (Fase 51)
 - **Qué faltaba**: al crear una cuenta LIQUIDEZ/RESERVA con `valorInicial`, ese
@@ -1185,8 +1122,10 @@ ya cerrados en Fases 50–51).
     `valor_pendiente` a 0 y generan un impacto `origen_tipo` `CONDONACION` /
     `DECLARACION_INCOBRABLE` (migración 003) cuyo `origen_id` apunta a la entrada
     de auditoría del comando (no hay tabla propia).
-- **Para decidir**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
+- **Pregunta original**: ¿un tipo de evento `PRESTAMO` propio (G8) en vez de
   TRANSFERENCIA hacia el elemento crédito? ¿intereses como Ajuste o como evento?
+- **Cómo se resolvió**: sin tipo `PRESTAMO` (el préstamo se modela con Deuda /
+  Crédito); los intereses son un Ajuste Patrimonial (Fase 37, P8).
 
 #### G28 — Dinero en custodia informal (naturaleza de Deuda/Crédito)  ✅ RESUELTO (Fase 50)
 - **Qué faltaba**: cuando un tercero me transfiere plata para que le compre algo,
@@ -1207,7 +1146,7 @@ ya cerrados en Fases 50–51).
   patrimonio ni genera comando nuevo. El wizard de alta lo pregunta; la app
   agrupa los `CUSTODIA_INFORMAL` bajo "Encargos y custodia", aparte de las deudas
   financieras. Ver `Docs/DDD.md` §X.2, `Docs/DATABASE_DESIGN.md` §13.
-- **Para decidir**: si más adelante hace falta, un tercer valor para "garantía /
+- **A futuro (no es pendiente)**: si más adelante hace falta, un tercer valor para "garantía /
   depósito en prenda" seguiría el mismo patrón (agregar al CHECK).
 
 ### Tema E · Movimientos financieros
@@ -1229,7 +1168,9 @@ ya cerrados en Fases 50–51).
   nuevo. Además la cadena de correcciones es lineal: no se puede corregir (ni
   anular) un evento que ya tiene una corrección viva — hay que actuar sobre la
   última corrección.
-- **Para decidir**: ¿permitir corregir fecha?, ¿re-corregir encadenando deltas?
+- **Pregunta original**: ¿permitir corregir fecha?, ¿re-corregir encadenando deltas?
+- **Cómo se resolvió**: sí a la fecha y al detalle (Fase 38, P5); re-corregir
+  encadenando quedó fuera. Para cambiar algo más, "Anotar de nuevo" (G39, M12).
 
 #### G10 — AnularEventoFinanciero: impactos y autorización (Fase 3)  ✅ RESUELTO
 - El **colapso visual** original+corrección se hizo en Fase 29 (§A9): el detalle
@@ -1262,7 +1203,8 @@ ya cerrados en Fases 50–51).
 - **Recomendación**: (a) para empezar. Migración 009. `RegistrarEventoFinanciero`
   y `CorregirEventoFinanciero` aceptan `glosa?`. Es configuración/anotación, no
   hecho económico → no participa de la reconstrucción histórica (Sección V).
-- **Para decidir**: ¿la glosa se puede editar sin anular el evento?
+- **Pregunta original**: ¿la glosa se puede editar sin anular el evento?
+- **Cómo se resolvió**: sí, con `CorregirEventoFinanciero` (Fase 38, P5).
 
 #### G23 — Categorización de movimientos: categoría vs. etiqueta  ✅ RESUELTO (categorías 15c + jerárquicas Fase 39/P7; etiquetas 15i; agrupaciones 15j)
 - Categorías (15c), etiquetas (15i), agrupaciones de elementos (15j), presupuesto
@@ -1386,7 +1328,9 @@ ya cerrados en Fases 50–51).
   agrega `usuario_id` a `objetivo_financiero` y `asignacion`. Consistente con el
   planteamiento monousuario del Flujo 5 (UX_FLOWS). Reflejado también en
   `init/01_schema.sql`.
-- **Para decidir**: ¿objetivos/asignaciones compartidos por hogar?
+- **Pregunta original**: ¿objetivos/asignaciones compartidos por hogar?
+- **Cómo se resolvió**: sí: la meta es personal o del hogar, con quiénes pueden
+  ahorrar en ella (migración 021, Fase 43, P9).
 
 #### G14 — Fase 5c: políticas y simplificaciones  ✅ RESUELTO (des-consumir al anular ✅ Fase 36; consumo parcial ✅ 2026-09-29)
 - ✅ (Fase 36, P2) **AnularEventoFinanciero ahora "des-consume" reservas** — lee
@@ -1434,12 +1378,15 @@ ya cerrados en Fases 50–51).
   la 001. INDIVIDUAL → solo el dueño; FAMILIAR → cualquier miembro ACTIVA del hogar.
 - **Decisión ("asignaciones esperadas")**: se **omite** — no hay columna y no se
   inventa una (BUILD_INSTRUCTIONS §4). El presupuesto cubre ingresos/gastos/ahorro.
-- **Para decidir**: ¿agregar `asignaciones_esperadas` (monto agregado) o una tabla
+- **Pregunta original**: ¿agregar `asignaciones_esperadas` (monto agregado) o una tabla
   hija presupuesto_linea por asignación esperada?
+- **Cómo se resolvió**: líneas de ahorro por meta en el presupuesto (migración
+  019, Fase 41, P6).
 
 #### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ RESUELTO (Fase 45 — moneda como etiqueta, sin conversión, P11)
-- Decisiones de alcance/agregación tomadas en Fase 6. Abierto: presupuesto con
-  moneda propia (§B8) y "ahorro real" desde reservas en vez de ingresos−gastos.
+- Decisiones de alcance/agregación tomadas en Fase 6. Moneda del presupuesto:
+  resuelta en la Fase 45 (P11). "Ahorro real" desde reservas: no se volvió a
+  pedir; sigue ingresos − gastos.
 - **Qué falta**: DATABASE_DESIGN §12 define la proyección como "comparación entre
   montos esperados y reales agregados desde `evento_financiero` en el período"
   sin precisar qué eventos entran ni cómo se maneja la moneda.
@@ -1454,14 +1401,17 @@ ya cerrados en Fases 50–51).
     TRANSFERENCIA/CONVERSION/PRESTAMO no cuentan. Eventos anulados se excluyen.
   - **Moneda**: se suman los montos tal cual, sin tipo de cambio (ver G7). El
     presupuesto no tiene moneda propia.
-- **Para decidir**: ¿presupuesto con moneda?, ¿ahorro real desde reservas/objetivos
+- **Pregunta original**: ¿presupuesto con moneda?, ¿ahorro real desde reservas/objetivos
   en vez de ingresos−gastos?, ¿excluir transferencias entre elementos del alcance
   ya está bien así?
+- **Cómo se resolvió**: moneda como etiqueta, sin conversión (migración 022, Fase
+  45, P11). El ahorro sigue siendo ingresos − gastos y las transferencias siguen
+  fuera; nadie pidió cambiarlo.
 
 #### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO (Fase 15d; línea de ahorro por objetivo, Fase 41/P6)
 - Líneas por categoría de gasto: ✅. Líneas de ahorro por objetivo: ✅ (Fase 41,
-  P6; cierra G15). Sin decidir y sin urgencia: ¿la suma de líneas debe cuadrar
-  con `gastos_esperados`? (hoy son independientes).
+  P6; cierra G15). La suma de líneas frente a `gastos_esperados` es una señal
+  informativa, no un bloqueo (P6).
 - **Qué falta**: el Presupuesto (Agregado K) solo compara totales de
   ingreso/gasto/ahorro (`ingresos_esperados`, `gastos_esperados`,
   `ahorro_esperado`). No hay forma de fijar cuánto se espera por categoría
@@ -1488,9 +1438,11 @@ ya cerrados en Fases 50–51).
     mismo alcance y período que el total (G16), sin tipo de cambio.
   - `GET /presupuestos/:id/lineas` para el editor (líneas + nombre/color de la
     categoría).
-- **Para decidir**: ¿la suma de las líneas de gasto debería cuadrar con
+- **Pregunta original**: ¿la suma de las líneas de gasto debería cuadrar con
   `gastos_esperados` (hoy son independientes)? ¿líneas de ahorro por objetivo
   (cierra del todo G15)?
+- **Cómo se resolvió**: las líneas de ahorro por meta existen (P6) y la suma de
+  líneas frente a `gastos_esperados` queda como señal informativa, no bloqueo (P6).
 
 #### G36 — Cambiar si un presupuesto es tuyo o del hogar  ✅ RESUELTO (2026-10-09)
 - **Qué pasa**: Juan (2026-10-09) no encontró cómo compartir su presupuesto
@@ -1564,7 +1516,7 @@ ya cerrados en Fases 50–51).
   hogar usando `tipo_cambio` (migración 007), y `null` + `conversionesFaltantes`
   si falta alguna tasa. `patrimonio-individual` sigue siendo solo `porMoneda`
   (el usuario no tiene "moneda de consolidación" propia).
-- **Para decidir**: materializar si el cálculo en vivo escala mal.
+- **A futuro (no es pendiente)**: materializar si el cálculo en vivo escala mal (P13).
 
 #### G27 — Reportes financieros por período (Fase 16)  ✅ RESUELTO (Fase 16)
 - **Qué falta**: no había forma de ver "mis gastos de marzo" ni "el año 2026". El
@@ -1591,8 +1543,9 @@ ya cerrados en Fases 50–51).
     las cuentas propias del alcance) — **no** suman a `porMoneda` ni a `porRubro`.
     Antes se filtraban por completo y el patrimonio "bajaba sin explicación"
     (F1 de `Docs/mockup/casos-dominio-probados.html`).
-- **Para decidir**: ¿comparación automática con el período anterior en el
-  endpoint, o la calcula el cliente con dos llamadas? (hoy: el cliente).
+- **Pregunta original**: ¿comparación automática con el período anterior en el
+  endpoint, o la calcula el cliente con dos llamadas?
+- **Cómo se resolvió**: la calcula el cliente con dos llamadas (Movimientos).
 
 #### G38 — Anotar una cuenta vieja hacía caer (o subir) el gráfico  ✅ RESUELTO (2026-10-09)
 - **Qué pasaba**: el gráfico de "Cómo ha cambiado" y el % del Inicio
@@ -1647,8 +1600,9 @@ ya cerrados en Fases 50–51).
 - `GET /usuarios/me` ya devuelve `preferencias`; hay pantalla Ajustes (hub) y
   selector de tema (Fase 28). Falta: darle forma al objeto de preferencias
   (formato de fecha, secciones visibles del dashboard, densidad, moneda de
-  despliegue) — cada toggle es chico — y 📋 decidir qué es del usuario y qué del
-  hogar (`hogar.configuracion JSONB` vs. tablas).
+  despliegue) — cada toggle es chico — y decidir qué es del usuario y qué del
+  hogar (`hogar.configuracion JSONB` vs. tablas). *(Resuelto: ver "Decisión
+  usuario vs. hogar" arriba.)*
 - **Qué falta**: un lugar para administrar de forma granular lo que se muestra —
   categorías, etiquetas, agrupaciones, formato de fecha, secciones visibles del
   dashboard, tema, densidad, moneda de despliegue preferida, tipos de elemento
@@ -1666,8 +1620,99 @@ ya cerrados en Fases 50–51).
     propia o `hogar` (hoy `hogar` solo tiene `nombre` + `moneda_consolidacion`).
   - Pantalla **Ajustes** con sub-secciones: Perfil · Categorías · Etiquetas ·
     Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
-- **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
+- **Pregunta original**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
+- **Cómo se resolvió**: lo personal en `usuario.preferencias`; lo del hogar en
+  sus tablas normalizadas, sin `hogar.configuracion` (ver arriba).
+
+#### G32 — Evaluación de usabilidad del flujo completo de la app (usuario nuevo)  ✅ CERRADO (evaluación y 7 ajustes ✅ 2026-09-29; la validación con una persona nueva falló y el trabajo siguió en G33)
+- ✅ (2026-09-29) **Revisión heurística** en
+  [`Docs/usabilidad/EVALUACION_USABILIDAD.md`](Docs/usabilidad/EVALUACION_USABILIDAD.md):
+  mapa de navegación real, flujos 1–6 con pasos, 14 hallazgos (4 de severidad
+  alta: "Reserva" con dos significados, apartar para una meta en 7 pasos, sin
+  lista de cuentas y bienes, onboarding que deja solo al usuario) y propuesta
+  de ajustes en 7 puntos.
+- ✅ (2026-09-29) **Los 7 puntos de la propuesta aplicados** en la app (detalle
+  en `EVALUACION_USABILIDAD.md` §5): vocabulario "Apartado" + glosario,
+  "Apartar dinero" en un paso desde el objetivo, detalles conectados, "Mi
+  patrimonio", programados y plantillas en Planificar, onboarding que lleva a
+  la primera cuenta, y pulido (categoría resuelta, "+" de Planificar,
+  engranaje en todas las tabs, icono de Movimientos, fuente de los tipos de
+  cambio). Sin cambios de modelo ni migraciones.
+- ✅ (2026-09-29) **Validación con persona nueva: falló.** La usuaria no
+  completó ningún flujo sola. La navegación (tabs, Ajustes, hogar) se entiende;
+  lo que se rompe es la operación (registrar, ahorrar, transferir). Además, el
+  punto 2 ("Apartar en un paso") resolvió el caso menos frecuente (ahorro
+  virtual): el usuario piensa ahorrar como transferir a la meta. Se continúa en
+  **G33**.
+- **Qué faltaba**: una evaluación de **todo el flujo gráfico** de la app desde
+  el punto de vista de un usuario **nuevo y sin experiencia**: qué tan fácil
+  le resulta entender para qué sirve cada sección, cómo se relacionan entre
+  sí y cómo sacarle el máximo provecho a la app.
+- **Por qué surge** (usuario, 2026-09-27): la app tiene muchas funcionalidades
+  útiles, pero incluso quien la modeló y diseñó "cuesta seguirle el paso a las
+  secciones" y no se siente que todo esté **conectado** ni que sea
+  "facilísimo de usar". Si le cuesta al autor, a un usuario nuevo le va a
+  costar más. Las revisiones anteriores de UI/UX (Fase 15,
+  `Docs/retirado/UI_UX_BACKLOG.md`, U1–U3) fueron **por pantalla**
+  (validación, accesibilidad, listas), no sobre el recorrido completo.
+- **Qué evaluar**:
+  - **Primer uso / onboarding**: registro → Bienvenida → primer hogar →
+    primer elemento → primer movimiento. ¿El usuario sabe qué hacer después de
+    cada paso? ¿Entiende los conceptos (elemento patrimonial, reserva,
+    asignación, ajuste, valorización…) sin conocer el modelo de dominio?
+  - **Mapa de navegación**: tabs, secciones y pantallas de detalle. ¿Hay
+    pantallas huérfanas, caminos duplicados o funcionalidades difíciles de
+    encontrar? ¿Los nombres de las secciones se entienden para alguien que no
+    conoce el modelo?
+  - **Conexión entre funcionalidades**: ¿se ve la relación entre elementos,
+    movimientos, presupuestos, objetivos/reservas, movimientos programados y
+    reportes? ¿Desde una pantalla se llega naturalmente a lo relacionado
+    (p. ej. del objetivo a la reserva que lo financia, del presupuesto a los
+    movimientos que lo consumen)?
+  - **Tareas clave**: medir cuántos pasos y cuánta fricción tienen los flujos
+    principales (`UX_FLOWS.md`, flujos 1–6) hechos en la app real.
+- **Método sugerido**: recorrido de las tareas clave con alguien que no conozca
+  la app (o simulando un usuario novato), un mapa de navegación
+  actual y un chequeo contra heurísticas de usabilidad. Resultado: una lista
+  priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
+  una propuesta de ajustes al flujo, antes de tocar pantallas.
+
+#### G35 — Mejora visual pantalla por pantalla  ✅ RESUELTO (las 6 tandas, 2026-10-09; el ícono de la app ⏸ en pausa junto con compilar la app propia)
+- **Qué pasa**: después de G33 la interfaz mejoró, pero Juan la siente poco
+  amigable y demasiado corporativa.
+- **Plan**: [`Docs/usabilidad/MEJORA_VISUAL_S02.md`](Docs/usabilidad/MEJORA_VISUAL_S02.md)
+  (fuente de verdad): inventario de las 60 pantallas con sus acciones,
+  agrupadas en 6 tandas por uso. Visual y textos: no cambian dominio,
+  backend, comandos ni flujos. Paso 0: elegir una dirección visual común sobre el
+  Inicio y aplicarla a las piezas de `app/src/ui/`; después, pantalla por
+  pantalla, cada una con su ficha (cómo se ve, qué mejorar, decisión de Juan).
+- **Decidido (Juan, 2026-10-09)**: V-1 primero la dirección común; V-2 los
+  textos entran; V-3 se mergea a medida que se prueba (el mes de Zoily aún no
+  empieza). Paso 0 elegido tras tres rondas (2026-10-09): resumen de
+  siempre con textos nuevos, cuentas como tarjetas con sus movimientos,
+  metas en anillo, paleta lila pastel, letra Nunito y emojis configurables.
+  Implementado junto con el Inicio en `feat/G35-P0-inicio`, probado por Juan
+  y mergeado (2026-10-09). Tanda 1 (lo de todos los días) y tanda 2 (Mi
+  plata y mis cuentas) probadas por Juan y mergeadas (2026-10-09); cada
+  pantalla tiene su ficha en el documento. Tanda 3 (Planificar) y tanda 4
+  (Hogar) probadas por Juan y mergeadas (2026-10-09). En la tanda 4 se
+  corrigió `GET /hogares/:id/metricas`: el avance de objetivos contaba las
+  metas de todos los miembros (también las personales); ahora solo las
+  compartidas con el hogar (requiere deploy en Render). Movimientos del
+  hogar pasó a ser la pestaña Movimientos en "Del hogar" (una sola versión
+  de la lista). Tanda 5 (Avisos, ajustes y cuenta) y tanda 6 (Acceso y
+  primer uso) probadas por Juan y mergeadas (2026-10-09); en la tanda 6, sin
+  sesión la app abre en Entrar (antes en Crear cuenta) y las pantallas de
+  acceso llevan el 🌳 de la marca. Después (2026-10-09): Agrupaciones
+  pasan a "Mis grupos" y se ven en Tu plata (selector "Por tipo / Mis
+  grupos"), y la categoría de un movimiento abre sus movimientos del mes
+  encima, con "atrás", como en Presupuesto. **Queda:** el ícono de la app
+  con el árbol, que se hace cuando se compile la app propia (con Expo Go no
+  se ve). ⏸ En pausa junto con la app compilada (Juan, 2026-10-10).
+  Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
+  largos cuando las fechas no son del mes en curso (G38) y la lista de un
+  grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
 
 #### G39 — Flujos simples después de G35  ✅ RESUELTO (abierto 2026-10-09; los 33 escenarios trabajados, cerrado 2026-10-10)
 - **Qué pasa**: G35 cambió lo visual pero no los flujos; registrar y accionar

@@ -1,5 +1,7 @@
 # Mejora visual pantalla por pantalla (S02)
 
+> **Estado (2026-10-10):** G35 cerrado (las 6 tandas, 2026-10-09). Sigue vigente como referencia visual de cada pantalla. Solo queda el ícono de la app, en pausa junto con compilar la app propia.
+
 **Objetivo de este archivo:** inventario de todas las pantallas de la app con
 las acciones que hace el usuario en cada una, y el registro de la revisión
 visual pantalla por pantalla (G35 en `GAPS.md`). Es la fuente de verdad de
@@ -352,7 +354,9 @@ Una ficha por pantalla, en el orden en que se trabajen. Plantilla:
       (liquidez, inversión, bien, deuda, crédito), en la app. Sin migración.
     - **Metas** (🏖️ 🛟): para que cada usuario elija el suyo hace falta una
       columna nueva (`objetivo_financiero.icono`, migración). Sin ella, todas
-      llevan el mismo (🎯). 📋 Juan.
+      llevan el mismo (🎯). *(Resuelto sin migración: cada usuario elige el
+      emoji de sus metas en "Editar meta", y se guarda en sus preferencias,
+      `preferencias.emojis.metas`, igual que el de sus cuentas.)*
     - **Filas fijas** (resumen y "Así va el mes": 💵 🐷 👥 ✅ 📥 📤 🎉): en la
       app.
     - Son los emojis del teléfono: se ven distintos en iPhone y Android, y no
@@ -1084,7 +1088,8 @@ eso entran las 6 listas y sus formularios de crear y editar.
   "Transferencia sin anotar" de 15.000 (Demo → Pareja, pendiente).
 - **Pendiente para la tanda 5:** en Ajustes la fila sigue diciendo
   "🏠 Gestionar hogar" y abre "Personas del hogar"; alinear el nombre al
-  revisar Ajustes.
+  revisar Ajustes. → **Hecho en la tanda 5:** la fila dice "👥 Personas del
+  hogar".
 
 ### 44, 46, 47 y 54. Notificaciones, Secciones del Inicio, Mi perfil y Confirmar (`NotificacionesScreen`, `AjustesVisualizacionScreen`, `PerfilScreen`, `AccionFormScreen`)  ✅ (probado por Juan y mergeado, 2026-10-09)
 

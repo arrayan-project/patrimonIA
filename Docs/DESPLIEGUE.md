@@ -14,8 +14,8 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 
 **Pendiente**
 
-- [ ] **Captcha antes del registro** — mientras no exista,
-  `AUTH_REGISTRO_TOKEN_REQUERIDO` queda en `false` (GAPS G4).
+- ⏸ **Captcha antes del registro** (en pausa por Juan, 2026-10-10) —
+  mientras no exista, `AUTH_REGISTRO_TOKEN_REQUERIDO` queda en `false` (GAPS G4).
 - [ ] **Dominio propio para el email** — hoy el remitente es un email verificado
   en Brevo y los correos pueden caer en spam; con dominio, autenticarlo
   (SPF/DKIM) y cambiar `EMAIL_REMITENTE` (§2b).
@@ -30,6 +30,7 @@ Coste objetivo: **$0/mes** (planes gratuitos de Render y Neon).
 - [x] Tanda GAPS 2026-09-29 (G31/G4 código de 6 dígitos, G25, G14, G11)
   desplegada en Render (commit `7b4e443`, después de la migración 026).
 - [x] §2 Render — backend desplegado desde `main` (auto-deploy en cada push).
+- [x] Revisión en Neon de las cuentas de plata (LIQUIDEZ) sin `participa_valor_liquido` (Juan, 2026-10-10; GAPS G33).
 - [x] §2b Brevo — emails reales de reset de contraseña (2026-09-27).
 - [x] §3–4 App apuntando a Render y prueba end-to-end, incluido el reset de
   contraseña (2026-09-27).

@@ -9,13 +9,19 @@ de dominio**, y deja instrucciones operativas para Claude Code.
 - **Fecha:** 2026-09-29 · **Versión:** 3 (catálogo validado; instrucciones de ejecución para Claude Code)
 - **Línea base probada:** commit `95e5b9f` (ajustes G32 ya aplicados).
 - **Relación con otros documentos:** continúa
-  `Docs/diseño/EVALUACION_USABILIDAD.md`, que fue una evaluación heurística sin
+  `Docs/usabilidad/EVALUACION_USABILIDAD.md`, que fue una evaluación heurística sin
   personas. Esta es la validación con una persona real que G32 dejaba
   pendiente. **Resultado: la validación falló.**
 
 ---
 
 ## 0. Estado y cómo usar este documento
+
+> **Estado al 2026-10-10:** las fases A a E están hechas y las instrucciones
+> de §10 ya se ejecutaron (son historia). Después vinieron G35 (visual) y G39
+> (flujos simples). Lo único abierto del frente es la señal de uso real (§11,
+> último punto, y `GAPS.md`, G33). Para saber cómo se hace hoy cada escenario,
+> ver `FLUJOS_SIMPLES_S03.md`.
 
 **Si eres Claude Code, lee esto primero.** Este documento es la fuente de
 verdad de este frente de trabajo. Léelo completo y después ejecuta **§10
@@ -506,7 +512,7 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
       [`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §4.5 (2026-10-02).
 - [x] **Claude Code:** Tarea 7 de `CIERRE_FASE_D_S01.md` §6 (registro del cierre
       de la Fase D).
-- [ ] **Fase E**, en este orden ([`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5):
+- [x] **Fase E** (los 10 bloques ✅, 2026-10-03 → 2026-10-08), en este orden ([`CIERRE_FASE_D_S01.md`](CIERRE_FASE_D_S01.md) §5):
   1. ✅ D-4 (diccionario) + HZ-19 (numeración) + HZ-22 (regla del paso 2).
      Rama `feat/G33-E1-palabras-y-pasos`, probada por Juan en el teléfono
      (tema oscuro y claro) y mergeada (2026-10-03). HZ-22 se aplicó solo a
@@ -533,15 +539,15 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      bloquea (sigue mostrando los errores al tocarlo). Validar con Zoily.
   4. ✅ Rediseño visual con el prototipo como referencia única (insertado el
      2026-10-03; ver `GAPS.md`, G33). Rama `feat/G33-E4-rediseno`, probada
-     por Juan en el teléfono y mergeada (2026-10-03). Capturas en `capturas-e4/`.
+     por Juan en el teléfono y mergeada (2026-10-03). Capturas en `capturas/e4/`.
   5. ✅ HZ-13: gastar desde la meta (A5). Rama `feat/G33-E5-gastar-meta`,
-     probada por Juan y mergeada (2026-10-03). Capturas en `capturas-e5/`.
+     probada por Juan y mergeada (2026-10-03). Capturas en `capturas/e5/`.
   6. ✅ C1 + D-2: alta de cuenta y compartir con el hogar. Rama
      `feat/G33-E6-alta-cuenta`, probada por Juan y mergeada (2026-10-03).
-     Capturas en `capturas-e6/`.
+     Capturas en `capturas/e6/`.
   7. ✅ D-1: Ahorrar (A1/A2), más los errores del backend con código (residuo
      de D-4). Rama `feat/G33-E7-ahorrar`, mergeada (2026-10-03). Capturas en
-     `capturas-e7/`.
+     `capturas/e7/`.
      - ✅ Reglas de diseño (`prototipo/plantillas-pantalla-s01.html`),
        insertadas antes del 8 en los bloques R1 a R6, una rama cada uno,
        mergeadas (2026-10-03 y 2026-10-04).
@@ -549,12 +555,12 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
      Gasté y Recibí, plata de otra persona, libre para gastar sin plata ajena
      y recuperación. En dos ramas: `feat/G33-E8a-otra-persona` (backend) y
      `feat/G33-E8b-dos-puertas` (app), probadas por Juan y mergeadas
-     (2026-10-04). Capturas en `capturas-e8/`. "Compartido con el hogar" y
+     (2026-10-04). Capturas en `capturas/e8/`. "Compartido con el hogar" y
      "Avisarle a [miembro]" pasan al 9.
   9. ✅ D-7 + HZ-21: solicitud de aporte ("Compartido con el hogar" en Gasté),
      "Avisarle a [miembro]" en Recibí → De alguien del hogar y "Entre
      [miembro] y tú". Implementado y probado por Juan (2026-10-08)
-     (`GAPS.md`, G33, bloque 9). Capturas en `capturas-e9/`.
+     (`GAPS.md`, G33, bloque 9). Capturas en `capturas/e9/`.
   10. ✅ D-5 + D-6: recurrencia y destino de otro miembro. D-5 se adelantó
       (2026-10-08) junto con la regla D-2 en el backend: rama
       `feat/G33-D5-destino-miembro`, probada por Juan y mergeada (`GAPS.md`,
@@ -562,5 +568,12 @@ D ni E: dependen de un trabajo posterior en el chat y de decisiones de Juan.
       028) y `feat/G33-E10b-recurrencia` (app: "¿Se repite?", aviso "¿Se
       pagó?" y "Frecuentes"), probadas por Juan (2026-10-08) (`GAPS.md`, G33,
       bloques 10a y 10b). *Rollback:* `git revert -m 1` del merge.
-- [ ] **Zoily:** señal de la Fase E: usar la app real durante un mes y
-      completar sola los mismos seis escenarios.
+- [x] **Después de la Fase E:** mejora visual pantalla por pantalla (G35,
+      [`MEJORA_VISUAL_S02.md`](MEJORA_VISUAL_S02.md)) y flujos simples de los
+      33 escenarios (G39, [`FLUJOS_SIMPLES_S03.md`](FLUJOS_SIMPLES_S03.md)),
+      ambos cerrados (2026-10-09 y 2026-10-10).
+- [ ] **Zoily:** señal de uso real. Primera señal (2026-10-10): mejora
+      notoria en diseño, flujos y orden; ahora le es fácil registrar un gasto
+      o un ingreso y entender una meta. No es definitiva; sus observaciones se
+      ajustaron (`GAPS.md`, G33). Falta: seguir su uso y, cuando pueda, una
+      prueba guiada con los 33 escenarios de `FLUJOS_SIMPLES_S03.md`.

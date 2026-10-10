@@ -37,7 +37,7 @@ Si un endpoint del código no está acá, o viceversa, el contrato está roto.
 
 | Endpoint | Devuelve |
 | --- | --- |
-| `GET /elementos-patrimoniales/{id}` | ElementoPatrimonialDTO — respeta visibilidad configurada, filtra campos según quién consulta |
+| `GET /elementos-patrimoniales/{id}` | ElementoPatrimonialDTO — respeta visibilidad configurada, filtra campos según quién consulta. Incluye `fechaUltimaValorizacion` (la última valorización vigente, para el aviso anual de valor; G39, F-19) |
 | `GET /elementos-patrimoniales?propietario={usuario_id}` | Lista de elementos donde el usuario es propietario (activos, incluye % de participación) |
 | `GET /elementos-patrimoniales/{id}/valorizaciones` | Historial de valorizaciones del elemento (Sección G, DDD) |
 | `GET /elementos-patrimoniales/{id}/impactos` | Historial de impactos patrimoniales que le afectan directamente (REQUISITES, Sección K) |
@@ -50,7 +50,7 @@ Nota de diseño: `GET /elementos-patrimoniales/{id}` no expone directamente el m
 
 | Endpoint | Application Service | Body (resumen) |
 | --- | --- | --- |
-| `POST /comandos/RegistrarEventoFinanciero` | #10 | tipo, monto, moneda, elemento(s) origen/destino, fecha, asignación (opcional), movimiento programado origen (opcional) |
+| `POST /comandos/RegistrarEventoFinanciero` | #10 | tipo, monto, moneda, elemento(s) origen/destino, fecha, asignación (opcional), movimiento programado origen (opcional), `montoDestino` (opcional, solo CONVERSION: lo que llegó a la cuenta destino; manda sobre la tasa vigente — G39, M11) |
 | `POST /comandos/AnularEventoFinanciero` | #11 | id, motivo |
 | `POST /comandos/CorregirEventoFinanciero` | #12 | id original, datos corregidos, motivo |
 
@@ -58,7 +58,7 @@ Nota de diseño: `GET /elementos-patrimoniales/{id}` no expone directamente el m
 
 | Endpoint | Devuelve |
 | --- | --- |
-| `GET /eventos-financieros/{id}` | EventoFinancieroDTO con sus impactos |
+| `GET /eventos-financieros/{id}` | EventoFinancieroDTO con sus impactos. Si tiene correcciones vivas, `vigente` (monto, fecha, detalle y la cadena de correcciones); si una de las cuentas es de otro miembro, `contraparte` (quién y cuál cuenta) — G39 |
 | `GET /eventos-financieros?elemento={elemento_id}` | Historial de movimientos relevantes para el elemento (REQUISITES Sección K: “el historial de un elemento patrimonial muestra los impactos patrimoniales asociados”) |
 | `GET /eventos-financieros?hogar={hogar_id}` | Vista consolidada — una transferencia se muestra como un único movimiento (REQUISITES Sección K), no como sus 2+ impactos separados |
 
@@ -276,7 +276,7 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 
 | Endpoint | Devuelve | Fase / gap |
 |---|---|---|
-| `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL) | Fase 16 / G27 |
+| `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL); cada movimiento trae su cuenta de salida y de llegada (G39, S3-6) y, si fue con otro miembro del hogar, `contraparte` | Fase 16 / G27 |
 | `GET /usuarios/me/resumen-anual?anio=&alcance=&hogarId=` | 12 baldes `{mes, porMoneda}` | Fase 16 / G27 |
 | `GET /usuarios/me/serie-patrimonial?desde=&hasta=&pasos=` | N puntos equiespaciados del patrimonio individual; lo anotado después de un punto cuenta en él con su valor al anotarse (GAPS G38) | Fase 15g |
 | `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` | patrimonio en 2 fechas + variación (abs / %), con la misma regla de G38 (anotar no es ganar ni perder) | Fase 9 |
@@ -291,6 +291,7 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 | `GET /presupuestos/:id/lineas` · `/lineas-ahorro` · `/desviacion` | líneas por rubro / por objetivo · desviación con desglose | Fase 15d / 41 |
 | `GET /usuarios/me/notificaciones` · `/no-leidas` · `POST …/:id/leer` · `…/leer-todas` | bandeja in-app | Fase 11 |
 | `GET /tipos-cambio` · `POST /comandos/RegistrarTipoCambio` | tasas registradas | Fase 13 |
+| `GET /tipos-cambio/tasa?origen=&destino=&fecha=` | la tasa que usaría una CONVERSION (directa, inversa o triangulada por CLP), o `null` | G39, M11 |
 | `POST /usuarios/me/dispositivos-push` · `DELETE …` | Expo push tokens | Fase 14c |
 | `POST /auth/registro-token` | token de pre-registro (rate-limit por IP; email opcional → envía código de 6 dígitos) | Fase 12/14c / G4 |
 | `POST /auth/verificar-codigo-registro` | canjea `{ email, codigo }` por el token de pre-registro | G4 |
@@ -313,4 +314,4 @@ Las 4 políticas automáticas (`UnirseAHogar`, `ConsumirReserva`, `CompletarObje
 
 Endpoints de consulta: no se cuentan 1:1 contra ningún catálogo del DDD porque las proyecciones de lectura (Sección O, M, N, Q) son por definición regenerables y no forman un catálogo cerrado — se diseñaron según necesidad de UI/dashboard razonable a partir de REQUISITES, no contra una lista fuente.
 
-Pendiente heredado, no resuelto en este bloque: endpoints de Movimiento Programado no incluyen visibilidad/propiedad (Sección S, DDD — decisión de dejarlo para más adelante).
+Pendiente heredado, no resuelto en este bloque: endpoints de Movimiento Programado no incluyen visibilidad/propiedad (Sección S, DDD — decisión de dejarlo para más adelante). **→ Resuelto: se heredan del elemento (DDD Sección X; GAPS.md G2 / P12).**

@@ -166,7 +166,7 @@ movimiento_programado
 
 *Nota: *`*evento_financiero.movimiento_programado_origen_id*`* es la referencia inversa que enlaza el evento real con su origen planificado, tras *`*MaterializarMovimientoProgramado*`*. No hay FK en sentido contrario obligatoria — un movimiento programado puede no llegar nunca a materializarse (cancelado).
 
-Pendiente explícito heredado de la Sección S del DDD: reglas de visibilidad/propiedad de Movimiento Programado — quedó fuera de este bloque por decisión tuya (“dejemoslo para más adelante”). Esta tabla NO tiene columnas de visibilidad ni propiedad todavía; se agregarán cuando se resuelva ese pendiente.*
+Pendiente explícito heredado de la Sección S del DDD: reglas de visibilidad/propiedad de Movimiento Programado — quedó fuera de este bloque por decisión tuya (“dejemoslo para más adelante”). Esta tabla NO tiene columnas de visibilidad ni propiedad todavía; se agregarán cuando se resuelva ese pendiente.* **→ Resuelto: la visibilidad y la propiedad se heredan del elemento (migración 015; GAPS.md G2 / P12).**
 
 # 6. Valorización (Agregado G)
 
@@ -350,8 +350,8 @@ Pendiente explícito (heredado de la Sección S del DDD, no resuelto en este blo
 
 Las secciones 1–12 describen el esquema tal como se diseñó en Fase 0. Lo que sigue
 son los cambios incrementales aplicados durante la implementación (Fases 1–52).
-El SQL exacto de cada uno está en [`../api/db/migrations/NNN_*.sql`](../api/db/migrations/);
-el esquema consolidado y ejecutable en [`../api/db/init/01_schema.sql`](../api/db/init/01_schema.sql).
+El SQL exacto de cada uno está en [`../api/db/migrations/NNN_*.sql`](../../api/db/migrations/);
+el esquema consolidado y ejecutable en [`../api/db/init/01_schema.sql`](../../api/db/init/01_schema.sql).
 Cada migración cita el gap de `GAPS.md` que la motivó.
 
 ## Propiedad y ámbito de las entidades de planificación

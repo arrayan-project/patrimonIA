@@ -1,12 +1,14 @@
 # Evaluación de usabilidad del flujo completo (GAPS G32)
 
+> **Estado (2026-10-10):** historia (G32). Sus 7 ajustes están aplicados; la prueba con una persona real falló y el trabajo siguió en [`USABILIDAD_REAL_S01.md`](USABILIDAD_REAL_S01.md) (G33).
+
 Revisión heurística hecha el 2026-09-29 sobre el código de la app (`app/src`),
 simulando a un usuario nuevo que no conoce el modelo de dominio. No se probó con
 personas: esto es la primera pasada; una prueba con alguien nuevo sirve después
 para validar las propuestas.
 
 Método: (1) mapa de navegación sacado de las llamadas `nav.go()` reales,
-(2) recorrido de los flujos 1–6 de [UX_FLOWS.md](UX_FLOWS.md) contando pasos,
+(2) recorrido de los flujos 1–6 de [UX_FLOWS.md](../diseño/UX_FLOWS.md) contando pasos,
 (3) chequeo contra las 10 heurísticas de Nielsen (H1–H10).
 
 ---

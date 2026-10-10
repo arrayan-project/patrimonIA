@@ -1,5 +1,7 @@
 # Flujos simples — Sesión 03 (después de G35)
 
+> **Estado (2026-10-10):** G39 cerrado. Sigue vigente como la descripción de cómo se hace hoy cada uno de los 33 escenarios (§5: la tabla "Objetivo" de cada uno es lo implementado; "Actual" es el antes) y como checklist para la prueba guiada con personas reales.
+
 **Objetivo de este archivo:** recorrer, sobre la app ya rediseñada (G35), cada
 escenario del catálogo de `USABILIDAD_REAL_S01.md` §5, contar cuánto cuesta
 completarlo y, escenario por escenario, definir el flujo objetivo: registrar y
@@ -1241,8 +1243,8 @@ no cambia nada para el usuario común.
 **Lo que cuesta:** no hay cupo ni día de pago, que es lo que el usuario
 conoce de su tarjeta; "¿Es una deuda de verdad?" sobra para una tarjeta.
 **Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-6 (§6). Cupo y día de pago
-quedan fuera: son datos nuevos del dominio (⬜ Juan decide si se abren como
-gap aparte).
+quedan fuera: son datos nuevos del dominio (anotado como GAPS G40, 💡 a
+futuro: el día de pago ya se cubre con "Se repite" al pagar).
 
 | # | Dónde | Qué ve | Qué hace | Toques |
 |---|-------|--------|----------|--------|

@@ -29,19 +29,38 @@ Se construye vertical (un flujo completo end-to-end a la vez), no horizontal.
 
 ### Pendiente
 
-El detalle y la prioridad de todo lo abierto viven en **`GAPS.md` → Parte 1**.
-En resumen:
+Todo lo abierto, con su detalle, vive en **`GAPS.md` → Parte 1**. En resumen:
 
-- [ ] **Rediseño de usabilidad** (G33) — la validación de G32 con una usuaria
-  real falló; plan y escenarios en `Docs/usabilidad/USABILIDAD_REAL_S01.md`.
-  Fase E: bloques 1 a 10 hechos (estado en `GAPS.md`, G33); queda la señal
-  de Zoily (usar la app real un mes y completar sola los seis escenarios).
-- [ ] **Mejora visual pantalla por pantalla** (G35) — la app se siente
-  corporativa; inventario y plan en `Docs/usabilidad/MEJORA_VISUAL_S02.md`.
-- [ ] **Bloqueado por proveedor externo**: captcha (G4), push remoto real (G20).
+- [ ] **Validar con personas reales** (G33) — la app ya pasó por el rediseño
+  de usabilidad (G33), el visual (G35) y los flujos simples (G39). La señal de
+  Zoily (2026-10-10) es positiva pero no definitiva; falta seguir su uso y una
+  prueba guiada con los 33 escenarios de
+  `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`.
+- [ ] **Operación** — dominio propio para los correos y backups propios
+  (`Docs/DESPLIEGUE.md`).
+- ⏸ **En pausa** (decisión de Juan): compilar la app propia (push remoto G20 e
+  ícono), captcha (G4), Fintual e integración bancaria.
 
 ### Implementado
 
+- [x] **Claridad del Inicio y de la plata entre miembros (2026-10-10)** —
+  por la señal de Zoily: tarjeta corta "📅 Octubre" bajo el saldo (entró,
+  salió y "Te queda del mes"), lo que le pasas a otra persona del hogar se ve
+  por persona ("👤 Le pasaste a Demo") y la API dice con quién fue cada
+  transferencia (`contraparte`, solo lectura). Frecuentes en una fila. Detalle
+  en `GAPS.md`, G33.
+- [x] **G39 · Flujos simples (2026-10-09 → 10)** — los 33 escenarios con
+  menos toques y cada paso a la vista: cuenta y categoría recordadas, "Se
+  repite" y "✅ Sí" desde el Inicio, pagar cualquier deuda, plata entre
+  miembros y de otras personas, metas, agregar cuentas, corregir y "Anotar de
+  nuevo", cerrar cuentas con saldo, "¿Cuánto llegó?" en un cambio de moneda,
+  "Qué compartes" e invitar a un toque. Detalle en
+  `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`.
+- [x] **G36 · G37 · G38 (2026-10-09)** — cambiar si un presupuesto es tuyo o
+  del hogar; la lista de un grupo del hogar cuadra con el total; anotar una
+  cuenta vieja ya no mueve el gráfico.
+- [x] **G35 · Mejora visual completa (2026-10-09)** — las 60 pantallas en 6
+  tandas, con "Mis grupos" en Tu plata. Queda el ícono, en pausa.
 - [x] **G35, Paso 0 + Inicio (2026-10-09)** — nueva dirección visual: paleta
   lila y pastel (claro y oscuro), letra Nunito (`app/src/ui/Text`), emojis
   configurables (categorías en `categoria_movimiento.icono`; cuentas y metas
@@ -284,8 +303,8 @@ Los `.docx` de diseño se migraron a Markdown el 2026-09-06 (originales en
 ## Tests
 
 ```bash
-cd api && npm run test:all   # 24 unitarios + 161 e2e
-cd app && npx tsc --noEmit && npx expo export --platform web
+cd api && npm run test:all   # 38 unitarios + 216 e2e (34 archivos)
+cd app && npx tsc --noEmit && npm test   # 30 tests (Node 22)
 ```
 
 Vacíos y decisiones pendientes: ver `GAPS.md` (Parte 1).
@@ -311,4 +330,5 @@ Resumen — dos terminales:
 ./scripts/parar.sh                    # cierra backend + Expo si se colgaron
 ```
 Los scripts eligen Node 22 solos. Firewall (una vez): `sudo ufw allow 3000/tcp`
-y `sudo ufw allow 8081/tcp`. No hay usuario de prueba: se crea en "Crear cuenta".
+y `sudo ufw allow 8081/tcp`. Datos de prueba: `./scripts/seed.sh` crea a Demo y
+Pareja (ver `Docs/CORRER_EN_LOCAL.md`).
