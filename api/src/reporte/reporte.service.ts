@@ -23,6 +23,7 @@ interface MovimientoInterno {
   elementoOrigenId: string | null;
   elementoDestinoId: string | null;
   registradoEn: string;
+  contraparte: { usuarioId: string; nombre: string } | null;
 }
 
 /**
@@ -98,6 +99,7 @@ export class ReporteService {
           elementoOrigenId: m.elementoOrigenId,
           elementoDestinoId: m.elementoDestinoId,
           registradoEn: m.registradoEn,
+          contraparte: m.contraparte,
         }),
       ),
     };
@@ -174,6 +176,26 @@ export class ReporteService {
     const propios = new Set(elementoIds);
     const esInterno = (tipo: string) => tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION';
 
+    // G39 (claridad): en una transferencia con alguien de fuera del alcance (otro
+    // miembro del hogar), quién es: el dueño de la cuenta del otro lado.
+    const ajenas = [
+      ...new Set(
+        todosLosImpactos
+          .filter((i) => !propios.has(i.elemento_id) && eventos.some((e) => e.id === i.origen_id && esInterno(e.tipo)))
+          .map((i) => i.elemento_id),
+      ),
+    ];
+    const duenos = ajenas.length
+      ? await this.prisma.elemento_propietario.findMany({
+          where: { elemento_id: { in: ajenas } },
+          select: { elemento_id: true, usuario: { select: { id: true, nombre: true } } },
+        })
+      : [];
+    const duenoDe = new Map<string, { usuarioId: string; nombre: string }>();
+    for (const d of duenos) {
+      if (!duenoDe.has(d.elemento_id)) duenoDe.set(d.elemento_id, { usuarioId: d.usuario.id, nombre: d.usuario.nombre });
+    }
+
     const filas: MovimientoInterno[] = [];
     for (const e of eventos) {
       if (e.correccion_de_id) continue; // el compensatorio se pliega en su raíz
@@ -203,6 +225,9 @@ export class ReporteService {
         elementoOrigenId: origen?.elemento_id ?? null,
         elementoDestinoId: destino?.elemento_id ?? null,
         registradoEn: e.created_at.toISOString(),
+        contraparte: esInterno(e.tipo)
+          ? (propiosDelEvento.map((i) => !propios.has(i.elemento_id) && duenoDe.get(i.elemento_id)).find(Boolean) || null)
+          : null,
       });
     }
     return filas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));

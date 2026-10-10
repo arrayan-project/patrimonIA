@@ -28,6 +28,12 @@ export interface EventoFinancieroDTO {
    * y la cadena de correcciones, de la primera a la última.
    */
   vigente?: { monto: number; fecha: string; glosa: string | null; correccionIds: string[] };
+  /**
+   * Solo en GET /eventos-financieros/:id: si una de las cuentas es de otra
+   * persona (p. ej. le pasaste plata a otro miembro del hogar), quién es y
+   * cuál es su cuenta, aunque no puedas verla.
+   */
+  contraparte?: { usuarioId: string; nombre: string; elementoId: string };
 }
 
 export function toEventoDTO(

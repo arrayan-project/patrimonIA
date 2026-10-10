@@ -403,7 +403,23 @@ export class EventoFinancieroService {
     const etqs = (await this.etiquetas.deEventos([eventoId])).get(eventoId) ?? [];
     const dto = toEventoDTO(evento, impactos, etqs);
     const vigente = await this.#vigente(evento, impactos);
-    return vigente ? { ...dto, vigente } : dto;
+    const contraparte = await this.#contraparte(impactos, actorId);
+    return { ...dto, ...(vigente ? { vigente } : {}), ...(contraparte ? { contraparte } : {}) };
+  }
+
+  /** El dueño de la cuenta del otro lado, si no es del actor (G39, claridad). */
+  async #contraparte(
+    impactos: ImpactoRow[],
+    actorId: string,
+  ): Promise<EventoFinancieroDTO['contraparte'] | undefined> {
+    if (impactos.length < 2) return undefined;
+    const duenos = await this.prisma.elemento_propietario.findMany({
+      where: { elemento_id: { in: impactos.map((i) => i.elemento_id) } },
+      select: { elemento_id: true, usuario: { select: { id: true, nombre: true } } },
+    });
+    const mias = new Set(duenos.filter((d) => d.usuario.id === actorId).map((d) => d.elemento_id));
+    const otro = duenos.find((d) => !mias.has(d.elemento_id) && d.usuario.id !== actorId);
+    return otro ? { usuarioId: otro.usuario.id, nombre: otro.usuario.nombre, elementoId: otro.elemento_id } : undefined;
   }
 
   /**
