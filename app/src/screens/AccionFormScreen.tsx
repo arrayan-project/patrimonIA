@@ -82,6 +82,11 @@ export interface AccionFormParams {
   comando: string;
   /** Cuerpo fijo; el texto se agrega en `campo`. */
   body: Record<string, unknown>;
+  /**
+   * Comandos que van antes, con el mismo texto (p. ej. eliminar los cambios de
+   * un movimiento antes que el movimiento).
+   */
+  antes?: { comando: string; body: Record<string, unknown> }[];
   /** Clave del texto en el cuerpo (por defecto `motivo`). */
   campo?: string;
   /** Largo mínimo del texto (por defecto 3, lo que pide el backend para un motivo). Con 0 es opcional y, vacío, no se envía. */
@@ -148,6 +153,9 @@ export function AccionFormScreen() {
     setBusy(true);
     setError('');
     try {
+      for (const a of p.antes ?? []) {
+        await api.post(`/comandos/${a.comando}`, { ...a.body, [p.campo ?? 'motivo']: texto.trim() }, token);
+      }
       await api.post(
         `/comandos/${p.comando}`,
         {
