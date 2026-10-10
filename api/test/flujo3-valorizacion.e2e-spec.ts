@@ -95,6 +95,9 @@ describe('Flujo 3 — valorización de un activo (e2e)', () => {
         .send({ elementoId: depId, valorNuevo: 130_000_000 }),
     ).expect(201);
     expect(await valorDep()).toBe(130_000_000); // reemplaza, no 120M+130M
+    // G39 (F-19): el elemento dice cuándo fue su último cambio de valor.
+    const dep = (await auth(request(http).get(`/elementos-patrimoniales/${depId}`))).body;
+    expect(dep.fechaUltimaValorizacion).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     const patrimonio = await auth(
       request(http).get('/usuarios/me/patrimonio-individual'),
