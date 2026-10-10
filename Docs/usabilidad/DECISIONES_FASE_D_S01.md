@@ -1,5 +1,7 @@
 # Decisiones de la Fase D: Sesión 01 (bloque 1 de G33)
 
+> **Estado (2026-10-10):** todas las decisiones de este documento (D-1 a D-7) están implementadas en la Fase E de G33 (`GAPS.md`, G33); la línea "Ninguna decisión está implementada" de abajo es de su fecha.
+
 **Objetivo de este archivo:** registrar las decisiones D-1 a D-7, el caso borde
 de HZ-11 y el tratamiento de M9/M7, aprobadas por Juan en el chat. Es la
 entrada del bloque 2 de la Fase D (prototipo) y la especificación de la

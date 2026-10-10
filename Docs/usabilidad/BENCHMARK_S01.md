@@ -1,5 +1,7 @@
 # Benchmark de patrones: Sesión 01 (Fase C de G33)
 
+> **Estado (2026-10-10):** historia. Sus decisiones se tomaron en la Fase D y se implementaron en la Fase E de G33 (`GAPS.md`, G33).
+
 **Objetivo de este archivo:** dar, para cada brecha que encontró la Fase B, al
 menos un patrón externo concreto y aplicable sin romper el dominio. Es la
 entrada de la Fase D (rediseño y mockup).

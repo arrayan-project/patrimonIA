@@ -1,5 +1,7 @@
 # Recorrido de escenarios — Sesión 01 (Fase B de G33)
 
+> **Estado (2026-10-10):** historia. El recorrido se repitió sobre la app actual en [`FLUJOS_SIMPLES_S03.md`](FLUJOS_SIMPLES_S03.md) §5: ahí, la tabla "Objetivo" de cada escenario es cómo se hace hoy (la tabla "Actual" es el antes).
+
 **Objetivo de este archivo:** recorrer, desde el código real de la app, cada
 escenario T1 y T2 del catálogo de `USABILIDAD_REAL_S01.md` §5, como lo haría un
 usuario nuevo, y medir cuánto le cuesta. Es la entrada de la Fase C
