@@ -126,4 +126,21 @@ describe('Corrección de fecha y glosa (e2e)', () => {
       .send({ eventoId: gasto.id, nuevoMonto: 1_000, nuevaFecha: '2026-05-01', motivo: 'sin cambios' })
       .expect(400);
   });
+
+  it('un cambio solo de fecha se puede eliminar, y después el original (no se duplica al anotar de nuevo)', async () => {
+    const antes = await valorVigente();
+    const t = (
+      await auth(request(http).post('/comandos/RegistrarEventoFinanciero'))
+        .send({ tipo: 'GASTO', monto: 30_000, moneda: 'CLP', elementoOrigenId: elementoId, fecha: '2026-04-10' })
+        .expect(201)
+    ).body;
+    const corr = (
+      await auth(request(http).post('/comandos/CorregirEventoFinanciero'))
+        .send({ eventoId: t.id, nuevaFecha: '2026-04-01', motivo: 'otra fecha' })
+        .expect(201)
+    ).body;
+    await auth(request(http).post('/comandos/AnularEventoFinanciero')).send({ eventoId: corr.id, motivo: 'Lo anoté de nuevo' }).expect(200);
+    await auth(request(http).post('/comandos/AnularEventoFinanciero')).send({ eventoId: t.id, motivo: 'Lo anoté de nuevo' }).expect(200);
+    expect(await valorVigente()).toBe(antes);
+  });
 });

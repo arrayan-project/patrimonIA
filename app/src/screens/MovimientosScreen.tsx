@@ -667,7 +667,7 @@ function FotoDelMes({
         <Row left="🏁 Tenías al empezar" right={money(m.tenias, m.moneda)} />
         <Row left="📥 Entró" right={<Text style={[styles.balance, { color: c.ok }]}>{`+ ${money(g.entro, m.moneda)}`}</Text>} />
         {g.lineasEntro.map(linea)}
-        <Row left="📤 Salió" right={<Text style={styles.balance}>{`− ${money(g.salio, m.moneda)}`}</Text>} />
+        <Row left="📤 Salió" right={<Text style={[styles.balance, { color: c.danger }]}>{`− ${money(g.salio, m.moneda)}`}</Text>} />
         {g.lineasSalio.map(linea)}
         <Row
           left={enCurso ? '🧮 Tienes hoy' : '🧮 Terminaste con'}

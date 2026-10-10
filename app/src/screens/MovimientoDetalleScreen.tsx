@@ -143,7 +143,8 @@ export function MovimientoDetalleScreen() {
   const vigente = evento.vigente;
   const tieneCorreccion = !!vigente;
   const glosa = vigente ? vigente.glosa : evento.glosa;
-  const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
+  // Un movimiento cambiado también se elimina: primero sus cambios, del último al primero.
+  const accionable = !evento.anulado && !esCorreccion;
   const puedePlantilla =
     !evento.anulado && (evento.tipo === 'GASTO' || evento.tipo === 'INGRESO' || evento.tipo === 'TRANSFERENCIA');
   const color = colorAnotar(c, evento.tipo);
@@ -326,6 +327,9 @@ export function MovimientoDetalleScreen() {
                 boton: 'Eliminar movimiento',
                 comando: 'AnularEventoFinanciero',
                 body: { eventoId },
+                antes: [...(vigente?.correccionIds ?? [])]
+                  .reverse()
+                  .map((id) => ({ comando: 'AnularEventoFinanciero', body: { eventoId: id } })),
                 aviso: 'Movimiento eliminado',
                 peligro: true,
                 volver: 2,

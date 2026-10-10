@@ -416,7 +416,7 @@ export function ElementoDetalleScreen() {
               const cat = ev.categoriaId ? catPorId.get(ev.categoriaId) : undefined;
               const titulo = ev.glosa || cat?.nombre || etiqueta(ev.tipo);
               const que = ev.tipo === 'SALDO_INICIAL' ? 'Con lo que empezó' : cat && cat.nombre !== titulo ? cat.nombre : etiqueta(ev.tipo);
-              const estado = ev.anulado ? ' · eliminado' : corr ? ' · cambiado' : '';
+              const estado = !ev.anulado && corr ? ' · cambiado' : '';
               return (
                 <TxRow
                   key={ev.id}
@@ -424,6 +424,7 @@ export function ElementoDetalleScreen() {
                   subtitle={`${fechaLegible(ev.fecha)} · ${que}${estado}`}
                   amount={conSigno(monto, ev.moneda)}
                   {...colorDe(monto, ev.anulado)}
+                  eliminado={ev.anulado}
                   logo={{ emoji: emojiCategoria(cat) ?? emojiTipoMovimiento(ev.tipo) }}
                   onPress={() => nav.go('MovimientoDetalle', { eventoId: ev.id, elementoId, contexto: el.nombre })}
                 />
@@ -447,7 +448,7 @@ export function ElementoDetalleScreen() {
               if (x.clase === 'valorizacion') {
                 const v = x.v;
                 const dif = v.valorNuevo - v.valorAnterior;
-                const estado = v.anulada ? ' · eliminado' : v.correccionDeId ? ' · cambiado' : '';
+                const estado = !v.anulada && v.correccionDeId ? ' · cambiado' : '';
                 return (
                   <TxRow
                     key={v.id}
@@ -455,6 +456,7 @@ export function ElementoDetalleScreen() {
                     subtitle={`${fechaLegible(v.fecha)}${estado}`}
                     amount={conSigno(dif, el.moneda)}
                     {...colorDe(dif, v.anulada)}
+                    eliminado={v.anulada}
                     logo={{ emoji: dif >= 0 ? '📈' : '📉' }}
                     onPress={() =>
                       nav.go('ValorizacionDetalle', {
@@ -468,7 +470,7 @@ export function ElementoDetalleScreen() {
                 );
               }
               const a = x.a;
-              const estado = a.anulado ? ' · eliminado' : a.correccionDeId ? ' · cambiado' : '';
+              const estado = !a.anulado && a.correccionDeId ? ' · cambiado' : '';
               return (
                 <TxRow
                   key={a.id}
@@ -476,6 +478,7 @@ export function ElementoDetalleScreen() {
                   subtitle={`${fechaLegible(a.fecha)}${estado}`}
                   amount={conSigno(a.monto, el.moneda)}
                   {...colorDe(a.monto, a.anulado)}
+                  eliminado={a.anulado}
                   logo={{ emoji: /inter[eé]s/i.test(a.motivo) ? '💹' : '🔧' }}
                   onPress={() =>
                     nav.go('AjusteDetalle', { ajusteId: a.id, elementoId, moneda: el.moneda, contexto: el.nombre, deuda: esDeuda })

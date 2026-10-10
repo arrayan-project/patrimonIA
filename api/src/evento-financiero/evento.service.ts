@@ -680,7 +680,18 @@ export class EventoFinancieroService {
     const impactos = await this.prisma.impacto_patrimonial.findMany({
       where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: eventoId },
     });
-    if (!(await this.actorVeAlgunElemento(impactos.map((i) => i.elemento_id), actorId))) {
+    // Una corrección solo de fecha o detalle no tiene impactos: el acceso se
+    // decide por las cuentas de su original (si no, no se podía anular).
+    const elementosAcceso =
+      impactos.length === 0 && evento.correccion_de_id
+        ? (
+            await this.prisma.impacto_patrimonial.findMany({
+              where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: evento.correccion_de_id },
+              select: { elemento_id: true },
+            })
+          ).map((i) => i.elemento_id)
+        : impactos.map((i) => i.elemento_id);
+    if (!(await this.actorVeAlgunElemento(elementosAcceso, actorId))) {
       throw new NotFoundException('Evento no encontrado');
     }
     return { evento, impactos };
