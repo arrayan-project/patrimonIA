@@ -10,6 +10,7 @@ import {
   type DesviacionPresupuestariaDTO,
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
+  type FotoMesDTO,
   type MovimientoReporteDTO,
   type MovimientoProgramadoDTO,
   type HogarDTO,
@@ -24,6 +25,8 @@ import {
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { pasesConPersonas, quedaDelMes } from '../flujoMes';
+import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
+import { agruparFoto, cuentasDelDia } from '../fotoMes';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
@@ -80,6 +83,11 @@ const MESES = [
 ];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+/** G43: el mes de "Lo mío" parte el día que elegiste; el de "Del hogar", el del hogar. */
+function cicloDeAlcance(alcance: string, hogar: HogarDTO | null, mes: { dia: number; nombre: CicloMes['nombre'] }): CicloMes {
+  return { dia: alcance === 'hogar' ? (hogar?.diaInicioMes ?? 1) : mes.dia, nombre: mes.nombre };
+}
+
 
 /** Categorías funcionales, en el orden en que se muestran en la composición. */
 const CATS = ['LIQUIDEZ', 'RESERVA', 'INVERSION', 'ACTIVO', 'CREDITO', 'DEUDA'] as const;
@@ -108,6 +116,10 @@ export function DashboardScreen() {
   const [flujo, setFlujo] = useState<{ ingresos: number; gastos: number; moneda: string } | null>(null);
   // G35: los movimientos del mes (todas tus cuentas) y las categorías, para sus emojis.
   const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
+  // G41: en "Lo mío", la foto del mes de tus cuentas del día a día (G42).
+  const [fotoMes, setFotoMes] = useState<{ tenias: number; tienes: number; entro: number; salio: number; moneda: string } | null>(
+    null,
+  );
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
   const [presuExcedido, setPresuExcedido] = useState<PresupuestoDTO | null>(null);
@@ -175,18 +187,33 @@ export function DashboardScreen() {
       }
 
       try {
-        const desde = iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
-        const hasta = iso(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0));
-        const r = await api.get<ResumenFinancieroDTO>(
-          `/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`,
-          token,
-        );
+        // G43: el mes de hoy según el día en que parte (el tuyo o el del hogar).
+        const ciclo = cicloDeAlcance(alcance, h, preferencias.mes);
+        const m = cicloDe(hoy, ciclo);
+        const { desde, hasta } = ventanaCiclo(m.anio, m.mes, ciclo);
+        const cuentas = cuentasDelDia(els, preferencias.mes.cuentas).join(',');
+        const [r, f] = await Promise.all([
+          api.get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`, token),
+          alcance === 'mios'
+            ? api.get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${desde}&hasta=${hasta}&cuentas=${cuentas}`, token).catch(() => null)
+            : Promise.resolve(null),
+        ]);
         const pm = r.porMoneda[0];
         setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
         setMovsMes(r.movimientos);
+        const fm =
+          f?.porMoneda.find((x) => x.moneda === preferencias.monedaPreferida) ??
+          [...(f?.porMoneda ?? [])].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0];
+        if (fm) {
+          const g = agruparFoto(fm.lineas);
+          setFotoMes({ tenias: fm.tenias, tienes: fm.tienes, entro: g.entro, salio: g.salio, moneda: fm.moneda });
+        } else {
+          setFotoMes(null);
+        }
       } catch {
         setFlujo(null);
         setMovsMes([]);
+        setFotoMes(null);
       }
       setCategorias(
         await api
@@ -265,7 +292,7 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav, claveHogar, claveOnb, alcance]);
+  }, [token, nav, claveHogar, claveOnb, alcance, preferencias.mes, preferencias.monedaPreferida]);
 
   useCargaAlEnfocar(cargar);
 
@@ -443,14 +470,20 @@ export function DashboardScreen() {
   const emojis = preferencias.emojis;
   const metasTop = [...enProgreso].sort((a, b) => b.progresoPorcentaje - a.progresoPorcentaje).slice(0, 2);
   // G39 (claridad): lo que pasaste o te pasaron personas del hogar también cuenta en el mes.
-  const monedaMes = flujo?.moneda ?? monedaPrin;
+  // G41: en "Lo mío", entró y salió de tus cuentas del día a día (los mismos de
+  // Movimientos); en "Del hogar", lo que entró y gastaron (G39).
+  const enFoto = alcance === 'mios' && fotoMes !== null;
+  const monedaMes = enFoto ? fotoMes.moneda : (flujo?.moneda ?? monedaPrin);
   const pases = alcance === 'mios' ? pasesConPersonas(movsMes, monedaMes) : [];
-  const balance = quedaDelMes(flujo?.ingresos ?? 0, flujo?.gastos ?? 0, pases);
-  // G39 (Zoily): el mes en corto, bajo el saldo. Entró y salió incluyen lo pasado con personas del hogar.
-  const entro = (flujo?.ingresos ?? 0) + pases.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
-  const salio = (flujo?.gastos ?? 0) - pases.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);
+  const balance = enFoto ? fotoMes.entro - fotoMes.salio : quedaDelMes(flujo?.ingresos ?? 0, flujo?.gastos ?? 0, pases);
+  const entro = enFoto ? fotoMes.entro : (flujo?.ingresos ?? 0) + pases.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
+  const salio = enFoto ? fotoMes.salio : (flujo?.gastos ?? 0) - pases.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);
   const pctSalio = entro > 0 ? Math.min(1, salio / entro) : salio > 0 ? 1 : 0;
-  const mesNombre = MESES[hoy.getMonth()].charAt(0).toUpperCase() + MESES[hoy.getMonth()].slice(1);
+  const ciclo = cicloDeAlcance(alcance, hogar, preferencias.mes);
+  const mesHoy = cicloDe(hoy, ciclo);
+  const ventanaMes = ventanaCiclo(mesHoy.anio, mesHoy.mes, ciclo);
+  const rotuloMes = rotuloCiclo(mesHoy.anio, mesHoy.mes, ciclo);
+  const mesNombre = MESES_LARGO[mesHoy.mes].charAt(0).toUpperCase() + MESES_LARGO[mesHoy.mes].slice(1);
   const nombre = usuario.nombre.split(' ')[0];
 
   return (
@@ -563,10 +596,13 @@ export function DashboardScreen() {
           style={({ pressed }) => [styles.mes, pressed && { opacity: 0.75 }]}
         >
           <View style={styles.headRow}>
-            <Text style={styles.mesTitulo}>{`📅 ${mesNombre}`}</Text>
+            <Text style={styles.mesTitulo}>
+              {`📅 ${mesNombre}`}
+              {rotuloMes ? <Text style={styles.muted}>{`  ${rotuloMes}`}</Text> : null}
+            </Text>
             <Text style={styles.mesFlecha}>›</Text>
           </View>
-          {entro === 0 && salio === 0 ? (
+          {entro === 0 && salio === 0 && !enFoto ? (
             <Text style={styles.muted}>Todavía no entra ni sale nada este mes.</Text>
           ) : (
             <>
@@ -578,12 +614,26 @@ export function DashboardScreen() {
                 <Text style={[styles.mesDato, { color: balance >= 0 ? c.primary : c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
                 <Text style={[styles.mesDato, { color: c.ok }]}>{`📥 Entró ${money(entro, monedaMes)}`}</Text>
               </View>
-              <View style={styles.headRow}>
-                <Text style={styles.mesQueda}>{balance >= 0 ? '🧮 Te queda del mes' : '⚠️ Salió más de lo que entró'}</Text>
-                <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
-                  {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
-                </Text>
-              </View>
+              {enFoto ? (
+                // G41: Empezaste con + Entró − Salió = Tienes hoy (en tus cuentas del día a día).
+                <>
+                  <View style={styles.headRow}>
+                    <Text style={styles.muted}>🏁 Empezaste con</Text>
+                    <Text style={styles.muted}>{money(fotoMes.tenias, monedaMes)}</Text>
+                  </View>
+                  <View style={styles.headRow}>
+                    <Text style={styles.mesQueda}>🧮 Tienes hoy</Text>
+                    <Text style={[styles.balance, { color: fotoMes.tienes >= 0 ? c.ok : c.danger }]}>{money(fotoMes.tienes, monedaMes)}</Text>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.headRow}>
+                  <Text style={styles.mesQueda}>{balance >= 0 ? '🧮 Te queda del mes' : '⚠️ Salió más de lo que entró'}</Text>
+                  <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
+                    {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
+                  </Text>
+                </View>
+              )}
             </>
           )}
         </Pressable>
@@ -635,7 +685,8 @@ export function DashboardScreen() {
               emojis={emojis.elementos}
               movsMes={movsMes}
               categorias={categorias}
-              mes={MESES[hoy.getMonth()]}
+              mes={MESES_LARGO[mesHoy.mes]}
+              ventana={ventanaMes}
               onVerTodas={verPatrimonio}
             />
           )}
@@ -754,6 +805,7 @@ function CuentasYMovimientos({
   movsMes,
   categorias,
   mes,
+  ventana,
   onVerTodas,
 }: {
   tarjetas: Tarjeta[];
@@ -761,6 +813,8 @@ function CuentasYMovimientos({
   movsMes: MovimientoReporteDTO[];
   categorias: CategoriaMovimientoDTO[];
   mes: string;
+  /** G43: el mes según el día en que parte. */
+  ventana: { desde: string; hasta: string };
   onVerTodas: () => void;
 }) {
   const c = useC();
@@ -792,11 +846,7 @@ function CuentasYMovimientos({
   const subDe = (categoriaId: string | null, tipo: string, fecha: string) =>
     `${fechaLegible(fecha)} · ${categoriaId ? (catPorId.get(categoriaId)?.nombre ?? etiqueta(tipo)) : etiqueta(tipo)}`;
 
-  const hoy = new Date();
-  const delMes = (f: string) => {
-    const d = new Date(`${f}T00:00:00`);
-    return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth();
-  };
+  const delMes = (f: string) => f.slice(0, 10) >= ventana.desde && f.slice(0, 10) <= ventana.hasta;
 
   let filas: { id: string; titulo: string; sub: string; emoji: string; monto: number; moneda: string }[] = [];
   if (soloCuenta) {

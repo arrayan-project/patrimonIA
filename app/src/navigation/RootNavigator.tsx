@@ -54,6 +54,7 @@ import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
 import { AjustesVisualizacionScreen } from '../screens/AjustesVisualizacionScreen';
+import { AjustesMesScreen } from '../screens/AjustesMesScreen';
 import { PatrimonioSeccionScreen } from '../screens/PatrimonioSeccionScreen';
 import { CategoriasScreen } from '../screens/CategoriasScreen';
 import { CatalogoFormScreen } from '../screens/CatalogoFormScreen';
@@ -169,6 +170,7 @@ const TITULOS: Record<string, string> = {
   TiposCambio: 'Tipos de cambio',
   Ajustes: 'Ajustes',
   AjustesVisualizacion: 'Secciones del Inicio',
+  AjustesMes: 'Tu mes',
   PatrimonioSeccion: 'Tu plata',
   Categorias: 'Categorías',
   TiposElemento: 'Tipos de cuenta',
@@ -228,6 +230,7 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['TiposCambio', TiposCambioScreen],
   ['Ajustes', AjustesScreen],
   ['AjustesVisualizacion', AjustesVisualizacionScreen],
+  ['AjustesMes', AjustesMesScreen],
   ['PatrimonioSeccion', PatrimonioSeccionScreen],
   ['Categorias', CategoriasScreen],
   ['TiposElemento', TiposElementoScreen],

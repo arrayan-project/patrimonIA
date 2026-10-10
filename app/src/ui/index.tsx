@@ -2125,6 +2125,7 @@ export function ElegirVarios({
   onChange,
   placeholder = 'Elegir…',
   paso,
+  boton,
 }: {
   label: string;
   values: string[];
@@ -2132,6 +2133,8 @@ export function ElegirVarios({
   onChange: (vs: string[]) => void;
   placeholder?: string;
   paso?: Paso;
+  /** Un botón propio que abre la hoja, en vez de la caja (como `Elegir`). */
+  boton?: (abrir: () => void) => ReactNode;
 }) {
   const c = useC();
   const styles = useEstilos();
@@ -2147,6 +2150,22 @@ export function ElegirVarios({
         ? elegidas.map((o) => o.label).join(', ')
         : `${elegidas.length} elegidos`;
 
+  const hoja = (
+    <HojaModal visible={abierto} onClose={() => setAbierto(false)}>
+      <View style={styles.agarre} />
+      <Text style={styles.modalTitulo}>{label}</Text>
+      <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} multiple />
+      <Button title="Listo" onPress={() => setAbierto(false)} />
+    </HojaModal>
+  );
+  if (boton) {
+    return (
+      <>
+        {boton(() => setAbierto(true))}
+        {hoja}
+      </>
+    );
+  }
   return (
     <BloquePaso paso={paso} style={styles.field}>
       <Question paso={paso}>{label}</Question>
@@ -2161,12 +2180,7 @@ export function ElegirVarios({
         </Text>
         <Ionicons name="chevron-down" size={16} color={c.muted} />
       </Pressable>
-      <HojaModal visible={abierto} onClose={() => setAbierto(false)}>
-            <View style={styles.agarre} />
-            <Text style={styles.modalTitulo}>{label}</Text>
-            <ListaOpciones options={options} elegida={(v) => values.includes(v)} onElegir={alternar} multiple />
-            <Button title="Listo" onPress={() => setAbierto(false)} />
-          </HojaModal>
+      {hoja}
     </BloquePaso>
   );
 }

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { api, ApiError, type HogarDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
+import { cicloDe, ventanaCiclo } from '../cicloMes';
+import { usePreferencias } from '../preferencias';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import {
@@ -50,6 +52,8 @@ export function PresupuestoFormScreen() {
     return v == null ? '' : String(v);
   };
   const [hogarId, setHogarId] = useState<string | null>(null);
+  const [diaHogar, setDiaHogar] = useState(1);
+  const { preferencias } = usePreferencias();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -68,7 +72,10 @@ export function PresupuestoFormScreen() {
   useEffect(() => {
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
-      .then((hs) => setHogarId(hs[0]?.id ?? null))
+      .then((hs) => {
+        setHogarId(hs[0]?.id ?? null);
+        setDiaHogar(hs[0]?.diaInicioMes ?? 1);
+      })
       .catch((e) => setError(e instanceof ApiError ? e.message : 'Error'));
   }, [token]);
 
@@ -99,6 +106,12 @@ export function PresupuestoFormScreen() {
       const body: Record<string, unknown> = { tipo, periodicidad };
       if (tipo === 'FAMILIAR') body.hogarId = hogarId;
       if (periodicidad === 'PERIODICO') body.intervalo = intervalo;
+      // G43: el presupuesto de cada mes parte el día en que parte tu mes (o el del hogar).
+      if (periodicidad === 'PERIODICO' && intervalo === 'MENSUAL') {
+        const ciclo = { dia: tipo === 'FAMILIAR' ? diaHogar : preferencias.mes.dia, nombre: preferencias.mes.nombre };
+        const m = cicloDe(new Date(), ciclo);
+        body.fechaInicio = ventanaCiclo(m.anio, m.mes, ciclo).desde;
+      }
       if (periodicidad === 'ESPECIFICO') {
         if (fechaInicio.trim()) body.fechaInicio = fechaInicio.trim();
         if (fechaFin.trim()) body.fechaFin = fechaFin.trim();

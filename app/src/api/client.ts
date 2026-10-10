@@ -166,6 +166,8 @@ export interface HogarDTO {
   id: string;
   nombre: string;
   monedaConsolidacion: string;
+  /** G43: día en que parte el mes del hogar (1 = mes calendario). */
+  diaInicioMes: number;
   createdAt: string;
   miembros?: MiembroDTO[];
 }
@@ -583,6 +585,29 @@ export interface MovimientoReporteDTO {
   registradoEn: string;
   /** Con quién del hogar fue la transferencia (null si fue entre tus cuentas). */
   contraparte: { usuarioId: string; nombre: string } | null;
+}
+
+/**
+ * G41 — la foto del mes de las cuentas del día a día. `clase` de cada línea:
+ * INGRESO · GASTO · SALDO_INICIAL · AHORRO · INVERSION · DEUDA · CUSTODIA · OTRAS ·
+ * PERSONA · CAMBIO_MONEDA · AJUSTE. `monto` con signo (+ entró, − salió).
+ */
+export interface LineaFotoMesDTO {
+  clase: string;
+  monto: number;
+  persona: { usuarioId: string; nombre: string } | null;
+}
+
+export interface FotoMesDTO {
+  periodo: { desde: string; hasta: string };
+  cuentas: string[];
+  porMoneda: {
+    moneda: string;
+    tenias: number;
+    tienes: number;
+    lineas: LineaFotoMesDTO[];
+    apartadoMetas: number;
+  }[];
 }
 
 export interface ResumenFinancieroDTO {

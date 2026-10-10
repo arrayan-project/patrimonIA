@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { api, type UsuarioDTO } from './api/client';
 import { useAuth } from './auth/AuthContext';
 import { setFormatoFecha, type FormatoFecha } from './ui';
+import type { NombreMes } from './cicloMes';
 
 /**
  * Preferencias personales de visualización (GAPS.md G25). Viven en
@@ -31,6 +32,12 @@ export interface PreferenciasVisualizacion {
    * (`categoria_movimiento.icono`).
    */
   emojis: { elementos: Record<string, string>; metas: Record<string, string> };
+  /**
+   * G43: el día en que parte tu mes (1–28) y si se llama como el mes en que
+   * termina (el que vives) o en que empieza. G42: las cuentas del día a día que
+   * entran en la foto del mes; null = las de siempre (`cuentasDelDia`).
+   */
+  mes: { dia: number; nombre: NombreMes; cuentas: string[] | null };
 }
 
 export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
@@ -38,6 +45,7 @@ export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
   monedaPreferida: null,
   dashboard: { composicion: true, disponibilidad: true, flujo: true, objetivos: true, accesos: true },
   emojis: { elementos: {}, metas: {} },
+  mes: { dia: 1, nombre: 'termina', cuentas: null },
 };
 
 /** Las preferencias con el emoji de una cuenta (`elementos`) o una meta (`metas`) cambiado. */
@@ -70,6 +78,11 @@ function leerVisualizacion(u: UsuarioDTO | null): PreferenciasVisualizacion {
     monedaPreferida: typeof v.monedaPreferida === 'string' && v.monedaPreferida ? v.monedaPreferida : null,
     dashboard,
     emojis: { elementos: mapaDeTextos(v.emojis?.elementos), metas: mapaDeTextos(v.emojis?.metas) },
+    mes: {
+      dia: Number.isInteger(v.mes?.dia) && v.mes!.dia >= 1 && v.mes!.dia <= 28 ? v.mes!.dia : 1,
+      nombre: v.mes?.nombre === 'empieza' ? 'empieza' : 'termina',
+      cuentas: Array.isArray(v.mes?.cuentas) ? v.mes!.cuentas.filter((x): x is string => typeof x === 'string') : null,
+    },
   };
 }
 

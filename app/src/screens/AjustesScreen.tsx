@@ -176,6 +176,12 @@ export function AjustesScreen() {
         <MenuList
           items={[
             {
+              title: 'Tu mes',
+              subtitle: `${preferencias.mes.dia === 1 ? 'Del 1 a fin de mes' : `Parte el ${preferencias.mes.dia}`} · cuentas del día a día`,
+              emoji: '📅',
+              onPress: () => nav.go('AjustesMes'),
+            },
+            {
               title: 'Secciones del Inicio',
               subtitle: 'Qué se muestra en el Inicio',
               emoji: '🧩',
