@@ -179,6 +179,10 @@ export function RegistrarMovimientoScreen() {
   const [parteOtro, setParteOtro] = useState('');
   const [conQuienes, setConQuienes] = useState<string[] | null>(null);
   const [recibeId, setRecibeId] = useState<string | null>(null);
+  // G39 (F-11): en "Con [miembro]", si ya te pasó su parte no se le pide nada.
+  const [yaPaso, setYaPaso] = useState(false);
+  // G39 (F-9): en Moví plata, "¿A dónde va la plata?": 'MIA' o el usuario del miembro.
+  const [hacia, setHacia] = useState<string | null>(null);
   const [compartiendo, setCompartiendo] = useState(false);
   // Recibí → De alguien del hogar: "Avisarle a [miembro]" si la transferencia no aparece.
   const [avisarA, setAvisarA] = useState<string | null>(null);
@@ -268,7 +272,7 @@ export function RegistrarMovimientoScreen() {
 
   // D-8: los movimientos de una cuenta no dicen de quién es el otro lado; las
   // transferencias con miembros las arma el backend.
-  const verDelHogar = tipo === 'INGRESO' && quien === 'HOGAR';
+  const verDelHogar = (tipo === 'INGRESO' && quien === 'HOGAR') || (tipo === 'GASTO' && quien === 'HOGAR' && yaPaso);
   useEffect(() => {
     if (!verDelHogar || transferenciasHogar) return;
     api
@@ -370,7 +374,7 @@ export function RegistrarMovimientoScreen() {
       if (rec.destinoId) setDestinoId(rec.destinoId);
       return;
     }
-    if (origenInicial || destinoInicial || origenId || destinoId) {
+    if (origenInicial || origenId || (destinoId && puerta !== 'TRANSFERENCIA')) {
       setRecordado({ origenId: null, destinoId: null });
       return;
     }
@@ -384,11 +388,19 @@ export function RegistrarMovimientoScreen() {
     const deMiembros = new Set(
       elementosHogar.filter((e) => !elementos.some((x) => x.id === e.id) && entreCuentas(e)).map((e) => e.id),
     );
-    const r = ultimaCuenta(
-      recientes,
-      puerta,
-      (id, lado) => propias.has(id) || (puerta === 'TRANSFERENCIA' && lado === 'destino' && deMiembros.has(id)),
-    ) ?? { origenId: null, destinoId: null };
+    // F-10: con el destino ya elegido (Hogar › Para transferirles), solo falta la de salida.
+    const r = destinoId
+      ? {
+          origenId:
+            ultimaCuenta(recientes, puerta, (id, lado) => lado === 'destino' || (propias.has(id) && id !== destinoId))
+              ?.origenId ?? null,
+          destinoId: null,
+        }
+      : (ultimaCuenta(
+          recientes,
+          puerta,
+          (id, lado) => propias.has(id) || (puerta === 'TRANSFERENCIA' && lado === 'destino' && deMiembros.has(id)),
+        ) ?? { origenId: null, destinoId: null });
     setRecordado(r);
     if (r.origenId) setOrigenId(r.origenId);
     if (r.destinoId) setDestinoId(r.destinoId);
@@ -666,7 +678,7 @@ export function RegistrarMovimientoScreen() {
         nav.back();
         return;
       }
-      if (esCompartido && recibe) {
+      if (esCompartido && !yaPaso && recibe) {
         await api.comando(
           '/comandos/RegistrarGastoCompartido',
           {
@@ -699,7 +711,7 @@ export function RegistrarMovimientoScreen() {
           ...(necesitaOrigen && origenId ? { elementoOrigenId: origenId } : {}),
           ...(necesitaDestino && destinoId ? { elementoDestinoId: destinoId } : {}),
           ...(puedeCategorizar && categoriaId ? { categoriaId } : {}),
-          ...(glosa.trim() ? { glosa: glosa.trim() } : {}),
+          ...(glosa.trim() || glosaYaPaso ? { glosa: glosa.trim() || glosaYaPaso } : {}),
           ...(etiquetaIds.length ? { etiquetaIds } : {}),
           ...(meta ? { asignacionId: meta.asignacionId } : {}),
         },
@@ -774,6 +786,44 @@ export function RegistrarMovimientoScreen() {
   const pendiente = deudaElegida ? (deudaElegida.valorPendiente ?? Math.abs(deudaElegida.valorVigente)) : 0;
   const cuota = deudaElegida?.cuotaMonto ?? null;
 
+  // G39 (F-11): lo que ya te transfirieron en los últimos 30 días, y el detalle
+  // que queda en el gasto ("Juan puso 100.000").
+  const yaTePasaron = (transferenciasHogar ?? []).filter(
+    (t) => t.direccion === 'RECIBIDA' && compartidoCon.some((x) => x.usuarioId === t.miembro.id),
+  );
+  const glosaYaPaso =
+    esCompartido && yaPaso && parte > 0
+      ? compartidoCon.length > 1
+        ? `${nombresCompartido} pusieron ${money(parte, monedaEvento)} cada uno`
+        : `${nombresCompartido} puso ${money(parte, monedaEvento)}`
+      : '';
+
+  // G39 (F-9): en Moví plata, a una cuenta tuya o a alguien del hogar.
+  const muestraHacia = (tipo === 'TRANSFERENCIA' || tipo === 'CONVERSION') && !esPago && otrosMiembros.length > 0;
+  const cuentasDe = (usuarioId: string) =>
+    elementosHogar.filter((e) => !propios.has(e.id) && e.propietarios[0]?.usuarioId === usuarioId);
+  const duenoDestino = destinoId && !propios.has(destinoId)
+    ? elementosHogar.find((e) => e.id === destinoId)?.propietarios[0]?.usuarioId ?? null
+    : null;
+  const haciaEfectivo = hacia ?? duenoDestino ?? 'MIA';
+  const haciaMiembro = muestraHacia ? otrosMiembros.find((x) => x.usuarioId === haciaEfectivo) : undefined;
+  const elegirHacia = (v: string) => {
+    setHacia(v);
+    const cs = v === 'MIA' ? null : cuentasDe(v);
+    const sirve = destinoId && (cs ? cs.some((e) => e.id === destinoId) : propios.has(destinoId));
+    if (!sirve) setDestinoId(cs && cs.length === 1 ? cs[0].id : null);
+  };
+  const opcionesDestino = haciaMiembro
+    ? opcionesDeElementos(cuentasDe(haciaMiembro.usuarioId), { emojis: emojis.elementos }).map((o) => {
+        const e = elementosHogar.find((x) => x.id === o.value);
+        return { ...o, grupo: undefined, sub: e?.valorOculto ? undefined : o.sub };
+      })
+    : muestraHacia
+      ? opcionesDeElementos(cuentasValidas, { excluir: origenId, emojis: emojis.elementos })
+      : opcionesA;
+  // Al pagar o al mandarle a alguien, primero a dónde va y después de qué cuenta sale.
+  const destinoPrimero = esPago || muestraHacia;
+
   const nombreDe = (id: string | null) =>
     [...elementos, ...elementosHogar].find((e) => e.id === id)?.nombre ?? '';
   const puedeEnviar =
@@ -782,7 +832,7 @@ export function RegistrarMovimientoScreen() {
     (!necesitaOrigen || !!origenId) &&
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId &&
-    (!esCompartido || (!errParte && !!recibe && !oculta(recibe))) &&
+    (!esCompartido || (!errParte && (yaPaso || (!!recibe && !oculta(recibe))))) &&
     (!esOtra ||
       (!!nombrePersona &&
         !esMiembro &&
@@ -811,12 +861,20 @@ export function RegistrarMovimientoScreen() {
       : `${tipo === 'GASTO' ? `Salen ${m} de ${nombreDe(origenId)}` : `Entran ${m} a ${nombreDe(destinoId)}`}. No es ${
           tipo === 'GASTO' ? 'gasto' : 'ingreso'
         } tuyo. ${saldoTexto(nombrePersona, saldoQueda, monedaEvento, money)}.`
-    : !puedeEnviar && esCompartido && (errParte || oculta(recibe))
+    : !puedeEnviar && esCompartido && (errParte || (!yaPaso && oculta(recibe)))
     ? errParte || `${nombresCompartido} tiene que poder transferirte a ${recibe?.nombre}.`
     : !puedeEnviar
     ? faltaTexto
+    : esCompartido && yaPaso
+      ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}. ${nombresCompartido} ya te ${
+          compartidoCon.length > 1 ? 'pasaron' : 'pasó'
+        } sus ${money(parte, monedaEvento)}${compartidoCon.length > 1 ? ' cada uno' : ''}: no le pedimos nada.`
     : esCompartido
-      ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}. Le pedimos a ${nombresCompartido} su parte: ${money(parte, monedaEvento)}${compartidoCon.length > 1 ? ' cada uno' : ''}.`
+      ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}. Le pedimos a ${nombresCompartido} sus ${money(parte, monedaEvento)}${
+          compartidoCon.length > 1 ? ' cada uno' : ''
+        }: le llega un aviso para transferirte a ${recibe?.nombre ?? 'tu cuenta'}.`
+    : haciaMiembro && destinoId
+      ? `Le pasas ${m} a ${haciaMiembro.nombre} (${nombreDe(destinoId)}) desde ${nombreDe(origenId)}. Hazla en tu banco; acá solo queda anotada. ${haciaMiembro.nombre} no tiene que anotar nada.`
     : tipo === 'GASTO'
       ? `Salen ${m} de ${nombreDe(origenId)}${meta ? `, de la plata de ${meta.nombre}` : ''}.`
       : tipo === 'INGRESO'
@@ -868,21 +926,24 @@ export function RegistrarMovimientoScreen() {
   const opcionesQuien =
     tipo === 'GASTO'
       ? [
-          { value: 'MIO', label: 'Mío', emoji: '🙋' },
+          { value: 'MIO', label: 'Mío', emoji: '🙋', sub: 'Lo pagaste tú y es tuyo' },
           ...(otrosMiembros.length > 0
             ? [
                 {
                   value: 'HOGAR',
                   emoji: '👫',
-                  label: otrosMiembros.length === 1 ? `Compartido con ${nombreMiembro}` : 'Compartido con el hogar',
-                  sub: `Pagaste algo de ${otrosMiembros.length === 1 ? 'los dos' : 'todos'} y te transfieren su parte`,
+                  label: otrosMiembros.length === 1 ? `Con ${nombreMiembro}` : 'Con el hogar',
+                  sub:
+                    otrosMiembros.length === 1
+                      ? `Pagaste algo de los dos y ${nombreMiembro} te transfiere su parte`
+                      : 'Pagaste algo de todos y te transfieren su parte',
                 },
               ]
             : []),
           { value: 'OTRA', label: 'De otra persona', emoji: '👤', sub: 'Pagaste por alguien, o usaste o devolviste su plata' },
         ]
       : [
-          { value: 'MIO', label: 'Mía', emoji: '🙋' },
+          { value: 'MIO', label: 'Mía', emoji: '🙋', sub: 'Es plata tuya' },
           { value: 'OTRA', label: 'De otra persona', emoji: '👤', sub: 'Te la pasaron, te la prestaron o te devolvieron algo' },
           ...(otrosMiembros.length > 0
             ? [{ value: 'HOGAR', label: 'De alguien del hogar', emoji: '👥', sub: `Te la transfirió ${nombreMiembro}` }]
@@ -896,6 +957,7 @@ export function RegistrarMovimientoScreen() {
   // HZ-22: la decisión que cambia el significado del registro va en el paso 2.
   const pQuien = puedeCategorizar ? paso({ hecho: true }) : undefined;
   const delHogarModo = tipo === 'INGRESO' && quien === 'HOGAR';
+  const pYaPaso = esCompartido ? paso({ hecho: true }) : undefined;
   const pParte = esCompartido ? paso({ hecho: Number(monto) > 0 && !errParte }) : undefined;
   // G39: "¿En qué?" va antes de la cuenta (monto, para qué, cuenta, cuándo).
   const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
@@ -903,21 +965,31 @@ export function RegistrarMovimientoScreen() {
   const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
   const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
   // G39 (F-5): al pagar, primero qué deuda y después desde qué cuenta.
-  const pAPago = esPago && necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
+  const pHacia = muestraHacia ? paso({ hecho: true }) : undefined;
+  const pAPago = destinoPrimero && necesitaDestino ? paso({ hecho: !!destinoId }) : undefined;
   const pDesde = necesitaOrigen ? paso({ hecho: !!origenId }) : undefined;
   const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
-  const pRecibe = esCompartido ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
+  const pRecibe = esCompartido && !yaPaso ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
   const pA = pAPago ?? (necesitaDestino ? paso({ hecho: !!destinoId }) : undefined);
   const pFecha = paso({ hecho: !!fecha });
 
+  // G39 (F-11): los tres a la vista; una línea dice qué significa el elegido.
+  const quienElegido = opcionesQuien.find((o) => o.value === quien);
   const pasoQuien = pQuien ? (
-    <Elegir
-      label={tipo === 'GASTO' ? '¿De quién es este gasto?' : '¿De quién es esta plata?'}
-      paso={pQuien}
-      value={quien}
-      options={opcionesQuien}
-      onChange={(v) => setQuien((v as Quien | null) ?? 'MIO')}
-    />
+    <BloquePaso paso={pQuien} style={styles.group}>
+      <Question paso={pQuien}>{tipo === 'GASTO' ? '¿De quién es este gasto?' : '¿De quién es esta plata?'}</Question>
+      <View style={styles.frecuentes}>
+        {opcionesQuien.map((o) => (
+          <Pastilla
+            key={o.value}
+            label={`${o.emoji} ${o.label}`}
+            activo={quien === o.value}
+            onPress={() => setQuien(o.value as Quien)}
+          />
+        ))}
+      </View>
+      {quienElegido?.sub ? <Nota>{`${quienElegido.emoji} ${quienElegido.sub}`}</Nota> : null}
+    </BloquePaso>
   ) : null;
 
   // D-8: "De alguien del hogar" no crea nada; la transferencia la anota quien la envía.
@@ -1010,15 +1082,44 @@ export function RegistrarMovimientoScreen() {
     );
   }
 
-  const bloqueDestino = necesitaDestino ? (
+  const bloqueDestino = !necesitaDestino ? null : haciaMiembro && opcionesDestino.length === 0 ? (
+    <BloquePaso paso={pA} style={styles.group}>
+      <Question paso={pA}>{`¿A qué cuenta de ${haciaMiembro.nombre}?`}</Question>
+      <Nota>{`🔒 ${haciaMiembro.nombre} todavía no te deja ver sus cuentas. Pídele que, en su teléfono, abra su cuenta › ⚙️ Ajustes de la cuenta › 👥 Con el hogar.`}</Nota>
+    </BloquePaso>
+  ) : (
     <Elegir
-      label={esPago ? '¿Qué deuda pagas?' : tipo === 'INGRESO' ? '¿A qué cuenta llegó?' : '¿A qué cuenta?'}
+      label={
+        esPago
+          ? '¿Qué deuda pagas?'
+          : haciaMiembro
+            ? `¿A qué cuenta de ${haciaMiembro.nombre}?`
+            : tipo === 'INGRESO'
+              ? '¿A qué cuenta llegó?'
+              : '¿A qué cuenta?'
+      }
       paso={pA}
       placeholder={esPago ? 'Elegir deuda' : 'Elegir cuenta'}
       value={destinoId}
-      options={opcionesA}
+      options={opcionesDestino}
       onChange={setDestinoId}
     />
+  );
+  const bloqueHacia = pHacia ? (
+    <BloquePaso paso={pHacia} style={styles.group}>
+      <Question paso={pHacia}>¿A dónde va la plata?</Question>
+      <View style={styles.frecuentes}>
+        <Pastilla label="🙋 A otra cuenta mía" activo={haciaEfectivo === 'MIA'} onPress={() => elegirHacia('MIA')} />
+        {otrosMiembros.map((x) => (
+          <Pastilla
+            key={x.usuarioId}
+            label={`👤 A ${x.nombre}`}
+            activo={haciaEfectivo === x.usuarioId}
+            onPress={() => elegirHacia(x.usuarioId)}
+          />
+        ))}
+      </View>
+    </BloquePaso>
   ) : null;
 
   return (
@@ -1103,12 +1204,41 @@ export function RegistrarMovimientoScreen() {
 
       {pasoQuien}
 
+      {pYaPaso && (
+        <BloquePaso paso={pYaPaso} style={styles.group}>
+          <Question paso={pYaPaso}>{`¿${nombresCompartido || nombreMiembro} ya te ${compartidoCon.length > 1 ? 'pasaron' : 'pasó'} su parte?`}</Question>
+          <View style={styles.frecuentes}>
+            <Pastilla label={`⏳ No, que me la ${compartidoCon.length > 1 ? 'pasen' : 'pase'}`} activo={!yaPaso} onPress={() => setYaPaso(false)} />
+            <Pastilla label={`✅ Sí, ya me la ${compartidoCon.length > 1 ? 'pasaron' : 'pasó'}`} activo={yaPaso} onPress={() => setYaPaso(true)} />
+          </View>
+          {yaPaso ? (
+            transferenciasHogar === null ? (
+              <Skeleton filas={1} />
+            ) : yaTePasaron.length > 0 ? (
+              <ListCard>
+                {yaTePasaron.slice(0, 3).map((t) => (
+                  <TxRow
+                    key={t.eventoId}
+                    title={`✅ ${t.miembro.nombre} te pasó ${money(t.monto, t.moneda)}`}
+                    subtitle={`${diaCorto(t.fecha)} · a ${t.cuentaPropia.nombre}`}
+                    amount=""
+                    logo={{ emoji: '👥' }}
+                  />
+                ))}
+              </ListCard>
+            ) : (
+              <Nota>{`No vemos transferencias de ${nombresCompartido || nombreMiembro} en los últimos 30 días. Si te la pasó de otra forma, igual puedes seguir.`}</Nota>
+            )
+          ) : null}
+        </BloquePaso>
+      )}
+
       {pParte && (
         <BloquePaso paso={pParte} style={styles.group}>
           {otrosMiembros.length === 1 ? (
             <>
               <Elegir
-                label={`¿Cuánto le toca a ${nombreMiembro}?`}
+                label={yaPaso ? `¿Cuánto era de ${nombreMiembro}?` : `¿Cuánto le toca a ${nombreMiembro}?`}
                 paso={pParte}
                 value={reparto}
                 options={[
@@ -1147,7 +1277,7 @@ export function RegistrarMovimientoScreen() {
           {errParte && (reparto === 'OTRO' ? !!parteOtro : true) ? (
             <ErrorText>{errParte}</ErrorText>
           ) : (
-            <Nota>{`Le pedimos su parte a ${nombresCompartido || 'tu hogar'} y te la transfiere. Lo ves en la pestaña Hogar.`}</Nota>
+            !yaPaso && <Nota>{`Le pedimos su parte a ${nombresCompartido || 'tu hogar'} y te la transfiere. Lo ves en la pestaña Hogar.`}</Nota>
           )}
         </BloquePaso>
       )}
@@ -1299,7 +1429,8 @@ export function RegistrarMovimientoScreen() {
         </BloquePaso>
       )}
 
-      {esPago && bloqueDestino}
+      {bloqueHacia}
+      {destinoPrimero && bloqueDestino}
       {esPago && recordado?.destinoId && destinoId === recordado.destinoId ? (
         <Nota>🔁 La de tu último pago. Tócala para cambiarla.</Nota>
       ) : null}
@@ -1321,6 +1452,9 @@ export function RegistrarMovimientoScreen() {
       ) : null}
       {esPago && recordado?.origenId && origenId === recordado.origenId ? (
         <Nota>🔁 La de tu último pago. Tócala para cambiarla.</Nota>
+      ) : null}
+      {!esPago && puerta === 'TRANSFERENCIA' && recordado?.origenId && !recordado.destinoId && origenId === recordado.origenId ? (
+        <Nota>🔁 La de tu última transferencia. Tócala para cambiarla.</Nota>
       ) : null}
 
       {pMeta && (
@@ -1370,7 +1504,7 @@ export function RegistrarMovimientoScreen() {
         </BloquePaso>
       )}
 
-      {!esPago && bloqueDestino}
+      {!destinoPrimero && bloqueDestino}
       {tipo === 'INGRESO' && recordado?.destinoId && destinoId === recordado.destinoId ? (
         <Nota>🔁 La de tu último ingreso. Tócala para cambiarla.</Nota>
       ) : null}

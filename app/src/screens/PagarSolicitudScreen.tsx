@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import { api, ApiError, type ElementoPatrimonialDTO } from '../api/client';
+import { api, ApiError, type ElementoPatrimonialDTO, type ResumenFinancieroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { money } from '../format';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -10,6 +10,7 @@ import { opcionesDeElementos } from '../opciones';
 import { usePreferencias } from '../preferencias';
 import { emojiElemento } from '../emojis';
 import { comoVa, diaCorto, type SolicitudDTO } from '../solicitudes';
+import { DIAS_RECIENTES, ultimaCuenta } from '../recientes';
 import { useToast } from '../ui/Toast';
 import { Text } from '../ui/Text';
 import {
@@ -52,13 +53,21 @@ export function PagarSolicitudScreen() {
   const [fecha, setFecha] = useState<string | null>(null);
   const [busy, setBusy] = useState<'pagar' | 'rechazar' | null>(null);
   const [error, setError] = useState('');
+  // G39 (F-10): la cuenta de tu última transferencia viene elegida.
+  const [recordada, setRecordada] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [lista, mios] = await Promise.all([
+      const hoy = new Date();
+      const desde = new Date(hoy.getTime() - DIAS_RECIENTES * 24 * 60 * 60 * 1000);
+      const [lista, mios, recientes] = await Promise.all([
         api.get<SolicitudDTO[]>('/usuarios/me/solicitudes', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+        api
+          .get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${aISO(desde)}&hasta=${aISO(hoy)}&alcance=mios`, token)
+          .then((r) => r.movimientos)
+          .catch(() => []),
       ]);
       const sol = lista.find((x) => x.id === solicitudId) ?? null;
       setS(sol);
@@ -71,7 +80,13 @@ export function PagarSolicitudScreen() {
           )
         : [];
       setCuentas(validas);
-      setOrigenId((o) => o ?? (validas.length === 1 ? validas[0].id : null));
+      const ids = new Set(validas.map((e) => e.id));
+      const ultima =
+        validas.length > 1
+          ? (ultimaCuenta(recientes, 'TRANSFERENCIA', (id, lado) => lado === 'destino' || ids.has(id))?.origenId ?? null)
+          : null;
+      setRecordada(ultima);
+      setOrigenId((o) => o ?? (validas.length === 1 ? validas[0].id : ultima));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -177,7 +192,7 @@ export function PagarSolicitudScreen() {
       pie={
         <>
           <Button
-            title={sinAnotar ? `✅ Anotar ${m}` : `✅ Transferir ${m}`}
+            title={sinAnotar ? `✅ Anotar ${m}` : `✅ Ya le transferí ${m}`}
             onPress={pagar}
             loading={busy === 'pagar'}
             disabled={!origenId || !s.cuentaDisponible || busy !== null}
@@ -208,6 +223,7 @@ export function PagarSolicitudScreen() {
           onChange={setOrigenId}
         />
       )}
+      {recordada && origenId === recordada ? <Nota>🔁 La de tu última transferencia. Tócala para cambiarla.</Nota> : null}
       {sinAnotar && <Cuando value={fechaPago} onChange={setFecha} />}
       <Datos>
         <Dato
@@ -216,6 +232,8 @@ export function PagarSolicitudScreen() {
         />
         <Dato etiqueta="👤 Llega a" valor={`${s.cuentaDestino.nombre} de ${nombre}`} />
       </Datos>
+      {/* G39 (F-12): la app anota; la plata se mueve en el banco. */}
+      {!sinAnotar && <Nota>🏦 Primero transfiérele en tu banco; acá queda anotado.</Nota>}
       <Nota>🔁 Es una transferencia: no cuenta como gasto.</Nota>
       {!s.cuentaDisponible && (
         <ErrorText>{`${nombre} dejó de compartir esta cuenta. Pídele que la comparta con "Que puedan transferirte".`}</ErrorText>
