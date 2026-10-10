@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G32, G33, G35, G39 | G25 |
+| **I** · App: preferencias y usabilidad | G32, G33, G35 | G25, G39 |
 
 ---
 
@@ -54,12 +54,11 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 | # | Gap | Qué falta | Tipo |
 |---|-----|-----------|------|
-| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. | ⬜ |
-| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Agrupaciones ✅ como "Mis grupos" en Tu plata; la categoría de un movimiento se abre encima, como en Presupuesto. Queda: el ícono de la app (cuando se compile la app propia). | 🟡 |
-| — | **G39** | Flujos simples después de G35: los 33 escenarios recorridos sobre el diseño nuevo, con conteo de toques y flujo objetivo por escenario (`Docs/usabilidad/FLUJOS_SIMPLES_S03.md`). Decidido: S3-1, S3-2, S3-3 (T1 en ≤ 4 toques + monto, T2 en ≤ 8) y S3-5 (pasos claros). M1–M3 (cuenta recordada y categoría en botones, F-1 y F-2) aprobados por Juan y mergeados (2026-10-09); incluyen un dato nuevo de solo lectura en `resumen-financiero` (requiere deploy en Render). M5, H3 y P2 (F-3 "✅ Sí" en el Inicio, F-8 "Se repite" con botones y fecha futura = programar) aprobados por Juan y mergeados (2026-10-09), solo app. M6 y H5 (F-5 "💳 Pagar una deuda" con deuda y cuenta recordadas y "Todo lo que debes" / "La cuota"; Gasté sin bienes ni "te deben") aprobados por Juan y mergeados (2026-10-09), solo app. M4, M7 y M9 (F-9 "¿A dónde va la plata?", F-10 cuenta de salida recordada, F-11 "¿De quién es?" en botones y "¿Ya te pasó su parte?", F-12 "Ya le transferí") aprobados por Juan y mergeados (2026-10-09), solo app. M8 y M10 (F-4 personas en botones, F-13 lo pendiente a un toque, F-14 "¿De dónde sale esta plata?") aprobados por Juan y mergeados (2026-10-09), solo app. Metas A1, A2, A6, A7 (F-15 metas en botones, F-16 cuenta del último ahorro, F-17 "no se mueve", F-18 "¿Quién más puede ahorrar en ella?" con todos marcados) aprobados por Juan y mergeados (2026-10-09), solo app. C1–C3 (F-6 tipo en botones, F-19 aviso anual "¿Cuánto vale hoy?") aprobados por Juan y mergeados (2026-10-09); F-19 suma `fechaUltimaValorizacion` a la API (solo lectura, requiere deploy). Push y deploy hechos por Juan (2026-10-09). Bloque 8 (M12, M13, C4, M11: F-7 motivo elegido, "Anotar de nuevo", "Cerrar cuenta" con saldo, "¿Cuánto llegó?" en un cambio de moneda) aprobado por Juan y mergeado (2026-10-10); toca la API (requiere deploy). Bloque 9 (H1 "suman N de M", H4 "Qué compartes", H6 invitar y aceptar a un toque, P1 presupuesto directo; H2 se mantiene) aprobado por Juan y mergeado (2026-10-10), solo app: los 33 escenarios trabajados; ver `FLUJOS_SIMPLES_S03.md` §0. | 🟡 |
+| U5 | **G33** | Rediseño de usabilidad tras la prueba con usuaria real (`Docs/usabilidad/USABILIDAD_REAL_S01.md`). Fases A, B y C ✅ + BUG-HOG ✅. Fase D ✅ (decisiones D-1 a D-8, prototipo validado 6 de 6, HZ-18 a HZ-23). Fase E: bloque 1 (D-4, HZ-19, HZ-22) ✅; bloque 2 (HZ-3 + HZ-17) ✅; bloque 3 (HZ-24) ✅; bloque 4 (rediseño visual) ✅; bloque 5 (HZ-13) ✅; bloque 6 (C1 + D-2) ✅; bloque 7 (D-1 + errores con código) ✅; reglas de diseño R1 a R6 ✅; bloque 8 (D-8 + D-3 + HZ-18 + HZ-20) ✅; D-5 adelantado del bloque 10, con D-2 en el backend (rama `feat/G33-D5-destino-miembro` ✅, probada por Juan y mergeada 2026-10-08); bloque 9 (D-7 + HZ-21) probado por Juan (2026-10-08); D-6: bloque 10a (backend) y 10b (app) probados por Juan y mergeados (2026-10-08; migración 028 aplicada en Neon); queda la señal de Zoily. **Señal de Zoily (2026-10-10):** mejora notoria en diseño, flujos y orden; ahora le es fácil registrar un gasto o un ingreso y ver y entender una meta y de dónde sale su plata. Va bien encaminado, pero no se da por cerrado. | 🟡 |
+| — | **G35** | Mejora visual pantalla por pantalla (la app se siente corporativa, poco amigable). Inventario de 60 pantallas y sus acciones en `Docs/usabilidad/MEJORA_VISUAL_S02.md`. Paso 0 (dirección visual) e Inicio ✅ (2026-10-09); Ajustes ✅ (2026-10-09); catálogos de "Para ordenar tu plata" ✅ (Agrupaciones fuera hasta usarlas en Mi patrimonio); tanda 1 completa ✅; tanda 2 completa ✅ (Tu plata, Evolución, Agregar, Detalle de cuenta y sus pantallas; filas tocables con "›" en toda la app); tanda 3 completa ✅ (A metas y ahorro; B presupuestos, con Gastos de una categoría y el saldo inicial como ingreso del presupuesto; C programados); tanda 4 completa ✅ (A Hogar, Patrimonio del hogar y Movimientos del hogar, con las métricas del hogar contando solo sus metas; B Entre ustedes, Pagar y Personas del hogar); tanda 5 completa ✅ (Notificaciones, Secciones del Inicio, Mi perfil, Confirmar); tanda 6 completa ✅ (Entrar, Crear cuenta, Recuperar, Bienvenido, Crear hogar, Invitaciones; sin sesión se entra por Entrar). Agrupaciones ✅ como "Mis grupos" en Tu plata; la categoría de un movimiento se abre encima, como en Presupuesto. Queda solo el ícono de la app, en pausa junto con compilar la app propia (Juan, 2026-10-10). | 🟡 (⏸ ícono) |
 | U4 | **G32** | Evaluación heurística ✅, 7 ajustes ✅, validación con persona nueva ✅ con **resultado negativo** → se continúa en G33. | 🟡 (sigue en G33) |
-| P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | 🔒 externo |
-| P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). | 🔒 externo |
+| P14 | **G4** | Captcha / anti-bot antes de emitir el token de registro — hay que elegir proveedor. El rate-limit en memoria necesitaría un store compartido para varias instancias. | ⏸ en pausa (Juan, 2026-10-10) |
+| P15 | **G20** | Push remoto real: development build + `projectId` de EAS (Expo Go SDK 53+ lo limita). Va junto con compilar la app propia. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **G31** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
 
@@ -67,7 +66,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 ### Tema A · Cuenta y autenticación
 
-#### G4 — "Token de sesión temporal de registro" para RegistrarUsuario  🔒 EXTERNO (token + email ✅; falta el captcha)
+#### G4 — "Token de sesión temporal de registro" para RegistrarUsuario  ⏸ EN PAUSA (token + email ✅; el captcha, en pausa por Juan 2026-10-10)
 - **Qué falta**: API_DESIGN dice que `POST /comandos/RegistrarUsuario` va con un
   "token de sesión temporal de registro, no de usuario ya autenticado".
 - **Estado (Fase 12 + 14c)**: **resuelto salvo el captcha**.
@@ -89,7 +88,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 ### Tema H · Notificaciones
 
-#### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL (in-app + preferencias ✅; push remoto 🔒; reintentos ✅)
+#### G20 — Notificaciones (Fase 11 + 14c)  🟡 PARCIAL (in-app + preferencias ✅; reintentos ✅; push remoto ⏸ en pausa por Juan 2026-10-10, junto con compilar la app propia)
 - In-app: ✅. **Preferencias por tipo: ✅ (Fase 36, P4)** —
   `usuario.preferencias.notificaciones[<tipo>] === false` silencia el aviso
   (in-app + push); `NotificacionService.emitir` lo consulta; toggles en "Mi
@@ -170,7 +169,39 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   priorizada de hallazgos (qué confunde, qué falta conectar, qué simplificar) y
   una propuesta de ajustes al flujo, antes de tocar pantallas.
 
-#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  ⬜ PENDIENTE (abierto 2026-09-29; Fase D cerrada 2026-10-02, decisiones D-1 a D-8)
+#### G33 — Rediseño de usabilidad a partir de la prueba con usuaria real  🟡 PARCIAL (abierto 2026-09-29; Fase D cerrada 2026-10-02; señal de Zoily positiva 2026-10-10, no definitiva)
+- **Señal de Zoily (2026-10-10)**, después de G35 y G39: exploró la app y ve
+  una mejora notoria en el diseño, los flujos y el orden de las cosas; ahora
+  le es fácil lo que antes no (registrar un gasto o un ingreso, ver y entender
+  una meta y de dónde sale su plata). No lo da por cerrado ni definitivo: va
+  bien encaminado hacia la simplicidad que necesitan los usuarios. G33 sigue
+  abierto para lo que salga de seguir usándola.
+- **Ajustes por esa señal (rama `feat/inicio-claridad`, 2026-10-10, decididos
+  por Juan):**
+  - **Puedes gastar 0 con plata en la cuenta:** era un dato de prueba (la
+    Cuenta sueldo de Pareja y la Cuenta en dólares de Demo sin
+    `participa_valor_liquido`; la app lo marca al crear una cuenta desde el
+    2026-09-02). Corregido en `scripts/seed.sh` y en la base local; en Neon se
+    revisa con una consulta (cuentas LIQUIDEZ activas sin la marca).
+  - **Inicio:** flecha "›" en la tarjeta principal (y en la del Hogar) para
+    indicar que abre todas tus cuentas; "Tu plata hoy" y "Puedes gastar hoy";
+    "Así va el mes" deja el final del Inicio y pasa a una tarjeta corta
+    **"📅 Octubre"** justo debajo, con una barra (lo que entró; la parte llena,
+    lo que ya salió), "Salió · Entró" y "🧮 Te queda del mes". Toca y abre
+    Movimientos.
+  - **Plata que pasas a otra persona del hogar:** sale de tu plata aunque no
+    sea gasto tuyo. El mes la muestra por persona ("👤 Le pasaste a Demo",
+    "👤 Te pasó Demo") y la cuenta en "Te queda del mes" (`app/src/flujoMes.ts`);
+    "Te sobra" pasa a "Te queda del mes". Sin cambio de dominio: presupuestos y
+    "¿En qué se fue?" siguen igual (opción A de Juan).
+  - **Transferencias entre miembros con nombre:** la lista dice "👤 Le pasaste
+    a Demo" / "👤 Te pasó Demo" y el detalle "👤 Le pasaste a Demo" con
+    "👤 Cuenta de Demo". La API suma `contraparte` (solo lectura, sin
+    migración) a los movimientos de `resumen-financiero` y al detalle de un
+    movimiento; requiere deploy.
+  - **Frecuentes:** una sola fila deslizable sobre el monto; sin frecuentes, nada.
+  - **Ahorrar desde una meta:** no vuelve a preguntar la meta ("Ahorrar para
+    Viaje a Japón").
 - **Fuente de verdad**: [`Docs/usabilidad/USABILIDAD_REAL_S01.md`](Docs/usabilidad/USABILIDAD_REAL_S01.md)
   (hallazgos HZ-1 a HZ-23, catálogo de 33 escenarios T1/T2/T3, plan por fases
   A–E + BUG-HOG). Continúa G32.
@@ -681,77 +712,10 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   grupos"), y la categoría de un movimiento abre sus movimientos del mes
   encima, con "atrás", como en Presupuesto. **Queda:** el ícono de la app
   con el árbol, que se hace cuando se compile la app propia (con Expo Go no
-  se ve).
+  se ve). ⏸ En pausa junto con la app compilada (Juan, 2026-10-10).
   Anotado fuera de G35 y resuelto aparte (2026-10-09): consolidar períodos
   largos cuando las fechas no son del mes en curso (G38) y la lista de un
   grupo "Del hogar" que traía solo las cuentas de los otros miembros (G37).
-
-#### G39 — Flujos simples después de G35  🟡 PARCIAL (abierto 2026-10-09; bloques 1–9 hechos, los 33 escenarios trabajados)
-- **Qué pasa**: G35 cambió lo visual pero no los flujos; registrar y accionar
-  cosas todavía pide muchos toques (un gasto diario, 7 a 10).
-- **Plan**: [`Docs/usabilidad/FLUJOS_SIMPLES_S03.md`](Docs/usabilidad/FLUJOS_SIMPLES_S03.md)
-  (fuente de verdad): los 33 escenarios de `USABILIDAD_REAL_S01.md` §5
-  recorridos sobre el diseño actual, en tablas paso a paso con conteo; por
-  cada uno, Claude propone el flujo objetivo, Juan decide, se implementa y se
-  valida en el teléfono. Patrones candidatos F-1 a F-8.
-- **Decidido (Juan, 2026-10-09)**: S3-1 todos los escenarios; S3-2 entra la
-  estructura de los flujos y lo visual de G35 se mantiene; S3-3 T1 en ≤ 4
-  toques + monto, T2 en ≤ 8; S3-5 los pasos tienen que quedar muy claros (lo
-  que viene elegido se ve como paso hecho y se cambia ahí mismo).
-  S3-6: la cuenta recordada sale del último movimiento anotado; para eso
-  `GET /usuarios/me/resumen-financiero` suma la cuenta de salida y de llegada
-  de cada movimiento (solo lectura, sin migración; requiere deploy).
-- **Hecho**: M1–M3 (F-1 cuenta recordada, F-2 categorías en botones) en la
-  rama `feat/G39-formulario-base`, verificado con capturas, aprobado por Juan
-  y mergeado (2026-10-09). Requiere deploy de la API en Render.
-- **Hecho (2)**: M5, H3 y P2 (F-3 "✅ Sí" en los avisos del Inicio para lo
-  programado que ya venció; F-8 "Se repite" con botones y una fecha futura en
-  el "+" deja el movimiento programado) en la rama `feat/G39-repite`, solo
-  app, verificado con capturas, aprobado por Juan y mergeado (2026-10-09).
-- **Hecho (3)**: M6 y H5 (F-5 "💳 Pagar una deuda" en el "+" para cualquier
-  deuda que no sea un encargo, con la deuda y la cuenta del último pago y los
-  botones "Todo lo que debes" / "La cuota"; Gasté ya no ofrece bienes ni lo
-  que te deben) en la rama `feat/G39-deudas`, solo app, verificado con
-  capturas, aprobado por Juan y mergeado (2026-10-09).
-- **Hecho (4)**: M4, M7 y M9 (F-9 "¿A dónde va la plata?" en Moví plata;
-  F-10 la cuenta de salida se recuerda con el destino ya elegido; F-11 "¿De
-  quién es?" en botones y "¿[miembro] ya te pasó su parte?", que evita
-  pedirle dos veces y deja "[miembro] puso X" en el detalle; F-12 "✅ Ya le
-  transferí" en Pagar) en la rama `feat/G39-hogar`, solo app, sin cambios de
-  dominio (la atribución por persona sigue fuera de alcance), verificado con
-  capturas, aprobado por Juan y mergeado (2026-10-09).
-- **Hecho (5)**: M8 y M10 (F-4 "¿De quién?" en botones con las personas con
-  algo pendiente primero y su saldo en palabras; F-13 "Todo lo de [persona]"
-  / "Lo que te debe" llenan el monto; F-14 "¿De dónde sale esta plata?" en
-  vez de "¿Te había pasado plata antes?") en la rama `feat/G39-personas`,
-  solo app, verificado con capturas, aprobado por Juan y mergeado (2026-10-09).
-- **Hecho (6)**: metas A1, A2, A6 y A7 (F-15 "¿Para qué meta?" en botones y
-  la meta nueva elegida al volver; F-16 la cuenta del último ahorro; F-17 "no
-  se mueve" en el pie; F-18 "¿Quién más puede ahorrar en ella?" con todos los
-  del hogar marcados al crear, que evita que la pareja vea la meta y no pueda
-  aportar) en la rama `feat/G39-metas`, solo app, verificado con capturas,
-  aprobado por Juan y mergeado (2026-10-09). A3, A4, A5 y A8 se mantienen.
-- **Hecho (7)**: C1, C2 y C3 (F-6 "¿De qué tipo?" en botones, con el primero
-  elegido en Cuenta, Ahorro e Inversión; F-19 aviso en el Inicio para bienes e
-  inversiones sin actualizar hace más de un año, con el dato nuevo
-  `fechaUltimaValorizacion` en la API, solo lectura, sin migración) en la rama
-  `feat/G39-agregar`, verificado con capturas y el e2e de valorización,
-  aprobado por Juan y mergeado (2026-10-09). Requiere deploy de la API en Render.
-- **Hecho (8)**: M12, M13, C4 y M11 en la rama `feat/G39-corregir`
-  (2026-10-10): F-7 el motivo viene elegido (la API lo sigue exigiendo);
-  "🔁 Anotar de nuevo" con el formulario lleno, que elimina el anterior;
-  "📦 Cerrar cuenta" pregunta qué pasó con el saldo; "¿Cuántos USD llegaron?"
-  en un cambio de moneda. API sin migración: `montoDestino` opcional en
-  `CONVERSION`, `GET /tipos-cambio/tasa` y `vigente` en el detalle de un
-  movimiento corregido. Verificado con capturas y e2e, aprobado por Juan y mergeado (2026-10-10).
-  Requiere deploy de la API en Render.
-- **Hecho (9)**: H1, H4, H6 y P1 en la rama `feat/G39-hogar-consultas`
-  (2026-10-10), solo app: "🔐 De lo tuyo suman N de M" en el Hogar; pantalla
-  "Qué compartes" con todas tus cuentas en dos grupos y el nivel a dos toques;
-  invitar destacado si estás solo en el hogar (si no, fila en Más del hogar);
-  aceptar una invitación desde Bienvenido; "Ponte un presupuesto del mes"
-  abre el formulario directo. H2 se mantiene. Verificado con capturas,
-  aprobado por Juan y mergeado (2026-10-10).
 
 ---
 
@@ -1704,3 +1668,73 @@ ya cerrados en Fases 50–51).
     Agrupaciones · Preferencias de visualización · Notificaciones · Hogar.
 - **Para decidir**: ¿qué preferencias son del usuario y cuáles del hogar?
   ¿`hogar.configuracion JSONB` o tablas normalizadas?
+
+#### G39 — Flujos simples después de G35  ✅ RESUELTO (abierto 2026-10-09; los 33 escenarios trabajados, cerrado 2026-10-10)
+- **Qué pasa**: G35 cambió lo visual pero no los flujos; registrar y accionar
+  cosas todavía pide muchos toques (un gasto diario, 7 a 10).
+- **Plan**: [`Docs/usabilidad/FLUJOS_SIMPLES_S03.md`](Docs/usabilidad/FLUJOS_SIMPLES_S03.md)
+  (fuente de verdad): los 33 escenarios de `USABILIDAD_REAL_S01.md` §5
+  recorridos sobre el diseño actual, en tablas paso a paso con conteo; por
+  cada uno, Claude propone el flujo objetivo, Juan decide, se implementa y se
+  valida en el teléfono. Patrones candidatos F-1 a F-8.
+- **Decidido (Juan, 2026-10-09)**: S3-1 todos los escenarios; S3-2 entra la
+  estructura de los flujos y lo visual de G35 se mantiene; S3-3 T1 en ≤ 4
+  toques + monto, T2 en ≤ 8; S3-5 los pasos tienen que quedar muy claros (lo
+  que viene elegido se ve como paso hecho y se cambia ahí mismo).
+  S3-6: la cuenta recordada sale del último movimiento anotado; para eso
+  `GET /usuarios/me/resumen-financiero` suma la cuenta de salida y de llegada
+  de cada movimiento (solo lectura, sin migración; requiere deploy).
+- **Hecho**: M1–M3 (F-1 cuenta recordada, F-2 categorías en botones) en la
+  rama `feat/G39-formulario-base`, verificado con capturas, aprobado por Juan
+  y mergeado (2026-10-09). Requiere deploy de la API en Render.
+- **Hecho (2)**: M5, H3 y P2 (F-3 "✅ Sí" en los avisos del Inicio para lo
+  programado que ya venció; F-8 "Se repite" con botones y una fecha futura en
+  el "+" deja el movimiento programado) en la rama `feat/G39-repite`, solo
+  app, verificado con capturas, aprobado por Juan y mergeado (2026-10-09).
+- **Hecho (3)**: M6 y H5 (F-5 "💳 Pagar una deuda" en el "+" para cualquier
+  deuda que no sea un encargo, con la deuda y la cuenta del último pago y los
+  botones "Todo lo que debes" / "La cuota"; Gasté ya no ofrece bienes ni lo
+  que te deben) en la rama `feat/G39-deudas`, solo app, verificado con
+  capturas, aprobado por Juan y mergeado (2026-10-09).
+- **Hecho (4)**: M4, M7 y M9 (F-9 "¿A dónde va la plata?" en Moví plata;
+  F-10 la cuenta de salida se recuerda con el destino ya elegido; F-11 "¿De
+  quién es?" en botones y "¿[miembro] ya te pasó su parte?", que evita
+  pedirle dos veces y deja "[miembro] puso X" en el detalle; F-12 "✅ Ya le
+  transferí" en Pagar) en la rama `feat/G39-hogar`, solo app, sin cambios de
+  dominio (la atribución por persona sigue fuera de alcance), verificado con
+  capturas, aprobado por Juan y mergeado (2026-10-09).
+- **Hecho (5)**: M8 y M10 (F-4 "¿De quién?" en botones con las personas con
+  algo pendiente primero y su saldo en palabras; F-13 "Todo lo de [persona]"
+  / "Lo que te debe" llenan el monto; F-14 "¿De dónde sale esta plata?" en
+  vez de "¿Te había pasado plata antes?") en la rama `feat/G39-personas`,
+  solo app, verificado con capturas, aprobado por Juan y mergeado (2026-10-09).
+- **Hecho (6)**: metas A1, A2, A6 y A7 (F-15 "¿Para qué meta?" en botones y
+  la meta nueva elegida al volver; F-16 la cuenta del último ahorro; F-17 "no
+  se mueve" en el pie; F-18 "¿Quién más puede ahorrar en ella?" con todos los
+  del hogar marcados al crear, que evita que la pareja vea la meta y no pueda
+  aportar) en la rama `feat/G39-metas`, solo app, verificado con capturas,
+  aprobado por Juan y mergeado (2026-10-09). A3, A4, A5 y A8 se mantienen.
+- **Hecho (7)**: C1, C2 y C3 (F-6 "¿De qué tipo?" en botones, con el primero
+  elegido en Cuenta, Ahorro e Inversión; F-19 aviso en el Inicio para bienes e
+  inversiones sin actualizar hace más de un año, con el dato nuevo
+  `fechaUltimaValorizacion` en la API, solo lectura, sin migración) en la rama
+  `feat/G39-agregar`, verificado con capturas y el e2e de valorización,
+  aprobado por Juan y mergeado (2026-10-09). Requiere deploy de la API en Render.
+- **Hecho (8)**: M12, M13, C4 y M11 en la rama `feat/G39-corregir`
+  (2026-10-10): F-7 el motivo viene elegido (la API lo sigue exigiendo);
+  "🔁 Anotar de nuevo" con el formulario lleno, que elimina el anterior;
+  "📦 Cerrar cuenta" pregunta qué pasó con el saldo; "¿Cuántos USD llegaron?"
+  en un cambio de moneda. API sin migración: `montoDestino` opcional en
+  `CONVERSION`, `GET /tipos-cambio/tasa` y `vigente` en el detalle de un
+  movimiento corregido. Verificado con capturas y e2e, aprobado por Juan y mergeado (2026-10-10).
+  Requiere deploy de la API en Render.
+- **Hecho (9)**: H1, H4, H6 y P1 en la rama `feat/G39-hogar-consultas`
+  (2026-10-10), solo app: "🔐 De lo tuyo suman N de M" en el Hogar; pantalla
+  "Qué compartes" con todas tus cuentas en dos grupos y el nivel a dos toques;
+  invitar destacado si estás solo en el hogar (si no, fila en Más del hogar);
+  aceptar una invitación desde Bienvenido; "Ponte un presupuesto del mes"
+  abre el formulario directo. H2 se mantiene. Verificado con capturas,
+  aprobado por Juan y mergeado (2026-10-10).
+- **Cerrado (2026-10-10)**: los 9 bloques mergeados; push y deploy de la API
+  en Render hechos por Juan. La validación con personas sigue en G33 (señal
+  de Zoily del 2026-10-10).

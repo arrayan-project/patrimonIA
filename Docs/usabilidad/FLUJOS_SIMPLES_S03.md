@@ -13,13 +13,16 @@ Es la fuente de verdad de este frente (G39 en `GAPS.md`).
   la Fase E de G33 y de G35) y `MEJORA_VISUAL_S02.md` (inventario de las 60
   pantallas y sus acciones).
 
-## 0. Estado al cierre del 2026-10-09 y lo que sigue
+## 0. Estado: frente cerrado (2026-10-10)
 
-**Hecho:** bloques 1 a 7 (24 de los 33 escenarios) aprobados por Juan,
-mergeados a `main` (último merge `482605f`), con push y deploy en Render
-hechos por Juan. Patrones F-1 a F-6 y F-8 a F-19 decididos (§6). La
-recuperación de contraseña en la nube quedó probada por Juan (llega el
-código de 6 dígitos).
+**G39 cerrado:** los 9 bloques (los 33 escenarios) aprobados por Juan y
+mergeados a `main` (último merge `0f30d75`), con push y deploy de la API en
+Render hechos por Juan (2026-10-10). Patrones F-1 a F-19 decididos (§6).
+
+**Señal de Zoily (2026-10-10):** ve una mejora notoria en el diseño, los
+flujos y el orden; ahora le es fácil registrar un gasto o un ingreso y ver y
+entender una meta y de dónde sale su plata. No lo da por definitivo: la
+validación sigue en G33 (`GAPS.md`).
 
 | Bloque | Escenarios | Sección |
 |--------|------------|---------|
@@ -32,17 +35,6 @@ código de 6 dígitos).
 | 7 | C1, C2, C3 · agregar cuentas y aviso anual de valor | §15 |
 | 8 | M12, M13, C4, M11 · corregir, borrar, cerrar y monedas | §16 |
 | 9 | H1, H2, H4, H6, P1 · consultas y configuración (H2 se mantiene) | §17 |
-
-**Hecho: bloque 8 — M12, M13, C4 y M11** (corregir, borrar, cerrar y
-monedas), aprobado por Juan y mergeado (2026-10-10, §16). Toca la API
-(requiere deploy en Render), sin migración.
-
-**Hecho: bloque 9 — H1, H2, H4, H6 y P1**, aprobado por Juan y mergeado
-(2026-10-10, §17), solo app. Con eso quedan los 33 escenarios trabajados.
-
-Bloque 9: consultas y configuración. Pistas
-del recorrido: H4 no tiene una vista para revisar qué comparte cada cuenta de
-una vez; P1 pasa por la lista vacía de Presupuestos antes del formulario.
 
 **Datos de prueba que quedaron en la base local** (`patrimonia`, Demo y
 Pareja): un gasto de 1.000 CLP sin categoría (Cuenta corriente de Demo); el
