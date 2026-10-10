@@ -136,7 +136,10 @@ export function ObjetivoDetalleScreen() {
       }
     >
       {obj.hogarId && !obj.puedoModificar && (
-        <AvisoDetalle color={c.muted} texto="👀 Meta del hogar: puedes verla, pero no cambiarla." />
+        <AvisoDetalle
+          color={c.muted}
+          texto="👀 Meta del hogar: puedes verla, pero no te agregaron para ahorrar en ella. Pídele a quien la creó que te agregue en ✏️ Editar."
+        />
       )}
       {/* G35: la banda dice cuánto llevas y la resta hasta la meta. */}
       <BandaDetalle

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   api,
@@ -8,17 +8,21 @@ import {
   type ObjetivoFinancieroDTO,
   type PatrimonioIndividualDTO,
   type ReservaDTO,
+  type ResumenFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
+import { DIAS_RECIENTES, ultimaCuenta, type MovimientoReciente } from '../recientes';
 import { money, porcentaje } from '../format';
 import { emojiMeta } from '../emojis';
 import { usePreferencias } from '../preferencias';
 import { useToast } from '../ui/Toast';
 import {
   AmountInput,
+  aISO,
   BandaDetalle,
   Button,
   Chip,
@@ -29,6 +33,7 @@ import {
   Nota,
   Panel,
   Pastilla,
+  Question,
   Screen,
   Skeleton,
   useC,
@@ -36,6 +41,8 @@ import {
 } from '../ui';
 
 type Origen = { cuentaId: string | null; monto: string };
+/** G39 (F-15): cuántas metas van como botones. */
+const METAS_A_LA_VISTA = 4;
 
 interface ResultadoAhorro {
   progreso: number;
@@ -75,18 +82,30 @@ export function AhorrarScreen() {
   const [origenes, setOrigenes] = useState<Origen[]>([{ cuentaId: null, monto: '' }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // G39 (F-16): los movimientos recientes dicen de qué cuenta ahorraste la última vez.
+  const [recientes, setRecientes] = useState<MovimientoReciente[] | null>(null);
+  const [recordada, setRecordada] = useState<string | null>(null);
+  // G39 (F-15): las metas que había antes de ir a "Nueva meta", para elegir la nueva al volver.
+  const idsAntes = useRef<Set<string> | null>(null);
 
   const sucio = origenes.some((o) => o.cuentaId || o.monto);
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
-  useEffect(() => {
+  // Se recarga al volver (p. ej. de "Nueva meta"): la meta nueva queda elegida.
+  const cargar = useCallback(() => {
     Promise.all([
       api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
       api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       api.get<{ elementoId: string; disponible: number }[]>('/usuarios/me/disponibilidad', token),
     ])
       .then(([objs, els, disp]) => {
-        setMetas(objs.filter((o) => o.estado === 'EN_PROGRESO' && o.puedoModificar));
+        const enCamino = objs.filter((o) => o.estado === 'EN_PROGRESO' && o.puedoModificar);
+        setMetas(enCamino);
+        const antes = idsAntes.current;
+        const nueva = antes ? enCamino.find((o) => !antes.has(o.id)) : undefined;
+        idsAntes.current = null;
+        if (nueva) setObjetivoId(nueva.id);
+        else if (enCamino.length === 1) setObjetivoId((actual) => actual ?? enCamino[0].id);
         setCuentas(
           els.filter(
             // Solo cuentas: no deudas, créditos ni bienes.
@@ -103,7 +122,30 @@ export function AhorrarScreen() {
       .get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token)
       .then((p) => setAjena(Object.fromEntries(p.porMoneda.map((m) => [m.moneda, m.plataAjena]))))
       .catch(() => setAjena({}));
+    const hoy = new Date();
+    const desde = new Date(hoy.getTime() - DIAS_RECIENTES * 24 * 60 * 60 * 1000);
+    api
+      .get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${aISO(desde)}&hasta=${aISO(hoy)}&alcance=mios`, token)
+      .then((r) => setRecientes(r.movimientos))
+      .catch(() => setRecientes([]));
   }, [token]);
+  useCargaAlEnfocar(cargar);
+  const nuevaMeta = () => {
+    idsAntes.current = new Set((metas ?? []).map((m) => m.id));
+    nav.go('MetaForm');
+  };
+
+  // G39 (F-16): con la cuenta de la meta conocida, la de tu último ahorro hacia ella
+  // viene elegida como "¿De dónde sale la plata?" (solo si aún no eligió).
+  useEffect(() => {
+    if (!cuentaMeta || !recientes) return;
+    const r = ultimaCuenta(recientes, 'TRANSFERENCIA', (id, lado) =>
+      lado === 'destino' ? id === cuentaMeta : id !== cuentaMeta && cuentas.some((x) => x.id === id),
+    );
+    if (!r?.origenId) return;
+    setOrigenes((xs) => (xs.length === 1 && !xs[0].cuentaId ? [{ ...xs[0], cuentaId: r.origenId }] : xs));
+    setRecordada(r.origenId);
+  }, [cuentaMeta, recientes, cuentas]);
 
   // Al elegir la meta: sus partes y la cuenta donde ya está su plata.
   useEffect(() => {
@@ -161,8 +203,9 @@ export function AhorrarScreen() {
   const resumen = (() => {
     if (!meta || validos.length === 0 || !destino) return '';
     const movidos = validos.filter((o) => o.cuentaId !== destino);
-    if (!movidos.length) return '';
-    return `🔁 Se mueven ${movidos.map((o) => `${money(Number(o.monto), meta.moneda)} de ${nombre(o.cuentaId)}`).join(' y ')} a ${nombre(destino)}.`;
+    // G39 (F-17): si la plata queda en la misma cuenta, se dice que no se mueve.
+    if (!movidos.length) return `🐷 La plata se queda en ${nombre(destino)}, separada para ${meta.nombre}: no se mueve.`;
+    return `🔁 Se mueven ${movidos.map((o) => `${money(Number(o.monto), meta.moneda)} de ${nombre(o.cuentaId)}`).join(' y ')} a ${nombre(destino)}. Hazlo también en tu banco; acá queda anotado.`;
   })();
 
   const puedeEnviar = !!meta && validos.length === origenes.length && !!destino && !excede;
@@ -197,11 +240,12 @@ export function AhorrarScreen() {
     return (
       <Screen>
         <Nota>No tienes metas en progreso donde ahorrar. Crea una meta primero.</Nota>
-        <Button title="Crear una meta" onPress={() => nav.go('MetaForm')} />
+        <Button title="🎯 Crear una meta" onPress={nuevaMeta} />
       </Screen>
     );
   }
 
+  const metasALaVista = metas.slice(0, METAS_A_LA_VISTA);
   // G35: sin numerar.
   const verParte = asignaciones.length > 1;
   const verCuentaMeta = !!meta && !cuentaMeta && origenes.length > 1;
@@ -220,17 +264,38 @@ export function AhorrarScreen() {
         </>
       }
     >
-      <Elegir
-        label="¿Para qué meta?"
-        placeholder="Elegir meta"
-        value={objetivoId}
-        options={metas.map((m) => ({
-          value: m.id,
-          label: m.nombre,
-          sub: `${money(m.progreso, m.moneda)} de ${money(m.montoObjetivo, m.moneda)}`,
-        }))}
-        onChange={setObjetivoId}
-      />
+      {/* G39 (F-15): las metas en camino a un toque, con su emoji. */}
+      <View style={styles.grupo}>
+        <Question>¿Para qué meta?</Question>
+        <View style={styles.chips}>
+          {metasALaVista.map((m) => (
+            <Pastilla
+              key={m.id}
+              label={`${emojiMeta(m.id, preferencias.emojis.metas)} ${m.nombre}`}
+              activo={objetivoId === m.id}
+              onPress={() => setObjetivoId(m.id)}
+            />
+          ))}
+          {meta && !metasALaVista.some((m) => m.id === meta.id) ? (
+            <Pastilla label={`${emojiMeta(meta.id, preferencias.emojis.metas)} ${meta.nombre}`} activo onPress={() => undefined} />
+          ) : null}
+          {metas.length > METAS_A_LA_VISTA && (
+            <Elegir
+              label="¿Para qué meta?"
+              value={objetivoId}
+              options={metas.map((m) => ({
+                value: m.id,
+                label: m.nombre,
+                emoji: emojiMeta(m.id, preferencias.emojis.metas),
+                sub: `${money(m.progreso, m.moneda)} de ${money(m.montoObjetivo, m.moneda)}`,
+              }))}
+              onChange={setObjetivoId}
+              boton={(abrir) => <Pastilla label={`🔍 Ver todas (${metas.length})`} enlace onPress={abrir} />}
+            />
+          )}
+          <Pastilla label="➕ Nueva meta" enlace onPress={nuevaMeta} />
+        </View>
+      </View>
 
       {meta && (
         <>
@@ -291,6 +356,9 @@ export function AhorrarScreen() {
                   })}
                   onChange={(v) => setOrigen(i, { cuentaId: v })}
                 />
+                {i === 0 && recordada && o.cuentaId === recordada ? (
+                  <Nota>🔁 La de tu último ahorro para esta meta. Tócala para cambiarla.</Nota>
+                ) : null}
                 {o.cuentaId && (
                   <View style={styles.monto}>
                     <AmountInput
@@ -339,5 +407,6 @@ export function AhorrarScreen() {
 const crearEstilos = (c: Paleta) =>
   StyleSheet.create({
     monto: { gap: 8 },
+    grupo: { gap: 8 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   });
