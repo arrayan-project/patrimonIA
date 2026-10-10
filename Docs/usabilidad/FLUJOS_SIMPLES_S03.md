@@ -13,6 +13,47 @@ Es la fuente de verdad de este frente (G39 en `GAPS.md`).
   la Fase E de G33 y de G35) y `MEJORA_VISUAL_S02.md` (inventario de las 60
   pantallas y sus acciones).
 
+## 0. Estado al cierre del 2026-10-09 y lo que sigue
+
+**Hecho:** bloques 1 a 7 (24 de los 33 escenarios) aprobados por Juan,
+mergeados a `main` (último merge `482605f`), con push y deploy en Render
+hechos por Juan. Patrones F-1 a F-6 y F-8 a F-19 decididos (§6). La
+recuperación de contraseña en la nube quedó probada por Juan (llega el
+código de 6 dígitos).
+
+| Bloque | Escenarios | Sección |
+|--------|------------|---------|
+| 1 | M1, M2, M3 · formulario base | §9 |
+| 2 | M5, H3, P2 · lo que se repite | §10 |
+| 3 | M6, H5 · tarjetas y deudas | §11 |
+| 4 | M4, M7, M9 · entre miembros del hogar | §12 |
+| 5 | M8, M10 · plata de otras personas | §13 |
+| 6 | A1–A8 · metas y ahorro (A3, A4, A5, A8 se mantienen) | §14 |
+| 7 | C1, C2, C3 · agregar cuentas y aviso anual de valor | §15 |
+| 8 | M12, M13, C4, M11 · corregir, borrar, cerrar y monedas | §16 |
+
+**Hecho: bloque 8 — M12, M13, C4 y M11** (corregir, borrar, cerrar y
+monedas), aprobado por Juan y mergeado (2026-10-10, §16). Toca la API
+(requiere deploy en Render), sin migración.
+
+**Lo siguiente: bloque 9 — H1, H2, H4, H6 y P1.**
+
+Bloque 9: consultas y configuración. Pistas
+del recorrido: H4 no tiene una vista para revisar qué comparte cada cuenta de
+una vez; P1 pasa por la lista vacía de Presupuestos antes del formulario.
+
+**Datos de prueba que quedaron en la base local** (`patrimonia`, Demo y
+Pareja): un gasto de 1.000 CLP sin categoría (Cuenta corriente de Demo); el
+programado "Prueba G39 internet" (18.000, 7 oct, confirmado) y otro igual del
+8 oct pendiente; un programado de 450.000 para el 5 nov; un gasto compartido de
+30.000 con su solicitud de 15.000 a Pareja pendiente; la meta compartida
+"Prueba G39 vacaciones" (1.500.000, Pareja puede ahorrar).
+
+**Para retomar en local:** `./scripts/db.sh`, `./scripts/api.sh` y
+`./scripts/app-local.sh` (Docs/CORRER_EN_LOCAL.md). En local los correos no se
+envían: sin `BREVO_API_KEY` en `api/.env`, el código de registro o de
+recuperación aparece en la terminal de `api.sh`.
+
 ---
 
 ## 1. Por qué (Juan, 2026-10-09)
@@ -638,8 +679,26 @@ devolución **6 toques, sin escribir** (antes 9 + monto).
 **Pagar en dólares:** Gasté desde una cuenta en USD, como M1.
 **Conteo:** 2 pantallas · 7 toques · 1 campo.
 **Lo que cuesta:** necesita una tasa vigente en Ajustes › Tipos de cambio
-*(verificar qué pasa si no hay)*: la tasa vive lejos del formulario.
-**Objetivo:** *por definir.*
+*(verificado: sin tasa la API rechaza "No hay tipo de cambio…"; en la nube
+USD, EUR y UF se importan cada hora desde mindicador.cl)*. Lo que de verdad
+cuesta: no se ve cuánto llega, y el banco no cambia al dólar observado, así
+que el saldo en dólares queda distinto al real.
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve / qué hace | Toques |
+|---|-------|-------------------|--------|
+| 1 | Inicio | Toca "+" | 1 |
+| 2 | Hoja "+" | Toca 🔁 Moví plata | 1 |
+| 3 | Moví plata | Escribe el monto | campo |
+| 4 | Moví plata | "¿A qué cuenta?" → cuenta en USD | 2 |
+| 5 | Moví plata | "¿Desde qué cuenta?" viene la de la última vez (F-1) | 0 |
+| 6 | Moví plata | **"¿Cuántos USD llegaron?"** ya lleno al cambio del día ("💱 1 USD = 960 CLP. Si tu banco te dio otro, escribe lo que llegó"); se cambia si el banco dio otro | 0 (+ campo) |
+| 7 | Moví plata | Pie: "Cambias 100.000 CLP de Cuenta corriente y llegan 104,17 USD a Cuenta en dólares · hoy." → Anotar cambio de moneda | 1 |
+
+Sin tasa del día, el paso 6 lo dice ahí mismo y basta con escribir lo que
+llegó (ya no hace falta ir a Ajustes). **Conteo:** 2 pantallas · 5 toques ·
+1 campo (+1 si el banco dio otro cambio). Implementado en §16.
 
 #### M12 — Me equivoqué en un monto y lo corrijo
 
@@ -656,8 +715,32 @@ devolución **6 toques, sin escribir** (antes 9 + monto).
 
 **Conteo:** 3 pantallas · 4 toques · 2 campos.
 **Lo que cuesta:** el motivo obligatorio para un error de tipeo; la cuenta y
-el tipo no se cambian (hay que eliminar y anotar de nuevo).
-**Objetivo:** *por definir.*
+el tipo no se cambian (hay que eliminar y anotar de nuevo). *(Verificado: la
+API exige el motivo, DDD §T y §U; la categoría tampoco se cambia; un
+movimiento ya cambiado no se puede volver a editar, y abierto desde la lista
+mostraba el monto original.)*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve / qué hace | Toques |
+|---|-------|-------------------|--------|
+| 1 | Cualquier pestaña | Toca la pestaña Movimientos | 1 |
+| 2 | Movimientos | Toca el movimiento | 1 |
+| 3 | Movimiento | ✏️ Editar | 1 |
+| 4 | Editar movimiento | Escribe el monto correcto | campo |
+| 5 | Editar movimiento | "¿Por qué lo cambias?" viene en **✏️ Me equivoqué al anotarlo** (F-7); "✍️ Otro" abre el campo | 0 |
+| 6 | Editar movimiento | Guardar cambios | 1 |
+
+**Conteo:** 3 pantallas · 4 toques · 1 campo.
+
+**Era otra cuenta, otro tipo u otra categoría (M12b):** en Editar,
+"🔁 Anotar de nuevo" abre el formulario del "+" lleno (monto, fecha, cuentas,
+categoría y detalle), con "¿Qué fue?" (💸 Gasté · 💰 Recibí · 🔁 Moví plata)
+arriba. El pie termina en "Reemplaza el gasto de 12.000 CLP del 10 oct: ese se
+elimina." Al anotar, se elimina el anterior (y sus cambios) y se vuelve a
+donde se abrió. Es también el camino para cambiar de nuevo un movimiento ya
+cambiado y para un cambio de moneda (que no se edita). **Conteo:** 3
+pantallas · 5 a 7 toques · 0 campos.
 
 #### M13 — Registré algo que no pasó y lo borro
 
@@ -673,7 +756,18 @@ el tipo no se cambian (hay que eliminar y anotar de nuevo).
 
 **Conteo:** 3 pantallas · 4 toques · 1 campo.
 **Lo que cuesta:** el motivo obligatorio.
-**Objetivo:** *por definir.*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve / qué hace | Toques |
+|---|-------|-------------------|--------|
+| 1 | Cualquier pestaña | Toca la pestaña Movimientos | 1 |
+| 2 | Movimientos | Toca el movimiento | 1 |
+| 3 | Movimiento | 🗑️ Eliminar movimiento | 1 |
+| 4 | Eliminar movimiento | "¿Por qué lo eliminas?" viene en **🙅 No pasó** (F-7); 👯 Estaba repetido · ✍️ Otro | 0 |
+| 5 | Eliminar movimiento | Eliminar movimiento | 1 |
+
+**Conteo:** 3 pantallas · 4 toques · 0 campos.
 
 ### 5.2 Metas y ahorro
 
@@ -1183,9 +1277,23 @@ valor de cada cuenta (dato de solo lectura, sin migración; requiere deploy).
 | 3 | Confirmar | Escribe el motivo | campo |
 | 4 | Confirmar | Desactivar | 1 |
 
-**Conteo:** 3 pantallas · 3 toques · 1 campo. *(verificar)* qué pide si la
-cuenta todavía tiene saldo.
-**Objetivo:** *por definir.*
+**Conteo:** 3 pantallas · 3 toques · 1 campo. *(Corregido al verificar: el
+motivo ya era opcional, así que son 3 toques y 0 campos. Con saldo no pedía
+nada: la cuenta dejaba de sumar y esa plata desaparecía de "Tu plata" sin
+aviso.)*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve / qué hace | Toques |
+|---|-------|-------------------|--------|
+| 1 | Inicio | En "Tus cuentas", la cuenta › Ver la cuenta | 1 |
+| 2 | Detalle | **📦 Cerrar cuenta** (antes "Desactivar"; en una deuda "Cerrar deuda", en un bien "Ya no lo tengo") | 1 |
+| 3 | Cerrar cuenta | Si tiene saldo: "💰 Todavía tiene 50.000 CLP. ¿Dónde quedó esa plata?" → 🔁 La pasé a otra cuenta (abre Moví plata con el monto y la cuenta de salida puestos; al volver ya está en cero) · 🚫 Ya no la tengo ("Los 50.000 CLP dejan de contar en tu plata"). En una deuda: 💳 La pagué · 🚫 Ya no la debo | 0 (sin saldo) · 1 |
+| 4 | Cerrar cuenta | 📦 Cerrar cuenta | 1 |
+
+**Conteo:** sin saldo, 3 pantallas · 3 toques · 0 campos. Con saldo que se
+pasa a otra cuenta: +4 toques (pasarla, elegir la cuenta, anotar). Lo cerrado
+se ve como "📦 Cerrada desde el …" y en "🗄️ Ver cerradas".
 
 ### 5.5 Planificación
 
@@ -1275,7 +1383,7 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-4 | **Personas como botones:** "¿De quién?" muestra a las personas con algo pendiente primero (máx. 4) y "➕ Otra persona", con una línea del saldo de la elegida ("💵 Tienes 30.000 de Noira"). | M8, M10 | −1 toque | ✅ en M8 y M10 (§13) |
 | F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+": la deuda y la cuenta de la última vez, y botones con "Todo lo que debes" y "La cuota"; el pie dice cuánto queda por pagar. Gasté ya no ofrece bienes ni "te deben" como cuenta de pago. | M6, H5 | −1 a −3 toques y 0 campos | ✅ en M6 y H5 (§11) |
 | F-6 | **"¿De qué tipo?" en botones** al agregar; en Cuenta, Ahorro e Inversión viene elegido el primero (no cambia nada para el usuario); en Bien, Deuda y Te deben se elige (cambia lo que se pregunta y cómo se paga). | C1, C2, C3 | −1 a −2 toques | ✅ en C1–C3 (§15) |
-| F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
+| F-7 | **El motivo viene elegido** en correcciones y eliminaciones (la API lo sigue exigiendo, DDD §T y §U): "✏️ Me equivoqué al anotarlo" al editar, "🙅 No pasó" · "👯 Estaba repetido" al eliminar, "♻️ La volví a usar" al reactivar; "✍️ Otro" abre el campo. Cerrar una cuenta ya no lo pedía. | M12, M13, C4 | −1 campo | ✅ en M12 y M13 (§16) |
 | F-8 | **El "+" para todo lo que se repite o viene:** "🔁 Se repite" muestra Cada mes · Cada año como botones, y una fecha futura en Gasté / Recibí / Moví plata deja el movimiento programado en vez de anotarlo. Programar en Planificar sigue existiendo. | M5, H3, P2 | −1 a −4 toques; una sola puerta | ✅ en M5, H3 y P2 (§9) |
 | F-9 | **"¿A dónde va la plata?" en Moví plata:** 🙋 A otra cuenta mía · 👤 A [miembro] como botones antes de la cuenta; si el miembro no deja ver ninguna cuenta, se dice qué tiene que hacer en su teléfono. El pie recuerda que la transferencia se hace en el banco y que el otro no anota nada. | M4, M9, H3 | −1 toque; deja claro quién anota qué | ✅ en M4 (§12) |
 | F-10 | **La cuenta de salida también se recuerda cuando el destino viene elegido** (Hogar › Para transferirles, Pagar una solicitud). | M4, M7 | −2 toques | ✅ en M4 y M7 (§12) |
@@ -1301,7 +1409,7 @@ Frecuencia primero; los primeros fijan los patrones.
 5. **M8, M10** — plata de otras personas (F-4, F-13, F-14). ✅ implementado y mergeado (§13).
 6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). ✅ implementado y mergeado (§14).
 7. **C1, C2, C3** — agregar (F-6, F-19). ✅ implementado y mergeado (§15). C4 (cerrar) pasa al bloque 8, con F-7.
-8. **M12, M13, C4, M11** — corregir, borrar, cerrar y monedas (F-7).
+8. **M12, M13, C4, M11** — corregir, borrar, cerrar y monedas (F-7). ✅ implementado y mergeado (§16).
 9. **H1, H2, H4, H6, P1** — consultas y configuración.
 
 Cada escenario trabajado reemplaza su "Objetivo: por definir" con la tabla de
@@ -1315,7 +1423,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10; F-15 a F-18 con las metas; F-6 y F-19 con C1–C3. | 🟡 F-1 a F-6 y F-8 a F-19 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10; F-15 a F-18 con las metas; F-6 y F-19 con C1–C3; F-7 con M12 y M13. | ✅ F-1 a F-6 y F-8 a F-19 Juan, 2026-10-09; F-7 Juan, 2026-10-10 |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1547,3 +1655,51 @@ un dato nuevo de solo lectura en la API (requiere deploy en Render).**
   Agregar › Deuda sin tipo elegido. No se guardó nada.
 - **Conteo logrado:** C1 5 toques + 2 campos · C2 6 + 2 · C3 6 + 2 y, cada año,
   2 + valor desde el aviso.
+
+## 16. Implementación de M12, M13, C4 y M11 (rama `feat/G39-corregir`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-10). **Toca la API (requiere deploy en Render), sin
+migración.**
+
+**Decisiones de Juan (2026-10-10):** F-7 con el motivo elegido por defecto
+(no se toca el dominio); M11 con "¿Cuánto llegó?" (cambio en la API);
+"Desactivar" pasa a "Cerrar cuenta" ("Ya no lo tengo" en bienes).
+
+- **API:**
+  - `RegistrarEventoFinanciero` acepta `montoDestino` opcional, solo en
+    `CONVERSION`: lo que llegó a la cuenta destino manda sobre la tasa
+    vigente (la tasa queda implícita). En otro tipo responde 400.
+  - `GET /tipos-cambio/tasa?origen&destino&fecha` (nuevo, solo lectura): la
+    tasa que usaría la conversión (directa, inversa o triangulada), o `null`.
+  - `GET /eventos-financieros/:id` trae `vigente` (monto, fecha, detalle y la
+    cadena de correcciones) cuando el movimiento tiene correcciones vivas,
+    igual que la fila de la lista. Antes el detalle mostraba el monto original
+    y "Editar" fallaba al abrirlo desde la lista.
+  - e2e: `tipo-cambio-conversion` 9/9 y `correccion-fecha-glosa` +
+    `flujo6-correccion` verdes, con aserciones nuevas.
+- **App:**
+  - `AccionFormScreen`: `ElegirMotivo` (motivos a un toque, el primero
+    elegido, "✍️ Otro" abre el campo) y `cierre` (el saldo de la cuenta o
+    deuda, recargado al volver, con "La pasé a otra cuenta" / "La pagué" o "Ya
+    no la tengo" / "Ya no la debo" antes de cerrar).
+  - `CorregirMovimientoScreen`: el motivo elegido y "🔁 Anotar de nuevo"
+    (también cuando ya se cambió o es un cambio de moneda; sin nada que guardar
+    no hay botón Guardar).
+  - `MovimientoDetalleScreen`: muestra lo vigente y "✏️ Lo cambiaste: antes
+    era …" (solo lo que cambió); motivos de Eliminar.
+  - `RegistrarMovimientoScreen`: acepta el formulario lleno (`monto`, `fecha`,
+    `categoriaId`, `glosa`, `montoDestino`) y `reemplaza` ("¿Qué fue?",
+    frecuentes ocultos, el pie lo dice; al anotar elimina el anterior y vuelve
+    3 pantallas). En un cambio de moneda, el paso "¿Cuántos USD llegaron?".
+  - `ElementoDetalleScreen` y `PatrimonioSeccionScreen`: Cerrar cuenta / Cerrar
+    deuda / Ya no lo tengo; "Cerrada" y "Ver cerradas".
+- **Verificado (capturas web, como Demo):** M12 (12.000 con el motivo elegido;
+  detalle con lo vigente; Editar de uno ya cambiado solo ofrece Anotar de
+  nuevo; anotarlo como 💰 Recibí elimina el gasto y su cambio, confirmado en
+  la API); M13 (los tres motivos y Otro); C4 (Prueba G39 cerrar con 50.000 →
+  La pasé a otra cuenta → Cuenta de ahorro → cerrar sin saldo → "📦 Cerrada");
+  M11 (100.000 CLP → 104,17 USD al 960; escrito 102,5 → la cuenta en dólares
+  queda en 2.602,5).
+- **Datos de prueba que quedaron (base local):** la cuenta "Prueba G39
+  cerrar" (cerrada, con su saldo pasado a Cuenta de ahorro); el ingreso
+  "Prueba G39 helado" eliminado; un cambio de 100.000 CLP → 102,5 USD.

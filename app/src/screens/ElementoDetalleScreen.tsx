@@ -269,6 +269,16 @@ export function ElementoDetalleScreen() {
       ]
     : [];
 
+  // G39 (C4): "Desactivar" en palabras de lo que pasó.
+  const cierre =
+    el.categoriaFuncional === 'ACTIVO'
+      ? { titulo: 'Ya no lo tengo', explicacion: 'Deja de sumar en tu plata desde la fecha que digas. Si lo vendiste, anota primero lo que te pagaron. Puedes reactivarlo después.', aviso: 'Listo: ya no suma' }
+      : esDeuda
+        ? { titulo: 'Cerrar deuda', explicacion: 'Deja de contar en lo que debes desde la fecha que digas. Puedes reactivarla después.', aviso: 'Deuda cerrada' }
+        : esCredito
+          ? { titulo: 'Cerrar', explicacion: 'Deja de contar en lo que te deben desde la fecha que digas. Puedes reactivarlo después.', aviso: 'Cerrado' }
+          : { titulo: 'Cerrar cuenta', explicacion: 'Deja de sumar en tu plata desde la fecha que digas. Puedes reactivarla después.', aviso: 'Cuenta cerrada' };
+
   return (
     <Screen
       onRefresh={cargar}
@@ -281,6 +291,7 @@ export function ElementoDetalleScreen() {
                 titulo: 'Reactivar',
                 explicacion: 'Vuelve a contar en tu plata.',
                 pregunta: '¿Por qué la reactivas?',
+                motivos: [{ emoji: '♻️', texto: 'La volví a usar' }],
                 boton: 'Reactivar',
                 comando: 'ReactivarElementoPatrimonial',
                 body: { elementoId },
@@ -312,7 +323,7 @@ export function ElementoDetalleScreen() {
       {el.estado === 'INACTIVO' && (
         <AvisoDetalle
           color={c.muted}
-          texto={`📦 Desactivada${el.fechaBaja ? ` desde el ${fechaLegible(el.fechaBaja)}` : ''}: no suma en tu plata.`}
+          texto={`📦 Cerrada${el.fechaBaja ? ` desde el ${fechaLegible(el.fechaBaja)}` : ''}: no suma en tu plata.`}
         />
       )}
       <BandaDetalle
@@ -483,20 +494,22 @@ export function ElementoDetalleScreen() {
         <View style={styles.destructivas}>
           {activo && (
             <Button
-              title="📦 Desactivar"
+              title={`📦 ${cierre.titulo}`}
               variant="danger"
               onPress={() =>
                 irAAccion(nav, {
-                  titulo: 'Desactivar',
-                  explicacion: 'Deja de sumar en tu plata desde la fecha que digas. Puedes reactivarla después.',
+                  titulo: cierre.titulo,
+                  explicacion: cierre.explicacion,
                   pregunta: '¿Por qué? (opcional)',
                   minimo: 0,
                   fecha: { campo: 'fechaBaja', pregunta: '¿Desde cuándo? (opcional, por defecto hoy)' },
-                  boton: 'Desactivar',
+                  boton: cierre.titulo,
                   comando: 'DesactivarElementoPatrimonial',
                   body: { elementoId },
-                  aviso: 'Desactivada',
+                  aviso: cierre.aviso,
                   peligro: true,
+                  // G39 (C4): con saldo, primero qué pasó con esa plata (o deuda).
+                  ...(esCredito || el.categoriaFuncional === 'ACTIVO' ? {} : { cierre: { elementoId: el.id, deuda: esDeuda } }),
                 })
               }
             />

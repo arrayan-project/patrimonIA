@@ -107,6 +107,13 @@ describe('Corrección de fecha y glosa (e2e)', () => {
     ).body;
     expect(corr.fecha).toBe('2026-04-02');
     expect(await valorVigente()).toBe(antes - 20_000);
+
+    // G39 (M12): el detalle del original dice cómo quedó, como la lista.
+    const det = await auth(request(http).get(`/eventos-financieros/${gasto.id}`)).expect(200);
+    expect(det.body.monto).toBe(30_000);
+    expect(det.body.vigente).toEqual({ monto: 20_000, fecha: '2026-04-02', glosa: null, correccionIds: [corr.id] });
+    const sinCorr = await auth(request(http).get(`/eventos-financieros/${corr.id}`)).expect(200);
+    expect(sinCorr.body.vigente).toBeUndefined();
   });
 
   it('rechaza una corrección sin cambios', async () => {

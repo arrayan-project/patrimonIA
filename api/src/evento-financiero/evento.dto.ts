@@ -22,6 +22,12 @@ export interface EventoFinancieroDTO {
     elementoId: string;
     monto: number;
   }[];
+  /**
+   * G39 (M12): solo en GET /eventos-financieros/:id y si el evento tiene
+   * correcciones vivas — cómo quedó después de ellas (lo que muestra la lista)
+   * y la cadena de correcciones, de la primera a la última.
+   */
+  vigente?: { monto: number; fecha: string; glosa: string | null; correccionIds: string[] };
 }
 
 export function toEventoDTO(

@@ -265,6 +265,8 @@ export interface EventoFinancieroDTO {
   etiquetaIds: string[];
   createdAt: string;
   impactos: { id: string; elementoId: string; monto: number }[];
+  /** G39 (M12): solo en el detalle, si tiene correcciones vivas: cómo quedó. */
+  vigente?: { monto: number; fecha: string; glosa: string | null; correccionIds: string[] };
 }
 
 export interface PatrimonioIndividualDTO {

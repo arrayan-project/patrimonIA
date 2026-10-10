@@ -153,7 +153,7 @@ export function PatrimonioSeccionScreen() {
     if (sinTildes(etiqueta(el.tipo)) !== sinTildes(el.nombre)) partes.push(etiqueta(el.tipo));
     if (el.estadoOperativo === 'EN_MORA' || el.estadoOperativo === 'INCOBRABLE')
       partes.push(`⏰ ${etiqueta(el.estadoOperativo)}`);
-    if (el.estado === 'INACTIVO') partes.push('Desactivada');
+    if (el.estado === 'INACTIVO') partes.push('Cerrada');
     return partes.join(' · ') || undefined;
   };
 
@@ -187,7 +187,7 @@ export function PatrimonioSeccionScreen() {
   const grupoDesactivadas = desactivadas.length > 0 && (
     <View style={{ gap: 8 }}>
       <Pastilla
-        label={verDesactivadas ? `🗄️ Ocultar desactivadas` : `🗄️ Ver desactivadas (${desactivadas.length})`}
+        label={verDesactivadas ? `🗄️ Ocultar cerradas` : `🗄️ Ver cerradas (${desactivadas.length})`}
         onPress={() => setVerDesactivadas((v) => !v)}
       />
       {verDesactivadas && <ListCard>{desactivadas.map(fila)}</ListCard>}
