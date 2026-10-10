@@ -7,6 +7,7 @@ import { InvitacionIdDto } from './dto/invitacion-id.dto.js';
 import {
   ActualizarDatosHogarDto,
   AsignarRolDto,
+  CambiarInicioMesHogarDto,
   CambiarMonedaConsolidacionDto,
   EliminarHogarDto,
   RemoverMiembroDto,
@@ -84,6 +85,12 @@ export class HogarController {
   @HttpCode(200)
   cambiarMoneda(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CambiarMonedaConsolidacionDto) {
     return this.hogares.cambiarMonedaConsolidacion(u.id, dto.hogarId, dto.moneda);
+  }
+
+  @Post('comandos/CambiarInicioMesHogar')
+  @HttpCode(200)
+  cambiarInicioMes(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CambiarInicioMesHogarDto) {
+    return this.hogares.cambiarInicioMes(u.id, dto.hogarId, dto.dia);
   }
 
   @Post('comandos/AsignarRol')

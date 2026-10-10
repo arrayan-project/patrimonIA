@@ -1,4 +1,4 @@
-import { IsIn, IsString, IsUUID, Length, MinLength } from 'class-validator';
+import { IsIn, IsInt, IsString, IsUUID, Length, Max, Min, MinLength } from 'class-validator';
 
 export class ActualizarDatosHogarDto {
   @IsUUID() hogarId!: string;
@@ -8,6 +8,12 @@ export class ActualizarDatosHogarDto {
 export class CambiarMonedaConsolidacionDto {
   @IsUUID() hogarId!: string;
   @IsString() @Length(3, 3) moneda!: string;
+}
+
+/** G43: día en que parte el mes del hogar (1 = mes calendario). */
+export class CambiarInicioMesHogarDto {
+  @IsUUID() hogarId!: string;
+  @IsInt() @Min(1) @Max(28) dia!: number;
 }
 
 export class AsignarRolDto {

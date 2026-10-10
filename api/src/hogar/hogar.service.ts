@@ -279,6 +279,28 @@ export class HogarService {
     return this.obtenerHogar(hogarId, actorId);
   }
 
+  /**
+   * G43 — CambiarInicioMesHogar. Día en que parte el mes de las vistas del
+   * hogar (1–28). Solo un administrador, como los demás datos del hogar.
+   */
+  async cambiarInicioMes(actorId: string, hogarId: string, dia: number): Promise<HogarDTO> {
+    await this.exigirAdministrador(hogarId, actorId);
+    const hogar = await this.prisma.hogar.findUniqueOrThrow({ where: { id: hogarId } });
+    if (hogar.dia_inicio_mes === dia) throw new ConflictException('Sin cambios');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.hogar.update({ where: { id: hogarId }, data: { dia_inicio_mes: dia } });
+      await this.auditoria.registrar(tx, {
+        comando: 'CambiarInicioMesHogar',
+        usuarioId: actorId,
+        entidadTipo: 'HOGAR',
+        entidadId: hogarId,
+        valorAnterior: { dia_inicio_mes: hogar.dia_inicio_mes },
+        valorPosterior: { dia_inicio_mes: dia },
+      });
+    });
+    return this.obtenerHogar(hogarId, actorId);
+  }
+
   /** AS #40 — AsignarRol. Debe quedar ≥1 administrador tras el cambio. */
   async asignarRol(
     actorId: string,

@@ -30,6 +30,8 @@ CREATE TABLE hogar (
     id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre                TEXT NOT NULL,
     moneda_consolidacion  TEXT NOT NULL,  -- ISO 4217
+    -- migración 029 (G43): día en que parte el mes del hogar (1 = mes calendario).
+    dia_inicio_mes        SMALLINT NOT NULL DEFAULT 1 CHECK (dia_inicio_mes BETWEEN 1 AND 28),
     created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

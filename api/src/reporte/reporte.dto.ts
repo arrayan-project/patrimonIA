@@ -68,3 +68,37 @@ export interface ResumenAnualDTO {
   /** 12 entradas (mes 1..12), cada una con sus totales por moneda. */
   meses: { mes: number; porMoneda: TotalesPorMoneda[] }[];
 }
+
+/**
+ * G41 — qué movió la plata de un grupo de cuentas en el período. `clase`:
+ *   INGRESO · GASTO · SALDO_INICIAL (cuenta que se agregó) ·
+ *   AHORRO (con tus cuentas de ahorro) · INVERSION · DEUDA (pagos o créditos) ·
+ *   CUSTODIA (plata de otras personas que guardas, G28) ·
+ *   OTRAS (con tus otras cuentas) · PERSONA (con alguien del hogar) ·
+ *   CAMBIO_MONEDA (entre tus cuentas de distinta moneda) · AJUSTE (corregiste el saldo).
+ * `monto` con signo: positivo = entró a las cuentas; negativo = salió.
+ * Una línea por (clase, signo, persona): lo que entra y lo que sale no se netean.
+ */
+export interface LineaFotoMesDTO {
+  clase: string;
+  monto: number;
+  persona: { usuarioId: string; nombre: string } | null;
+}
+
+export interface FotoMesPorMonedaDTO {
+  moneda: string;
+  /** Lo que había en las cuentas el día antes de `desde`. */
+  tenias: number;
+  /** Lo que había al cierre de `hasta`. tenias + Σ lineas = tienes. */
+  tienes: number;
+  lineas: LineaFotoMesDTO[];
+  /** Lo apartado hoy para metas en estas cuentas (reservas activas). */
+  apartadoMetas: number;
+}
+
+export interface FotoMesDTO {
+  periodo: { desde: string; hasta: string };
+  /** Las cuentas usadas (las pedidas que son tuyas y están activas). */
+  cuentas: string[];
+  porMoneda: FotoMesPorMonedaDTO[];
+}
