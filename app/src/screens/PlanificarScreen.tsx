@@ -216,12 +216,13 @@ export function PlanificarScreen() {
           ) : (
             <Section title="Presupuesto">
               <ListCard>
+                {/* G39 (P1): abre directo el formulario (sin pasar por la lista vacía). */}
                 <TxRow
-                  title="Sin presupuesto vigente"
-                  subtitle="Crea uno para comparar lo que gastas"
+                  title="Ponte un presupuesto del mes"
+                  subtitle="Para ver si te pasas de lo que piensas gastar"
                   amount=""
                   logo={{ emoji: '🧾' }}
-                  onPress={() => nav.go('Presupuestos')}
+                  onPress={() => nav.go('PresupuestoForm')}
                 />
               </ListCard>
             </Section>

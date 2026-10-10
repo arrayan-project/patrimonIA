@@ -106,20 +106,7 @@ export function GestionHogarScreen() {
       peligro: true,
     });
 
-  const invitar = () =>
-    irAAccion(nav, {
-      titulo: 'Invitar a alguien',
-      explicacion: 'Le llega una invitación para unirse al hogar.',
-      pregunta: '¿Cuál es su correo?',
-      placeholder: 'persona@email.cl',
-      teclado: 'email',
-      boton: 'Enviar invitación',
-      comando: 'InvitarMiembro',
-      body: { hogarId },
-      campo: 'emailInvitado',
-      minimo: 5,
-      aviso: 'Invitación enviada',
-    });
+  const invitar = () => invitarAlHogar(nav, hogarId);
 
   const salir = async () => {
     if (!(await confirmar('Salir del hogar', 'Dejarás de ver la plata y las metas del hogar. Tus cuentas siguen siendo tuyas.', 'Salir')))
@@ -251,3 +238,20 @@ export function GestionHogarScreen() {
 const styles = StyleSheet.create({
   pastillas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
+
+/** Invitar a alguien al hogar (Personas del hogar y, G39 H6, el Hogar). */
+export function invitarAlHogar(nav: ReturnType<typeof useNav>, hogarId: string): void {
+  irAAccion(nav, {
+    titulo: 'Invitar a alguien',
+    explicacion: 'Le llega una invitación para unirse al hogar.',
+    pregunta: '¿Cuál es su correo?',
+    placeholder: 'persona@email.cl',
+    teclado: 'email',
+    boton: 'Enviar invitación',
+    comando: 'InvitarMiembro',
+    body: { hogarId },
+    campo: 'emailInvitado',
+    minimo: 5,
+    aviso: 'Invitación enviada',
+  });
+}

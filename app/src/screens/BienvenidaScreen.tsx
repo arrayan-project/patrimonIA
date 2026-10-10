@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { api, ApiError, type InvitacionDTO } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { useNav } from '../navigation/navigator';
-import { panelDe, Screen, tinte, useC, type Paleta } from '../ui';
+import { ErrorText, panelDe, Screen, tinte, useC, type Paleta } from '../ui';
+import { TarjetaInvitacion } from './InvitacionesScreen';
 import { EnlaceAcceso } from '../ui/acceso';
 import { Text } from '../ui/Text';
 
@@ -12,6 +15,31 @@ export function BienvenidaScreen() {
   const styles = useMemo(() => crearEstilos(c), [c]);
   const nav = useNav();
   const { session, cerrarSesion } = useAuth();
+  // G39 (H6): con una invitación pendiente, se acepta aquí mismo con un toque.
+  const [invitaciones, setInvitaciones] = useState<InvitacionDTO[]>([]);
+  const [actuando, setActuando] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const token = session?.token ?? '';
+  const cargar = useCallback(async () => {
+    if (!token) return;
+    setInvitaciones(await api.get<InvitacionDTO[]>('/usuarios/me/invitaciones?estado=PENDIENTE', token).catch(() => []));
+  }, [token]);
+  useCargaAlEnfocar(cargar);
+  const responder = async (inv: InvitacionDTO, acepta: boolean) => {
+    setActuando(inv.id);
+    setError('');
+    try {
+      await api.post(acepta ? '/comandos/AceptarInvitacion' : '/comandos/RechazarInvitacion', { invitacionId: inv.id }, token);
+      if (acepta) {
+        nav.reset('Tabs');
+        return;
+      }
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error inesperado');
+    }
+    setActuando(null);
+  };
 
   const opcion = (emoji: string, titulo: string, sub: string, onPress: () => void) => (
     <Pressable
@@ -38,10 +66,21 @@ export function BienvenidaScreen() {
       </Text>
       <Text style={styles.pregunta}>¿Cómo quieres empezar?</Text>
 
+      {invitaciones.map((inv) => (
+        <TarjetaInvitacion
+          key={inv.id}
+          inv={inv}
+          actuando={actuando === inv.id}
+          onAceptar={() => void responder(inv, true)}
+          onRechazar={() => void responder(inv, false)}
+        />
+      ))}
+      <ErrorText>{error}</ErrorText>
       {opcion('🏠', 'Crear mi hogar', 'Aunque vivas solo: ahí se ordena tu plata', () =>
         nav.go('CrearHogar'),
       )}
-      {opcion('✉️', 'Me invitaron', 'Únete al hogar de otra persona', () => nav.go('Invitaciones'))}
+      {invitaciones.length === 0 &&
+        opcion('✉️', 'Me invitaron', 'Únete al hogar de otra persona', () => nav.go('Invitaciones'))}
     </Screen>
   );
 }

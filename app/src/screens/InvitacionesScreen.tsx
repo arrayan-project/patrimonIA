@@ -68,33 +68,54 @@ export function InvitacionesScreen() {
         />
       ) : (
         invitaciones.map((inv) => (
-          <Panel key={inv.id} gap={12}>
-            <View style={styles.cabeza}>
-              <View style={styles.circulo}>
-                <Text style={styles.emoji}>🏠</Text>
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.hogar}>{inv.hogarNombre ?? 'Hogar'}</Text>
-                <Text style={styles.sub}>Te invitaron · {fechaLegible(inv.createdAt)}</Text>
-              </View>
-            </View>
-            <Button
-              title="✅ Unirme"
-              onPress={() => aceptar(inv.id)}
-              loading={actuando === inv.id}
-            />
-            <Pressable
-              onPress={() => rechazar(inv.id)}
-              disabled={actuando === inv.id}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.noGracias, pressed && { opacity: 0.6 }]}
-            >
-              <Text style={styles.noGraciasTxt}>No, gracias</Text>
-            </Pressable>
-          </Panel>
+          <TarjetaInvitacion
+            key={inv.id}
+            inv={inv}
+            actuando={actuando === inv.id}
+            onAceptar={() => aceptar(inv.id)}
+            onRechazar={() => rechazar(inv.id)}
+          />
         ))
       )}
     </Screen>
+  );
+}
+
+/** Una invitación con "Unirme a [hogar]" y "No, gracias" (Invitaciones y, G39 H6, Bienvenido). */
+export function TarjetaInvitacion({
+  inv,
+  actuando,
+  onAceptar,
+  onRechazar,
+}: {
+  inv: InvitacionDTO;
+  actuando: boolean;
+  onAceptar: () => void;
+  onRechazar: () => void;
+}) {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
+  return (
+    <Panel gap={12}>
+      <View style={styles.cabeza}>
+        <View style={styles.circulo}>
+          <Text style={styles.emoji}>🏠</Text>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={styles.hogar}>{inv.hogarNombre ?? 'Hogar'}</Text>
+          <Text style={styles.sub}>Te invitaron · {fechaLegible(inv.createdAt)}</Text>
+        </View>
+      </View>
+      <Button title={`✅ Unirme a ${inv.hogarNombre ?? 'este hogar'}`} onPress={onAceptar} loading={actuando} />
+      <Pressable
+        onPress={onRechazar}
+        disabled={actuando}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.noGracias, pressed && { opacity: 0.6 }]}
+      >
+        <Text style={styles.noGraciasTxt}>No, gracias</Text>
+      </Pressable>
+    </Panel>
   );
 }
 

@@ -139,6 +139,12 @@ export function AjustesScreen() {
                     emoji: '👥',
                     onPress: () => nav.go('GestionHogar', { hogarId: hogar.id }),
                   },
+                  {
+                    title: 'Qué compartes',
+                    subtitle: 'Qué ve el hogar de cada cuenta tuya y qué suma',
+                    emoji: '🔐',
+                    onPress: () => nav.go('QueCompartes'),
+                  },
                 ]
               : []),
             {

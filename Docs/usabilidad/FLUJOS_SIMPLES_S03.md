@@ -31,12 +31,14 @@ código de 6 dígitos).
 | 6 | A1–A8 · metas y ahorro (A3, A4, A5, A8 se mantienen) | §14 |
 | 7 | C1, C2, C3 · agregar cuentas y aviso anual de valor | §15 |
 | 8 | M12, M13, C4, M11 · corregir, borrar, cerrar y monedas | §16 |
+| 9 | H1, H2, H4, H6, P1 · consultas y configuración (H2 se mantiene) | §17 |
 
 **Hecho: bloque 8 — M12, M13, C4 y M11** (corregir, borrar, cerrar y
 monedas), aprobado por Juan y mergeado (2026-10-10, §16). Toca la API
 (requiere deploy en Render), sin migración.
 
-**Lo siguiente: bloque 9 — H1, H2, H4, H6 y P1.**
+**Hecho: bloque 9 — H1, H2, H4, H6 y P1**, aprobado por Juan y mergeado
+(2026-10-10, §17), solo app. Con eso quedan los 33 escenarios trabajados.
 
 Bloque 9: consultas y configuración. Pistas
 del recorrido: H4 no tiene una vista para revisar qué comparte cada cuenta de
@@ -1009,7 +1011,16 @@ al completarse.
 **Conteo:** 1 pantalla · 1 toque.
 **Lo que cuesta:** el número es correcto solo si cada cuenta "suma al hogar"
 (se pregunta al crearla o en Ajustes de la cuenta, ver H4).
-**Objetivo:** *por definir.*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve | Toques |
+|---|-------|--------|--------|
+| 1 | Hogar | "🏠 Plata del hogar" y debajo **"🔐 De lo tuyo suman 2 de 7 · Revisa qué compartes ›"** | 1 |
+| 2 | (opcional) | La fila abre "Qué compartes" (H4) | 1 |
+
+**Conteo:** 1 pantalla · 1 toque; queda a la vista qué parte de lo tuyo
+entra en la cifra. Implementado en §17.
 
 #### H2 — ¿Cuánto gastamos este mes, yo y el hogar?
 
@@ -1022,7 +1033,7 @@ al completarse.
 
 (Lo propio también se ve en el Inicio, "📊 Así va el mes".)
 **Conteo:** 1 pantalla · 2 toques.
-**Objetivo:** *por definir.*
+**Objetivo:** se mantiene (Juan, 2026-10-10): ya cumple la meta.
 
 #### H3 — Juan programa una transferencia mensual a la Falabella de Zoily
 
@@ -1080,7 +1091,18 @@ toque** (meta ✅). Antes: 8 a 10 y 3.
 
 **Conteo:** 3 pantallas · 4 a 6 toques **por cuenta**.
 **Lo que cuesta:** no hay una vista para revisar todas las cuentas de una vez.
-**Objetivo:** *por definir.*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué ve / qué hace | Toques |
+|---|-------|-------------------|--------|
+| 1 | Cualquier pestaña | Toca la pestaña Hogar | 1 |
+| 2 | Hogar | "De lo tuyo suman…" o Más del hogar › 🔐 Qué compartes (también en Ajustes) | 1 |
+| 3 | Qué compartes con [pareja] | Tus cuentas en dos grupos: "🏠 Suman a la plata del hogar (N)" y "🙋 Solo tuyas (N)", cada una con lo que ve el hogar (🔒 Solo tú la ves · 🔁 Puede transferirte · 👀 Ve el saldo · 👀 Ve todo · ⚙️ A tu medida) | 0 |
+| 4 | Qué compartes | Toca la cuenta → la hoja con los 4 niveles de siempre → se guarda al instante y la cuenta cambia de grupo | 2 por cuenta |
+
+**Conteo:** 2 pantallas · 2 toques + 2 por cuenta (antes 3 pantallas y 4 a
+6 toques por cuenta). Implementado en §17.
 
 #### H5 — Tenemos una deuda juntos (hipotecario o auto) y la pagamos
 
@@ -1156,7 +1178,21 @@ entrando por el detalle de la deuda); con "Se repite", 1 toque al mes.
 
 **Conteo:** invitar 3 pantallas · 4 toques · 1 campo; aceptar 2 pantallas ·
 2 a 3 toques.
-**Objetivo:** *por definir.*
+
+**Objetivo (aprobado por Juan, 2026-10-10: invitar siempre a mano, sin ruido)**
+
+| # | Dónde | Qué hace | Toques |
+|---|-------|----------|--------|
+| 1 | Cualquier pestaña | Toca la pestaña Hogar | 1 |
+| 2 | Hogar | Solo en el hogar: "👥 Invita a quien vive contigo" bajo la cifra. Con más personas: Más del hogar › ➕ Invitar a alguien | 1 |
+| 3 | Invitar a alguien | Escribe el correo | campo |
+| 4 | Invitar a alguien | Enviar invitación | 1 |
+
+**Aceptar:** sin hogar, Bienvenido muestra la invitación con
+"✅ Unirme a [hogar]" y "No, gracias" (y "Me invitaron" desaparece mientras
+haya una): 1 toque. Con hogar, sigue la fila 📩 del Hogar.
+**Conteo:** invitar 2 pantallas · 3 toques · 1 campo; aceptar 1 pantalla ·
+1 toque. Implementado en §17.
 
 ### 5.4 Cuentas y bienes
 
@@ -1316,7 +1352,17 @@ Presupuesto (0 a 1 toque).
 **Conteo:** crear 3 pantallas · 4 toques · 1 campo.
 **Lo que cuesta:** "Sin presupuesto vigente" pasa por la lista vacía antes
 del formulario.
-**Objetivo:** *por definir.*
+
+**Objetivo (aprobado por Juan, 2026-10-10)**
+
+| # | Dónde | Qué hace | Toques |
+|---|-------|----------|--------|
+| 1 | Cualquier pestaña | Toca la pestaña Planificar | 1 |
+| 2 | Planificar | "🧾 Ponte un presupuesto del mes" abre directo Nuevo presupuesto | 1 |
+| 3 | Nuevo presupuesto | "¿Cuánto piensas gastar?" (Solo mío y Cada mes vienen elegidos) | campo |
+| 4 | Nuevo presupuesto | Guardar | 1 |
+
+**Conteo:** 2 pantallas · 3 toques · 1 campo. Implementado en §17.
 
 #### P2 — Dejo anotado un pago futuro (arriendo, dividendo)
 
@@ -1410,7 +1456,7 @@ Frecuencia primero; los primeros fijan los patrones.
 6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). ✅ implementado y mergeado (§14).
 7. **C1, C2, C3** — agregar (F-6, F-19). ✅ implementado y mergeado (§15). C4 (cerrar) pasa al bloque 8, con F-7.
 8. **M12, M13, C4, M11** — corregir, borrar, cerrar y monedas (F-7). ✅ implementado y mergeado (§16).
-9. **H1, H2, H4, H6, P1** — consultas y configuración.
+9. **H1, H2, H4, H6, P1** — consultas y configuración. ✅ implementado y mergeado (§17).
 
 Cada escenario trabajado reemplaza su "Objetivo: por definir" con la tabla de
 pasos aprobada, el conteo antes → después, la rama, la verificación y la
@@ -1703,3 +1749,40 @@ migración.**
 - **Datos de prueba que quedaron (base local):** la cuenta "Prueba G39
   cerrar" (cerrada, con su saldo pasado a Cuenta de ahorro); el ingreso
   "Prueba G39 helado" eliminado; un cambio de 100.000 CLP → 102,5 USD.
+
+## 17. Implementación de H1, H4, H6 y P1 (rama `feat/G39-hogar-consultas`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-10). **Solo app**, sin cambios en la API. H2 se
+mantiene.
+
+**Decisiones de Juan (2026-10-10):** la vista "Qué compartes" con la línea
+"suman N de M" en el Hogar; H2 sin cambios; invitar siempre a mano, cuidando
+el ruido (se resolvió así: destacado solo cuando estás solo en el hogar; con
+más personas, una fila en "Más del hogar").
+
+- **`QueCompartesScreen` (nueva, "Qué compartes con [pareja]"):** tus
+  cuentas activas (sin encargos) en "🏠 Suman a la plata del hogar" y
+  "🙋 Solo tuyas", con su saldo y lo que ve el hogar en corto. Tocar abre la
+  hoja de `opcionesNivel` y aplica `aplicarNivel` al instante (los mismos dos
+  comandos de Ajustes de la cuenta). Se entra desde el Hogar (la línea bajo la
+  cifra y Más del hogar) y desde Ajustes. Plantilla Ajustes (se guarda al tocar),
+  agregada al mapa de `plantillas-pantalla-s01.html`.
+- **`HogarScreen`:** "🔐 De lo tuyo suman N de M" bajo la cifra; "👥 Invita a
+  quien vive contigo" si no hay nadie más; en Más del hogar, "🔐 Qué
+  compartes" y "➕ Invitar a alguien" (con más personas). "Personas del
+  hogar" pasa a "Nombre y quiénes están".
+- **`GestionHogarScreen`:** `invitarAlHogar` (el formulario de invitar, ahora
+  compartido con el Hogar).
+- **`InvitacionesScreen` / `BienvenidaScreen`:** `TarjetaInvitacion` con
+  "✅ Unirme a [hogar]"; Bienvenido muestra las invitaciones pendientes y
+  esconde "Me invitaron" mientras haya una.
+- **`PlanificarScreen`:** "🧾 Ponte un presupuesto del mes" abre
+  `PresupuestoForm` directo.
+- **Verificado (capturas web):** como Demo, el Hogar con "De lo tuyo suman 2
+  de 7"; Qué compartes con los dos grupos; Cuenta en dólares a "Todo" pasa a
+  "Suman" (3 de 7) y de vuelta a "Nada"; Más del hogar con las filas nuevas.
+  Como nuevo.g35 (sin hogar), Bienvenido con "✅ Unirme a Casa Carrero Flores"
+  (no se aceptó). **Sin captura:** la tarjeta de invitar con el hogar de una
+  sola persona (no hay un usuario así en la base local) y la fila de P1 (Demo
+  y Pareja tienen presupuesto vigente); P1 abre la misma pantalla que "Nuevo
+  presupuesto" de la lista.
