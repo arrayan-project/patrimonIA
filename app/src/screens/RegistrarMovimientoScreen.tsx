@@ -25,6 +25,8 @@ import { usePreferencias } from '../preferencias';
 import { opcionesDeElementos, opcionesDeMiembros } from '../opciones';
 import {
   opcionesDePersonas,
+  personasPrimero,
+  saldoClaro,
   saldoResultante,
   saldoTexto,
   type PersonaDTO,
@@ -88,6 +90,9 @@ type Quien = 'MIO' | 'OTRA' | 'HOGAR';
 /** Cuentas donde se recibe una transferencia de un miembro (como en el backend). */
 const RECIBEN = ['LIQUIDEZ', 'RESERVA'];
 const NUEVA = '__nueva__';
+/** G39 (F-4): cuántas personas van como botones en "¿De quién?". */
+const PERSONAS_A_LA_VISTA = 4;
+const mayus = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 /** G39 (F-8): "¿Se repite?" en dos botones; sin elegir, no se repite. */
 const REPITE_BOTONES: { value: Periodicidad; label: string }[] = [
   { value: 'MENSUAL', label: '🔁 Cada mes' },
@@ -169,6 +174,8 @@ export function RegistrarMovimientoScreen() {
   const [nuevoNombre, setNuevoNombre] = useState('');
   // HZ-20: si la persona no tenía saldo, ¿te había pasado plata antes?
   const [previo, setPrevio] = useState<Previo | null>(null);
+  // G39 (F-14): "¿De dónde sale esta plata?" → "Es de [persona]" abre "¿La anotaste?".
+  const [eraSuya, setEraSuya] = useState(false);
   const [ingresoId, setIngresoId] = useState<string | null>(null);
   // Movimientos de tus cuentas: los ingresos a corregir (HZ-20) y lo que te
   // transfirió alguien del hogar (D-8). Se cargan solo si hacen falta.
@@ -786,6 +793,24 @@ export function RegistrarMovimientoScreen() {
   const pendiente = deudaElegida ? (deudaElegida.valorPendiente ?? Math.abs(deudaElegida.valorVigente)) : 0;
   const cuota = deudaElegida?.cuotaMonto ?? null;
 
+  // G39 (F-4): las personas a la vista y cómo se elige una.
+  const personasALaVista = personasPrimero(opcionesP).slice(0, PERSONAS_A_LA_VISTA);
+  const elegirPersona = (v: string | null) => {
+    setPersona(v);
+    setPrevio(null);
+    setEraSuya(false);
+    setIngresoId(null);
+  };
+  // G39 (F-13): lo pendiente con la persona, para llenar el monto de un toque.
+  const pendientePersona =
+    esOtra && persona && persona !== NUEVA && !esMiembro
+      ? tipo === 'GASTO' && saldoActual < 0
+        ? { label: `💵 Todo lo de ${persona}`, monto: -saldoActual }
+        : tipo === 'INGRESO' && saldoActual > 0
+          ? { label: '💵 Lo que te debe', monto: saldoActual }
+          : null
+      : null;
+
   // G39 (F-11): lo que ya te transfirieron en los últimos 30 días, y el detalle
   // que queda en el gasto ("Juan puso 100.000").
   const yaTePasaron = (transferenciasHogar ?? []).filter(
@@ -849,6 +874,8 @@ export function RegistrarMovimientoScreen() {
   // G39: el pie dice solo lo que falta (la cuenta puede venir elegida).
   const faltan = [
     Number(monto) > 0 ? null : 'el monto',
+    esOtra && !nombrePersona ? 'de quién es' : null,
+    pidePrevio && previo === null ? 'de dónde sale la plata' : null,
     necesitaOrigen && !origenId ? (necesitaDestino ? 'de qué cuenta sale' : 'la cuenta') : null,
     necesitaDestino && !destinoId ? (necesitaOrigen ? 'a qué cuenta llega' : 'la cuenta') : null,
   ].filter(Boolean) as string[];
@@ -857,10 +884,10 @@ export function RegistrarMovimientoScreen() {
     : 'Revisa los datos.';
   const resumen: ReactNode = esOtra
     ? !puedeEnviar
-      ? 'Completa monto, persona y cuenta.'
+      ? faltaTexto
       : `${tipo === 'GASTO' ? `Salen ${m} de ${nombreDe(origenId)}` : `Entran ${m} a ${nombreDe(destinoId)}`}. No es ${
           tipo === 'GASTO' ? 'gasto' : 'ingreso'
-        } tuyo. ${saldoTexto(nombrePersona, saldoQueda, monedaEvento, money)}.`
+        } tuyo: ${saldoClaro(nombrePersona, saldoQueda, monedaEvento, money)}.`
     : !puedeEnviar && esCompartido && (errParte || (!yaPaso && oculta(recibe)))
     ? errParte || `${nombresCompartido} tiene que poder transferirte a ${recibe?.nombre}.`
     : !puedeEnviar
@@ -955,13 +982,14 @@ export function RegistrarMovimientoScreen() {
   const paso = contadorPasos();
   const pMonto = paso({ hecho: Number(monto) > 0 });
   // HZ-22: la decisión que cambia el significado del registro va en el paso 2.
-  const pQuien = puedeCategorizar ? paso({ hecho: true }) : undefined;
+  // G39: de quién es la plata se puede elegir antes del monto (el monto puede salir de la persona, F-13).
+  const pQuien = puedeCategorizar ? paso({ hecho: true, libre: true }) : undefined;
   const delHogarModo = tipo === 'INGRESO' && quien === 'HOGAR';
   const pYaPaso = esCompartido ? paso({ hecho: true }) : undefined;
   const pParte = esCompartido ? paso({ hecho: Number(monto) > 0 && !errParte }) : undefined;
   // G39: "¿En qué?" va antes de la cuenta (monto, para qué, cuenta, cuándo).
   const pCategoria = puedeCategorizar && !esOtra ? paso({ opcional: true }) : undefined;
-  const pPersona = esOtra ? paso({ hecho: !!nombrePersona }) : undefined;
+  const pPersona = esOtra ? paso({ hecho: !!nombrePersona, libre: true }) : undefined;
   const pPrevio = pidePrevio ? paso({ hecho: previo !== null }) : undefined;
   const pIngreso = pidePrevio && previo === 'ANOTADA' ? paso({ hecho: !!ingreso }) : undefined;
   // G39 (F-5): al pagar, primero qué deuda y después desde qué cuenta.
@@ -1134,6 +1162,15 @@ export function RegistrarMovimientoScreen() {
       <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda}>
         {esFuturo ? (
           <Text style={[styles.frecuentesTitulo, { color: c.text, opacity: 1 }]}>{`🗓️ Para el ${diaCorto(fecha)}: se anota ese día`}</Text>
+        ) : null}
+        {pendientePersona ? (
+          <View style={styles.frecuentes}>
+            <Pastilla
+              label={`${pendientePersona.label} · ${money(pendientePersona.monto, monedaEvento)}`}
+              activo={Number(monto) === pendientePersona.monto}
+              onPress={() => setMonto(String(pendientePersona.monto))}
+            />
+          </View>
         ) : null}
         {deudaElegida && (pendiente > 0 || (cuota ?? 0) > 0) ? (
           <View style={styles.frecuentes}>
@@ -1349,26 +1386,36 @@ export function RegistrarMovimientoScreen() {
 
       {pPersona && (
         <BloquePaso paso={pPersona} style={styles.group}>
-          <Elegir
-            label="¿Quién?"
-            paso={pPersona}
-            placeholder="Elegir persona"
-            value={persona}
-            options={[
-              ...opcionesP.map((x) => ({
-                value: x.nombre,
-                label: x.nombre,
-                emoji: '👤',
-                sub: saldoTexto(x.nombre, x.saldo, monedaEvento, money),
-              })),
-              { value: NUEVA, label: 'Nueva persona', emoji: '➕' },
-            ]}
-            onChange={(v) => {
-              setPersona(v);
-              setPrevio(null);
-              setIngresoId(null);
-            }}
-          />
+          {/* G39 (F-4): las personas con algo pendiente primero, a un toque. */}
+          <Question paso={pPersona}>¿De quién?</Question>
+          <View style={styles.frecuentes}>
+            {personasALaVista.map((x) => (
+              <Pastilla key={x.nombre} label={`👤 ${x.nombre}`} activo={persona === x.nombre} onPress={() => elegirPersona(x.nombre)} />
+            ))}
+            {persona && persona !== NUEVA && !personasALaVista.some((x) => x.nombre === persona) ? (
+              <Pastilla label={`👤 ${persona}`} activo onPress={() => elegirPersona(null)} />
+            ) : null}
+            <Pastilla label="➕ Otra persona" activo={persona === NUEVA} onPress={() => elegirPersona(NUEVA)} />
+            {opcionesP.length > PERSONAS_A_LA_VISTA && (
+              <Elegir
+                label="¿De quién?"
+                value={persona}
+                options={opcionesP.map((x) => ({
+                  value: x.nombre,
+                  label: x.nombre,
+                  emoji: '👤',
+                  sub: saldoTexto(x.nombre, x.saldo, monedaEvento, money),
+                }))}
+                onChange={elegirPersona}
+                boton={(abrir) => <Pastilla label={`🔍 Ver todas (${opcionesP.length})`} enlace onPress={abrir} />}
+              />
+            )}
+          </View>
+          {persona && persona !== NUEVA && !esMiembro ? (
+            <Nota>{`${saldoActual < 0 ? '💵' : saldoActual > 0 ? '🤝' : '👌'} ${mayus(saldoClaro(persona, saldoActual, monedaEvento, money))}.${
+              pendientePersona && !(Number(monto) > 0) ? ` Para usar todo, toca «${pendientePersona.label}» arriba.` : ''
+            }`}</Nota>
+          ) : null}
           {persona === NUEVA && (
             <Field
               label="¿Cómo se llama?"
@@ -1391,21 +1438,46 @@ export function RegistrarMovimientoScreen() {
       )}
 
       {pPrevio && (
-        <Elegir
-          label={`¿${nombrePersona} te había pasado plata antes?`}
-          paso={pPrevio}
-          placeholder="Elegir"
-          value={previo}
-          options={[
-            { value: 'DEVOLVER', label: 'No, me la va a devolver' },
-            { value: 'ANOTADA', label: 'Sí, y la anoté como mía', sub: 'Corregimos ese ingreso' },
-            { value: 'NO_ANOTADA', label: 'Sí, pero no la anoté' },
-          ]}
-          onChange={(v) => {
-            setPrevio(v as Previo | null);
-            setIngresoId(null);
-          }}
-        />
+        <BloquePaso paso={pPrevio} style={styles.group}>
+          <Question paso={pPrevio}>¿De dónde sale esta plata?</Question>
+          <View style={styles.frecuentes}>
+            <Pastilla
+              label={`🤝 La pongo yo: ${nombrePersona} me la devuelve`}
+              activo={previo === 'DEVOLVER'}
+              onPress={() => {
+                setEraSuya(false);
+                setPrevio('DEVOLVER');
+                setIngresoId(null);
+              }}
+            />
+            <Pastilla
+              label={`💵 Es de ${nombrePersona}: me la había pasado`}
+              activo={eraSuya}
+              onPress={() => {
+                setEraSuya(true);
+                setPrevio(null);
+                setIngresoId(null);
+              }}
+            />
+          </View>
+          {eraSuya ? (
+            <>
+              <Question>¿La anotaste cuando te llegó?</Question>
+              <View style={styles.frecuentes}>
+                <Pastilla label="No la anoté" activo={previo === 'NO_ANOTADA'} onPress={() => setPrevio('NO_ANOTADA')} />
+                <Pastilla
+                  label="Sí, como ingreso mío"
+                  activo={previo === 'ANOTADA'}
+                  onPress={() => {
+                    setPrevio('ANOTADA');
+                    setIngresoId(null);
+                  }}
+                />
+              </View>
+              {previo === 'ANOTADA' ? <Nota>Elige cuál: lo corregimos para que no cuente como tuyo.</Nota> : null}
+            </>
+          ) : null}
+        </BloquePaso>
       )}
 
       {pIngreso && (
