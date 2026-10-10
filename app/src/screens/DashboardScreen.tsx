@@ -669,8 +669,12 @@ export function DashboardScreen() {
         />
       )}
       {ver.composicion && alcance === 'mios' && (
-        // "Ver todas" vive como última tarjeta del carrusel: un solo camino.
-        <Section title="Tus cuentas">
+        // "Ver todas" es el enlace de la sección, a la altura del título: un solo camino.
+        <Section
+          title="Tus cuentas"
+          accion={tarjetas.length > MAX_TARJETAS ? `Ver todas (${tarjetas.length})` : 'Ver todas'}
+          onAccion={tarjetas.length > 0 ? verPatrimonio : undefined}
+        >
           {tarjetas.length === 0 ? (
             <EmptyState
               icon="wallet-outline"
@@ -687,7 +691,6 @@ export function DashboardScreen() {
               categorias={categorias}
               mes={MESES_LARGO[mesHoy.mes]}
               ventana={ventanaMes}
-              onVerTodas={verPatrimonio}
             />
           )}
         </Section>
@@ -795,7 +798,7 @@ const MAX_TARJETAS = 3;
 const MAX_MOVIMIENTOS = 4;
 
 /**
- * G35: las cuentas como tarjetas de color (3 + "Ver todas") y, debajo, los
+ * G35: las cuentas como tarjetas de color (3; "Ver todas" es el enlace de la sección) y, debajo, los
  * movimientos del mes de la que está elegida, con un interruptor para ver los
  * de todas tus cuentas. Solo 4 filas: el resto vive en la pestaña Movimientos.
  */
@@ -806,7 +809,6 @@ function CuentasYMovimientos({
   categorias,
   mes,
   ventana,
-  onVerTodas,
 }: {
   tarjetas: Tarjeta[];
   emojis: Record<string, string>;
@@ -815,7 +817,6 @@ function CuentasYMovimientos({
   mes: string;
   /** G43: el mes según el día en que parte. */
   ventana: { desde: string; hasta: string };
-  onVerTodas: () => void;
 }) {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
@@ -918,14 +919,6 @@ function CuentasYMovimientos({
             </Pressable>
           );
         })}
-        <Pressable
-          onPress={onVerTodas}
-          accessibilityRole="button"
-          accessibilityLabel={`Ver todas tus cuentas (${tarjetas.length})`}
-          style={[styles.tarjeta, styles.tarjetaMas]}
-        >
-          <Text style={styles.tarjetaMasTxt}>Ver todas{tarjetas.length > MAX_TARJETAS ? ` (${tarjetas.length})` : ''}</Text>
-        </Pressable>
       </ScrollView>
 
       <ListCard>
@@ -1052,8 +1045,6 @@ const crearEstilos = (c: Paleta) =>
     tarjetaEmoji: { fontSize: 22, marginBottom: 'auto' },
     tarjetaNombre: { fontSize: 13, color: '#fff', fontWeight: '600', opacity: 0.92 },
     tarjetaValor: { fontSize: 16, color: '#fff', fontWeight: '800' },
-    tarjetaMas: { backgroundColor: c.acentoSuave, alignItems: 'center', justifyContent: 'center', width: 110 },
-    tarjetaMasTxt: { fontSize: 14, color: c.primary, fontWeight: '800', textAlign: 'center' },
     swFila: {
       flexDirection: 'row',
       alignItems: 'center',
