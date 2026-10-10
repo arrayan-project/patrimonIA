@@ -1125,14 +1125,16 @@ export type Paso = number | { n: number; estado: EstadoPaso };
  * puesto cuenta como hecho); todo lo que viene después queda bloqueado. Sin
  * argumentos, la pregunta se trata como opcional.
  */
-export function contadorPasos(): (p?: { hecho?: boolean; opcional?: boolean }) => Paso {
+export function contadorPasos(): (p?: { hecho?: boolean; opcional?: boolean; libre?: boolean }) => Paso {
   let n = 0;
   let hayActual = false;
   return (p) => {
     const hecho = p?.hecho ?? false;
     const opcional = p === undefined ? true : (p.opcional ?? false);
     n += 1;
-    if (hayActual) return { n, estado: 'bloqueado' };
+    // G39: una pregunta `libre` no depende de las anteriores (p. ej. de quién
+    // es la plata, antes del monto): nunca queda bloqueada.
+    if (hayActual) return { n, estado: p?.libre ? 'hecho' : 'bloqueado' };
     if (opcional || hecho) return { n, estado: 'hecho' };
     hayActual = true;
     return { n, estado: 'actual' };

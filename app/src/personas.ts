@@ -69,3 +69,32 @@ export function opcionesDePersonas(
   }
   return [...porNombre.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
+
+/**
+ * G39 (F-4, F-13): el saldo como lo diría el usuario, para la línea bajo
+ * "¿De quién?" y el pie: "tienes 30.000 CLP de Noira" (su plata está en tu
+ * cuenta), "Papás te debe 25.000 CLP", "Noira y tú quedan a mano".
+ */
+export function saldoClaro(
+  persona: string,
+  saldo: number,
+  moneda: string,
+  formato: (monto: number, moneda: string) => string,
+): string {
+  if (saldo < 0) return `tienes ${formato(-saldo, moneda)} de ${persona}`;
+  if (saldo > 0) return `${persona} te debe ${formato(saldo, moneda)}`;
+  return `${persona} y tú quedan a mano`;
+}
+
+/**
+ * G39 (F-4): las personas para los botones de "¿De quién?": primero las que
+ * tienen algo pendiente (la de más monto primero), después el resto por nombre.
+ */
+export function personasPrimero<T extends { nombre: string; saldo: number }>(personas: T[]): T[] {
+  return [...personas].sort(
+    (a, b) =>
+      Number(b.saldo !== 0) - Number(a.saldo !== 0) ||
+      Math.abs(b.saldo) - Math.abs(a.saldo) ||
+      a.nombre.localeCompare(b.nombre, 'es'),
+  );
+}
