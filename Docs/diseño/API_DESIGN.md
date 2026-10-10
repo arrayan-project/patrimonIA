@@ -174,6 +174,7 @@ de una ocurrencia vencida es una notificación `PROGRAMADO_VENCIDO` con
 | `POST /comandos/CrearHogar` | #34 | nombre |
 | `POST /comandos/ActualizarDatosHogar` | #35 | id, campos a modificar |
 | `POST /comandos/CambiarMonedaConsolidacion` | #36 | id, nueva moneda |
+| `POST /comandos/CambiarInicioMesHogar` | G43 | id, día en que parte el mes del hogar (1–28; solo administrador) |
 | `POST /comandos/InvitarMiembro` | #37 | id del hogar, usuario invitado |
 | `POST /comandos/AceptarInvitacion` | #38 | id de la invitación |
 | `POST /comandos/RechazarInvitacion` | #39 | id de la invitación |
@@ -276,7 +277,8 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 
 | Endpoint | Devuelve | Fase / gap |
 |---|---|---|
-| `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL); cada movimiento trae su cuenta de salida y de llegada (G39, S3-6) y, si fue con otro miembro del hogar, `contraparte` | Fase 16 / G27 |
+| `GET /usuarios/me/resumen-financiero?desde=&hasta=&alcance=mios\|hogar&hogarId=&cuentas=` | totales por moneda, desglose por rubro, lista de movimientos (incluye TRANSFERENCIA/CONVERSION con `efectoPropio`, y SALDO_INICIAL); cada movimiento trae su cuenta de salida y de llegada (G39, S3-6) y, si fue con otro miembro del hogar, `contraparte` ; con `cuentas=id,id` (solo `mios`), únicamente esas cuentas (las del día a día, G42) | Fase 16 / G27 / G42 |
+| `GET /usuarios/me/foto-mes?desde=&hasta=&cuentas=id,id` | la foto del mes de esas cuentas, por moneda: `tenias`, `tienes`, `lineas` (`clase` INGRESO · GASTO · SALDO_INICIAL · AHORRO · INVERSION · DEUDA · CUSTODIA · OTRAS · PERSONA · CAMBIO_MONEDA · AJUSTE, con signo) y `apartadoMetas`; cuadra: tenias + Σ lineas = tienes | G41 |
 | `GET /usuarios/me/resumen-anual?anio=&alcance=&hogarId=` | 12 baldes `{mes, porMoneda}` | Fase 16 / G27 |
 | `GET /usuarios/me/serie-patrimonial?desde=&hasta=&pasos=` | N puntos equiespaciados del patrimonio individual; lo anotado después de un punto cuenta en él con su valor al anotarse (GAPS G38) | Fase 15g |
 | `GET /usuarios/me/variacion-patrimonial?desde=&hasta=` | patrimonio en 2 fechas + variación (abs / %), con la misma regla de G38 (anotar no es ganar ni perder) | Fase 9 |

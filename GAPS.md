@@ -47,7 +47,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
-| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38 |
+| **G** · Monedas, proyecciones y reportes | G41, G42, G43 (🟡 en prueba) | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G33 | G25, G32, G35, G39 |
 
@@ -67,6 +67,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
+| — | **G41–G43** | Foto del mes, cuentas del día a día y mes que parte el día del sueldo: implementados en la rama `feat/G41-43-foto-del-mes` (2026-10-10). **Falta:** que Juan lo pruebe en el teléfono, merge, correr la migración 029 en Neon, push y deploy. | 🟡 en prueba |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
@@ -106,6 +107,118 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   el que la tarjeta mostraría "Cupo disponible = cupo − lo que debes".
 - **Decisión (Juan, 2026-10-10)**: queda anotado a futuro; se abre si un
   usuario lo pide. Origen: `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`, C2.
+
+### Tema G · Monedas, proyecciones y reportes
+
+#### G41 — "Tu mes": desglose operativo del mes  🟡 IMPLEMENTADO, EN PRUEBA (rama `feat/G41-43-foto-del-mes`, 2026-10-10)
+- **Qué falta** (Juan, 2026-10-10): Inicio es una vista histórica del
+  patrimonio; la tarjeta "📅 Octubre" y el resumen de Movimientos dicen solo
+  entró / gastaste / pases con personas / te queda. No dicen cuánto se
+  ahorró ni cuánto se invirtió, y no se ve cómo va la plata del mes.
+- **Qué hay hoy**: `resumen-financiero` (G27) suma INGRESO/GASTO; las
+  transferencias van como filas neutras con `efectoPropio`; "Ahorrar" es una
+  reserva para una meta (la plata no sale de la cuenta); invertir y pagar la
+  tarjeta son transferencias.
+- **Propuesta (por decidir)**: el período "Mes" de Movimientos pasa a ser la
+  foto del mes, y la tarjeta del Inicio lleva ahí. Cifras ordenadas para que
+  cuadren solas (ver criterio de claridad):
+  `Tenías al empezar el mes + Entró − Gastaste − Invertiste − Pagaste deudas
+  ± Pasaste a personas = Tienes hoy`, y aparte `Apartaste para metas` (no
+  sale de la cuenta, baja lo libre para gastar). Debajo, la lista.
+- **Preguntas**: ¿pantalla propia o el período "Mes" de Movimientos? ¿pagar
+  la tarjeta cuenta como salida del mes (doble conteo con los gastos hechos
+  con la tarjeta) o se muestra aparte?
+
+- **Respuestas de Juan (2026-10-10)**: le sirve verla al entrar a la app
+  (Inicio) y también en Movimientos (resumen arriba, detalle abajo). Pagar la
+  tarjeta no debe contar dos veces. **Propuesta de Claude**: una sola foto con
+  dos entradas, sin pantalla nueva: en el Inicio, la tarjeta del mes en versión
+  corta (tenías, entró, salió, tienes hoy); en Movimientos, la versión
+  completa, con las mismas cifras. Para la tarjeta, la compra cuenta como gasto
+  el día que se hace y el pago es un movimiento entre tus cuentas, que no suma
+  ni resta, sin ligar pagos con compras. La foto incluye lo que debes en la
+  tarjeta.
+
+- **Cómo se resolvió (Juan aprobó las propuestas, 2026-10-10)**:
+  - API: `GET /usuarios/me/foto-mes?desde=&hasta=&cuentas=` (`ReporteService.fotoMes`).
+    Cuadra por construcción: el saldo a una fecha es `valor_vigente` menos los
+    impactos vivos posteriores, y las líneas son los impactos vivos de la
+    ventana, neteados por movimiento (lo que va entre dos cuentas del grupo no
+    aparece). El otro lado de cada transferencia da la clase: RESERVA → Ahorraste,
+    INVERSION → Invertiste, DEUDA → Pagaste deudas, DEUDA de custodia (G28) →
+    plata encargada, cuenta de otra persona → con su nombre, otra cuenta tuya →
+    Pasaste/Trajiste de tus otras cuentas.
+  - App: en "Lo mío" + Mes, Movimientos muestra la foto (Tenías al empezar ·
+    Entró con su detalle · Salió con su detalle · Tienes hoy), "🎯 De esto, X
+    está apartado para tus metas" y la comparación con el mes anterior. La
+    tarjeta del mes del Inicio muestra Salió, Entró, Empezaste con y Tienes hoy,
+    con los mismos números. "Del hogar" sigue con Les entró / Gastaron / Les queda.
+  - Si las cuentas elegidas tienen otra moneda, se muestra la preferida (o la de
+    más plata) y una nota con las otras.
+
+ Cuentas "del día a día" en la foto del mes  🟡 IMPLEMENTADO, EN PRUEBA (rama `feat/G41-43-foto-del-mes`, 2026-10-10)
+- **Qué falta** (Juan, 2026-10-10): mucha gente opera con 1 o 2 cuentas y
+  tarjetas; las otras quedan quietas (p. ej. BCI para ahorro, Banco de Chile
+  para el día a día). Sumar todas no sirve para decidir "¿me alcanza?".
+- **No es `participa_valor_liquido`**: esa marca dice si la cuenta es plata
+  disponible (la cuenta de ahorro lo es); esto dice cuál usas a diario.
+- **Propuesta (por decidir)**: preferencia de vista del usuario (no dato de
+  dominio, porque en una cuenta compartida cada miembro puede usarla
+  distinto): lista de cuentas y tarjetas elegidas con `ElegirVarios`; por
+  defecto, todas las de LIQUIDEZ y las tarjetas. Lo que va y viene entre una
+  cuenta del día a día y otra tuya se muestra en una línea propia ("Trajiste
+  de tus otras cuentas" / "Mandaste a tus otras cuentas"), no como ingreso o
+  gasto.
+- **Pregunta**: ¿la elección vive en Ajustes, en la misma foto del mes, o en
+  ambos?
+
+- **Respuesta de Juan (2026-10-10)**: se eligen en ambos lados (Ajustes y la
+  foto del mes).
+
+- **Cómo se resolvió**: la elección es una preferencia personal
+  (`preferencias.visualizacion.mes.cuentas`; null = las LIQUIDEZ y las
+  tarjetas). Se elige en Ajustes → Tu mes y en la pastilla "💳 … · Cambiar" de
+  la foto. En "Lo mío", Movimientos usa solo esas cuentas en todo (foto, "¿En
+  qué se fue?", lista), con `?cuentas=` en `resumen-financiero`. Una
+  transferencia a otra cuenta tuya se ve como "A tus otras cuentas" y ya no se
+  toma como plata pasada a otra persona.
+
+ Mes que no parte el día 1 (ciclo del sueldo)  🟡 IMPLEMENTADO, EN PRUEBA (rama `feat/G41-43-foto-del-mes`, 2026-10-10)
+- **Qué falta** (Juan, 2026-10-10): si el sueldo llega el 25 de octubre y es
+  para vivir noviembre, lo que se paga el 27 de octubre es de "noviembre".
+  Hoy todo mes es del 1 al último día (`resumen-financiero` recibe
+  `desde`/`hasta`; el cliente arma la ventana).
+- **Opciones**:
+  - **a) Día de inicio del mes** (preferencia, 1–28): el mes "Noviembre" va
+    del 25 oct al 24 nov; lo usan la tarjeta del Inicio, Movimientos, la
+    comparación con el mes anterior y los presupuestos mensuales. Sin cambio
+    de dominio. Se muestra con fechas: "Noviembre (25 oct – 24 nov)".
+  - **b) "Es para el mes siguiente" en un movimiento**: fecha de imputación en
+    `evento_financiero`. Cubre el sueldo adelantado por fin de semana o un
+    bono, pero es dominio nuevo y toca los reportes.
+  - **c) El ciclo parte cuando entra el sueldo**: automático pero frágil.
+- **Recomendación**: (a), con el ajuste "si el día cae en fin de semana, parte
+  el día hábil anterior" (cubre el sueldo pagado el viernes); (b) solo si un
+  usuario lo pide.
+- **Preguntas**: ¿el ciclo 25 oct–24 nov se llama "Noviembre" (el mes que
+  vives) u "Octubre" (el sueldo de octubre)? ¿Es por usuario o por hogar?
+
+- **Respuestas de Juan (2026-10-10)**: el nombre del mes lo elige el usuario.
+  Antes de decidir si el ciclo es por persona o por hogar, quiere ver qué
+  implica cada opción. **Propuesta de Claude**: cada persona tiene su día para
+  sus vistas, y el hogar tiene el suyo (por defecto el 1) para sus vistas y sus
+  presupuestos compartidos.
+
+- **Cómo se resolvió**: opción (a) con el ajuste del fin de semana
+  (`app/src/cicloMes.ts`). El día de cada persona y el nombre del mes ("El que
+  vives" / "El del sueldo") están en `preferencias.visualizacion.mes`. El
+  hogar tiene `hogar.dia_inicio_mes` (migración 029), que se cambia con
+  `CambiarInicioMesHogar`; solo lo cambia quien administra el hogar, como los
+  demás datos del hogar. Las vistas muestran las fechas ("25 sep – 22 oct"). Un
+  presupuesto mensual nuevo parte el día en que parte el mes (el tuyo o el del
+  hogar). Lo que sigue en el mes calendario: los períodos "Año" y "Recientes".
+- **Despliegue**: correr `api/db/migrations/029_hogar_dia_inicio_mes.sql` en
+  Neon antes de desplegar la API.
 
 ### Tema H · Notificaciones
 
