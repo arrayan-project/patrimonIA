@@ -755,6 +755,7 @@ export function TxRow({
   virtual,
   tag,
   accesorio,
+  eliminado,
   onPress,
 }: {
   title: string;
@@ -768,6 +769,8 @@ export function TxRow({
   tag?: string;
   /** Controles al final de la fila (p. ej. ▲▼ para ordenar un catálogo). */
   accesorio?: ReactNode;
+  /** Ya no cuenta: texto gris, monto tachado y la marca "🗑️ Eliminado" (sin rojo, que es gasto o deuda). */
+  eliminado?: boolean;
   onPress?: () => void;
 }) {
   const c = useC();
@@ -779,6 +782,7 @@ export function TxRow({
       <View
         style={[
           styles.txLogo,
+          eliminado && { opacity: 0.45 },
           virtual
             ? { backgroundColor: c.panelAlt, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }
             : // Con emoji, el color propio (etiqueta, agrupación) va suave detrás.
@@ -796,11 +800,13 @@ export function TxRow({
         )}
       </View>
       <View style={styles.txMain}>
-        <Text style={styles.txTitle} numberOfLines={1}>
+        <Text style={[styles.txTitle, eliminado && { color: c.muted }]} numberOfLines={1}>
           {title}
         </Text>
-        {subtitle || tag ? (
+        {subtitle || tag || eliminado ? (
           <Text style={styles.txSub} numberOfLines={1}>
+            {eliminado ? <Text style={styles.txEliminado}>🗑️ Eliminado</Text> : null}
+            {eliminado && (tag || subtitle) ? ' · ' : ''}
             {tag ? <Text style={styles.txTag}>{tag}</Text> : null}
             {tag && subtitle ? ' · ' : ''}
             {subtitle}
@@ -808,7 +814,16 @@ export function TxRow({
         ) : null}
       </View>
       {amount ? (
-        <Text style={[styles.txAmt, positivo && { color: c.ok }, negativo && { color: c.danger }]}>{amount}</Text>
+        <Text
+          style={[
+            styles.txAmt,
+            positivo && { color: c.ok },
+            negativo && { color: c.danger },
+            eliminado && { color: c.muted, textDecorationLine: 'line-through' },
+          ]}
+        >
+          {amount}
+        </Text>
       ) : null}
       {accesorio}
       {/* G35 (Juan): la flecha dice que la fila abre su detalle. */}
@@ -3045,6 +3060,7 @@ const crearEstilos = (c: Paleta) => {
     txTitle: { ...tipografia.fila, color: c.text },
     txSub: { ...tipografia.filaSub, color: c.muted, marginTop: 2 },
     txTag: { color: '#8b5cf6', fontWeight: '700', letterSpacing: 0.3 },
+    txEliminado: { color: c.danger, fontWeight: '700' },
     txAmt: { fontSize: 15, fontWeight: '700', color: c.text },
     bandaDet: { borderRadius: 22, borderWidth: 1, padding: 18, gap: 4 },
     bandaDetTitulo: { fontSize: 15, fontWeight: '700' },
