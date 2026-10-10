@@ -50,6 +50,12 @@ export interface ElementoPatrimonialDTO {
   estadoOperativo: string | null;
   /** §G28 — solo DEUDA/CREDITO: FINANCIERA · CUSTODIA_INFORMAL. NULL en el resto. */
   naturaleza: string | null;
+  /**
+   * G39 (F-19): fecha de la última valorización vigente (solo si admite
+   * valorización y el actor ve el valor); null si no hay. La app avisa cuando
+   * pasó más de un año.
+   */
+  fechaUltimaValorizacion: string | null;
 }
 
 export interface ImpactoPatrimonialDTO {
@@ -68,6 +74,8 @@ export interface OpcionesElementoDTO {
   /** Solo para el propietario: config de visibilidad por tipo + lista de compartidos. */
   visibilidadPorTipo?: { EXISTENCIA: string; VALOR: string; MOVIMIENTOS: string } | null;
   compartidoCon?: string[] | null;
+  /** G39 (F-19): fecha de la última valorización vigente. */
+  fechaUltimaValorizacion?: Date | null;
 }
 
 export function toElementoDTO(
@@ -113,6 +121,7 @@ export function toElementoDTO(
     valorPendienteInicial: numOculto(e.valor_pendiente_inicial),
     estadoOperativo: opciones.estadoOperativo ?? null,
     naturaleza: e.naturaleza ?? null,
+    fechaUltimaValorizacion: oculto ? null : fecha(opciones.fechaUltimaValorizacion ?? null),
   };
 }
 

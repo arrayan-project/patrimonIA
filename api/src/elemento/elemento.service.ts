@@ -831,6 +831,16 @@ export class ElementoService {
         ocultarValor: !verValor,
         visibilidadPorTipo,
         compartidoCon,
+        fechaUltimaValorizacion:
+          verValor && elemento.admite_valorizacion
+            ? ((
+                await this.prisma.valorizacion.findFirst({
+                  where: { elemento_id: elementoId, anulada: false },
+                  orderBy: { fecha: 'desc' },
+                  select: { fecha: true },
+                })
+              )?.fecha ?? null)
+            : null,
       },
     );
   }
