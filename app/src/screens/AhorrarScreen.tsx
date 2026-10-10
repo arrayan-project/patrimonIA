@@ -11,7 +11,7 @@ import {
   type ResumenFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { useNav } from '../navigation/navigator';
+import { useNav, useTitulo } from '../navigation/navigator';
 import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useConfirmarDescarte } from '../hooks/useConfirmarDescarte';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -71,6 +71,9 @@ export function AhorrarScreen() {
   const [objetivoId, setObjetivoId] = useState<string | null>(
     (nav.route.params?.objetivoId as string | undefined) ?? null,
   );
+  // G39 (Zoily): desde una meta, la meta ya está elegida: no se vuelve a preguntar.
+  const metaDeEntrada = (nav.route.params?.objetivoId as string | undefined) ?? null;
+  useTitulo(metaDeEntrada ? `Ahorrar para ${metas?.find((m) => m.id === metaDeEntrada)?.nombre ?? 'la meta'}` : undefined);
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
   // Desde el Detalle de una parte, llega ya elegida.
   const [parteId, setParteId] = useState<string | null>(
@@ -254,7 +257,7 @@ export function AhorrarScreen() {
     <Screen
       pie={
         <>
-          {resumen ? <Nota>{resumen}</Nota> : !puedeEnviar ? <Nota>Elige la meta, de dónde sale la plata y cuánto.</Nota> : null}
+          {resumen ? <Nota>{resumen}</Nota> : !puedeEnviar ? <Nota>{metaDeEntrada ? 'Elige de dónde sale la plata y cuánto.' : 'Elige la meta, de dónde sale la plata y cuánto.'}</Nota> : null}
           <Button
             title={total > 0 && meta ? `🐷 Ahorrar ${money(total, meta.moneda)}` : '🐷 Ahorrar'}
             onPress={onSubmit}
@@ -264,7 +267,8 @@ export function AhorrarScreen() {
         </>
       }
     >
-      {/* G39 (F-15): las metas en camino a un toque, con su emoji. */}
+      {/* G39 (F-15): las metas en camino a un toque, con su emoji (solo si no se entró desde una). */}
+      {!metaDeEntrada && (
       <View style={styles.grupo}>
         <Question>¿Para qué meta?</Question>
         <View style={styles.chips}>
@@ -296,6 +300,7 @@ export function AhorrarScreen() {
           <Pastilla label="➕ Nueva meta" enlace onPress={nuevaMeta} />
         </View>
       </View>
+      )}
 
       {meta && (
         <>

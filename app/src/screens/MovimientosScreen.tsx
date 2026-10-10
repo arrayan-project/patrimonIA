@@ -13,6 +13,7 @@ import {
   type ResumenFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
+import { pasesConPersonas, quedaDelMes } from '../flujoMes';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useAlcance } from '../ui/alcance';
@@ -185,7 +186,12 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         ]);
         setResumen(r);
         setAnual(null);
-        setBalancePrev(p ? p.porMoneda.reduce((s, m) => s + m.balance, 0) : null);
+        setBalancePrev(
+          p
+            ? p.porMoneda.reduce((s, m) => s + m.balance, 0) +
+                (alcance === 'hogar' ? 0 : pasesConPersonas(p.movimientos, p.porMoneda[0]?.moneda ?? 'CLP').reduce((s, x) => s + x.monto, 0))
+            : null,
+        );
       } else if (periodo === 'Año') {
         const [r, a] = await Promise.all([
           pedirResumen(desde, hasta),
@@ -276,8 +282,10 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         { ingresos: 0, gastos: 0 },
       )
     : null;
-  const balance = totales ? totales.ingresos - totales.gastos : 0;
   const monedaPrincipal = resumen?.porMoneda[0]?.moneda ?? 'CLP';
+  // G39 (claridad): lo que pasaste o te pasaron personas del hogar también cuenta en el mes.
+  const pases = hogar ? [] : pasesConPersonas(resumen?.movimientos ?? [], monedaPrincipal);
+  const balance = totales ? quedaDelMes(totales.ingresos, totales.gastos, pases) : 0;
   const multiMoneda = (resumen?.porMoneda.length ?? 0) > 1;
   const mesAnterior = MESES_LARGO[anchor.mes === 0 ? 11 : anchor.mes - 1];
   const contraAnterior = balancePrev != null ? balance - balancePrev : null;
@@ -360,11 +368,18 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
             <Panel gap={0}>
               <Row left={hogar ? '📥 Les entró' : '📥 Te entró'} right={money(totales?.ingresos ?? 0, monedaPrincipal)} />
               <Row left={hogar ? '📤 Gastaron' : '📤 Gastaste'} right={money(totales?.gastos ?? 0, monedaPrincipal)} />
+              {pases.map((p) => (
+                <Row
+                  key={`${p.usuarioId}${p.monto < 0 ? '-' : '+'}`}
+                  left={p.monto < 0 ? `👤 Le pasaste a ${p.nombre}` : `👤 Te pasó ${p.nombre}`}
+                  right={`${p.monto < 0 ? '−' : '+'} ${money(Math.abs(p.monto), monedaPrincipal)}`}
+                />
+              ))}
               <Row
                 left={
                   balance >= 0
-                    ? `🎉 ${hogar ? 'Les' : 'Te'} ${enCurso ? 'sobra' : 'sobró'}`
-                    : `⚠️ ${hogar ? 'Gastaron' : 'Gastaste'} de más`
+                    ? `🧮 ${hogar ? 'Les' : 'Te'} ${enCurso ? 'queda' : 'quedó'} ${periodo === 'Año' ? 'del año' : periodo === 'Mes' ? 'del mes' : ''}`.trim()
+                    : '⚠️ Salió más de lo que entró'
                 }
                 right={
                   <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
@@ -531,9 +546,12 @@ function FilaMovimiento({
   let signo = '';
   if (interno) {
     const e = m.efectoPropio ?? 0;
+    // G39 (claridad): con alguien del hogar, se dice con quién.
     sub = hogar
       ? e === 0 ? 'Entre cuentas del hogar' : e < 0 ? 'Salió del hogar' : 'Entró al hogar'
-      : e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
+      : m.contraparte
+        ? e < 0 ? `👤 Le pasaste a ${m.contraparte.nombre}` : `👤 Te pasó ${m.contraparte.nombre}`
+        : e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
     signo = e === 0 ? '' : e < 0 ? '−' : '+';
   } else if (m.tipo === 'SALDO_INICIAL') {
     sub = 'Con lo que empezó la cuenta';

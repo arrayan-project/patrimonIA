@@ -7,7 +7,7 @@ const SECCIONES: { k: SeccionDashboard; emoji: string; titulo: string; sub: stri
   { k: 'disponibilidad', emoji: '✅', titulo: 'Puedes gastar', sub: 'Debajo del total' },
   { k: 'composicion', emoji: '🏦', titulo: 'Tus cuentas', sub: 'Cada cuenta con su saldo' },
   { k: 'objetivos', emoji: '🎯', titulo: 'Tus metas', sub: 'Cuánto llevas de cada una' },
-  { k: 'flujo', emoji: '📊', titulo: 'Así va el mes', sub: 'Lo que entró y salió' },
+  { k: 'flujo', emoji: '📅', titulo: 'El mes', sub: 'Lo que entró y salió este mes' },
   { k: 'accesos', emoji: '⚡', titulo: 'Atajos', sub: 'Lo que más usas, a un toque' },
 ];
 

@@ -267,6 +267,8 @@ export interface EventoFinancieroDTO {
   impactos: { id: string; elementoId: string; monto: number }[];
   /** G39 (M12): solo en el detalle, si tiene correcciones vivas: cómo quedó. */
   vigente?: { monto: number; fecha: string; glosa: string | null; correccionIds: string[] };
+  /** Solo en el detalle: si una cuenta es de otra persona, quién es y cuál es su cuenta. */
+  contraparte?: { usuarioId: string; nombre: string; elementoId: string };
 }
 
 export interface PatrimonioIndividualDTO {
@@ -579,6 +581,8 @@ export interface MovimientoReporteDTO {
   elementoDestinoId: string | null;
   /** G39: cuándo se anotó (no la fecha del movimiento). */
   registradoEn: string;
+  /** Con quién del hogar fue la transferencia (null si fue entre tus cuentas). */
+  contraparte: { usuarioId: string; nombre: string } | null;
 }
 
 export interface ResumenFinancieroDTO {
