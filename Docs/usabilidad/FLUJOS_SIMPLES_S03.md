@@ -472,7 +472,37 @@ pantallas · 2 a 4 toques.
 **Lo que cuesta:** dos preguntas seguidas ("De otra persona" y "¿Quién?")
 para un solo dato; la segunda vez Noira ya existe y podría ofrecerse directo.
 Dominio resuelto (D-3: no infla ingresos ni gastos).
-**Objetivo:** *por definir.*
+**Ya mejorado por bloques anteriores:** "¿De quién es?" en botones (F-11) y
+la cuenta de la última vez (F-1): hoy son 7 toques por parte.
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-4 y F-13 (§6).
+
+*Llega la plata*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💰 Recibí | 1 |
+| 3 | Recibí | Banda del monto resaltada | Escribe 30.000 | campo |
+| 4 | Recibí | "¿De quién es esta plata?": 🙋 Mía · 👤 De otra persona · 👥 De alguien del hogar | Toca 👤 De otra persona | 1 |
+| 5 | Recibí | **"¿De quién?"** como botones: las personas con las que tiene algo pendiente primero (máx. 4) y **➕ Otra persona** | Toca ➕ Otra persona y escribe "Noira" | 1 + campo |
+| 6 | Recibí | "¿A qué cuenta llegó?": la de la última vez | Nada | 0 |
+| 7 | Recibí | Pie: "💰 Entran 30.000 a Falabella · hoy. No es ingreso tuyo: **tienes 30.000 de Noira.**" | "Anotar plata de otra persona" | 1 |
+
+*La compra*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | "¿De quién es este gasto?" | Toca 👤 De otra persona | 1 |
+| 4 | Gasté | "¿De quién?" con **👤 Noira** (tiene plata suya) y debajo "💵 Tienes 30.000 de Noira" | Toca 👤 Noira | 1 |
+| 5 | Gasté | En la banda del monto aparece **💵 Todo lo de Noira · 30.000** | Lo toca (o escribe otro monto) | 1 |
+| 6 | Gasté | La cuenta de la última vez | Nada | 0 |
+| 7 | Gasté | Pie: "💸 Salen 30.000 de Falabella · hoy. No es gasto tuyo: **Noira y tú quedan a mano.**" | "Anotar plata de otra persona" | 1 |
+
+**Conteo objetivo:** llega 5 toques + monto + nombre; compra **6 toques, sin
+escribir** (antes 9 + monto cada una).
 
 #### M9 — Juan me pasa 100.000 para mi papá; se los envío y agrego 100.000 míos
 
@@ -556,7 +586,41 @@ pagaron".)
 **Conteo:** 4 pantallas · 20 toques · 3 campos.
 **Lo que cuesta:** "plata de otra persona" para algo que pagué yo; la
 pregunta del saldo previo es la más difícil de entender del flujo.
-**Objetivo:** *por definir.*
+**Ya mejorado por bloques anteriores:** "¿De quién es?" en botones y la cuenta
+de la última vez.
+
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-4, F-13 y F-14 (§6).
+
+*La compra*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe 25.000 | campo |
+| 4 | Gasté | "¿De quién es este gasto?" | Toca 👤 De otra persona | 1 |
+| 5 | Gasté | "¿De quién?" | Toca ➕ Otra persona y escribe "Papás" (o 👤 Papás si ya existe) | 1 + campo |
+| 6 | Gasté | **"¿De dónde sale esta plata?"** (solo si no hay nada pendiente con esa persona): **🤝 La pongo yo: Papás me la devuelve** · **💵 Es de Papás: me la había pasado** | Toca 🤝 La pongo yo | 1 |
+| 7 | Gasté | La cuenta de la última vez | Nada | 0 |
+| 8 | Gasté | Pie: "💸 Salen 25.000 de Cuenta corriente · hoy. No es gasto tuyo: **Papás te debe 25.000.**" | "Anotar plata de otra persona" | 1 |
+
+Si toca "💵 Es de Papás: me la había pasado", aparece una sola pregunta más,
+"¿La anotaste cuando te llegó?": **No la anoté** · **Sí, como ingreso mío**
+(y elige cuál; "Lo corregimos para que no cuente como tuyo").
+
+*La devolución*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💰 Recibí | 1 |
+| 3 | Recibí | "¿De quién es esta plata?" | Toca 👤 De otra persona | 1 |
+| 4 | Recibí | "¿De quién?" con **👤 Papás** primero y "🤝 Papás te debe 25.000" | Toca 👤 Papás | 1 |
+| 5 | Recibí | En la banda, **💵 Lo que te debe · 25.000** | Lo toca | 1 |
+| 6 | Recibí | Pie: "💰 Entran 25.000 a Cuenta corriente · hoy. No es ingreso tuyo: **Papás y tú quedan a mano.**" | "Anotar plata de otra persona" | 1 |
+
+**Conteo objetivo:** compra 6 toques + monto + nombre (antes 11 + 2 campos);
+devolución **6 toques, sin escribir** (antes 9 + monto).
 
 #### M11 — Pagué algo en dólares / cambié plata
 
@@ -631,7 +695,20 @@ el tipo no se cambian (hay que eliminar y anotar de nuevo).
 tarjeta "🐷 Ahorrar", la meta viene elegida (−2).
 **Lo que cuesta:** era "No se completa" en S01; hoy resuelto. Queda el orden:
 se pregunta la meta antes que la plata.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-15 y F-16 (§6).
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 🐷 Ahorrar para una meta | 1 |
+| 3 | Ahorrar | **"¿Para qué meta?"** como botones con su emoji (hasta 4 metas en camino, "🔍 Ver todas" si hay más, "➕ Nueva meta"); si hay una sola, viene elegida | Toca 🏠 Hogar | 1 |
+| 4 | Ahorrar | Banda de la meta (Llevas, %). "¿En qué cuenta guardas la plata de esta meta?": viene la de siempre (Fintual) | Nada | 0 |
+| 5 | Ahorrar | "¿De dónde sale la plata?": **la de tu último ahorro para esa meta** (Falabella), con "🔁 La de la última vez. Tócala para cambiarla." | Nada | 0 |
+| 6 | Ahorrar | "¿Cuánto?" con "💯 Todo lo libre (1.000.000)" | Escribe el monto o toca "Todo lo libre" | campo o 1 |
+| 7 | Ahorrar | Pie: "🔁 Se mueven 1.000.000 de Falabella a Fintual. **Hazlo también en tu banco; acá queda anotado.**" | "Guardar" | 1 |
+
+**Conteo objetivo:** **4 toques + monto** (meta ✅, antes 7 a 9). Desde la
+tarjeta de la meta ("🐷 Ahorrar"), 3 + monto.
 
 #### A2 — Fin de mes: junto lo que sobra de dos cuentas y lo mando a la meta
 
@@ -650,7 +727,21 @@ se pregunta la meta antes que la plata.
 **Conteo:** 2 pantallas · 12 a 14 toques · 0 campos.
 **Lo que cuesta:** hay que saber qué cuentas tienen sobrante; la app no
 sugiere "te sobraron X este mes".
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — lo mismo que A1 (F-15, F-16):
+la meta y la primera cuenta vienen elegidas, y cada cuenta se vacía con
+"💯 Todo lo libre".
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1–2 | Inicio → Ahorrar | — | "+" · 🐷 Ahorrar | 2 |
+| 3 | Ahorrar | "¿Para qué meta?" en botones | Toca la meta | 1 |
+| 4 | Ahorrar | Primera cuenta: la de la última vez | "💯 Todo lo libre" | 1 |
+| 5 | Ahorrar | "➕ Sumar otra cuenta" | Lo toca y elige la segunda cuenta | 3 |
+| 6 | Ahorrar | Segunda cuenta | "💯 Todo lo libre" | 1 |
+| 7 | Ahorrar | Pie con lo que se mueve de cada cuenta | "Guardar" | 1 |
+
+**Conteo objetivo:** 9 toques, sin escribir (antes 12 a 14). Es el único T1
+que no llega a 4: junta dos cuentas en una sola operación.
 
 #### A3 — ¿Cuánto llevo para la meta y cuánto me queda libre?
 
@@ -663,7 +754,7 @@ sugiere "te sobraron X este mes".
 
 **Conteo:** 1 pantalla · 0 toques.
 **Lo que cuesta:** nada relevante.
-**Objetivo:** *por definir (probablemente se mantiene).*
+**Objetivo (✅ se mantiene):** ya se ve en el Inicio sin tocar nada.
 
 #### A4 — Mi Fintual rentó; actualizo cuánto vale
 
@@ -679,7 +770,9 @@ sugiere "te sobraron X este mes".
 **Conteo:** 3 pantallas · 3 toques · 1 campo.
 **Lo que cuesta:** solo aparece si la cuenta tiene "cambia de valor"; si no,
 hay que ir por 🔧 Corregir el saldo ("¿Cuánto tiene de verdad?" + por qué).
-**Objetivo:** *por definir.*
+**Objetivo (✅ se mantiene):** 3 toques + valor. Si la cuenta no "cambia de
+valor", el Detalle ofrece "🔧 Corregir el saldo" ("¿Cuánto tiene de
+verdad?"), que también se entiende solo.
 
 #### A5 — Uso la plata de la meta (compro el pasaje)
 
@@ -696,7 +789,9 @@ hay que ir por 🔧 Corregir el saldo ("¿Cuánto tiene de verdad?" + por qué).
 **Otra ruta:** "+" → Gasté → cuenta → "¿Sale de una meta?" (+2 sobre M1).
 **Conteo:** 3 pantallas · 5 toques · 1 campo. Era "No se completa" en S01
 (HZ-13); hoy resuelto.
-**Objetivo:** *por definir.*
+**Objetivo (✅ se mantiene):** con los bloques anteriores ya son 4 toques +
+monto (meta ✅): la meta → "💸 Usar plata de la meta" → monto → categoría en
+botones → Anotar.
 
 #### A6 — Separo plata para algo sin moverla de mi cuenta
 
@@ -720,7 +815,21 @@ cuenta guardas…?" y en "¿De dónde sale?" (no se mueve nada).
 porque origen y destino coinciden. "Ahorro sin meta" ya no se crea directo.
 Desde Ahorrar sin metas, "Crear una meta" abre el formulario *(verificar si
 vuelve a Ahorrar con la meta elegida)*.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-15 y F-17 (§6).
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 🐷 Ahorrar para una meta | 1 |
+| 3 | Ahorrar | "¿Para qué meta?" con "➕ Nueva meta" | Toca ➕ Nueva meta | 1 |
+| 4 | Nueva meta | "¿Para qué juntas?" y "¿Cuánto quieres juntar?" | Escribe "Vacaciones" y 1.500.000 | 2 campos |
+| 5 | Nueva meta | — | "Guardar" | 1 |
+| 6 | Ahorrar | **Vuelve con "Vacaciones" ya elegida** (hoy vuelve sin la meta nueva) | — | 0 |
+| 7 | Ahorrar | "¿De dónde sale la plata?" → Cuenta corriente; como es la primera vez, "¿En qué cuenta guardas…?" viene en la misma | Elige la cuenta | 2 |
+| 8 | Ahorrar | "¿Cuánto?" | Escribe 300.000 | campo |
+| 9 | Ahorrar | Pie: "🐷 **La plata se queda en Cuenta corriente**, separada para Vacaciones: no se mueve." | "Guardar" | 1 |
+
+**Conteo objetivo:** 7 toques + 3 campos (antes ≈ 13 + 3).
 
 #### A7 — Creamos una meta del hogar y aportamos los dos
 
@@ -748,7 +857,32 @@ vuelve a Ahorrar con la meta elegida)*.
 pantallas · 5 a 7 toques · 1 campo.
 **Lo que cuesta:** *(verificar)* si la pareja puede ahorrar sin estar en
 "¿Quién más puede cambiarla?" (antes, "designados", era requisito).
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-18 (§6).
+
+**Lo que hoy falla sin avisar:** la pareja solo puede ahorrar en la meta si
+quien la creó la marcó en "¿Quién más puede cambiarla? (opcional)". El campo
+parece opcional y habla de "cambiarla", no de ahorrar: si nadie lo marca, la
+pareja ve la meta pero no puede aportar.
+
+*Quien la crea*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Planificar | — | Toca ➕ Nueva meta | 2 |
+| 2 | Nueva meta | "¿Para qué juntas?" | Escribe "Casa" | campo |
+| 3 | Nueva meta | "¿La comparten en el hogar?" 🙋 No, es mía · 👥 Sí | Toca 👥 Sí | 1 |
+| 4 | Nueva meta | **"¿Quién más puede ahorrar en ella?"** con todos los del hogar **ya marcados** (se pueden quitar) | Nada | 0 |
+| 5 | Nueva meta | "¿Cuánto quieres juntar?" | Escribe el monto | campo |
+| 6 | Nueva meta | — | "Guardar" | 1 |
+
+*La pareja, cada aporte:* Hogar → 🎯 Metas del hogar → 🐷 Ahorrar → como A1
+desde la meta (cuenta de la última vez, "Todo lo libre" o monto) → Guardar:
+**4 toques + monto**.
+Si una meta del hogar no la deja ahorrar, la Meta dice "👀 [quien la creó]
+no te agregó para ahorrar en esta meta" en vez de no mostrar el botón.
+
+**Conteo objetivo:** crear 4 toques + 2 campos; cada aporte 4 + monto, y la
+pareja siempre puede aportar salvo que la saquen a propósito.
 
 #### A8 — Cumplí la meta / la quiero reabrir
 
@@ -763,7 +897,8 @@ pantallas · 5 a 7 toques · 1 campo.
 
 (Al completarse, la meta se marca lograda sola.)
 **Conteo:** 3 pantallas · 4 toques.
-**Objetivo:** *por definir.*
+**Objetivo (✅ se mantiene):** 4 toques, y la meta se marca lograda sola
+al completarse.
 
 ### 5.3 Hogar
 
@@ -1093,7 +1228,7 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-1 | **Cuenta recordada:** la cuenta (o el par de cuentas, en Moví plata) del último movimiento del mismo tipo viene elegida, se ve como paso hecho y se cambia tocándola. | M1, M2, M3, M6, M7, M8, M10, P2 | −2 toques por cuenta | ✅ en M1–M3 (§9) |
 | F-2 | **Categoría en chips:** las 4 categorías más usadas de ese tipo, a un toque, y "🔍 Otra" para la lista completa. | M1, M2, M5, M7, A5, P2 | −1 toque | ✅ en M1–M2 (§9) |
 | F-3 | **Confirmar desde el Inicio en un toque:** lo programado que ya venció aparece en los avisos del Inicio con "✅ Sí", que anota con el monto y la fecha previstos; la fila abre el Programado para los otros casos. | M5, H3, P2, H5 | −2 toques por mes | ✅ en M5 y H3 (§9) |
-| F-4 | **Personas como respuesta directa:** "¿De quién es?" ofrece las personas recientes (Noira, Papás) junto a Mío y Compartido. | M8, M10 | −2 toques | ⬜ |
+| F-4 | **Personas como botones:** "¿De quién?" muestra a las personas con algo pendiente primero (máx. 4) y "➕ Otra persona", con una línea del saldo de la elegida ("💵 Tienes 30.000 de Noira"). | M8, M10 | −1 toque | ✅ en M8 y M10 (§13) |
 | F-5 | **Pagar una deuda** (no solo tarjeta) en la hoja "+": la deuda y la cuenta de la última vez, y botones con "Todo lo que debes" y "La cuota"; el pie dice cuánto queda por pagar. Gasté ya no ofrece bienes ni "te deben" como cuenta de pago. | M6, H5 | −1 a −3 toques y 0 campos | ✅ en M6 y H5 (§11) |
 | F-6 | **Tipo opcional** al agregar: se deja en el genérico sin preguntar. | C1, C2, C3 | −2 toques | ⬜ |
 | F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
@@ -1102,6 +1237,12 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-10 | **La cuenta de salida también se recuerda cuando el destino viene elegido** (Hogar › Para transferirles, Pagar una solicitud). | M4, M7 | −2 toques | ✅ en M4 y M7 (§12) |
 | F-11 | **"¿De quién es?" como botones** con una línea que explica el elegido, y en "Con [miembro]", **"¿Ya te pasó su parte?"**: si ya la pasó, no se le pide nada y se muestra lo que transfirió. | M7, M8, M9, M10 | −1 toque; evita pedir dos veces | ✅ en M7 y M9 (§12) |
 | F-12 | **La app anota; la plata se mueve en el banco:** "Transferir" pasa a "✅ Ya le transferí X", con "Primero transfiérele en tu banco; acá queda anotado." | M4, M7 | claridad | ✅ en M7 (§12) |
+| F-13 | **El monto pendiente con una persona a un toque:** al elegir a alguien con algo pendiente, la banda ofrece "💵 Todo lo de [persona]" (Gasté, si tienes plata suya) o "💵 Lo que te debe" (Recibí, si te debe). | M8, M10 | −1 campo | ✅ en M8 y M10 (§13) |
+| F-14 | **"¿De dónde sale esta plata?"** en palabras del usuario, en vez de "¿Te había pasado plata antes?": 🤝 La pongo yo · 💵 Es de [persona]; solo si dice que era suya se pregunta si la anotó. | M10 | claridad | ✅ en M10 (§13) |
+| F-15 | **"¿Para qué meta?" en botones** en Ahorrar (hasta 4 en camino, con emoji; una sola viene elegida; "➕ Nueva meta" vuelve con la meta nueva elegida). | A1, A2, A6 | −1 toque | ⬜ propuesto en A1, A2 y A6 |
+| F-16 | **La cuenta de tu último ahorro para esa meta** viene elegida en "¿De dónde sale la plata?"; el pie recuerda que la plata se mueve en el banco. | A1, A2, A7 | −2 toques | ⬜ propuesto en A1 y A2 |
+| F-17 | **"No se mueve" dicho en el pie** cuando la plata queda en la misma cuenta. | A6 | claridad | ⬜ propuesto en A6 |
+| F-18 | **"¿Quién más puede ahorrar en ella?"** (antes "¿Quién más puede cambiarla? (opcional)") con todos los del hogar marcados al compartir; si a alguien no lo agregaron, la Meta se lo dice. | A7 | claridad; evita que la pareja no pueda aportar | ⬜ propuesto en A7 |
 
 ## 7. Orden de trabajo
 
@@ -1112,8 +1253,8 @@ Frecuencia primero; los primeros fijan los patrones.
 2. **M5, H3, P2** — lo que se repite (F-3, F-8). ✅ implementado y mergeado (§10).
 3. **M6, H5** — tarjetas y deudas (F-5). ✅ implementado y mergeado (§11).
 4. **M4, M7, M9** — entre miembros del hogar (F-9 a F-12). ✅ implementado y mergeado (§12).
-5. **M8, M10** — plata de otras personas (F-4).
-6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor.
+5. **M8, M10** — plata de otras personas (F-4, F-13, F-14). ✅ implementado y mergeado (§13).
+6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). **← propuesta en §5.2.**
 7. **C1, C2, C3, C4** — agregar y cerrar (F-6).
 8. **M12, M13, M11** — corregir, borrar y monedas (F-7).
 9. **H1, H2, H4, H6, P1** — consultas y configuración.
@@ -1129,7 +1270,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9. | 🟡 F-1 a F-3, F-5 y F-8 a F-12 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10. | 🟡 F-1 a F-5 y F-8 a F-14 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1270,3 +1411,37 @@ requiere deploy en Render.
   para probar en el teléfono).
 - **Conteo logrado:** M4 desde el "+" 4 + monto (3 si la última vez fue a la
   pareja) · M7 quien pagó 5 + monto, la pareja 2 · M9 Zoily 5 + monto.
+
+## 13. Implementación de M8 y M10 (rama `feat/G39-personas`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). Solo app
+(sin cambios en la API ni en el dominio).
+
+- **Pasos libres** (`contadorPasos`, pieza común): una pregunta `libre` no se
+  bloquea aunque falte una anterior. Se usa en "¿De quién es?" y "¿De
+  quién?", para elegir a la persona antes del monto (el monto puede salir de
+  ella, F-13). Los demás pasos siguen la regla de HZ-24.
+- **F-4 · "¿De quién?" en botones:** hasta 4 personas, primero las que tienen
+  algo pendiente (`personasPrimero`), "➕ Otra persona" (pide el nombre) y
+  "🔍 Ver todas (N)" si hay más. Debajo, el saldo en palabras
+  (`saldoClaro`): "💵 Tienes 80.000 CLP de Nico", "🤝 Papás te debe 25.000",
+  "👌 … y tú quedan a mano".
+- **F-13 · el monto pendiente a un toque:** en la banda, "💵 Todo lo de
+  [persona] · X" (Gasté, si tienes plata suya) o "💵 Lo que te debe · X"
+  (Recibí, si te debe). Con el monto vacío, la línea del saldo dice "Para
+  usar todo, toca «💵 Todo lo de Nico» arriba.".
+- **F-14 · "¿De dónde sale esta plata?"** (Gasté, persona sin nada
+  pendiente): "🤝 La pongo yo: [persona] me la devuelve" · "💵 Es de
+  [persona]: me la había pasado"; con la segunda, "¿La anotaste cuando te
+  llegó?" No la anoté · Sí, como ingreso mío (y elige cuál). Guarda lo mismo
+  que antes (DEVOLVER / NO_ANOTADA / ANOTADA).
+- **Pie:** "No es gasto tuyo: Papás te debe 25.000." / "… tienes 30.000 de
+  Noira." / "… Nico y tú quedan a mano."; si falta algo, dice qué ("Completa
+  el monto y de quién es.").
+- **Verificado:** `tsc` sin errores; tests de `personas` y `recientes` 12/12;
+  capturas web como Demo: "De otra persona" se toca antes del monto; Nico (80.000
+  suyos) con su línea y "Todo lo de Nico" → "Nico y tú quedan a mano"; una
+  persona nueva con "¿De dónde sale esta plata?" en sus dos ramas. No se
+  anotó nada.
+- **Conteo logrado:** compra para Noira 6 toques sin escribir · devolución de
+  Papás 6 sin escribir · compra para Papás 6 + monto + nombre.
