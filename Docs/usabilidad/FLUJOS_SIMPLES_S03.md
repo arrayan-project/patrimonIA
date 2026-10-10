@@ -256,7 +256,31 @@ distintas, pasa solo a cambio de moneda: bien resuelto.)
 visible (HZ-10; desde D-8 existe "Que [pareja] pueda transferirme aquí", pero
 lo hace la otra persona). Desde el "+" no se intuye que la pareja está en la
 lista de destino.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-9 y F-10 (§6).
+
+*Desde el "+" (la pareja en una pregunta propia)*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 🔁 Moví plata | 1 |
+| 3 | Moví plata | Banda del monto resaltada | Escribe 15.000 | campo |
+| 4 | Moví plata | **"¿A dónde va la plata?"** con dos botones: **🙋 A otra cuenta mía** · **👤 A Pareja** | Toca 👤 A Pareja | 1 |
+| 5 | Moví plata | "¿A qué cuenta de Pareja?": si Pareja deja ver una sola, viene elegida | Nada (2 si tiene varias) | 0 |
+| 6 | Moví plata | "¿Desde qué cuenta?": la de la última vez, con "🔁 Tócala para cambiarla" | Nada | 0 |
+| 7 | Moví plata | Pie: "🔁 Le pasas 15.000 a Pareja (Cuenta RUT) desde Cuenta corriente · hoy. **Hazla en tu banco; acá solo queda anotada. Pareja no tiene que anotar nada.**" | "Anotar movimiento" | 1 |
+
+Si Pareja no deja ver ninguna cuenta, en el paso 5 aparece, en vez de la
+lista: "**Pareja todavía no te deja ver sus cuentas.** Pídele que, en su
+teléfono, abra su cuenta › ⚙️ Ajustes de la cuenta › 👥 Con el hogar." y el
+botón queda desactivado.
+
+*Desde Hogar › "🔁 Para transferirles"* (atajo que ya existe): la cuenta de
+Pareja viene elegida y ahora también la de salida (la de la última vez):
+Hogar · cuenta de Pareja · monto · Anotar = **3 toques + monto**.
+
+**Conteo objetivo:** desde el "+" **4 toques + monto** (meta ✅, antes 7);
+desde Hogar 3 + monto (antes 5).
 
 #### M5 — Pago cuentas fijas (luz, Spotify) todos los meses
 
@@ -390,7 +414,32 @@ con bienes (la casa, el auto) y con lo que te deben.
 **Conteo:** quien pagó 2 pantallas · 9 toques · 1 campo; la pareja 2
 pantallas · 2 a 4 toques.
 **Lo que cuesta:** poco. Era "No se completa" en S01; hoy resuelto (D-7).
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-10, F-11 y F-12 (§6).
+
+*Quien pagó*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe 60.000 | campo |
+| 4 | Gasté | **"¿De quién es este gasto?"** como tres botones a la vista: **🙋 Mío · 👫 Con Pareja · 👤 De otra persona**; debajo, una línea dice qué significa el elegido ("👫 Pagaste algo de los dos y Pareja te transfiere su parte") | Toca 👫 Con Pareja | 1 |
+| 5 | Gasté | **"¿Pareja ya te pasó su parte?"**: **⏳ No, que me la pase** (elegido) · **✅ Sí, ya me la pasó** | Nada | 0 |
+| 6 | Gasté | "¿Cuánto le toca a Pareja?": ➗ La mitad · 30.000 (elegido) | Nada | 0 |
+| 7 | Gasté | "¿En qué?" con botones | Toca 🛒 Mercado | 1 |
+| 8 | Gasté | Cuenta del gasto (la de la última vez) y "¿A qué cuenta te transfiere?" (la misma) | Nada | 0 |
+| 9 | Gasté | Pie: "💸 Salen 60.000 de Cuenta corriente · Mercado · hoy. **Le pedimos a Pareja sus 30.000: le llega un aviso para transferirte a Cuenta corriente.**" | "Anotar gasto" | 1 |
+
+*Pareja*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | Aviso "🤝 Demo te pide tu parte: 30.000 · Mercado" | Lo toca | 1 |
+| 2 | Pagar | Banda "🧾 Tu parte de Mercado"; "¿Desde qué cuenta le transfieres?" ya dice la de su última transferencia; línea **"Primero transfiérele en tu banco; acá queda anotado."** | Nada | 0 |
+| 3 | Pagar | Botón **"✅ Ya le transferí 30.000"** (antes "Transferir", que parecía que la app movía la plata) | Lo toca | 1 |
+
+**Conteo objetivo:** quien pagó **5 toques + monto** (4 sin categoría; antes
+9); la pareja **2 toques** (antes 2 a 4).
 
 #### M8 — Noira me transfiere 30.000 para que le compre un labial y se lo compro
 
@@ -446,7 +495,33 @@ anota nada, D-8.)
 **Lo que cuesta:** los 100.000 "de paso" quedan como gasto de Zoily; "De otra
 persona" no acepta a un miembro del hogar *(verificar si hay otra vía)*
 (HIP-2).
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-11 (§6). El dominio no cambia
+(la atribución por persona sigue fuera de alcance, `DECISIONES_FASE_D_S01.md`
+§3): el gasto de 200.000 queda en Zoily, como hoy; lo que cambia es que la
+app le dice claramente qué hacer y no le pide a Juan una plata que ya pasó.
+
+*Juan:* como M4 (👤 A Zoily), 4 toques + monto.
+
+*Zoily*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca 💸 Gasté | 1 |
+| 3 | Gasté | Banda del monto resaltada | Escribe 200.000 | campo |
+| 4 | Gasté | "¿De quién es este gasto?" | Toca 👫 Con Juan | 1 |
+| 5 | Gasté | "¿Juan ya te pasó su parte?" | Toca **✅ Sí, ya me la pasó** | 1 |
+| 6 | Gasté | Aparece lo que Juan le transfirió en los últimos 30 días: "✅ Juan te pasó 100.000 · 8 oct · a Falabella" y "¿Cuánto era de Juan?": ➗ La mitad · 100.000 (elegido) · ✏️ Otro monto | Nada | 0 |
+| 7 | Gasté | Cuenta del gasto (la de la última vez) | Nada | 0 |
+| 8 | Gasté | Pie: "💸 Salen 200.000 de Falabella · hoy. **Juan ya te pasó sus 100.000: no le pedimos nada.**" | "Anotar gasto" | 1 |
+
+Se anota un gasto de 200.000 (como hoy) y, si no escribió un detalle, queda
+"Juan puso 100.000" en el detalle (la etiqueta informativa que
+`DECISIONES_FASE_D_S01.md` §3 dejaba como "camino barato"; ✅ Juan,
+2026-10-09).
+
+**Conteo objetivo:** Zoily **5 toques + monto** (meta T2 ≤ 8 ✅, antes 7); y
+sobre todo, ya no puede pedirle a Juan una plata que ya le pasó.
 
 #### M10 — Le compro algo a mis papás y me devuelven
 
@@ -1023,6 +1098,10 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-6 | **Tipo opcional** al agregar: se deja en el genérico sin preguntar. | C1, C2, C3 | −2 toques | ⬜ |
 | F-7 | **Motivo opcional** en correcciones y eliminaciones de movimientos propios. | M12, M13, C4 | −1 campo | ⬜ |
 | F-8 | **El "+" para todo lo que se repite o viene:** "🔁 Se repite" muestra Cada mes · Cada año como botones, y una fecha futura en Gasté / Recibí / Moví plata deja el movimiento programado en vez de anotarlo. Programar en Planificar sigue existiendo. | M5, H3, P2 | −1 a −4 toques; una sola puerta | ✅ en M5, H3 y P2 (§9) |
+| F-9 | **"¿A dónde va la plata?" en Moví plata:** 🙋 A otra cuenta mía · 👤 A [miembro] como botones antes de la cuenta; si el miembro no deja ver ninguna cuenta, se dice qué tiene que hacer en su teléfono. El pie recuerda que la transferencia se hace en el banco y que el otro no anota nada. | M4, M9, H3 | −1 toque; deja claro quién anota qué | ✅ en M4 (§12) |
+| F-10 | **La cuenta de salida también se recuerda cuando el destino viene elegido** (Hogar › Para transferirles, Pagar una solicitud). | M4, M7 | −2 toques | ✅ en M4 y M7 (§12) |
+| F-11 | **"¿De quién es?" como botones** con una línea que explica el elegido, y en "Con [miembro]", **"¿Ya te pasó su parte?"**: si ya la pasó, no se le pide nada y se muestra lo que transfirió. | M7, M8, M9, M10 | −1 toque; evita pedir dos veces | ✅ en M7 y M9 (§12) |
+| F-12 | **La app anota; la plata se mueve en el banco:** "Transferir" pasa a "✅ Ya le transferí X", con "Primero transfiérele en tu banco; acá queda anotado." | M4, M7 | claridad | ✅ en M7 (§12) |
 
 ## 7. Orden de trabajo
 
@@ -1032,7 +1111,7 @@ Frecuencia primero; los primeros fijan los patrones.
    cambia 15 escenarios. ✅ implementado y mergeado (§9).
 2. **M5, H3, P2** — lo que se repite (F-3, F-8). ✅ implementado y mergeado (§10).
 3. **M6, H5** — tarjetas y deudas (F-5). ✅ implementado y mergeado (§11).
-4. **M4, M7, M9** — entre miembros del hogar.
+4. **M4, M7, M9** — entre miembros del hogar (F-9 a F-12). ✅ implementado y mergeado (§12).
 5. **M8, M10** — plata de otras personas (F-4).
 6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor.
 7. **C1, C2, C3, C4** — agregar y cerrar (F-6).
@@ -1050,7 +1129,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5. | 🟡 F-1, F-2, F-3, F-5 y F-8 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9. | 🟡 F-1 a F-3, F-5 y F-8 a F-12 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1154,3 +1233,40 @@ requiere deploy en Render.
   cuentas de Gasté. No se anotó nada nuevo.
 - **Conteo logrado:** pagar una deuda 4 toques, sin escribir · compra con
   tarjeta 4 + monto (si la tarjeta fue la última cuenta).
+
+## 12. Implementación de M4, M7 y M9 (rama `feat/G39-hogar`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). Solo app
+(sin cambios en la API ni en el dominio).
+
+- **F-9 · "¿A dónde va la plata?"** (Moví plata, si hay otros miembros):
+  🙋 A otra cuenta mía · 👤 A [miembro], antes de la cuenta. Con un miembro,
+  "¿A qué cuenta de [miembro]?" lista solo sus cuentas (una sola viene
+  elegida); si no deja ver ninguna: "🔒 [miembro] todavía no te deja ver sus
+  cuentas. Pídele que, en su teléfono, abra su cuenta › ⚙️ Ajustes de la
+  cuenta › 👥 Con el hogar.". Después, "¿Desde qué cuenta?". Pie: "🔁 Le pasas
+  X a [miembro] ([cuenta]) desde [cuenta] · hoy. Hazla en tu banco; acá solo
+  queda anotada. [miembro] no tiene que anotar nada."
+- **F-10 · la cuenta de salida se recuerda con el destino ya elegido:** desde
+  Hogar › Para transferirles ("🔁 La de tu última transferencia") y en Pagar
+  una solicitud (la cuenta de tu última transferencia, si tienes más de una).
+- **F-11 · "¿De quién es?" en botones** (Gasté y Recibí), con una línea que
+  explica el elegido ("🙋 Lo pagaste tú y es tuyo", "👫 Pagaste algo de los
+  dos y Pareja te transfiere su parte"…). En "👫 Con [miembro]":
+  "¿[miembro] ya te pasó su parte?" ⏳ No, que me la pase (elegido) · ✅ Sí,
+  ya me la pasó. Con "Sí": se listan sus transferencias de los últimos 30
+  días, "¿Cuánto era de [miembro]?", no se pregunta a qué cuenta te
+  transfiere, se anota un gasto normal (sin solicitud) con el detalle
+  "[miembro] puso X" si no escribiste otro, y el pie dice "… ya te pasó sus
+  X: no le pedimos nada.". Con "No", como antes, y el pie dice "Le pedimos a
+  [miembro] sus X: le llega un aviso para transferirte a [cuenta]."
+- **F-12 · Pagar:** "✅ Ya le transferí X" (antes "Transferir X") y la línea
+  "🏦 Primero transfiérele en tu banco; acá queda anotado.".
+- **Verificado:** `tsc` sin errores; capturas web como Demo (Moví plata a
+  Pareja, Gasté "Con Pareja" con No y con Sí) y como Pareja (Inicio con el
+  aviso "Demo te pide tu parte: 15.000" → Pagar con la cuenta recordada y el
+  botón nuevo). Para eso se anotó, como Demo, un gasto compartido de 30.000
+  con Pareja (queda en la base local, con su solicitud de 15.000 pendiente
+  para probar en el teléfono).
+- **Conteo logrado:** M4 desde el "+" 4 + monto (3 si la última vez fue a la
+  pareja) · M7 quien pagó 5 + monto, la pareja 2 · M9 Zoily 5 + monto.
