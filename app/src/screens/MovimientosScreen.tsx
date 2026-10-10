@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -7,6 +7,8 @@ import {
   api,
   ApiError,
   type CategoriaMovimientoDTO,
+  type ElementoPatrimonialDTO,
+  type FotoMesDTO,
   type HogarDTO,
   type MovimientoReporteDTO,
   type ResumenAnualDTO,
@@ -14,6 +16,10 @@ import {
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { pasesConPersonas, quedaDelMes } from '../flujoMes';
+import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
+import { agruparFoto, cuentasDelDia, elegiblesDelDia, rotuloLinea } from '../fotoMes';
+import { usePreferencias } from '../preferencias';
+import { emojiElemento } from '../emojis';
 import { useNav } from '../navigation/navigator';
 import { money } from '../format';
 import { useAlcance } from '../ui/alcance';
@@ -21,6 +27,7 @@ import { emojiCategoria, emojiTipoMovimiento } from '../emojis';
 import {
   Button,
   colorCategoria,
+  ElegirVarios,
   EmptyState,
   ErrorText,
   etiqueta,
@@ -46,10 +53,8 @@ import {
 import { GraficoBarras } from '../ui/charts';
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const MESES_LARGO = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
+/** G43: el día del mes del hogar, recordado entre visitas (así no se carga dos veces). */
+let diaHogarRecordado = 1;
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 /** Fecha ISO de (año, mes 0-11, día); normaliza meses y días fuera de rango (mes -1 = diciembre anterior, día 0 = último del mes previo). */
 const iso = (y: number, m: number, d: number) => {
@@ -95,9 +100,23 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
   const alcance = soloHogar ? 'hogar' : ctxAlcance.alcance;
 
   const hoy = useMemo(() => new Date(), []);
+  const { preferencias, guardarPreferencias } = usePreferencias();
+  const hogar = alcance === 'hogar';
+  // G43: el mes parte el día que elegiste (o el del hogar en "Del hogar").
+  const [diaHogar, setDiaHogar] = useState(diaHogarRecordado);
+  const ciclo: CicloMes = useMemo(
+    () => ({ dia: hogar ? diaHogar : preferencias.mes.dia, nombre: preferencias.mes.nombre }),
+    [hogar, diaHogar, preferencias.mes.dia, preferencias.mes.nombre],
+  );
   const [periodo, setPeriodo] = useState<Periodo>('Mes');
-  const [anchor, setAnchor] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() });
+  // null = el mes de hoy (según el ciclo, que puede llegar después).
+  const [anchorElegido, setAnchor] = useState<{ anio: number; mes: number } | null>(null);
+  const anchor = useMemo(() => anchorElegido ?? cicloDe(hoy, ciclo), [anchorElegido, hoy, ciclo]);
   const [mesesAtras, setMesesAtras] = useState(3);
+  // G42: tus cuentas, para la foto del mes de las del día a día.
+  const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
+  const [foto, setFoto] = useState<FotoMesDTO | null>(null);
+  const [resultadoPrev, setResultadoPrev] = useState<number | null>(null);
 
   // En un ref: guardarlo no debe cambiar `cargar` (si no, la pantalla carga dos veces al abrirse).
   const hogarIdRef = useRef<string | null>((nav.route.params?.hogarId as string | undefined) ?? null);
@@ -127,10 +146,10 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
   }, [categoriaParam, categoriaNombreParam]);
   useEffect(() => {
     if (!mesParam) return;
-    const [a, m] = mesParam.split('-').map(Number);
+    const [a, m, d] = mesParam.split('-').map(Number);
     setPeriodo('Mes');
-    setAnchor({ anio: a, mes: m - 1 });
-  }, [mesParam]);
+    setAnchor(d ? cicloDe(new Date(a, m - 1, d), ciclo) : { anio: a, mes: m - 1 });
+  }, [mesParam, ciclo]);
 
   // Ventana [desde, hasta] según el período elegido.
   const ventana = useMemo(() => {
@@ -143,20 +162,32 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         hasta: iso(hoy.getFullYear(), hoy.getMonth() + 1, 0),
       };
     }
-    return { desde: iso(anchor.anio, anchor.mes, 1), hasta: iso(anchor.anio, anchor.mes + 1, 0) };
-  }, [periodo, anchor, mesesAtras, hoy]);
+    return ventanaCiclo(anchor.anio, anchor.mes, ciclo);
+  }, [periodo, anchor, mesesAtras, hoy, ciclo]);
 
   const cargar = useCallback(async () => {
     setError('');
     setCargando(true);
     try {
+      const [hs, els] = await Promise.all([
+        api.get<HogarDTO[]>('/usuarios/me/hogares', token),
+        hogar ? Promise.resolve(null) : api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+      ]);
       let hid = hogarIdRef.current;
       if (!hid) {
-        const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
         hid = hs[0]?.id ?? null;
         hogarIdRef.current = hid;
       }
-      const q = alcance === 'hogar' && hid ? `&alcance=hogar&hogarId=${hid}` : '&alcance=mios';
+      const dia = hs.find((h) => h.id === hid)?.diaInicioMes ?? 1;
+      diaHogarRecordado = dia;
+      setDiaHogar(dia);
+      // G42: en "Lo mío", todo se mira en tus cuentas del día a día.
+      const cuentas = els ? cuentasDelDia(els, preferencias.mes.cuentas) : null;
+      if (els) setElementos(els);
+      const q =
+        alcance === 'hogar' && hid ? `&alcance=hogar&hogarId=${hid}` : `&alcance=mios&cuentas=${(cuentas ?? []).join(',')}`;
+      const pedirFoto = (v: { desde: string; hasta: string }) =>
+        api.get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${v.desde}&hasta=${v.hasta}&cuentas=${(cuentas ?? []).join(',')}`, token);
 
       api
         .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
@@ -177,31 +208,39 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
           token,
         );
 
-      if (periodo === 'Mes') {
-        const prevMes = anchor.mes === 0 ? 11 : anchor.mes - 1;
-        const prevAnio = anchor.mes === 0 ? anchor.anio - 1 : anchor.anio;
-        const [r, p] = await Promise.all([
+      if (periodo === 'Mes' && !hogar) {
+        // G41: la foto del mes (y la del mes anterior, para comparar).
+        const prev = ventanaCiclo(anchor.anio, anchor.mes - 1, ciclo);
+        const [r, f, fp] = await Promise.all([
           pedirResumen(desde, hasta),
-          pedirResumen(iso(prevAnio, prevMes, 1), iso(prevAnio, prevMes + 1, 0)).catch(() => null),
+          pedirFoto(ventana),
+          pedirFoto(prev).catch(() => null),
         ]);
         setResumen(r);
+        setFoto(f);
         setAnual(null);
-        setBalancePrev(
-          p
-            ? p.porMoneda.reduce((s, m) => s + m.balance, 0) +
-                (alcance === 'hogar' ? 0 : pasesConPersonas(p.movimientos, p.porMoneda[0]?.moneda ?? 'CLP').reduce((s, x) => s + x.monto, 0))
-            : null,
-        );
+        setBalancePrev(null);
+        const principalPrev = fp ? monedaDeFoto(fp, preferencias.monedaPreferida) : null;
+        setResultadoPrev(principalPrev ? principalPrev.tienes - principalPrev.tenias : null);
+      } else if (periodo === 'Mes') {
+        const prev = ventanaCiclo(anchor.anio, anchor.mes - 1, ciclo);
+        const [r, p] = await Promise.all([pedirResumen(desde, hasta), pedirResumen(prev.desde, prev.hasta).catch(() => null)]);
+        setResumen(r);
+        setFoto(null);
+        setAnual(null);
+        setBalancePrev(p ? p.porMoneda.reduce((s, m) => s + m.balance, 0) : null);
       } else if (periodo === 'Año') {
         const [r, a] = await Promise.all([
           pedirResumen(desde, hasta),
           api.get<ResumenAnualDTO>(`/usuarios/me/resumen-anual?anio=${anchor.anio}${q}`, token),
         ]);
         setResumen(r);
+        setFoto(null);
         setAnual(a);
         setBalancePrev(null);
       } else {
         setResumen(await pedirResumen(desde, hasta));
+        setFoto(null);
         setAnual(null);
         setBalancePrev(null);
       }
@@ -210,19 +249,18 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
     } finally {
       setCargando(false);
     }
-  }, [token, periodo, anchor, ventana, alcance]);
+  }, [token, periodo, anchor, ventana, alcance, hogar, ciclo, preferencias.mes.cuentas, preferencias.monedaPreferida]);
 
   useCargaAlEnfocar(cargar);
 
   const mover = (delta: number) => {
-    setAnchor((a) => {
-      if (periodo === 'Año') return { ...a, anio: a.anio + delta };
-      let mes = a.mes + delta;
-      let anio = a.anio;
-      if (mes < 0) { mes = 11; anio--; }
-      else if (mes > 11) { mes = 0; anio++; }
-      return { anio, mes };
-    });
+    const a = anchor;
+    if (periodo === 'Año') return setAnchor({ ...a, anio: a.anio + delta });
+    let mes = a.mes + delta;
+    let anio = a.anio;
+    if (mes < 0) { mes = 11; anio--; }
+    else if (mes > 11) { mes = 0; anio++; }
+    setAnchor({ anio, mes });
   };
 
   const catPorId = useMemo(() => new Map(categorias.map((x) => [x.id, x])), [categorias]);
@@ -267,15 +305,16 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         : `${MESES_LARGO[anchor.mes]} ${anchor.anio}`;
   const etiquetaPeriodo =
     periodo === 'Año' ? `${anchor.anio}` : periodo === 'Recientes' ? 'los últimos meses' : MESES_LARGO[anchor.mes];
+  const mesDeHoy = cicloDe(hoy, ciclo);
   const enCurso =
     periodo === 'Recientes' ||
-    (periodo === 'Año' ? anchor.anio === hoy.getFullYear() : anchor.anio === hoy.getFullYear() && anchor.mes === hoy.getMonth());
+    (periodo === 'Año' ? anchor.anio === hoy.getFullYear() : anchor.anio === mesDeHoy.anio && anchor.mes === mesDeHoy.mes);
+  const rotulo = periodo === 'Mes' ? rotuloCiclo(anchor.anio, anchor.mes, ciclo) : null;
   const tituloResumen =
     periodo === 'Recientes'
       ? `Así van los últimos ${mesesAtras} meses`
       : `${enCurso ? 'Así va' : 'Así fue'} ${etiquetaPeriodo}`;
 
-  const hogar = alcance === 'hogar';
   const totales = resumen
     ? resumen.porMoneda.reduce(
         (s, m) => ({ ingresos: s.ingresos + m.ingresos, gastos: s.gastos + m.gastos }),
@@ -342,7 +381,10 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         >
           <Text style={styles.flecha}>‹</Text>
         </Pressable>
-        <Text style={styles.periodo} numberOfLines={1}>🗓️ {titulo.charAt(0).toUpperCase() + titulo.slice(1)}</Text>
+        <View style={styles.periodoCaja}>
+          <Text style={styles.periodo} numberOfLines={1}>🗓️ {titulo.charAt(0).toUpperCase() + titulo.slice(1)}</Text>
+          {rotulo ? <Text style={styles.rotulo}>{rotulo}</Text> : null}
+        </View>
         <Pressable
           disabled={periodo === 'Recientes'}
           onPress={() => mover(1)}
@@ -364,6 +406,36 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
         <Skeleton filas={2} />
       ) : (
         <>
+          {foto ? (
+            <FotoDelMes
+              titulo={tituloResumen}
+              foto={foto}
+              enCurso={enCurso}
+              monedaPreferida={preferencias.monedaPreferida}
+              resultadoPrev={resultadoPrev}
+              mesAnterior={mesAnterior}
+              selector={
+                <ElegirVarios
+                  label="¿Con cuáles pagas tu día a día?"
+                  values={cuentasDelDia(elementos, preferencias.mes.cuentas)}
+                  options={elegiblesDelDia(elementos).map((e) => ({
+                    value: e.id,
+                    label: `${emojiElemento(e, preferencias.emojis.elementos)} ${e.nombre}`,
+                  }))}
+                  onChange={(cuentas) =>
+                    void guardarPreferencias({ ...preferencias, mes: { ...preferencias.mes, cuentas } }).catch(() => undefined)
+                  }
+                  boton={(abrir) => (
+                    <Pastilla
+                      label={`💳 ${nombresCuentas(elementos, foto.cuentas)} · Cambiar`}
+                      accessibilityLabel="Elegir tus cuentas del día a día"
+                      onPress={abrir}
+                    />
+                  )}
+                />
+              }
+            />
+          ) : (
           <Section title={tituloResumen}>
             <Panel gap={0}>
               <Row left={hogar ? '📥 Les entró' : '📥 Te entró'} right={money(totales?.ingresos ?? 0, monedaPrincipal)} />
@@ -396,7 +468,8 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
               </Text>
             )}
           </Section>
-          {multiMoneda && (
+          )}
+          {multiMoneda && !foto && (
             <Text style={styles.muted}>Hay movimientos en varias monedas: se muestran sumados sin convertir.</Text>
           )}
 
@@ -526,6 +599,98 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
   );
 }
 
+type MonedaFoto = FotoMesDTO['porMoneda'][number];
+
+/** La moneda que se muestra: la preferida si hay cuentas en ella, si no la de más plata. */
+function monedaDeFoto(f: FotoMesDTO, preferida: string | null): MonedaFoto | null {
+  return (
+    f.porMoneda.find((m) => m.moneda === preferida) ??
+    [...f.porMoneda].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0] ??
+    null
+  );
+}
+
+/** "Banco de Chile, Visa" o "3 cuentas". */
+function nombresCuentas(els: ElementoPatrimonialDTO[], ids: string[]): string {
+  if (ids.length === 0) return 'Elige tus cuentas';
+  if (ids.length > 2) return `${ids.length} cuentas`;
+  return ids.map((id) => els.find((e) => e.id === id)?.nombre ?? 'Cuenta').join(', ');
+}
+
+/**
+ * G41 — la foto del mes de tus cuentas del día a día, ordenada para que cuadre
+ * sola: Tenías al empezar + Entró − Salió = Tienes. Entró y Salió son los mismos
+ * números de la tarjeta del mes en el Inicio.
+ */
+function FotoDelMes({
+  titulo,
+  foto,
+  enCurso,
+  monedaPreferida,
+  resultadoPrev,
+  mesAnterior,
+  selector,
+}: {
+  titulo: string;
+  foto: FotoMesDTO;
+  enCurso: boolean;
+  monedaPreferida: string | null;
+  resultadoPrev: number | null;
+  mesAnterior: string;
+  selector: ReactNode;
+}) {
+  const c = useC();
+  const styles = useMemo(() => crearEstilos(c), [c]);
+  const m = monedaDeFoto(foto, monedaPreferida);
+  const otras = foto.porMoneda.filter((x) => x !== m).map((x) => x.moneda);
+  if (!m) {
+    return (
+      <Section title={titulo}>
+        <View style={styles.filtroFila}>{selector}</View>
+        <Text style={styles.muted}>Elige las cuentas con que pagas tu día a día para ver cómo va tu mes.</Text>
+      </Section>
+    );
+  }
+  const g = agruparFoto(m.lineas);
+  const resultado = m.tienes - m.tenias;
+  const contraAnterior = resultadoPrev != null ? resultado - resultadoPrev : null;
+  const linea = (l: (typeof m.lineas)[number]) => (
+    <View key={`${l.clase}${l.monto > 0 ? '+' : '-'}${l.persona?.usuarioId ?? ''}`} style={styles.subFila}>
+      <Text style={styles.subTexto} numberOfLines={1}>{rotuloLinea(l)}</Text>
+      <Text style={styles.subMonto}>{money(Math.abs(l.monto), m.moneda)}</Text>
+    </View>
+  );
+  return (
+    <Section title={titulo}>
+      <View style={styles.filtroFila}>{selector}</View>
+      <Panel gap={0}>
+        <Row left="🏁 Tenías al empezar" right={money(m.tenias, m.moneda)} />
+        <Row left="📥 Entró" right={<Text style={[styles.balance, { color: c.ok }]}>{`+ ${money(g.entro, m.moneda)}`}</Text>} />
+        {g.lineasEntro.map(linea)}
+        <Row left="📤 Salió" right={<Text style={styles.balance}>{`− ${money(g.salio, m.moneda)}`}</Text>} />
+        {g.lineasSalio.map(linea)}
+        <Row
+          left={enCurso ? '🧮 Tienes hoy' : '🧮 Terminaste con'}
+          right={<Text style={[styles.balance, { color: m.tienes >= 0 ? c.text : c.danger }]}>{money(m.tienes, m.moneda)}</Text>}
+        />
+      </Panel>
+      {enCurso && m.apartadoMetas > 0 && (
+        <Text style={styles.muted}>{`🎯 De esto, ${money(m.apartadoMetas, m.moneda)} está apartado para tus metas.`}</Text>
+      )}
+      {contraAnterior != null && contraAnterior !== 0 && (
+        <Text style={styles.muted}>
+          {`${resultado >= 0 ? 'Este mes subió' : 'Este mes bajó'} ${money(Math.abs(resultado), m.moneda)}: ${money(Math.abs(contraAnterior), m.moneda)} ${
+            contraAnterior > 0 ? 'mejor' : 'peor'
+          } que ${mesAnterior}.`}
+        </Text>
+      )}
+      {otras.length > 0 && (
+        <Text style={styles.muted}>{`Tus cuentas en ${otras.join(', ')} no se suman aquí: están en otra moneda.`}</Text>
+      )}
+    </Section>
+  );
+}
+
 function FilaMovimiento({
   m,
   categoria,
@@ -551,7 +716,8 @@ function FilaMovimiento({
       ? e === 0 ? 'Entre cuentas del hogar' : e < 0 ? 'Salió del hogar' : 'Entró al hogar'
       : m.contraparte
         ? e < 0 ? `👤 Le pasaste a ${m.contraparte.nombre}` : `👤 Te pasó ${m.contraparte.nombre}`
-        : e === 0 ? 'Entre tus cuentas' : e < 0 ? 'Salió de tus cuentas' : 'Entró a tus cuentas';
+        : // G42: "tus cuentas" son las del día a día; el otro lado es otra cuenta tuya.
+          e === 0 ? 'Entre tus cuentas' : e < 0 ? 'A tus otras cuentas' : 'Desde tus otras cuentas';
     signo = e === 0 ? '' : e < 0 ? '−' : '+';
   } else if (m.tipo === 'SALDO_INICIAL') {
     sub = 'Con lo que empezó la cuenta';
@@ -578,7 +744,12 @@ const crearEstilos = (c: Paleta) =>
     flechaZona: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: c.acentoSuave },
     flecha: { fontSize: 26, lineHeight: 30, color: c.primary, fontWeight: '700' },
     flechaOff: { opacity: 0.3 },
-    periodo: { flex: 1, fontSize: 18, fontWeight: '800', color: c.text, textAlign: 'center' },
+    periodoCaja: { flex: 1, alignItems: 'center' },
+    periodo: { fontSize: 18, fontWeight: '800', color: c.text, textAlign: 'center' },
+    rotulo: { fontSize: 13, color: c.muted },
+    subFila: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, paddingLeft: 28, paddingVertical: 3 },
+    subTexto: { fontSize: 13, color: c.muted, flexShrink: 1 },
+    subMonto: { fontSize: 13, color: c.muted },
     muted: tipoDe(c).nota,
     balance: { fontSize: 14, fontWeight: '800' },
     controles: { flexDirection: 'row' },

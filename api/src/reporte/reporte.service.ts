@@ -2,6 +2,9 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { PrismaService } from '../prisma/prisma.service.js';
 import type {
   AlcanceReporte,
+  FotoMesDTO,
+  FotoMesPorMonedaDTO,
+  LineaFotoMesDTO,
   MovimientoReporteDTO,
   ResumenAnualDTO,
   ResumenFinancieroDTO,
@@ -43,13 +46,16 @@ export class ReporteService {
     hastaISO: string,
     alcance: AlcanceReporte,
     hogarId?: string,
+    cuentas?: string[],
   ): Promise<ResumenFinancieroDTO> {
     const desde = this.#fecha(desdeISO);
     const hasta = this.#fecha(hastaISO);
     if (hasta < desde) throw new BadRequestException('hasta es anterior a desde');
 
-    const elementoIds = await this.#elementosEnAlcance(actorId, alcance, hogarId);
-    const movs = await this.#movimientosDelPeriodo(elementoIds, desde, hasta);
+    // G42: en "Lo mío", solo las cuentas del día a día que se pidan.
+    let elementoIds = await this.#elementosEnAlcance(actorId, alcance, hogarId);
+    if (cuentas && alcance === 'mios') elementoIds = elementoIds.filter((id) => cuentas.includes(id));
+    const movs = await this.#movimientosDelPeriodo(elementoIds, desde, hasta, actorId);
 
     const etiquetasPorEvento = await this.#etiquetasPorEvento(movs.map((m) => m.eventoId));
     const categorias = await this.#categorias(movs.map((m) => m.categoriaId));
@@ -116,7 +122,7 @@ export class ReporteService {
     const hasta = new Date(Date.UTC(anio, 11, 31));
 
     const elementoIds = await this.#elementosEnAlcance(actorId, alcance, hogarId);
-    const movs = await this.#movimientosDelPeriodo(elementoIds, desde, hasta);
+    const movs = await this.#movimientosDelPeriodo(elementoIds, desde, hasta, actorId);
 
     const meses = Array.from({ length: 12 }, (_, i) => ({
       mes: i + 1,
@@ -126,6 +132,139 @@ export class ReporteService {
     }));
 
     return { anio, alcance, meses };
+  }
+
+  /**
+   * G41 — la foto del mes de un grupo de cuentas (las del día a día, G42): lo
+   * que había al empezar, qué la movió y lo que había al terminar, por moneda.
+   * Cuadra por construcción: el saldo a una fecha es `valor_vigente` menos los
+   * impactos vivos posteriores (como `ReconstruccionService`), y las líneas son
+   * los impactos vivos de la ventana. Pagar la tarjeta, si la tarjeta está en
+   * el grupo, es plata entre tus cuentas: no suma ni resta (la compra ya contó
+   * como gasto el día que se hizo).
+   */
+  async fotoMes(actorId: string, desdeISO: string, hastaISO: string, cuentas?: string[]): Promise<FotoMesDTO> {
+    const desde = this.#fecha(desdeISO);
+    const hasta = this.#fecha(hastaISO);
+    if (hasta < desde) throw new BadRequestException('hasta es anterior a desde');
+
+    const mias = await this.#elementosEnAlcance(actorId, 'mios');
+    const els = await this.prisma.elemento_patrimonial.findMany({
+      where: { id: { in: cuentas ? mias.filter((id) => cuentas.includes(id)) : mias }, estado: 'ACTIVO' },
+      select: { id: true, moneda: true, valor_vigente: true },
+    });
+    const enGrupo = new Map(els.map((e) => [e.id, e]));
+    const ids = [...enGrupo.keys()];
+
+    const impactos = ids.length
+      ? await this.prisma.impacto_patrimonial.findMany({ where: { elemento_id: { in: ids }, fecha: { gte: desde } } })
+      : [];
+    const eventoIds = [...new Set(impactos.filter((i) => i.origen_tipo === 'EVENTO_FINANCIERO').map((i) => i.origen_id))];
+    const eventos = eventoIds.length
+      ? await this.prisma.evento_financiero.findMany({
+          where: { id: { in: eventoIds } },
+          select: { id: true, tipo: true, anulado: true, correccion_de_id: true },
+        })
+      : [];
+    const eventoPorId = new Map(eventos.map((e) => [e.id, e]));
+    // Una corrección se clasifica como su movimiento original.
+    const raizIds = [...new Set(eventos.map((e) => e.correccion_de_id).filter((x): x is string => !!x))];
+    const raices = raizIds.length
+      ? await this.prisma.evento_financiero.findMany({ where: { id: { in: raizIds } }, select: { id: true, tipo: true } })
+      : [];
+    const tipoRaiz = new Map(raices.map((r) => [r.id, r.tipo]));
+    const vivos = impactos.filter((i) => i.origen_tipo !== 'EVENTO_FINANCIERO' || !eventoPorId.get(i.origen_id)?.anulado);
+
+    // El otro lado de cada movimiento entre cuentas: las que no están en el grupo.
+    const otrosLados = eventoIds.length
+      ? await this.prisma.impacto_patrimonial.findMany({
+          where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: { in: eventoIds }, elemento_id: { notIn: ids } },
+          select: { origen_id: true, elemento_id: true },
+        })
+      : [];
+    const otroLadoIds = [...new Set(otrosLados.map((o) => o.elemento_id))];
+    const otrosEls = otroLadoIds.length
+      ? await this.prisma.elemento_patrimonial.findMany({
+          where: { id: { in: otroLadoIds } },
+          select: { id: true, categoria_funcional: true, naturaleza: true, elemento_propietario: { select: { usuario: { select: { id: true, nombre: true } } } } },
+        })
+      : [];
+    const otroPorId = new Map(otrosEls.map((e) => [e.id, e]));
+    const otroLadoDe = new Map<string, string>();
+    for (const o of otrosLados) if (!otroLadoDe.has(o.origen_id)) otroLadoDe.set(o.origen_id, o.elemento_id);
+
+    const clasificar = (i: (typeof vivos)[number]): { clase: string; persona: LineaFotoMesDTO['persona'] } => {
+      if (i.origen_tipo !== 'EVENTO_FINANCIERO') return { clase: 'AJUSTE', persona: null };
+      const ev = eventoPorId.get(i.origen_id);
+      const tipo = (ev?.correccion_de_id ? tipoRaiz.get(ev.correccion_de_id) : ev?.tipo) ?? 'OTRAS';
+      if (tipo === 'INGRESO' || tipo === 'GASTO' || tipo === 'SALDO_INICIAL') return { clase: tipo, persona: null };
+      const otroId = otroLadoDe.get(i.origen_id);
+      if (!otroId) return { clase: 'CAMBIO_MONEDA', persona: null };
+      const otro = otroPorId.get(otroId);
+      const duenos = otro?.elemento_propietario.map((p) => p.usuario) ?? [];
+      if (duenos.length && !duenos.some((d) => d.id === actorId)) {
+        return { clase: 'PERSONA', persona: { usuarioId: duenos[0].id, nombre: duenos[0].nombre } };
+      }
+      const cat = otro?.categoria_funcional;
+      if (cat === 'DEUDA' && otro?.naturaleza === 'CUSTODIA_INFORMAL') return { clase: 'CUSTODIA', persona: null };
+      return { clase: cat === 'RESERVA' ? 'AHORRO' : cat === 'INVERSION' ? 'INVERSION' : cat === 'DEUDA' ? 'DEUDA' : 'OTRAS', persona: null };
+    };
+
+    const porMoneda = new Map<string, FotoMesPorMonedaDTO>();
+    const deMoneda = (m: string) => {
+      const x = porMoneda.get(m) ?? { moneda: m, tenias: 0, tienes: 0, lineas: [], apartadoMetas: 0 };
+      porMoneda.set(m, x);
+      return x;
+    };
+    for (const e of els) {
+      const despuesDe = (d: Date) =>
+        vivos.filter((i) => i.elemento_id === e.id && i.fecha > d).reduce((s, i) => s + Number(i.monto), 0);
+      const vigente = Number(e.valor_vigente);
+      const x = deMoneda(e.moneda);
+      x.tenias += vigente - despuesDe(new Date(desde.getTime() - 86_400_000));
+      x.tienes += vigente - despuesDe(hasta);
+    }
+
+    // Neto por movimiento y moneda: un movimiento entre dos cuentas del grupo da 0 y no aparece.
+    const netos = new Map<string, { moneda: string; monto: number; i: (typeof vivos)[number] }>();
+    for (const i of vivos) {
+      if (i.fecha < desde || i.fecha > hasta) continue;
+      const moneda = enGrupo.get(i.elemento_id)!.moneda;
+      const k = `${i.origen_tipo}|${i.origen_id}|${moneda}`;
+      const n = netos.get(k) ?? { moneda, monto: 0, i };
+      n.monto += Number(i.monto);
+      netos.set(k, n);
+    }
+    const lineas = new Map<string, LineaFotoMesDTO & { moneda: string }>();
+    for (const n of netos.values()) {
+      if (Math.abs(n.monto) < 0.005) continue;
+      const { clase, persona } = clasificar(n.i);
+      const k = `${n.moneda}|${clase}|${n.monto < 0 ? '-' : '+'}|${persona?.usuarioId ?? ''}`;
+      const l = lineas.get(k) ?? { moneda: n.moneda, clase, monto: 0, persona };
+      l.monto += n.monto;
+      lineas.set(k, l);
+    }
+    for (const { moneda, ...l } of lineas.values()) deMoneda(moneda).lineas.push(l);
+
+    const reservas = ids.length
+      ? await this.prisma.reserva.findMany({ where: { elemento_origen_id: { in: ids }, estado: 'ACTIVA' } })
+      : [];
+    for (const r of reservas) deMoneda(enGrupo.get(r.elemento_origen_id)!.moneda).apartadoMetas += Number(r.monto);
+
+    const redondear = (v: number) => Math.round(v * 100) / 100;
+    return {
+      periodo: { desde: desdeISO.slice(0, 10), hasta: hastaISO.slice(0, 10) },
+      cuentas: ids,
+      porMoneda: [...porMoneda.values()]
+        .map((x) => ({
+          ...x,
+          tenias: redondear(x.tenias),
+          tienes: redondear(x.tienes),
+          apartadoMetas: redondear(x.apartadoMetas),
+          lineas: x.lineas.map((l) => ({ ...l, monto: redondear(l.monto) })).sort((a, b) => Math.abs(b.monto) - Math.abs(a.monto)),
+        }))
+        .sort((a, b) => a.moneda.localeCompare(b.moneda)),
+    };
   }
 
   // ── Núcleo ────────────────────────────────────────────────────────────────
@@ -140,6 +279,7 @@ export class ReporteService {
     elementoIds: string[],
     desde: Date,
     hasta: Date,
+    actorId: string,
   ): Promise<MovimientoInterno[]> {
     if (elementoIds.length === 0) return [];
 
@@ -191,8 +331,12 @@ export class ReporteService {
           select: { elemento_id: true, usuario: { select: { id: true, nombre: true } } },
         })
       : [];
+    // G42: con las cuentas del día a día, la cuenta del otro lado puede ser tuya
+    // (o compartida contigo): eso no es pasarle plata a alguien.
+    const tuyas = new Set(duenos.filter((d) => d.usuario.id === actorId).map((d) => d.elemento_id));
     const duenoDe = new Map<string, { usuarioId: string; nombre: string }>();
     for (const d of duenos) {
+      if (tuyas.has(d.elemento_id)) continue;
       if (!duenoDe.has(d.elemento_id)) duenoDe.set(d.elemento_id, { usuarioId: d.usuario.id, nombre: d.usuario.nombre });
     }
 

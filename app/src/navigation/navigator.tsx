@@ -51,6 +51,7 @@ export type RouteName =
   | 'TiposCambio'
   | 'Ajustes'
   | 'AjustesVisualizacion'
+  | 'AjustesMes'
   | 'PatrimonioSeccion'
   | 'Categorias'
   | 'TiposElemento'

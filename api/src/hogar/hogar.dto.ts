@@ -16,6 +16,8 @@ export interface HogarDTO {
   id: string;
   nombre: string;
   monedaConsolidacion: string;
+  /** G43: día en que parte el mes del hogar (1 = mes calendario). */
+  diaInicioMes: number;
   createdAt: string;
   miembros?: MiembroDTO[];
 }
@@ -43,6 +45,7 @@ export function toHogarDTO(h: HogarRow, miembros?: MiembroDTO[]): HogarDTO {
     id: h.id,
     nombre: h.nombre,
     monedaConsolidacion: h.moneda_consolidacion,
+    diaInicioMes: h.dia_inicio_mes,
     createdAt: h.created_at.toISOString(),
     ...(miembros ? { miembros } : {}),
   };

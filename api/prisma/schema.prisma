@@ -169,6 +169,7 @@ model hogar {
   id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nombre                  String
   moneda_consolidacion    String
+  dia_inicio_mes          Int                       @default(1) @db.SmallInt
   created_at              DateTime                  @default(now()) @db.Timestamptz(6)
   categoria_movimiento    categoria_movimiento[]
   invitacion              invitacion[]
