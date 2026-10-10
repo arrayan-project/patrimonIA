@@ -13,7 +13,7 @@ import { setFormatoFecha, type FormatoFecha } from './ui';
 export const SECCIONES_DASHBOARD = [
   ['composicion', 'Tus cuentas'],
   ['disponibilidad', 'Puedes gastar'],
-  ['flujo', 'Así va el mes'],
+  ['flujo', 'El mes'],
   ['objetivos', 'Tus metas'],
   ['accesos', 'Atajos'],
 ] as const;

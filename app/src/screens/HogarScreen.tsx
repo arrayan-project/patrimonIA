@@ -146,6 +146,7 @@ export function HogarScreen() {
       <Pressable onPress={verPatrimonio} accessibilityRole="button" accessibilityLabel="Ver la plata del hogar">
         <Hero
           label="🏠 Plata del hogar"
+          ver
           value={cons?.total != null ? money(cons.total, cons.monedaConsolidacion) : '—'}
           substats={
             cuadra && pm

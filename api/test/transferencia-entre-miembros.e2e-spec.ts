@@ -124,6 +124,18 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
     expect(await gastosPresupuesto()).toBe(0);
   });
 
+  it('cada uno ve quién está del otro lado de la transferencia (contraparte), y el hogar no', async () => {
+    const deA = (await totales(A, 'mios')).movimientos as Array<{ tipo: string; efectoPropio: number; contraparte: { nombre: string } | null }>;
+    const deB = (await totales(B, 'mios')).movimientos as typeof deA;
+    expect(deA.find((m) => m.tipo === 'TRANSFERENCIA')).toMatchObject({ efectoPropio: -50_000, contraparte: { nombre: 'b@e2e.cl' } });
+    expect(deB.find((m) => m.tipo === 'TRANSFERENCIA')).toMatchObject({ efectoPropio: 50_000, contraparte: { nombre: 'a@e2e.cl' } });
+    const hogar = (await totales(A, 'hogar')).movimientos as typeof deA;
+    expect(hogar.find((m) => m.tipo === 'TRANSFERENCIA')?.contraparte).toBeNull();
+    const id = (deA.find((m) => m.tipo === 'TRANSFERENCIA') as unknown as { eventoId: string }).eventoId;
+    const det = await B(request(http).get(`/eventos-financieros/${id}`)).expect(200);
+    expect(det.body.contraparte).toMatchObject({ nombre: 'a@e2e.cl', elementoId: cuentaA });
+  });
+
   it('D-2: A no puede transferir a una cuenta que B no comparte con el hogar ("Nada")', async () => {
     const privada = (
       await B(request(http).post('/comandos/RegistrarElementoPatrimonial'))

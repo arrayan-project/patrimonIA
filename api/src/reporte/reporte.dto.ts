@@ -28,6 +28,12 @@ export interface MovimientoReporteDTO {
   elementoDestinoId: string | null;
   /** G39: cuándo se anotó (no la fecha del movimiento). */
   registradoEn: string;
+  /**
+   * Solo TRANSFERENCIA/CONVERSION con una cuenta fuera del alcance: el dueño de
+   * esa cuenta (p. ej. el otro miembro del hogar al que le pasaste plata). Null
+   * si la plata se movió entre cuentas del alcance.
+   */
+  contraparte: { usuarioId: string; nombre: string } | null;
 }
 
 export interface TotalesPorMoneda {

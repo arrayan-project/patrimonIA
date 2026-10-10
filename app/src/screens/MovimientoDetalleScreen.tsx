@@ -152,12 +152,16 @@ export function MovimientoDetalleScreen() {
   // cuenta no visible o la cuenta desde la que se llegó queda como dato.
   const enlaces: { key: string; title: string; subtitle: string; emoji: string; onPress: () => void }[] = [];
   const datosCuenta: { etiqueta: string; valor: string }[] = [];
-  const cuenta = (id: string | undefined, rol: string) => {
+  // G39 (claridad): si la plata fue o vino de otra persona del hogar, se dice de quién es su cuenta.
+  const otra = esInterno ? evento.contraparte : undefined;
+  const cuenta = (id: string | undefined, rolBase: string) => {
     if (!id) return;
     const nombre = nombresImpacto[id];
     if (nombre === undefined) return;
+    const deOtra = otra?.elementoId === id;
+    const rol = deOtra ? `👤 Cuenta de ${otra!.nombre}` : rolBase;
     if (nombre === null || id === elementoId) {
-      datosCuenta.push({ etiqueta: `🏦 ${rol}`, valor: nombre ?? 'Otra cuenta' });
+      datosCuenta.push({ etiqueta: `🏦 ${rolBase}`, valor: nombre ?? (deOtra ? `Una cuenta de ${otra!.nombre}` : 'Otra cuenta') });
       return;
     }
     enlaces.push({
@@ -259,7 +263,13 @@ export function MovimientoDetalleScreen() {
       )}
       <BandaDetalle
         color={color}
-        titulo={`${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`}
+        titulo={
+          otra
+            ? otra.elementoId === origen?.elementoId
+              ? `👤 ${otra.nombre} te pasó`
+              : `👤 Le pasaste a ${otra.nombre}`
+            : `${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`
+        }
         monto={money(vigente?.monto ?? evento.monto, evento.moneda)}
         sub={`📅 ${fechaLarga(vigente?.fecha ?? evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
       />

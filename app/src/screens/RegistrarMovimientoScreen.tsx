@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
 import {
   api,
@@ -76,10 +76,6 @@ const TITULOS: Record<Tipo, string> = {
 };
 
 /** G35: el emoji de cada puerta del "+" (banda del monto y resumen). */
-/** G35: los 2 primeros Frecuentes (orden de Ajustes › Frecuentes) van a un toque; el resto en "Ver todos". */
-const FRECUENTES_A_LA_VISTA = 2;
-/** "Tus frecuentes de …" / "Aún no tienes frecuentes de …". */
-const DE_TIPO: Record<Tipo, string> = { GASTO: 'gasto', INGRESO: 'ingreso', TRANSFERENCIA: 'plata movida', CONVERSION: 'plata movida' };
 const EMOJIS: Record<Tipo, string> = EMOJI_ANOTAR;
 
 /**
@@ -1245,6 +1241,25 @@ export function RegistrarMovimientoScreen() {
           </View>
         </View>
       ) : null}
+      {/* G39 (Zoily): los frecuentes en una sola fila deslizable sobre el monto; sin frecuentes, nada. */}
+      {!reemplaza && frecuentes.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filaFrecuentes}
+          accessibilityLabel="Tus frecuentes"
+        >
+          <Text style={[styles.frecuentesRayo, { color: c.text }]}>⚡</Text>
+          {frecuentes.map((p) => (
+            <Pastilla
+              key={p.id}
+              label={`${emojiFrecuente(p)} ${p.nombre}`}
+              accessibilityLabel={`Usar frecuente ${p.nombre}${p.monto != null ? `, ${money(p.monto, p.moneda ?? 'CLP')}` : ''}`}
+              onPress={() => aplicarPlantilla(p)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
       <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda}>
         {esFuturo ? (
           <Text style={[styles.frecuentesTitulo, { color: c.text, opacity: 1 }]}>{`🗓️ Para el ${diaCorto(fecha)}: se anota ese día`}</Text>
@@ -1276,50 +1291,6 @@ export function RegistrarMovimientoScreen() {
             )}
           </View>
         ) : null}
-        {reemplaza || (esPago && frecuentes.length === 0) ? null : frecuentes.length === 0 ? (
-          <View style={styles.frecuentes}>
-            <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Aún no tienes frecuentes de ${DE_TIPO[tipo]}`}</Text>
-            <Pastilla
-              label="➕ Crear uno"
-              enlace
-              onPress={() => nav.go('PlantillaForm', { tipo: tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo })}
-            />
-          </View>
-        ) : (
-          <View style={styles.frecuentes}>
-            <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Tus frecuentes (${frecuentes.length})`}</Text>
-            {frecuentes.slice(0, FRECUENTES_A_LA_VISTA).map((p) => (
-              <Pastilla
-                key={p.id}
-                label={p.monto != null ? `${emojiFrecuente(p)} ${p.nombre} · ${money(p.monto, p.moneda ?? 'CLP')}` : `${emojiFrecuente(p)} ${p.nombre}`}
-                accessibilityLabel={`Usar frecuente ${p.nombre}`}
-                onPress={() => aplicarPlantilla(p)}
-              />
-            ))}
-            {frecuentes.length > FRECUENTES_A_LA_VISTA && (
-              <Elegir
-                label={`Tus frecuentes de ${DE_TIPO[tipo]}`}
-                value={null}
-                options={frecuentes.map((p) => ({
-                  value: p.id,
-                  label: p.nombre,
-                  emoji: emojiFrecuente(p),
-                  sub: [
-                    p.monto != null ? money(p.monto, p.moneda ?? 'CLP') : null,
-                    nombreDe(p.elementoOrigenId ?? p.elementoDestinoId ?? null) || null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || undefined,
-                }))}
-                onChange={(id) => {
-                  const p = frecuentes.find((x) => x.id === id);
-                  if (p) aplicarPlantilla(p);
-                }}
-                boton={(abrir) => <Pastilla label={`🔍 Ver los ${frecuentes.length}`} enlace onPress={abrir} />}
-              />
-            )}
-          </View>
-        )}
       </MontoBanda>
 
       {pasoQuien}
@@ -1770,5 +1741,7 @@ const styles = StyleSheet.create({
   group: { gap: 8 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   frecuentes: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  filaFrecuentes: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 },
+  frecuentesRayo: { fontSize: 16 },
   frecuentesTitulo: { width: '100%', fontSize: 13, fontWeight: '700', opacity: 0.75 },
 });

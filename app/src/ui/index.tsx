@@ -520,9 +520,12 @@ export function Hero({
   substats,
   children,
   debajo,
+  ver,
 }: {
   label: string;
   value: ReactNode;
+  /** La tarjeta abre algo más (p. ej. todas tus cuentas): una flecha arriba a la derecha lo indica. */
+  ver?: boolean;
   change?: string;
   changeDir?: 'pos' | 'neg';
   substats?: { label: string; value: string }[];
@@ -545,7 +548,14 @@ export function Hero({
         </Defs>
         <Rect x="0" y="0" width="100" height="100" fill={`url(#${gradId})`} />
       </Svg>
-      <Text style={styles.heroLbl}>{label}</Text>
+      <View style={styles.heroTop}>
+        <Text style={styles.heroLbl}>{label}</Text>
+        {ver ? (
+          <View style={[styles.heroVer, { backgroundColor: c.bg }]} accessibilityElementsHidden importantForAccessibility="no">
+            <Text style={styles.heroVerTxt}>›</Text>
+          </View>
+        ) : null}
+      </View>
       <View style={styles.heroRow}>
         {typeof value === 'string' ? <Text style={styles.heroVal}>{value}</Text> : value}
         {change ? (
@@ -2945,6 +2955,9 @@ const crearEstilos = (c: Paleta) => {
     hero: { padding: 16, gap: 6, overflow: 'hidden' },
     heroDebajo: { paddingHorizontal: 16, paddingVertical: 4 },
     heroLbl: { ...tipografia.rotulo, color: c.muted },
+    heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    heroVer: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    heroVerTxt: { fontSize: 20, lineHeight: 22, fontWeight: '700', color: c.primary },
     heroRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
     heroVal: { ...tipografia.hero, color: c.text },
     heroChg: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },

@@ -23,6 +23,7 @@ import {
   type VariacionPatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
+import { pasesConPersonas, quedaDelMes } from '../flujoMes';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
@@ -42,6 +43,8 @@ import {
   IconButton,
   ListCard,
   Panel,
+  panelDe,
+  tinte,
   Pastilla,
   aISO,
   PillToggle,
@@ -439,7 +442,15 @@ export function DashboardScreen() {
   const tarjetas = cuentasParaTarjetas(elementos, usuario.id);
   const emojis = preferencias.emojis;
   const metasTop = [...enProgreso].sort((a, b) => b.progresoPorcentaje - a.progresoPorcentaje).slice(0, 2);
-  const balance = flujo ? flujo.ingresos - flujo.gastos : 0;
+  // G39 (claridad): lo que pasaste o te pasaron personas del hogar también cuenta en el mes.
+  const monedaMes = flujo?.moneda ?? monedaPrin;
+  const pases = alcance === 'mios' ? pasesConPersonas(movsMes, monedaMes) : [];
+  const balance = quedaDelMes(flujo?.ingresos ?? 0, flujo?.gastos ?? 0, pases);
+  // G39 (Zoily): el mes en corto, bajo el saldo. Entró y salió incluyen lo pasado con personas del hogar.
+  const entro = (flujo?.ingresos ?? 0) + pases.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
+  const salio = (flujo?.gastos ?? 0) - pases.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);
+  const pctSalio = entro > 0 ? Math.min(1, salio / entro) : salio > 0 ? 1 : 0;
+  const mesNombre = MESES[hoy.getMonth()].charAt(0).toUpperCase() + MESES[hoy.getMonth()].slice(1);
   const nombre = usuario.nombre.split(' ')[0];
 
   return (
@@ -492,7 +503,8 @@ export function DashboardScreen() {
         accessibilityLabel="Ver dónde está tu plata"
       >
         <Hero
-          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu plata en total'}
+          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu plata hoy'}
+          ver
           value={heroValor}
           change={
             alcance === 'mios' && v && v.variacion !== 0
@@ -533,7 +545,7 @@ export function DashboardScreen() {
                   />
                 ) : null}
                 <Dato
-                  etiqueta="✅ Puedes gastar"
+                  etiqueta="✅ Puedes gastar hoy"
                   valor={<Text style={styles.libre}>{money(principal.valorLibre, principal.moneda)}</Text>}
                 />
               </Datos>
@@ -543,6 +555,39 @@ export function DashboardScreen() {
           {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} alto={44} color={c.primary} /> : null}
         </Hero>
       </Pressable>
+      {ver.flujo && (
+        <Pressable
+          onPress={() => nav.go('Movimientos')}
+          accessibilityRole="button"
+          accessibilityLabel={`${mesNombre}: entró ${money(entro, monedaMes)}, salió ${money(salio, monedaMes)}. Ver movimientos`}
+          style={({ pressed }) => [styles.mes, pressed && { opacity: 0.75 }]}
+        >
+          <View style={styles.headRow}>
+            <Text style={styles.mesTitulo}>{`📅 ${mesNombre}`}</Text>
+            <Text style={styles.mesFlecha}>›</Text>
+          </View>
+          {entro === 0 && salio === 0 ? (
+            <Text style={styles.muted}>Todavía no entra ni sale nada este mes.</Text>
+          ) : (
+            <>
+              <View style={[styles.mesBarra, { backgroundColor: tinte(c.ok, 0.25) }]}>
+                <View style={[styles.mesBarraSalio, { width: `${pctSalio * 100}%`, backgroundColor: balance >= 0 ? c.primary : c.danger }]} />
+              </View>
+              <View style={styles.headRow}>
+                {/* La barra es lo que entró; la parte llena, lo que ya salió (mismo lado y color que su texto). */}
+                <Text style={[styles.mesDato, { color: balance >= 0 ? c.primary : c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
+                <Text style={[styles.mesDato, { color: c.ok }]}>{`📥 Entró ${money(entro, monedaMes)}`}</Text>
+              </View>
+              <View style={styles.headRow}>
+                <Text style={styles.mesQueda}>{balance >= 0 ? '🧮 Te queda del mes' : '⚠️ Salió más de lo que entró'}</Text>
+                <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
+                  {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
+                </Text>
+              </View>
+            </>
+          )}
+        </Pressable>
+      )}
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
       {hh?.tipo === 'parcial' && (
         <ErrorText>{`Este total no incluye la plata en ${hh.faltantes.join(', ')}: falta su valor en ${hh.moneda}.`}</ErrorText>
@@ -648,28 +693,6 @@ export function DashboardScreen() {
             ))}
             {metasTop.length === 1 ? <View style={styles.metaVacia} /> : null}
           </View>
-        </Section>
-      )}
-      {ver.flujo && (
-        <Section title={`Así va ${MESES[hoy.getMonth()]}`} accion="Ver todo" onAccion={() => nav.go('Movimientos')}>
-          <Panel gap={0}>
-            {flujo ? (
-              <>
-                <Row left="📥 Te entró" right={money(flujo.ingresos, flujo.moneda)} />
-                <Row left="📤 Gastaste" right={money(flujo.gastos, flujo.moneda)} />
-                <Row
-                  left={balance >= 0 ? '🎉 Te sobra' : '⚠️ Gastaste de más'}
-                  right={
-                    <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
-                      {money(Math.abs(balance), flujo.moneda)}
-                    </Text>
-                  }
-                />
-              </>
-            ) : (
-              <Text style={styles.muted}>Todavía no anotas nada este mes.</Text>
-            )}
-          </Panel>
         </Section>
       )}
       {ver.accesos && (
@@ -944,6 +967,13 @@ const crearEstilos = (c: Paleta) =>
     fecha: { fontSize: 12, color: c.muted, fontWeight: '600' },
     hola: { fontSize: 20, color: c.text, fontWeight: '800' },
     balance: { fontSize: 14, fontWeight: '800' },
+    mes: { ...panelDe(c), gap: 10 },
+    mesTitulo: { fontSize: 16, fontWeight: '800', color: c.text },
+    mesFlecha: { fontSize: 20, fontWeight: '700', color: c.primary },
+    mesBarra: { height: 10, borderRadius: 5, overflow: 'hidden' },
+    mesBarraSalio: { height: 10, borderRadius: 5 },
+    mesDato: { fontSize: 13, fontWeight: '600' },
+    mesQueda: { fontSize: 14, fontWeight: '700', color: c.text },
     resta: { fontSize: 14, color: c.muted, textAlign: 'right' },
     libre: { fontSize: 15, fontWeight: '800', color: c.ok, textAlign: 'right' },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
