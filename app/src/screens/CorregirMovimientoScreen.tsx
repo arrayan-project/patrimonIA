@@ -4,6 +4,9 @@ import { useSession } from '../auth/AuthContext';
 import { useNav } from '../navigation/navigator';
 import { useToast } from '../ui/Toast';
 import { EMOJI_ANOTAR } from '../emojis';
+import { money } from '../format';
+import { diaCorto } from '../solicitudes';
+import { ElegirMotivo } from './AccionFormScreen';
 import {
   Button,
   colorAnotar,
@@ -18,11 +21,33 @@ import {
   useC,
 } from '../ui';
 
+/** G39 (M12): lo que hace falta para anotarlo de nuevo con el formulario lleno. */
+export interface Reanotar {
+  origenId: string | null;
+  destinoId: string | null;
+  montoDestino: number | null;
+  categoriaId: string | null;
+  /** Lo que se elimina al anotar el nuevo, en orden (sus cambios y el original). */
+  anular: string[];
+}
+
+/** G39 (F-7): el motivo de un cambio, a un toque. */
+const MOTIVOS = [{ emoji: '✏️', texto: 'Me equivoqué al anotarlo' }];
+const QUE: Record<string, string> = {
+  GASTO: 'gasto',
+  INGRESO: 'ingreso',
+  TRANSFERENCIA: 'movimiento',
+  CONVERSION: 'cambio de moneda',
+};
+
 /**
  * Editar un movimiento (plantillas de pantalla, R3). Monto, fecha y detalle se
- * corrigen con una corrección enlazada (pide motivo; el original queda
- * intacto); las etiquetas se cambian directo. Si el movimiento ya no se puede
- * corregir (es una corrección o ya fue corregido), solo se ven las etiquetas.
+ * corrigen con una corrección enlazada (el motivo viene elegido; el original
+ * queda intacto); las etiquetas se cambian directo. Lo demás (cuenta, tipo,
+ * categoría) se cambia con "Anotar de nuevo" (G39, M12): el formulario del "+"
+ * lleno y, al anotar, se elimina este. Si ya no se puede corregir (es una
+ * corrección, ya se corrigió o es un cambio de moneda), queda "Anotar de nuevo"
+ * y las etiquetas.
  */
 export function CorregirMovimientoScreen() {
   const c = useC();
@@ -38,12 +63,13 @@ export function CorregirMovimientoScreen() {
     moneda: string;
     corregible: boolean;
     etiquetaIds: string[];
+    reanotar?: Reanotar | null;
   };
 
   const [monto, setMonto] = useState(String(p.monto));
   const [fecha, setFecha] = useState(p.fecha);
   const [glosa, setGlosa] = useState(p.glosa ?? '');
-  const [motivo, setMotivo] = useState('');
+  const [motivo, setMotivo] = useState(MOTIVOS[0].texto);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
   const [etiquetaIds, setEtiquetaIds] = useState<string[]>(p.etiquetaIds);
   const [busy, setBusy] = useState(false);
@@ -84,6 +110,28 @@ export function CorregirMovimientoScreen() {
     }
   };
 
+  const reanotar = p.reanotar;
+  const anotarDeNuevo = () => {
+    if (!reanotar) return;
+    nav.go('RegistrarMovimiento', {
+      tipo: p.tipo === 'CONVERSION' ? 'TRANSFERENCIA' : p.tipo,
+      monto: p.monto,
+      fecha: p.fecha,
+      glosa: p.glosa ?? '',
+      origenId: reanotar.origenId ?? undefined,
+      destinoId: reanotar.destinoId ?? undefined,
+      categoriaId: reanotar.categoriaId ?? undefined,
+      montoDestino: reanotar.montoDestino ?? undefined,
+      reemplaza: {
+        anular: reanotar.anular,
+        texto: `el ${QUE[p.tipo] ?? 'movimiento'} de ${money(p.monto, p.moneda)} del ${diaCorto(p.fecha)}`,
+      },
+    });
+  };
+  const botonDeNuevo = reanotar ? (
+    <Button title="🔁 Anotar de nuevo" variant="secondary" onPress={anotarDeNuevo} />
+  ) : null;
+
   const elegirEtiquetas = (
     <ElegirVarios
       label="Etiquetas (opcional)"
@@ -93,13 +141,15 @@ export function CorregirMovimientoScreen() {
     />
   );
   return (
-    <Screen pie={<Button title="Guardar cambios" onPress={guardar} loading={busy} disabled={!listo} />}>
+    <Screen
+      pie={
+        p.corregible || etiquetas.length > 0 ? (
+          <Button title="Guardar cambios" onPress={guardar} loading={busy} disabled={!listo} />
+        ) : undefined
+      }
+    >
       {p.corregible ? (
         <>
-          <Nota>
-            Puedes cambiar el monto, la fecha y el detalle. Para cambiar la cuenta o el tipo, elimínalo y
-            anótalo de nuevo.
-          </Nota>
           <MontoBanda
             label="¿Cuánto fue?"
             value={monto}
@@ -125,21 +175,34 @@ export function CorregirMovimientoScreen() {
                 : []),
             ]}
           />
+          {corrige && (
+            <ElegirMotivo
+              pregunta="¿Por qué lo cambias?"
+              motivos={MOTIVOS}
+              valor={motivo}
+              onChange={setMotivo}
+              placeholder="p. ej. me cobraron de más"
+            />
+          )}
+          {botonDeNuevo && (
+            <>
+              <Nota>¿Era otra cuenta, otro tipo u otra categoría? Anótalo de nuevo: este se elimina.</Nota>
+              {botonDeNuevo}
+            </>
+          )}
         </>
       ) : (
         <>
-          <Nota>Este movimiento ya se cambió una vez (o es un cambio): solo puedes cambiar sus etiquetas.</Nota>
+          <Nota>
+            {botonDeNuevo
+              ? p.tipo === 'CONVERSION'
+                ? 'Un cambio de moneda no se edita: anótalo de nuevo con lo correcto y este se elimina.'
+                : 'Ya lo cambiaste una vez: para cambiarlo otra vez, anótalo de nuevo y este se elimina.'
+              : 'Es el cambio de otro movimiento: solo puedes cambiar sus etiquetas.'}
+          </Nota>
+          {botonDeNuevo}
           {etiquetas.length > 0 && elegirEtiquetas}
         </>
-      )}
-      {corrige && (
-        <Field
-          label="¿Por qué lo cambias?"
-          value={motivo}
-          onChangeText={setMotivo}
-          placeholder="p. ej. me equivoqué en el monto"
-          autoCapitalize="sentences"
-        />
       )}
       <ErrorText>{error}</ErrorText>
     </Screen>

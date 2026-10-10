@@ -72,7 +72,6 @@ export function MovimientoDetalleScreen() {
   // ¿Alguna de sus cuentas es tuya? Si no, es un movimiento de otro miembro del hogar.
   const [esMio, setEsMio] = useState(true);
   const [etiquetas, setEtiquetas] = useState<EtiquetaDTO[]>([]);
-  const [tieneCorreccion, setTieneCorreccion] = useState(false);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -115,13 +114,6 @@ export function MovimientoDetalleScreen() {
           );
         }
       }
-      if (elementoId) {
-        const lista = await api.get<EventoFinancieroDTO[]>(
-          `/eventos-financieros?elemento=${elementoId}`,
-          token,
-        );
-        setTieneCorreccion(lista.some((e) => e.correccionDeId === eventoId && !e.anulado));
-      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -129,7 +121,7 @@ export function MovimientoDetalleScreen() {
 
   useCargaAlEnfocar(cargar);
 
-  useTitulo(evento ? evento.glosa || etiqueta(evento.tipo) : undefined);
+  useTitulo(evento ? (evento.vigente ? evento.vigente.glosa : evento.glosa) || etiqueta(evento.tipo) : undefined);
 
   if (!evento) {
     return (
@@ -147,6 +139,10 @@ export function MovimientoDetalleScreen() {
   const origen = esInterno ? evento.impactos.find((i) => i.monto < 0) : undefined;
   const destino = esInterno ? evento.impactos.find((i) => i.monto > 0) : undefined;
   const esCorreccion = evento.correccionDeId !== null;
+  // G39 (M12): si ya se cambió, se muestra cómo quedó (como en la lista).
+  const vigente = evento.vigente;
+  const tieneCorreccion = !!vigente;
+  const glosa = vigente ? vigente.glosa : evento.glosa;
   const accionable = !evento.anulado && !esCorreccion && !tieneCorreccion;
   const puedePlantilla =
     !evento.anulado && (evento.tipo === 'GASTO' || evento.tipo === 'INGRESO' || evento.tipo === 'TRANSFERENCIA');
@@ -234,12 +230,25 @@ export function MovimientoDetalleScreen() {
     nav.go('CorregirMovimiento', {
       eventoId,
       tipo: evento.tipo,
-      monto: evento.monto,
-      fecha: evento.fecha,
-      glosa: evento.glosa,
+      monto: vigente?.monto ?? evento.monto,
+      fecha: vigente?.fecha ?? evento.fecha,
+      glosa,
       moneda: evento.moneda,
-      corregible: evento.correccionDeId === null && !tieneCorreccion,
+      // Un cambio de moneda no se corrige: se anota de nuevo (la tasa cambia los dos lados).
+      corregible: evento.correccionDeId === null && !tieneCorreccion && evento.tipo !== 'CONVERSION',
       etiquetaIds: evento.etiquetaIds,
+      // G39 (M12): "Anotar de nuevo" llena el formulario y, al anotar, elimina
+      // este (primero sus cambios, del último al primero).
+      reanotar:
+        !esCorreccion && evento.tipo !== 'SALDO_INICIAL' && esMio
+          ? {
+              origenId: evento.impactos.find((i) => i.monto < 0)?.elementoId ?? null,
+              destinoId: evento.impactos.find((i) => i.monto > 0)?.elementoId ?? null,
+              montoDestino: evento.tipo === 'CONVERSION' ? (evento.impactos.find((i) => i.monto > 0)?.monto ?? null) : null,
+              categoriaId: evento.categoriaId,
+              anular: [...(vigente?.correccionIds ?? [])].reverse().concat(eventoId),
+            }
+          : null,
     });
 
   return (
@@ -251,17 +260,17 @@ export function MovimientoDetalleScreen() {
       <BandaDetalle
         color={color}
         titulo={`${EMOJI_ANOTAR[evento.tipo] ?? '🧾'} ${VERBO[evento.tipo] ?? etiqueta(evento.tipo)}`}
-        monto={money(evento.monto, evento.moneda)}
-        sub={`📅 ${fechaLarga(evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
+        monto={money(vigente?.monto ?? evento.monto, evento.moneda)}
+        sub={`📅 ${fechaLarga(vigente?.fecha ?? evento.fecha)}${cuentasBanda ? ` · ${cuentasBanda}` : ''}`}
       />
 
       {enlaces.length > 0 && <MenuList items={enlaces} />}
-      {(evento.glosa || impacto || datosCuenta.length > 0) && (
+      {(glosa || impacto || datosCuenta.length > 0) && (
         <Datos>
           {datosCuenta.map((d) => (
             <Dato key={d.etiqueta} etiqueta={d.etiqueta} valor={d.valor} />
           ))}
-          {evento.glosa ? <Dato etiqueta="📝 Detalle" valor={evento.glosa} /> : null}
+          {glosa ? <Dato etiqueta="📝 Detalle" valor={glosa} /> : null}
           {impacto && <Dato etiqueta="💰 En esta cuenta" valor={money(impacto.monto, evento.moneda)} />}
         </Datos>
       )}
@@ -274,7 +283,17 @@ export function MovimientoDetalleScreen() {
         </View>
       )}
       {esCorreccion && <Nota>✏️ Es el cambio de un movimiento anterior.</Nota>}
-      {tieneCorreccion && <Nota>✏️ Este movimiento ya se cambió: para cambiarlo otra vez, edita o elimina ese cambio.</Nota>}
+      {vigente && (
+        <Nota>
+          {`✏️ Lo cambiaste: antes ${[
+            vigente.monto !== evento.monto ? `era ${money(evento.monto, evento.moneda)}` : null,
+            vigente.fecha !== evento.fecha ? `fue el ${fechaLarga(evento.fecha)}` : null,
+            vigente.glosa !== evento.glosa ? `decía "${evento.glosa ?? 'sin detalle'}"` : null,
+          ]
+            .filter(Boolean)
+            .join(', ')}.`}
+        </Nota>
+      )}
 
       <ErrorText>{error}</ErrorText>
       <View style={styles.acciones}>
@@ -290,6 +309,10 @@ export function MovimientoDetalleScreen() {
                 explicacion:
                   'Úsalo si el movimiento no ocurrió: se deshace su efecto en el saldo y queda en el historial como eliminado. Si ocurrió con otro monto o fecha, mejor cámbialo con Editar.',
                 pregunta: '¿Por qué lo eliminas?',
+                motivos: [
+                  { emoji: '🙅', texto: 'No pasó' },
+                  { emoji: '👯', texto: 'Estaba repetido' },
+                ],
                 boton: 'Eliminar movimiento',
                 comando: 'AnularEventoFinanciero',
                 body: { eventoId },

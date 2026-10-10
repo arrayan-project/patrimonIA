@@ -146,19 +146,26 @@ export function RegistrarMovimientoScreen() {
   const [tipo, setTipo] = useState<Tipo>(
     TIPOS.includes(params.tipo as Tipo) ? (params.tipo as Tipo) : 'GASTO',
   );
-  const [monto, setMonto] = useState('');
-  const [fecha, setFecha] = useState(aISO(new Date()));
+  // G39 (M12, C4): se puede llegar con el formulario lleno ("Anotar de nuevo",
+  // "Pasarla a otra cuenta"). Con `reemplaza`, al anotar se eliminan esos.
+  const reemplaza = params.reemplaza as { anular: string[]; texto: string } | undefined;
+  const [monto, setMonto] = useState(params.monto != null ? String(params.monto) : '');
+  const [fecha, setFecha] = useState((params.fecha as string | undefined) ?? aISO(new Date()));
   const origenInicial = (params.origenId as string | undefined) ?? cuentaId ?? null;
   const destinoInicial = (params.destinoId as string | undefined) ?? null;
   const [origenId, setOrigenId] = useState<string | null>(origenInicial);
   const [destinoId, setDestinoId] = useState<string | null>(destinoInicial);
-  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [categoriaId, setCategoriaId] = useState<string | null>((params.categoriaId as string | undefined) ?? null);
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const hogarId = hogar?.id ?? null;
   const [crearCat, setCrearCat] = useState(false);
   const [catNombre, setCatNombre] = useState('');
   const [catBusy, setCatBusy] = useState(false);
-  const [glosa, setGlosa] = useState('');
+  const [glosa, setGlosa] = useState((params.glosa as string | undefined) ?? '');
+  // G39 (M11): en un cambio de moneda, cuánto llegó (por defecto, al tipo de cambio de ese día).
+  const [llega, setLlega] = useState(params.montoDestino != null ? String(params.montoDestino) : '');
+  const [llegaEscrito, setLlegaEscrito] = useState(params.montoDestino != null);
+  const [tasa, setTasa] = useState<number | null | undefined>(undefined);
   // D-6: "¿Se repite?" deja programada la próxima vez, con aviso "¿Se pagó?".
   const [repite, setRepite] = useState<'NO' | Periodicidad>('NO');
   // El nombre del frecuente usado: sin detalle, nombra la repetición en la lista.
@@ -209,6 +216,7 @@ export function RegistrarMovimientoScreen() {
   const emojiBanda = esPago ? '💳' : EMOJIS[tipo];
 
   const sucio =
+    !!reemplaza ||
     Number(monto) > 0 ||
     origenId !== (origenInicial ?? recordado?.origenId ?? null) ||
     destinoId !== (destinoInicial ?? recordado?.destinoId ?? null) ||
@@ -501,6 +509,30 @@ export function RegistrarMovimientoScreen() {
     return ref?.moneda ?? 'CLP';
   }, [elementos, origenId, destinoId, necesitaOrigen]);
 
+  // G39 (M11): la tasa del día para decir cuánto llega; null si no hay.
+  const monedaDestino = useMemo(
+    () => [...(elementos ?? []), ...elementosHogar].find((e) => e.id === destinoId)?.moneda ?? null,
+    [elementos, elementosHogar, destinoId],
+  );
+  useEffect(() => {
+    if (tipo !== 'CONVERSION' || !monedaDestino) {
+      setTasa(undefined);
+      return;
+    }
+    let vigente = true;
+    api
+      .get<{ tasa: number | null }>(`/tipos-cambio/tasa?origen=${monedaEvento}&destino=${monedaDestino}&fecha=${fecha}`, token)
+      .then((r) => vigente && setTasa(r.tasa))
+      .catch(() => vigente && setTasa(null));
+    return () => {
+      vigente = false;
+    };
+  }, [tipo, monedaEvento, monedaDestino, fecha, token]);
+  const decimalesLlega = monedaDestino === 'CLP' ? 0 : 2;
+  const estimado =
+    tasa && Number(monto) > 0 ? Math.round(Number(monto) * tasa * 10 ** decimalesLlega) / 10 ** decimalesLlega : null;
+  const llegaNum = tipo !== 'CONVERSION' ? 0 : llegaEscrito ? Number(llega) || 0 : (estimado ?? 0);
+
   const errMonto = Number(monto) > 0 ? '' : 'Ingresa un monto mayor a 0.';
   const errMismo =
     necesitaOrigen && necesitaDestino && origenId && origenId === destinoId
@@ -636,6 +668,22 @@ export function RegistrarMovimientoScreen() {
     }
   };
 
+  // G39 (M12): "Anotar de nuevo" elimina el anterior (sus cambios primero)
+  // después de anotar el nuevo, y vuelve a donde se abrió el movimiento.
+  const salir = async () => {
+    if (reemplaza) {
+      try {
+        for (const eventoId of reemplaza.anular) {
+          await api.post('/comandos/AnularEventoFinanciero', { eventoId, motivo: 'Lo anoté de nuevo' }, token);
+        }
+      } catch {
+        toast.mostrar(`Se anotó, pero no se pudo eliminar ${reemplaza.texto}: elimínalo desde Movimientos`);
+      }
+    }
+    permitirSalida();
+    nav.back(reemplaza ? 3 : 1);
+  };
+
   const onSubmit = async () => {
     if (errMonto || errMismo || !puedeEnviar) return;
     setError('');
@@ -658,8 +706,7 @@ export function RegistrarMovimientoScreen() {
           token,
         );
         toast.mostrar(`Programado para el ${diaCorto(fecha)}`);
-        permitirSalida();
-        nav.back();
+        await salir();
         return;
       }
       if (esOtra) {
@@ -681,8 +728,7 @@ export function RegistrarMovimientoScreen() {
         toast.mostrar(
           `${saldoTexto(r.persona, r.saldo, r.moneda, money)}${r.anuladoId ? '. Corregimos el ingreso' : ''}`,
         );
-        permitirSalida();
-        nav.back();
+        await salir();
         return;
       }
       if (esCompartido && !yaPaso && recibe) {
@@ -704,8 +750,7 @@ export function RegistrarMovimientoScreen() {
           key,
         );
         toast.mostrar(`Le pedimos su parte a ${nombresCompartido}`);
-        permitirSalida();
-        nav.back();
+        await salir();
         return;
       }
       await api.comando<EventoFinancieroDTO>(
@@ -721,6 +766,7 @@ export function RegistrarMovimientoScreen() {
           ...(glosa.trim() || glosaYaPaso ? { glosa: glosa.trim() || glosaYaPaso } : {}),
           ...(etiquetaIds.length ? { etiquetaIds } : {}),
           ...(meta ? { asignacionId: meta.asignacionId } : {}),
+          ...(tipo === 'CONVERSION' ? { montoDestino: llegaNum } : {}),
         },
         token,
         key,
@@ -737,8 +783,7 @@ export function RegistrarMovimientoScreen() {
       } else {
         toast.mostrar(`Movimiento registrado${aviso}`);
       }
-      permitirSalida();
-      nav.back();
+      await salir();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     } finally {
@@ -857,6 +902,7 @@ export function RegistrarMovimientoScreen() {
     (!necesitaOrigen || !!origenId) &&
     (!necesitaDestino || !!destinoId) &&
     origenId !== destinoId &&
+    (tipo !== 'CONVERSION' || llegaNum > 0) &&
     (!esCompartido || (!errParte && (yaPaso || (!!recibe && !oculta(recibe))))) &&
     (!esOtra ||
       (!!nombrePersona &&
@@ -878,6 +924,7 @@ export function RegistrarMovimientoScreen() {
     pidePrevio && previo === null ? 'de dónde sale la plata' : null,
     necesitaOrigen && !origenId ? (necesitaDestino ? 'de qué cuenta sale' : 'la cuenta') : null,
     necesitaDestino && !destinoId ? (necesitaOrigen ? 'a qué cuenta llega' : 'la cuenta') : null,
+    tipo === 'CONVERSION' && destinoId && !(llegaNum > 0) ? 'cuánto llegó' : null,
   ].filter(Boolean) as string[];
   const faltaTexto = faltan.length
     ? `Completa ${faltan.length > 1 ? `${faltan.slice(0, -1).join(', ')} y ${faltan[faltan.length - 1]}` : faltan[0]}.`
@@ -914,7 +961,7 @@ export function RegistrarMovimientoScreen() {
             }`
         : tipo === 'TRANSFERENCIA'
           ? `Pasas ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)}. No cuenta como gasto.`
-          : `Cambias ${m} de ${nombreDe(origenId)} a ${nombreDe(destinoId)} al tipo de cambio vigente.`;
+          : `Cambias ${m} de ${nombreDe(origenId)} y llegan ${money(llegaNum, monedaDestino ?? monedaEvento)} a ${nombreDe(destinoId)}.`;
   // G39: el pie dice también en qué y cuándo (lo que vino elegido se ve).
   const hoyISO = aISO(new Date());
   const ayerISO = aISO(new Date(Date.now() - DIA));
@@ -936,6 +983,29 @@ export function RegistrarMovimientoScreen() {
       : puedeEnviar
         ? `${emojiBanda} ${conRepite}`
         : conRepite;
+  const resumenPie: ReactNode =
+    reemplaza && puedeEnviar && typeof resumenFinal === 'string'
+      ? `${resumenFinal} Reemplaza ${reemplaza.texto}: ese se elimina.`
+      : resumenFinal;
+  // G39 (M12): al anotar de nuevo se puede cambiar el tipo; las cuentas pasan al lado que corresponde.
+  const cambiarTipo = (t: 'GASTO' | 'INGRESO' | 'TRANSFERENCIA') => {
+    const actual = tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo;
+    if (t === actual) return;
+    const cuenta = origenId ?? destinoId;
+    if (t === 'GASTO') {
+      setOrigenId(cuenta);
+      setDestinoId(null);
+    } else if (t === 'INGRESO') {
+      setDestinoId(cuenta);
+      setOrigenId(null);
+    } else if (!origenId) {
+      setOrigenId(destinoId);
+      setDestinoId(null);
+    }
+    const cat = categorias.find((x) => x.id === categoriaId);
+    if (t === 'TRANSFERENCIA' || (cat && cat.tipoAplicable !== 'AMBOS' && cat.tipoAplicable !== t)) setCategoriaId(null);
+    setTipo(t);
+  };
   const accion = esPago
     ? '💳 Pagar'
     : {
@@ -999,6 +1069,7 @@ export function RegistrarMovimientoScreen() {
   const pMeta = tipo === 'GASTO' && !esOtra && metasCuenta.length > 0 ? paso({ opcional: true }) : undefined;
   const pRecibe = esCompartido && !yaPaso ? paso({ hecho: !!recibe && !oculta(recibe) }) : undefined;
   const pA = pAPago ?? (necesitaDestino ? paso({ hecho: !!destinoId }) : undefined);
+  const pLlega = tipo === 'CONVERSION' ? paso({ hecho: llegaNum > 0 }) : undefined;
   const pFecha = paso({ hecho: !!fecha });
 
   // G39 (F-11): los tres a la vista; una línea dice qué significa el elegido.
@@ -1154,11 +1225,26 @@ export function RegistrarMovimientoScreen() {
     <Screen
       pie={
         <>
-          <Nota>{resumenFinal}</Nota>
+          <Nota>{resumenPie}</Nota>
           <Button title={accionFinal} onPress={onSubmit} loading={loading} disabled={!puedeEnviar} />
         </>
       }
     >
+      {reemplaza ? (
+        <View style={styles.group}>
+          <Question>¿Qué fue?</Question>
+          <View style={styles.frecuentes}>
+            {(['GASTO', 'INGRESO', 'TRANSFERENCIA'] as const).map((t) => (
+              <Pastilla
+                key={t}
+                label={`${EMOJIS[t]} ${TITULOS[t]}`}
+                activo={(tipo === 'CONVERSION' ? 'TRANSFERENCIA' : tipo) === t}
+                onPress={() => cambiarTipo(t)}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
       <MontoBanda paso={pMonto} value={monto} onChange={setMonto} moneda={monedaEvento} color={colorBanda} emoji={emojiBanda}>
         {esFuturo ? (
           <Text style={[styles.frecuentesTitulo, { color: c.text, opacity: 1 }]}>{`🗓️ Para el ${diaCorto(fecha)}: se anota ese día`}</Text>
@@ -1190,7 +1276,7 @@ export function RegistrarMovimientoScreen() {
             )}
           </View>
         ) : null}
-        {esPago && frecuentes.length === 0 ? null : frecuentes.length === 0 ? (
+        {reemplaza || (esPago && frecuentes.length === 0) ? null : frecuentes.length === 0 ? (
           <View style={styles.frecuentes}>
             <Text style={[styles.frecuentesTitulo, { color: c.text }]}>{`⚡ Aún no tienes frecuentes de ${DE_TIPO[tipo]}`}</Text>
             <Pastilla
@@ -1235,9 +1321,6 @@ export function RegistrarMovimientoScreen() {
           </View>
         )}
       </MontoBanda>
-      {tipo === 'CONVERSION' && (
-        <Nota>El monto va en la moneda de la cuenta de salida; la otra recibe el equivalente al tipo de cambio vigente.</Nota>
-      )}
 
       {pasoQuien}
 
@@ -1582,6 +1665,32 @@ export function RegistrarMovimientoScreen() {
       ) : null}
       {!esPago && necesitaOrigen && necesitaDestino && recordado?.origenId && origenId === recordado.origenId && destinoId === recordado.destinoId ? (
         <Nota>🔁 Las de la última vez. Tócalas para cambiarlas.</Nota>
+      ) : null}
+
+      {pLlega && monedaDestino ? (
+        <BloquePaso paso={pLlega} style={styles.group}>
+          <Question paso={pLlega}>{`¿Cuántos ${monedaDestino} llegaron?`}</Question>
+          <Field
+            label={`Lo que llegó a ${nombreDe(destinoId)}`}
+            value={llegaEscrito ? llega : estimado != null ? String(estimado) : ''}
+            onChangeText={(t) => {
+              setLlegaEscrito(true);
+              setLlega(t.replace(',', '.'));
+            }}
+            keyboardType="decimal-pad"
+            placeholder={`Ej.: ${monedaDestino === 'CLP' ? '94.000' : '100'}`}
+          />
+          {tasa !== undefined && (
+            <Nota>
+              {tasa
+                ? `💱 Cambio del día: 1 ${tasa >= 1 ? monedaEvento : monedaDestino} = ${money(
+                    tasa >= 1 ? tasa : 1 / tasa,
+                    tasa >= 1 ? monedaDestino : monedaEvento,
+                  )}. Si tu banco te dio otro, escribe lo que llegó.`
+                : `💱 No tenemos el cambio ${monedaEvento} → ${monedaDestino} de ese día: escribe lo que llegó.`}
+            </Nota>
+          )}
+        </BloquePaso>
       ) : null}
 
       <Cuando value={fecha} onChange={setFecha} paso={pFecha} />
