@@ -695,7 +695,7 @@ el tipo no se cambian (hay que eliminar y anotar de nuevo).
 tarjeta "🐷 Ahorrar", la meta viene elegida (−2).
 **Lo que cuesta:** era "No se completa" en S01; hoy resuelto. Queda el orden:
 se pregunta la meta antes que la plata.
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-15 y F-16 (§6).
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-15 y F-16 (§6).
 
 | # | Dónde | Qué ve | Qué hace | Toques |
 |---|-------|--------|----------|--------|
@@ -727,7 +727,7 @@ tarjeta de la meta ("🐷 Ahorrar"), 3 + monto.
 **Conteo:** 2 pantallas · 12 a 14 toques · 0 campos.
 **Lo que cuesta:** hay que saber qué cuentas tienen sobrante; la app no
 sugiere "te sobraron X este mes".
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — lo mismo que A1 (F-15, F-16):
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — lo mismo que A1 (F-15, F-16):
 la meta y la primera cuenta vienen elegidas, y cada cuenta se vacía con
 "💯 Todo lo libre".
 
@@ -815,7 +815,7 @@ cuenta guardas…?" y en "¿De dónde sale?" (no se mueve nada).
 porque origen y destino coinciden. "Ahorro sin meta" ya no se crea directo.
 Desde Ahorrar sin metas, "Crear una meta" abre el formulario *(verificar si
 vuelve a Ahorrar con la meta elegida)*.
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-15 y F-17 (§6).
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-15 y F-17 (§6).
 
 | # | Dónde | Qué ve | Qué hace | Toques |
 |---|-------|--------|----------|--------|
@@ -857,7 +857,7 @@ vuelve a Ahorrar con la meta elegida)*.
 pantallas · 5 a 7 toques · 1 campo.
 **Lo que cuesta:** *(verificar)* si la pareja puede ahorrar sin estar en
 "¿Quién más puede cambiarla?" (antes, "designados", era requisito).
-**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-18 (§6).
+**Objetivo (✅ aprobado por Juan, 2026-10-09; ✅ implementado y mergeado)** — F-18 (§6).
 
 **Lo que hoy falla sin avisar:** la pareja solo puede ahorrar en la meta si
 quien la creó la marcó en "¿Quién más puede cambiarla? (opcional)". El campo
@@ -1084,7 +1084,20 @@ entrando por el detalle de la deuda); con "Se repite", 1 toque al mes.
 **Conteo:** 2 pantallas · 7 a 8 toques · 2 campos.
 **Lo que cuesta:** "¿De qué tipo?" (corriente, vista, RUT…) es obligatoria y
 no cambia nada para el usuario común.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-6 (§6).
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | — | Toca "+" | 1 |
+| 2 | Hoja "+" | — | Toca ➕ Agregar cuenta | 1 |
+| 3 | Agregar | Seis tarjetas: 🏦 Cuenta · 🐷 Ahorro · 📈 Inversión · 🏠 Bien · 💳 Deuda · 🤝 Te deben | Toca 🏦 Cuenta | 1 |
+| 4 | Agregar | **"¿De qué tipo?" en botones** (Cuenta corriente · Cuenta vista · Efectivo · ➕ Otro) con **Cuenta corriente ya elegida** (en Cuenta, Ahorro e Inversión el tipo no cambia nada, así que viene el primero) | Nada (1 si es otro) | 0 |
+| 5 | Agregar | "¿Cómo se llama?" | Escribe "Falabella" | campo |
+| 6 | Agregar | "¿Cuánto tiene hoy?" (en la banda) | Escribe el saldo | campo |
+| 7 | Agregar | — | "🏦 Agregar cuenta" | 1 |
+| 8 | ¿Qué compartes? | Lo de siempre (o "Ahora no") | Responde | 1 |
+
+**Conteo objetivo:** **5 toques + 2 campos** (meta T2 ✅, antes 7 a 8).
 
 #### C2 — Agrego mi tarjeta de crédito con lo que debo
 
@@ -1105,7 +1118,21 @@ no cambia nada para el usuario común.
 **Conteo:** 2 pantallas · 8 a 9 toques · 2 campos.
 **Lo que cuesta:** no hay cupo ni día de pago, que es lo que el usuario
 conoce de su tarjeta; "¿Es una deuda de verdad?" sobra para una tarjeta.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09)** — F-6 (§6). Cupo y día de pago
+quedan fuera: son datos nuevos del dominio (⬜ Juan decide si se abren como
+gap aparte).
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1–2 | Inicio → Agregar | — | "+" · ➕ Agregar cuenta | 2 |
+| 3 | Agregar | Las seis tarjetas | Toca 💳 Deuda | 1 |
+| 4 | Agregar | **"¿De qué tipo?" en botones** (💳 Tarjeta de crédito · 🏡 Crédito hipotecario · Crédito de consumo · ➕ Otro), **sin nada elegido**: en una deuda el tipo sí cambia cosas (una tarjeta no pregunta "¿Es una deuda de verdad?" y se paga con "Pagar una deuda") | Toca 💳 Tarjeta de crédito | 1 |
+| 5 | Agregar | "¿Cómo se llama?" | Escribe "Visa" | campo |
+| 6 | Agregar | "¿Cuánto debes hoy?" | Escribe el monto | campo |
+| 7 | Agregar | — | "💳 Agregar deuda" | 1 |
+| 8 | ¿Qué compartes? | — | Responde | 1 |
+
+**Conteo objetivo:** **6 toques + 2 campos** (meta T2 ✅, antes 8 a 9).
 
 #### C3 — Agrego el auto o la casa y actualizo su valor una vez al año
 
@@ -1126,7 +1153,24 @@ conoce de su tarjeta; "¿Es una deuda de verdad?" sobra para una tarjeta.
 **Actual — cada año:** como A4 (3 toques, 1 campo).
 **Conteo:** agregar 2 pantallas · ≈ 9 toques · 2 campos.
 **Lo que cuesta:** nada le recuerda actualizar el valor.
-**Objetivo:** *por definir.*
+**Objetivo (✅ aprobado por Juan, 2026-10-09, con F-19)** — F-6 y F-19 (§6).
+
+*Agregar:* como C2 con 🏠 Bien y el tipo en botones (🏠 Propiedad ·
+🚗 Vehículo · ➕ Otro, sin nada elegido); "📈 Cambia de valor" ya viene en Sí
+para un bien. **6 toques + 2 campos** (antes ≈ 9).
+
+*Cada año (F-19, opcional):*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | En los avisos: **"📈 ¿Cuánto vale hoy tu Auto?"** · "lo actualizaste hace 1 año" | Toca el aviso | 1 |
+| 2 | Actualizar cuánto vale | El valor de hoy y la resta en vivo | Escribe el valor | campo |
+| 3 | Actualizar cuánto vale | — | "📈 Guardar valor" | 1 |
+
+Aparece para bienes e inversiones que "cambian de valor" y no se actualizan
+hace más de un año. Necesita que la API diga la fecha del último cambio de
+valor de cada cuenta (dato de solo lectura, sin migración; requiere deploy).
+**Conteo objetivo cada año:** 2 toques + valor, y la app lo recuerda.
 
 #### C4 — Cerré una cuenta
 
@@ -1239,10 +1283,11 @@ elegir en hojas cosas que el usuario repite siempre igual.
 | F-12 | **La app anota; la plata se mueve en el banco:** "Transferir" pasa a "✅ Ya le transferí X", con "Primero transfiérele en tu banco; acá queda anotado." | M4, M7 | claridad | ✅ en M7 (§12) |
 | F-13 | **El monto pendiente con una persona a un toque:** al elegir a alguien con algo pendiente, la banda ofrece "💵 Todo lo de [persona]" (Gasté, si tienes plata suya) o "💵 Lo que te debe" (Recibí, si te debe). | M8, M10 | −1 campo | ✅ en M8 y M10 (§13) |
 | F-14 | **"¿De dónde sale esta plata?"** en palabras del usuario, en vez de "¿Te había pasado plata antes?": 🤝 La pongo yo · 💵 Es de [persona]; solo si dice que era suya se pregunta si la anotó. | M10 | claridad | ✅ en M10 (§13) |
-| F-15 | **"¿Para qué meta?" en botones** en Ahorrar (hasta 4 en camino, con emoji; una sola viene elegida; "➕ Nueva meta" vuelve con la meta nueva elegida). | A1, A2, A6 | −1 toque | ⬜ propuesto en A1, A2 y A6 |
-| F-16 | **La cuenta de tu último ahorro para esa meta** viene elegida en "¿De dónde sale la plata?"; el pie recuerda que la plata se mueve en el banco. | A1, A2, A7 | −2 toques | ⬜ propuesto en A1 y A2 |
-| F-17 | **"No se mueve" dicho en el pie** cuando la plata queda en la misma cuenta. | A6 | claridad | ⬜ propuesto en A6 |
-| F-18 | **"¿Quién más puede ahorrar en ella?"** (antes "¿Quién más puede cambiarla? (opcional)") con todos los del hogar marcados al compartir; si a alguien no lo agregaron, la Meta se lo dice. | A7 | claridad; evita que la pareja no pueda aportar | ⬜ propuesto en A7 |
+| F-15 | **"¿Para qué meta?" en botones** en Ahorrar (hasta 4 en camino, con emoji; una sola viene elegida; "➕ Nueva meta" vuelve con la meta nueva elegida). | A1, A2, A6 | −1 toque | ✅ en A1, A2 y A6 (§14) |
+| F-16 | **La cuenta de tu último ahorro para esa meta** viene elegida en "¿De dónde sale la plata?"; el pie recuerda que la plata se mueve en el banco. | A1, A2, A7 | −2 toques | ✅ en A1 y A2 (§14) |
+| F-17 | **"No se mueve" dicho en el pie** cuando la plata queda en la misma cuenta. | A6 | claridad | ✅ en A6 (§14) |
+| F-18 | **"¿Quién más puede ahorrar en ella?"** (antes "¿Quién más puede cambiarla? (opcional)") con todos los del hogar marcados al compartir; si a alguien no lo agregaron, la Meta se lo dice. | A7 | claridad; evita que la pareja no pueda aportar | ✅ en A7 (§14) |
+| F-19 | **Recordar actualizar el valor:** un aviso en el Inicio para bienes e inversiones que cambian de valor y no se actualizan hace más de un año. Requiere un dato de solo lectura en la API. | C3, A4 | la app lo recuerda | ⬜ propuesto en C3 (opcional) |
 
 ## 7. Orden de trabajo
 
@@ -1254,9 +1299,9 @@ Frecuencia primero; los primeros fijan los patrones.
 3. **M6, H5** — tarjetas y deudas (F-5). ✅ implementado y mergeado (§11).
 4. **M4, M7, M9** — entre miembros del hogar (F-9 a F-12). ✅ implementado y mergeado (§12).
 5. **M8, M10** — plata de otras personas (F-4, F-13, F-14). ✅ implementado y mergeado (§13).
-6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). **← propuesta en §5.2.**
-7. **C1, C2, C3, C4** — agregar y cerrar (F-6).
-8. **M12, M13, M11** — corregir, borrar y monedas (F-7).
+6. **A1, A2, A5, A6, A7, A8, A3, A4** — metas y valor (F-15 a F-18; A3, A4, A5 y A8 se mantienen). ✅ implementado y mergeado (§14).
+7. **C1, C2, C3** — agregar (F-6, F-19). **← propuesta en §5.4.** C4 (cerrar) pasa al bloque 8, con F-7.
+8. **M12, M13, C4, M11** — corregir, borrar, cerrar y monedas (F-7).
 9. **H1, H2, H4, H6, P1** — consultas y configuración.
 
 Cada escenario trabajado reemplaza su "Objetivo: por definir" con la tabla de
@@ -1270,7 +1315,7 @@ fecha.
 | S3-1 | Se trabajan los 33 escenarios; los primeros fijan los patrones. | ✅ Juan, 2026-10-09 |
 | S3-2 | Entra la estructura de los flujos (por defecto, orden, atajos); lo visual de G35 se mantiene. | ✅ Juan, 2026-10-09 |
 | S3-3 | Meta: T1 en ≤ 4 toques + monto; T2 en ≤ 8. | ✅ Juan, 2026-10-09 |
-| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10. | 🟡 F-1 a F-5 y F-8 a F-14 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
+| S3-4 | Patrones F-1 a F-8 (§6). F-1 y F-2 aprobados con M1–M3; F-3 y F-8 con M5, H3 y P2; F-5 con M6 y H5; F-9 a F-12 con M4, M7 y M9; F-4, F-13 y F-14 con M8 y M10; F-15 a F-18 con las metas. | 🟡 F-1 a F-5 y F-8 a F-18 ✅ Juan, 2026-10-09; el resto al trabajar cada escenario |
 | S3-5 | Los pasos tienen que quedar muy claros: nada se esconde para ahorrar toques (§2) y cada flujo se documenta en tabla paso a paso. | ✅ Juan, 2026-10-09 |
 | S3-6 | F-1: la "cuenta recordada" sale del último movimiento anotado de esa puerta (igual en todos los teléfonos, sin guardar nada nuevo). Para eso el resumen de movimientos de la API suma la cuenta de salida y de llegada de cada uno (solo lectura, sin migración). | ✅ Juan, 2026-10-09 |
 
@@ -1445,3 +1490,35 @@ requiere deploy en Render.
   anotó nada.
 - **Conteo logrado:** compra para Noira 6 toques sin escribir · devolución de
   Papás 6 sin escribir · compra para Papás 6 + monto + nombre.
+
+## 14. Implementación de metas y ahorro: A1, A2, A6, A7 (rama `feat/G39-metas`)
+
+**Estado:** ✅ aprobado por Juan y mergeado a `main` (2026-10-09). Solo app
+(sin cambios en la API ni en el dominio). A3, A4, A5 y A8 se mantienen.
+
+- **F-15 · "¿Para qué meta?" en botones** (`AhorrarScreen`): hasta 4 metas en
+  camino con su emoji, "🔍 Ver todas (N)" si hay más y "➕ Nueva meta". Con
+  una sola, viene elegida. Ahorrar se recarga al volver: la meta recién
+  creada (desde "➕ Nueva meta" o "🎯 Crear una meta", si no había ninguna)
+  queda elegida.
+- **F-16 · la cuenta de tu último ahorro para esa meta:** si la meta ya tiene
+  cuenta y en los últimos 90 días hubo una transferencia hacia ella, esa
+  cuenta de origen viene elegida, con "🔁 La de tu último ahorro para esta
+  meta. Tócala para cambiarla.". Si no, se elige como antes. Pie con
+  movimiento: "🔁 Se mueven X de A a B. Hazlo también en tu banco; acá queda
+  anotado."
+- **F-17 · sin movimiento:** "🐷 La plata se queda en [cuenta], separada para
+  [meta]: no se mueve."
+- **F-18 · "¿Quién más puede ahorrar en ella?"** (`MetaFormScreen`): al crear
+  una meta compartida aparecen los del hogar, todos marcados (se pueden
+  quitar), y después de crearla se guardan (`DefinirDesignadosObjetivo`); al
+  editar, la misma pregunta. En la Meta, quien no fue agregado ve "👀 Meta del
+  hogar: puedes verla, pero no te agregaron para ahorrar en ella. Pídele a
+  quien la creó que te agregue en ✏️ Editar.".
+- **Verificado:** `tsc` sin errores; capturas web como Demo: metas en botones;
+  "Fondo de emergencia" (su cuenta, Cuenta de ahorro, no recibió transferencias
+  en 90 días: no se preelige nada, como corresponde); "➕ Nueva meta"
+  compartida "Prueba G39 vacaciones" con Pareja marcada → vuelve a Ahorrar con
+  ella elegida → Cuenta corriente y 300.000 → pie "no se mueve" (no se
+  guardó el ahorro). Como Pareja, "Prueba G39 vacaciones" aparece en Ahorrar
+  (puede aportar). La meta queda en la base local.
