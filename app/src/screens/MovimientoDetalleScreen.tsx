@@ -77,42 +77,48 @@ export function MovimientoDetalleScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
+      // En paralelo: lo que no depende del movimiento parte de inmediato, y lo que
+      // depende de él parte apenas llega; todo se aplica de una vez.
+      const pEtiquetas =
+        etiquetas.length === 0 ? api.get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token).catch(() => []) : null;
+      const pHogares = categorias.length === 0 ? api.get<HogarDTO[]>('/usuarios/me/hogares', token) : null;
+      pHogares?.catch(() => undefined);
       const ev = await api.get<EventoFinancieroDTO>(`/eventos-financieros/${eventoId}`, token);
+      // G32 H-05 — un gasto del mes en curso enlaza al presupuesto vigente.
+      const conPresupuesto = ev.tipo === 'GASTO' && ev.fecha.slice(0, 7) === aISO(new Date()).slice(0, 7);
+      const [pares, presus, etqs, hogarYCats] = await Promise.all([
+        Promise.all(
+          ev.impactos.map(async (im) => {
+            try {
+              const el = await api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${im.elementoId}`, token);
+              return [im.elementoId, el.nombre, el.propietarios.some((p) => p.usuarioId === usuario.id)] as const;
+            } catch {
+              return [im.elementoId, null, false] as const;
+            }
+          }),
+        ),
+        conPresupuesto ? api.get<PresupuestoDTO[]>('/presupuestos', token).catch(() => []) : null,
+        pEtiquetas,
+        ev.categoriaId && pHogares
+          ? pHogares.then(async (hs) => ({
+              hogarId: hs[0]?.id ?? null,
+              cats: hs[0]
+                ? await api.get<CategoriaMovimientoDTO[]>(
+                    `/hogares/${hs[0].id}/categorias-movimiento?incluirArchivadas=true`,
+                    token,
+                  )
+                : null,
+            }))
+          : null,
+      ]);
       setEvento(ev);
-      const pares = await Promise.all(
-        ev.impactos.map(async (im) => {
-          try {
-            const el = await api.get<ElementoPatrimonialDTO>(
-              `/elementos-patrimoniales/${im.elementoId}`,
-              token,
-            );
-            return [im.elementoId, el.nombre, el.propietarios.some((p) => p.usuarioId === usuario.id)] as const;
-          } catch {
-            return [im.elementoId, null, false] as const;
-          }
-        }),
-      );
       setNombresImpacto(Object.fromEntries(pares.map(([id, nombre]) => [id, nombre])));
       setEsMio(pares.length === 0 || pares.some(([, , mio]) => mio));
-      // G32 H-05 — un gasto del mes en curso enlaza al presupuesto vigente.
-      if (ev.tipo === 'GASTO' && ev.fecha.slice(0, 7) === aISO(new Date()).slice(0, 7)) {
-        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token).catch(() => []);
-        setPresupuesto(presus.find((x) => x.vigente && x.estado !== 'CERRADO') ?? null);
-      }
-      if (etiquetas.length === 0) {
-        setEtiquetas(await api.get<EtiquetaDTO[]>('/usuarios/me/etiquetas', token).catch(() => []));
-      }
-      if (ev.categoriaId && categorias.length === 0) {
-        const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
-        setHogarId(hs[0]?.id ?? null);
-        if (hs[0]) {
-          setCategorias(
-            await api.get<CategoriaMovimientoDTO[]>(
-              `/hogares/${hs[0].id}/categorias-movimiento?incluirArchivadas=true`,
-              token,
-            ),
-          );
-        }
+      if (presus) setPresupuesto(presus.find((x) => x.vigente && x.estado !== 'CERRADO') ?? null);
+      if (etqs) setEtiquetas(etqs);
+      if (hogarYCats) {
+        setHogarId(hogarYCats.hogarId);
+        if (hogarYCats.cats) setCategorias(hogarYCats.cats);
       }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

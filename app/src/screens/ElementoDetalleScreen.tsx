@@ -87,45 +87,40 @@ export function ElementoDetalleScreen() {
     if (!elementoId) return;
     setError('');
     try {
-      const el = await api.get<ElementoPatrimonialDTO>(
-        `/elementos-patrimoniales/${elementoId}`,
-        token,
-      );
+      // Todo en paralelo: la pantalla se actualiza cuando llega lo más lento, no la suma.
+      const pEl = api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token);
+      const [el, evs, ajs, res, metas, vals, cats] = await Promise.all([
+        pEl,
+        api.get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token).catch(() => []),
+        api.get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token).catch(() => []),
+        api.get<ReservaDeElementoDTO[]>(`/elementos-patrimoniales/${elementoId}/reservas`, token).catch(() => []),
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []),
+        pEl.then((e) =>
+          e.admiteValorizacion
+            ? api.get<ValorizacionDTO[]>(`/elementos-patrimoniales/${elementoId}/valorizaciones`, token)
+            : null,
+        ),
+        // G35: las categorías, para el emoji de cada movimiento.
+        api
+          .get<HogarDTO[]>('/usuarios/me/hogares', token)
+          .then((hs) =>
+            hs[0]
+              ? api.get<CategoriaMovimientoDTO[]>(
+                  `/hogares/${hs[0].id}/categorias-movimiento?incluirArchivadas=true`,
+                  token,
+                )
+              : null,
+          )
+          .catch(() => null),
+      ]);
       setElemento(el);
-      setEventos(
-        await api
-          .get<EventoFinancieroDTO[]>(`/eventos-financieros?elemento=${elementoId}`, token)
-          .catch(() => []),
-      );
-      setAjustes(
-        await api
-          .get<AjustePatrimonialDTO[]>(`/ajustes-patrimoniales?elemento=${elementoId}`, token)
-          .catch(() => []),
-      );
-      setReservas(
-        await api
-          .get<ReservaDeElementoDTO[]>(`/elementos-patrimoniales/${elementoId}/reservas`, token)
-          .catch(() => []),
-      );
-      const metas = await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []);
+      setEventos(evs);
+      setAjustes(ajs);
+      setReservas(res);
       const m = metas.find((o) => (o.cuentasDedicadas ?? []).some((d) => d.elementoId === elementoId));
       setEsPara(m ? { id: m.id, nombre: m.nombre } : null);
-      if (el.admiteValorizacion) {
-        setValorizaciones(
-          await api.get<ValorizacionDTO[]>(
-            `/elementos-patrimoniales/${elementoId}/valorizaciones`,
-            token,
-          ),
-        );
-      }
-      // G35: las categorías, para el emoji de cada movimiento.
-      const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => [] as HogarDTO[]);
-      if (hs[0])
-        setCategorias(
-          await api
-            .get<CategoriaMovimientoDTO[]>(`/hogares/${hs[0].id}/categorias-movimiento?incluirArchivadas=true`, token)
-            .catch(() => []),
-        );
+      if (vals) setValorizaciones(vals);
+      if (cats) setCategorias(cats);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }

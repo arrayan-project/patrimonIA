@@ -66,8 +66,12 @@ export function AjustesElementoScreen() {
 
   const cargar = useCallback(async () => {
     try {
-      setEl(await api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token));
-      setMetas(await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []));
+      const [e, ms] = await Promise.all([
+        api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token),
+        api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []),
+      ]);
+      setEl(e);
+      setMetas(ms);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -107,15 +111,32 @@ export function AjustesElementoScreen() {
   const metaActual = metas.find((m) => (m.cuentasDedicadas ?? []).some((d) => d.elementoId === el.id)) ?? null;
   const metasPosibles = metas.filter((m) => m.estado === 'EN_PROGRESO' && m.puedoModificar && m.moneda === el.moneda);
   const NINGUNA = 'ninguna';
-  const dedicarA = (objetivoId: string) =>
-    guardar(
+  // Al instante: la cuenta pasa a la meta elegida (o a ninguna) en pantalla; si falla, se recarga.
+  const mostrarEnMeta = (objetivoId: string | null) =>
+    setMetas((ms) =>
+      ms.map((m) => {
+        const otras = (m.cuentasDedicadas ?? []).filter((d) => d.elementoId !== el.id);
+        return {
+          ...m,
+          cuentasDedicadas:
+            m.id === objetivoId
+              ? [...otras, { elementoId: el.id, nombre: el.nombre, valor: el.valorVigente, moneda: el.moneda }]
+              : otras,
+        };
+      }),
+    );
+  const dedicarA = (objetivoId: string) => {
+    mostrarEnMeta(objetivoId);
+    return guardar(
       () => api.post('/comandos/DedicarCuentaAObjetivo', { objetivoId, elementoId: el.id }, token),
       () => undefined,
     ).then(() => cargar());
+  };
   const cambiarDeMeta = async (conservarComoApartado: boolean) => {
     if (!metaActual || !cambioMeta) return;
     const destino = cambioMeta;
     setCambioMeta(null);
+    mostrarEnMeta(destino === NINGUNA ? null : destino);
     const ok = await guardar(
       () =>
         api.post(

@@ -31,10 +31,13 @@ export function QueCompartesScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const propias = await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token);
+      const [propias, h] = await Promise.all([
+        api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+        api
+          .get<HogarDTO[]>('/usuarios/me/hogares', token)
+          .then((hs) => (hs[0] ? api.get<HogarDTO>(`/hogares/${hs[0].id}`, token) : null)),
+      ]);
       setCuentas(propias.filter((e) => e.estado === 'ACTIVO' && e.naturaleza !== 'CUSTODIA_INFORMAL'));
-      const hs = await api.get<HogarDTO[]>('/usuarios/me/hogares', token);
-      const h = hs[0] ? await api.get<HogarDTO>(`/hogares/${hs[0].id}`, token) : null;
       setMiembros((h?.miembros ?? []).filter((m) => m.usuarioId !== usuario.id));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

@@ -59,18 +59,21 @@ export function ObjetivoDetalleScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const o = await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${objetivoId}`, token);
+      // En paralelo y se aplica de una vez (las cuentas y reservas solo sirven a quien puede modificar).
+      const pAsgs = api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token);
+      pAsgs.catch(() => undefined);
+      const [o, asgs, els, rs] = await Promise.all([
+        api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${objetivoId}`, token),
+        pAsgs,
+        api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token).catch(() => []),
+        pAsgs.then((as) =>
+          Promise.all(as.map((a) => api.get<ReservaDTO[]>(`/asignaciones/${a.id}/reservas`, token).catch(() => []))),
+        ),
+      ]);
       setObj(o);
-      const asgs = await api.get<AsignacionDTO[]>(`/asignaciones?objetivo=${objetivoId}`, token);
       setAsignaciones(asgs);
       if (o.puedoModificar) {
-        const els = await api
-          .get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token)
-          .catch(() => []);
         setCuentas(els.filter((e) => e.categoriaFuncional !== 'DEUDA' && e.categoriaFuncional !== 'CREDITO'));
-        const rs = await Promise.all(
-          asgs.map((a) => api.get<ReservaDTO[]>(`/asignaciones/${a.id}/reservas`, token).catch(() => [])),
-        );
         setReservas(rs.flat());
       }
     } catch (e) {

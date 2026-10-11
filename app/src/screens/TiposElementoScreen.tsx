@@ -59,10 +59,15 @@ export function TiposElementoScreen() {
     const ia = orden.indexOf(a.id);
     const ib = orden.indexOf(b.id);
     [orden[ia], orden[ib]] = [orden[ib], orden[ia]];
+    // Al instante: la lista se reordena ya; si falla, se recarga lo guardado.
+    const porId = new Map(lista.map((t) => [t.id, t]));
+    setLista(orden.map((id) => porId.get(id)).filter((t): t is TipoElementoDTO => !!t));
     api
       .post('/comandos/ReordenarTiposElemento', { hogarId, orden }, token)
-      .then(cargar)
-      .catch((e) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+      .catch((e) => {
+        setError(e instanceof ApiError ? e.message : 'Error inesperado');
+        void cargar();
+      });
   };
 
   const filtrando = busca.trim() !== '';
