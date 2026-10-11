@@ -244,7 +244,13 @@ export function DashboardScreen() {
 
       try {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
-        const vig = presus.find((x) => x.vigente && x.estado !== 'CERRADO');
+        // L-12: el presupuesto del lente — INDIVIDUAL en "Lo mío"; FAMILIAR del hogar activo en "Del hogar".
+        const vig = presus.find(
+          (x) =>
+            x.vigente &&
+            x.estado !== 'CERRADO' &&
+            (alcance === 'hogar' ? x.tipo === 'FAMILIAR' && x.hogarId === activo : x.tipo === 'INDIVIDUAL'),
+        );
         if (vig) {
           const d = await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token);
           setPresuExcedido(d.real.gastos > d.esperado.gastos && d.esperado.gastos > 0 ? vig : null);
@@ -387,9 +393,9 @@ export function DashboardScreen() {
   }
 
   // ── Objetivos ──────────────────────────────────────────────────────────
-  // En "Del hogar", solo las metas compartidas con el hogar.
+  // L-12: en "Lo mío", solo las metas personales; en "Del hogar", las del hogar activo.
   const enProgreso = objetivos.filter(
-    (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' || o.hogarId === hogarId),
+    (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' ? o.hogarId === null : o.hogarId === hogarId),
   );
 
   /** G39 (F-3): "✅ Sí": se anota con el monto y la fecha previstos, como "Sí, se pagó" del Programado. */
@@ -414,7 +420,10 @@ export function DashboardScreen() {
   const enMora = elementos.filter(
     (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
   );
-  const alertas: { texto: string; sub?: string; emoji: string; onPress: () => void; accesorio?: ReactNode }[] = porPagar.map((x) => ({
+  // L-9: en "Del hogar" lo que te piden ya encabeza "Entre [miembro] y tú"; como alerta, solo en "Lo mío".
+  const alertas: { texto: string; sub?: string; emoji: string; onPress: () => void; accesorio?: ReactNode }[] = (
+    alcance === 'mios' ? porPagar : []
+  ).map((x) => ({
     texto:
       x.motivo === 'GASTO_COMPARTIDO'
         ? `${x.solicitante.nombre} te pide tu parte: ${money(x.monto, x.moneda)}${x.glosa ? ` · ${x.glosa}` : ''}`
@@ -702,8 +711,9 @@ export function DashboardScreen() {
           <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('MetaForm')} c={c} styles={styles} />
           <Text style={styles.muted}>
             Abajo tienes 3 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
-            sale) y Planificar (metas, presupuesto y pagos futuros). Arriba eliges si ves
-            lo tuyo o lo del hogar.
+            sale) y Planificar (metas, presupuesto y pagos futuros).
+            {/* L-11: la frase del lente, solo si hay lente. */}
+            {lente ? ' Arriba eliges si ves lo tuyo o lo del hogar.' : ''}
           </Text>
         </Panel>
       )}
