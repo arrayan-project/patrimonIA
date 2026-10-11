@@ -56,7 +56,7 @@ export function rotuloLinea(l: LineaFotoMesDTO): string {
     case 'PERSONA':
       return entra ? `👤 Te pasó ${l.persona?.nombre ?? 'alguien'}` : `👤 Le pasaste a ${l.persona?.nombre ?? 'alguien'}`;
     case 'CAMBIO_MONEDA':
-      return '💱 Cambiaste de moneda';
+      return entra ? '💱 Llegó de otra moneda' : '💱 Pasaste a otra moneda';
     case 'AJUSTE':
       return '✏️ Corregiste el saldo';
     default:

@@ -82,9 +82,9 @@ export function AjustesMesScreen() {
         )}
       </Section>
 
-      <Section title="💳 Cuentas del día a día">
+      <Section title="💳 Cuentas que entran en tu mes">
         <ElegirVarios
-          label="¿Con cuáles pagas tu día a día?"
+          label="¿Qué cuentas entran en los cálculos?"
           values={elegidas}
           options={elegibles.map((e) => ({
             value: e.id,
@@ -93,7 +93,7 @@ export function AjustesMesScreen() {
           onChange={(cuentas) => cambiarMes({ cuentas })}
           placeholder="Ninguna"
         />
-        <Nota>Solo estas entran en la foto del mes del Inicio y de Movimientos. Lo que muevas a tus otras cuentas se ve aparte.</Nota>
+        <Nota>Tu mes en el Inicio y en Movimientos se calcula solo con estas. Lo que muevas a tus otras cuentas se ve aparte.</Nota>
       </Section>
 
       {hogar && (

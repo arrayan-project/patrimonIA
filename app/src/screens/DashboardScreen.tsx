@@ -117,9 +117,7 @@ export function DashboardScreen() {
   // G35: los movimientos del mes (todas tus cuentas) y las categorías, para sus emojis.
   const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
   // G41: en "Lo mío", la foto del mes de tus cuentas del día a día (G42).
-  const [fotoMes, setFotoMes] = useState<{ tenias: number; tienes: number; entro: number; salio: number; moneda: string } | null>(
-    null,
-  );
+  const [fotoMes, setFotoMes] = useState<{ entro: number; salio: number; moneda: string } | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[]>([]);
   const [presuExcedido, setPresuExcedido] = useState<PresupuestoDTO | null>(null);
@@ -206,7 +204,7 @@ export function DashboardScreen() {
           [...(f?.porMoneda ?? [])].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0];
         if (fm) {
           const g = agruparFoto(fm.lineas);
-          setFotoMes({ tenias: fm.tenias, tienes: fm.tienes, entro: g.entro, salio: g.salio, moneda: fm.moneda });
+          setFotoMes({ entro: g.entro, salio: g.salio, moneda: fm.moneda });
         } else {
           setFotoMes(null);
         }
@@ -602,38 +600,27 @@ export function DashboardScreen() {
             </Text>
             <Text style={styles.mesFlecha}>›</Text>
           </View>
-          {entro === 0 && salio === 0 && !enFoto ? (
+          {entro === 0 && salio === 0 ? (
             <Text style={styles.muted}>Todavía no entra ni sale nada este mes.</Text>
           ) : (
             <>
               <View style={[styles.mesBarra, { backgroundColor: tinte(c.ok, 0.25) }]}>
-                <View style={[styles.mesBarraSalio, { width: `${pctSalio * 100}%`, backgroundColor: balance >= 0 ? c.primary : c.danger }]} />
+                <View style={[styles.mesBarraSalio, { width: `${pctSalio * 100}%`, backgroundColor: c.danger }]} />
               </View>
               <View style={styles.headRow}>
-                {/* La barra es lo que entró; la parte llena, lo que ya salió (mismo lado y color que su texto). */}
-                <Text style={[styles.mesDato, { color: balance >= 0 ? c.primary : c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
+                {/* La barra es lo que entró; la parte llena, lo que ya salió (rojo, como en Movimientos). */}
+                <Text style={[styles.mesDato, { color: c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
                 <Text style={[styles.mesDato, { color: c.ok }]}>{`📥 Entró ${money(entro, monedaMes)}`}</Text>
               </View>
-              {enFoto ? (
-                // G41: Empezaste con + Entró − Salió = Tienes hoy (en tus cuentas del día a día).
-                <>
-                  <View style={styles.headRow}>
-                    <Text style={styles.muted}>🏁 Empezaste con</Text>
-                    <Text style={styles.muted}>{money(fotoMes.tenias, monedaMes)}</Text>
-                  </View>
-                  <View style={styles.headRow}>
-                    <Text style={styles.mesQueda}>🧮 Tienes hoy</Text>
-                    <Text style={[styles.balance, { color: fotoMes.tienes >= 0 ? c.ok : c.danger }]}>{money(fotoMes.tienes, monedaMes)}</Text>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.headRow}>
-                  <Text style={styles.mesQueda}>{balance >= 0 ? '🧮 Te queda del mes' : '⚠️ Salió más de lo que entró'}</Text>
-                  <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
-                    {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
-                  </Text>
-                </View>
-              )}
+              {/* G41: lo que queda de lo que entró este mes (lo de meses anteriores va en Movimientos, aparte). */}
+              <View style={styles.headRow}>
+                <Text style={styles.mesQueda}>
+                  {balance >= 0 ? `🧮 ${alcance === 'hogar' ? 'Les' : 'Te'} queda de ${MESES_LARGO[mesHoy.mes]}` : '⚠️ Salió más de lo que entró'}
+                </Text>
+                <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
+                  {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
+                </Text>
+              </View>
             </>
           )}
         </Pressable>

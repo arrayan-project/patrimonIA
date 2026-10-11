@@ -413,10 +413,11 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
               enCurso={enCurso}
               monedaPreferida={preferencias.monedaPreferida}
               resultadoPrev={resultadoPrev}
+              mes={etiquetaPeriodo}
               mesAnterior={mesAnterior}
               selector={
                 <ElegirVarios
-                  label="¿Con cuáles pagas tu día a día?"
+                  label="¿Qué cuentas entran en los cálculos?"
                   values={cuentasDelDia(elementos, preferencias.mes.cuentas)}
                   options={elegiblesDelDia(elementos).map((e) => ({
                     value: e.id,
@@ -450,7 +451,7 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
               <Row
                 left={
                   balance >= 0
-                    ? `🧮 ${hogar ? 'Les' : 'Te'} ${enCurso ? 'queda' : 'quedó'} ${periodo === 'Año' ? 'del año' : periodo === 'Mes' ? 'del mes' : ''}`.trim()
+                    ? `🧮 ${hogar ? 'Les' : 'Te'} ${enCurso ? 'queda' : 'quedó'} ${periodo === 'Año' ? 'del año' : periodo === 'Mes' ? `de ${etiquetaPeriodo}` : ''}`.trim()
                     : '⚠️ Salió más de lo que entró'
                 }
                 right={
@@ -489,7 +490,7 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
 
           {gastosRubro.length > 0 && (
             <Section
-              title="¿En qué se fue?"
+              title={hogar ? '¿En qué gastaron?' : '¿En qué gastaste?'}
               accion={verTodosRubros ? 'Ver menos' : `Ver todas (${gastosRubro.length})`}
               onAccion={gastosRubro.length > RUBROS_A_LA_VISTA ? () => setVerTodosRubros((v) => !v) : undefined}
             >
@@ -618,9 +619,11 @@ function nombresCuentas(els: ElementoPatrimonialDTO[], ids: string[]): string {
 }
 
 /**
- * G41 — la foto del mes de tus cuentas del día a día, ordenada para que cuadre
- * sola: Tenías al empezar + Entró − Salió = Tienes. Entró y Salió son los mismos
- * números de la tarjeta del mes en el Inicio.
+ * G41 — cómo se mueve tu mes, desde lo que te entró (el sueldo) hasta el último
+ * peso: Entró − Salió = Te queda de este mes. Lo que sobró de meses anteriores
+ * se cuenta aparte, sin mezclarse con el mes (Juan, 2026-10-10: es para gente
+ * común, no para contadores). Entró, Salió y Te queda son los mismos números de
+ * la tarjeta del mes en el Inicio.
  */
 function FotoDelMes({
   titulo,
@@ -628,6 +631,7 @@ function FotoDelMes({
   enCurso,
   monedaPreferida,
   resultadoPrev,
+  mes,
   mesAnterior,
   selector,
 }: {
@@ -636,6 +640,7 @@ function FotoDelMes({
   enCurso: boolean;
   monedaPreferida: string | null;
   resultadoPrev: number | null;
+  mes: string;
   mesAnterior: string;
   selector: ReactNode;
 }) {
@@ -652,8 +657,7 @@ function FotoDelMes({
     );
   }
   const g = agruparFoto(m.lineas);
-  const resultado = m.tienes - m.tenias;
-  const contraAnterior = resultadoPrev != null ? resultado - resultadoPrev : null;
+  const queda = g.entro - g.salio;
   const linea = (l: (typeof m.lineas)[number]) => (
     <View key={`${l.clase}${l.monto > 0 ? '+' : '-'}${l.persona?.usuarioId ?? ''}`} style={styles.subFila}>
       <Text style={styles.subTexto} numberOfLines={1}>{rotuloLinea(l)}</Text>
@@ -664,26 +668,32 @@ function FotoDelMes({
     <Section title={titulo}>
       <View style={styles.filtroFila}>{selector}</View>
       <Panel gap={0}>
-        <Row left="🏁 Tenías al empezar" right={money(m.tenias, m.moneda)} />
-        <Row left="📥 Entró" right={<Text style={[styles.balance, { color: c.ok }]}>{`+ ${money(g.entro, m.moneda)}`}</Text>} />
+        <Row left="📥 Te entró" right={<Text style={[styles.balance, { color: c.ok }]}>{`+ ${money(g.entro, m.moneda)}`}</Text>} />
         {g.lineasEntro.map(linea)}
         <Row left="📤 Salió" right={<Text style={[styles.balance, { color: c.danger }]}>{`− ${money(g.salio, m.moneda)}`}</Text>} />
         {g.lineasSalio.map(linea)}
         <Row
-          left={enCurso ? '🧮 Tienes hoy' : '🧮 Terminaste con'}
-          right={<Text style={[styles.balance, { color: m.tienes >= 0 ? c.text : c.danger }]}>{money(m.tienes, m.moneda)}</Text>}
+          left={queda >= 0 ? `🧮 ${enCurso ? 'Te queda' : 'Te sobró'} de ${mes}` : '⚠️ Salió más de lo que entró'}
+          right={
+            <Text style={[styles.balance, { color: queda >= 0 ? c.ok : c.danger }]}>
+              {`${queda >= 0 ? '' : '− '}${money(Math.abs(queda), m.moneda)}`}
+            </Text>
+          }
         />
       </Panel>
-      {enCurso && m.apartadoMetas > 0 && (
-        <Text style={styles.muted}>{`🎯 De esto, ${money(m.apartadoMetas, m.moneda)} está apartado para tus metas.`}</Text>
-      )}
-      {contraAnterior != null && contraAnterior !== 0 && (
+      {resultadoPrev != null && (
         <Text style={styles.muted}>
-          {`${resultado >= 0 ? 'Este mes subió' : 'Este mes bajó'} ${money(Math.abs(resultado), m.moneda)}: ${money(Math.abs(contraAnterior), m.moneda)} ${
-            contraAnterior > 0 ? 'mejor' : 'peor'
-          } que ${mesAnterior}.`}
+          {resultadoPrev >= 0
+            ? `En ${mesAnterior} te sobraron ${money(resultadoPrev, m.moneda)}.`
+            : `En ${mesAnterior} salió ${money(-resultadoPrev, m.moneda)} más de lo que entró.`}
         </Text>
       )}
+      {/* Lo de meses anteriores, aparte: no se mezcla con el mes. */}
+      <Text style={styles.muted}>
+        {`${m.tenias >= 0 ? `Aparte, de meses anteriores te quedaban ${money(m.tenias, m.moneda)}` : `Empezaste ${mes} debiendo ${money(-m.tenias, m.moneda)} en estas cuentas`}. ${
+          enCurso ? 'Hoy tienes' : 'Terminaste con'
+        } ${money(m.tienes, m.moneda)} en estas cuentas${enCurso && m.apartadoMetas > 0 ? `, ${money(m.apartadoMetas, m.moneda)} apartados para tus metas` : ''}.`}
+      </Text>
       {otras.length > 0 && (
         <Text style={styles.muted}>{`Tus cuentas en ${otras.join(', ')} no se suman aquí: están en otra moneda.`}</Text>
       )}
