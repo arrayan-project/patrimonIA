@@ -58,9 +58,11 @@ Pasarlos a la escala se hace dentro del Paso 0, cuando se toquen esas piezas.
 
 - **Sin sesión:** Login · Registro · Recuperar contraseña.
 - **Primer uso (sin hogar):** Bienvenida → Crear hogar o Invitaciones.
-- **Barra inferior (4 pestañas):** Inicio · Movimientos · Planificar · Hogar.
-  Arriba a la derecha en las pestañas: campana (Notificaciones) y engranaje
-  (Ajustes).
+- **Barra inferior (3 pestañas):** Inicio · Movimientos · Planificar (L1,
+  `LENTE_HOGAR_S04.md`: la pestaña Hogar se repartió entre Inicio "Del hogar"
+  y Ajustes › Hogar). Arriba de las tres, el lente "Lo mío · Del hogar" (no se
+  muestra si el hogar tiene un solo miembro). Arriba a la derecha en las
+  pestañas: campana (Notificaciones) y engranaje (Ajustes).
 - **Botón "+" (Inicio y Movimientos):** hoja "¿Qué quieres anotar?" con Gasté ·
   Recibí · Moví plata · Ahorrar para una meta · Pagar tarjeta (si hay
   tarjetas) · Agregar cuenta.

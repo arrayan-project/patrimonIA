@@ -27,7 +27,7 @@ historia. Si no sabes dónde buscar algo, empieza acá.
   - **[usabilidad/prototipo/](usabilidad/prototipo/)** — prototipos y reglas
     de pantalla en HTML.
   - **[usabilidad/capturas/](usabilidad/capturas/)** — capturas de los bloques
-    4 a 9 de la Fase E de G33 (`e4/` … `e9/`).
+    4 a 9 de la Fase E de G33 (`e4/` … `e9/`) y del Bloque 1 de G44 (`l1/`).
 - **[retirado/](retirado/)** — análisis ya superados, cuyo contenido se
   integró a otro lado. Se conservan como registro histórico.
 - **[_baseline/](_baseline/)** — los `.docx` originales de la Fase 0, congelados.
@@ -71,6 +71,7 @@ estos seis.
 | [usabilidad/CIERRE_FASE_D_S01.md](usabilidad/CIERRE_FASE_D_S01.md) | G33 · Fase D | Validación con el prototipo (6 de 6), HZ-18 a HZ-23, D-8 y orden de la Fase E. | Vigente (decisiones tomadas) |
 | [usabilidad/MEJORA_VISUAL_S02.md](usabilidad/MEJORA_VISUAL_S02.md) | G35 | Las 60 pantallas, sus acciones y la ficha visual de cada una. | **Vigente: referencia visual** |
 | [usabilidad/FLUJOS_SIMPLES_S03.md](usabilidad/FLUJOS_SIMPLES_S03.md) | G39 | Los 33 escenarios paso a paso, con el flujo actual de cada uno y sus patrones F-1 a F-19. | **Vigente: cómo se hace cada cosa en la app** |
+| [usabilidad/LENTE_HOGAR_S04.md](usabilidad/LENTE_HOGAR_S04.md) | G44 | Un solo lente "Lo mío · Del hogar" y sin pestaña Hogar (Bloque 1); Inicio responde "¿cómo va el mes?" y "¿cómo va el patrimonio?" (Bloque 2). Decisiones L-1 a L-8. | **Vigente: en curso** (Bloque 1 en prueba) |
 
 **Prototipos y reglas de pantalla** ([usabilidad/prototipo/](usabilidad/prototipo/)):
 

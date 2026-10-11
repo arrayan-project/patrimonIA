@@ -49,7 +49,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | G41, G42, G43 (🟡 en prueba) | G7, G21, G27, G38 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G33 | G25, G32, G35, G39 |
+| **I** · App: preferencias y usabilidad | G33, G44 (🟡 en prueba) | G25, G32, G35, G39 |
 
 ---
 
@@ -68,6 +68,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
 | — | **G41–G43** | Foto del mes, cuentas del día a día y mes que parte el día del sueldo: implementados en la rama `feat/G41-43-foto-del-mes` (2026-10-10). **Falta:** que Juan lo pruebe en el teléfono, merge, correr la migración 029 en Neon, push y deploy. | 🟡 en prueba |
+| — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Implementado en la rama `feat/L1-lente-hogar` (2026-10-10). **Falta:** que Juan lo pruebe en el teléfono (los dos lentes en las tres pestañas), borrar `HogarScreen.tsx`, merge y push (Paso 6). Bloques 2 y 3 por especificar/implementar. | 🟡 en prueba |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
@@ -770,6 +771,30 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   completo aparece en quien pagó. **Reapertura:** solo si en la Fase E Zoily o
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
+
+#### G44 — Lente del hogar: las dos preguntas sin acertijos  🟡 BLOQUE 1 IMPLEMENTADO, EN PRUEBA (rama `feat/L1-lente-hogar`, 2026-10-10)
+- **Fuente de verdad**: [`Docs/usabilidad/LENTE_HOGAR_S04.md`](Docs/usabilidad/LENTE_HOGAR_S04.md)
+  (diagnóstico, decisiones L-1 a L-8 y pasos por bloque).
+- **Pregunta original** (Juan, 2026-10-10): la app conserva todo lo que tiene,
+  pero mejor explicado y mostrado; deben responderse sin acertijos "¿Cómo va
+  el mes?" y "¿Cómo va el patrimonio?". El lente "Lo mío · Del hogar" ya
+  existía (Inicio y Movimientos), pero Planificar no lo obedecía (mostraba el
+  primer presupuesto vigente y mezclaba metas personales con las del hogar) y
+  la pestaña Hogar repetía lo que Inicio ya mostraba en "Del hogar".
+- **Decisiones (Juan, 2026-10-10)**: L-1 un solo lente, arriba de Inicio,
+  Movimientos y Planificar · L-2 la pestaña Hogar desaparece sin perder
+  funciones · L-3 Planificar obedece al lente (metas por `hogarId`, presupuesto
+  `INDIVIDUAL` o `FAMILIAR` del hogar activo) · L-4 con un solo miembro no hay
+  lente. L-5 a L-8 son del Bloque 2.
+- **Bloque 1 (rama `feat/L1-lente-hogar`)**: Planificar con lente (Paso 1);
+  "🤝 Entre [miembro] y tú" y el atajo "Transferirle a [miembro]" en Inicio
+  "Del hogar" (Paso 2); Ajustes › Hogar con Personas · Qué compartes ("De lo
+  tuyo suman X de Y") · Invitar a alguien · Invitaciones (Paso 3); barra de 3
+  pestañas y L-4 (Paso 4); rutas de H1, H4, H6, M4, M7 y M9 en
+  `FLUJOS_SIMPLES_S03.md` (Paso 5). Capturas en `Docs/usabilidad/capturas/l1/`.
+  Sin cambios de dominio, de API ni migraciones.
+- **Falta**: Paso 6 (prueba de Juan en el teléfono, borrar `HogarScreen.tsx`,
+  merge y push); Bloques 2 y 3.
 
 ---
 
