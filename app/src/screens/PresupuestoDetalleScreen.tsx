@@ -111,7 +111,10 @@ export function PresupuestoDetalleScreen() {
   const segmentos = [
     ...rubrosGasto.map((r, i) => ({ label: r.nombre, valor: r.real, color: colorCategoria(r.color, i) })),
     { label: 'Sin categoría', valor: desv.sinClasificar.gastos, color: c.muted },
+    // H1: lo privado de otros miembros, sin desglose.
+    ...(desv.privados ?? []).map((x) => ({ label: `🔒 Privado de ${x.nombre}`, valor: x.gastos, color: c.mutedDim })),
   ].filter((s) => s.valor > 0);
+  const privadosGasto = (desv.privados ?? []).filter((x) => x.gastos > 0);
   const verEntra = desv.esperado.ingresos > 0 || desv.esperado.ahorro > 0 || rubrosIngreso.length > 0;
   const sobra = desv.real.ahorro;
 
@@ -221,7 +224,7 @@ export function PresupuestoDetalleScreen() {
       )}
 
       <Section title="🧾 En qué gastaste">
-        {rubrosGasto.length === 0 && desv.sinClasificar.gastos === 0 ? (
+        {rubrosGasto.length === 0 && desv.sinClasificar.gastos === 0 && privadosGasto.length === 0 ? (
           <Nota>Todavía no gastas nada en este período.</Nota>
         ) : (
           <>
@@ -250,7 +253,7 @@ export function PresupuestoDetalleScreen() {
               );
             })}
             {/* Lo que no tiene monto pensado: filas simples (una barra vacía no dice nada). */}
-            {(sinMonto.length > 0 || desv.sinClasificar.gastos > 0) && (
+            {(sinMonto.length > 0 || desv.sinClasificar.gastos > 0 || privadosGasto.length > 0) && (
               <ListCard>
                 {sinMonto.map((r) => (
                   <TxRow
@@ -271,6 +274,16 @@ export function PresupuestoDetalleScreen() {
                     onPress={() => verGastos(null, 'Sin categoría', '❓', 0)}
                   />
                 )}
+                {/* H1: no abre detalle (son movimientos que no te comparten). */}
+                {privadosGasto.map((x) => (
+                  <TxRow
+                    key={`privado-${x.usuarioId}`}
+                    title={`Movimientos privados de ${x.nombre}`}
+                    subtitle="No te comparte el detalle"
+                    amount={m(x.gastos)}
+                    logo={{ emoji: '🔒' }}
+                  />
+                ))}
               </ListCard>
             )}
           </>

@@ -329,7 +329,11 @@ export function MovimientosScreen() {
   const gastosRubro = (resumen?.porRubro ?? [])
     .filter((r) => r.tipo === 'GASTO' && r.total > 0)
     .sort((a, b) => b.total - a.total);
-  const totalRubros = gastosRubro.reduce((s, r) => s + r.total, 0);
+  // H1: lo privado de otros miembros, sin detalle — una línea 🔒 por dueño.
+  const privados = (resumen?.privados ?? []).filter((x) => x.moneda === monedaPrincipal);
+  const privadosGasto = privados.filter((x) => x.gastos > 0);
+  const totalRubros =
+    gastosRubro.reduce((s, r) => s + r.total, 0) + privadosGasto.reduce((s, x) => s + x.gastos, 0);
   const rubrosVisibles = verTodosRubros ? gastosRubro : gastosRubro.slice(0, RUBROS_A_LA_VISTA);
   const emojiDe = (categoriaId: string | null, tipo: string) =>
     emojiCategoria(categoriaId ? catPorId.get(categoriaId) : null) ?? emojiTipoMovimiento(tipo);
@@ -484,7 +488,7 @@ export function MovimientosScreen() {
             </Section>
           )}
 
-          {gastosRubro.length > 0 && (
+          {(gastosRubro.length > 0 || privadosGasto.length > 0) && (
             <Section
               title={hogar ? '¿En qué gastaron?' : '¿En qué gastaste?'}
               accion={verTodosRubros ? 'Ver menos' : `Ver todas (${gastosRubro.length})`}
@@ -524,6 +528,31 @@ export function MovimientosScreen() {
                     </Pressable>
                   );
                 })}
+                {/* H1: lo privado va como rubro aparte y no abre detalle. */}
+                {privadosGasto.map((x) => {
+                  const pct = totalRubros > 0 ? x.gastos / totalRubros : 0;
+                  return (
+                    <View
+                      key={`privado-${x.usuarioId}`}
+                      style={styles.rubro}
+                      accessibilityLabel={`Movimientos privados de ${x.nombre}: ${money(x.gastos, monedaPrincipal)}`}
+                    >
+                      <Text style={styles.rubroEmoji}>🔒</Text>
+                      <View style={styles.rubroCuerpo}>
+                        <View style={styles.rubroFila}>
+                          <Text style={[styles.rubroNombre, { flexShrink: 1 }]} numberOfLines={2}>{`Movimientos privados de ${x.nombre}`}</Text>
+                          <Text style={styles.rubroMonto}>{money(x.gastos, monedaPrincipal)}</Text>
+                        </View>
+                        <View style={styles.rubroBarraFila}>
+                          <View style={styles.rubroPista}>
+                            <View style={[styles.rubroBarra, { width: `${Math.max(pct * 100, 2)}%`, backgroundColor: c.mutedDim }]} />
+                          </View>
+                          <Text style={styles.rubroPct}>{pct > 0 && pct < 0.01 ? '<1%' : `${Math.round(pct * 100)}%`}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
               </Panel>
             </Section>
           )}
@@ -555,6 +584,26 @@ export function MovimientosScreen() {
               </View>
             )}
           </Section>
+
+          {/* H1: lo privado de otros miembros, sin detalle, arriba de la lista (sin filtros ni búsqueda). */}
+          {privados.length > 0 && filtro === 'Todo' && !catFiltro && !busca.trim() && (
+            <ListCard>
+              {privados.map((x) => (
+                <TxRow
+                  key={`privado-${x.usuarioId}`}
+                  title={`Movimientos privados de ${x.nombre}`}
+                  subtitle={[
+                    x.ingresos > 0 ? `Entró ${money(x.ingresos, x.moneda)}` : '',
+                    x.gastos > 0 ? `Salió ${money(x.gastos, x.moneda)}` : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  amount=""
+                  logo={{ emoji: '🔒' }}
+                />
+              ))}
+            </ListCard>
+          )}
 
           {movsFiltrados.length === 0 ? (
             <EmptyState
