@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
-| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30, G37 |
+| **B** · Hogar, membresías y consolidación | G45 (🟡 H1 en prueba) | G3, G5, G12, G19, G30, G37 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
@@ -67,6 +67,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
+| — | **G45** | "Del hogar" respeta lo que cada uno comparte. **H1 (fuga de privacidad)** implementado en la rama `fix/privacidad-movimientos-hogar` (2026-10-10). **Falta:** aprobación de Juan, merge y deploy; después H2 (un solo universo del hogar, reabre G16). | 🟡 H1 en prueba |
 | — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Falta:** Bloque 2 (Inicio responde las dos preguntas) y Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
@@ -93,6 +94,49 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
+
+### Tema B · Hogar, membresías y consolidación
+
+#### G45 — "Del hogar" respeta lo que cada uno comparte  🟡 H1 IMPLEMENTADO, EN PRUEBA (rama `fix/privacidad-movimientos-hogar`, 2026-10-10); H2 PENDIENTE
+- **Qué se encontró** (diagnóstico de "Llevas gastado", 2026-10-10): el
+  resumen del mes "Del hogar", el presupuesto FAMILIAR y los eventos del hogar
+  sumaban **todas** las cuentas de todos los miembros y devolvían el detalle
+  (glosa, categoría, fila) de cuentas cuyos movimientos su dueño no comparte.
+  En la app, Demo veía en Movimientos "Del hogar" un gasto de la Cuenta sueldo
+  de Pareja (nivel "Que pueda transferirte"). Estaba en producción.
+- **Decisiones (Juan, 2026-10-10)**:
+  - **Regla del hogar**: "Del hogar" cuenta solo lo que **suma al hogar**
+    (`participa_consolidacion`), en el patrimonio, el mes, el resumen anual y
+    el presupuesto FAMILIAR. **Reabre G16** (que tomaba todos los miembros
+    ACTIVA).
+  - El nivel de compartir de cada cuenta es el acuerdo de los miembros; la
+    regla usa el **nivel actual**. **Comportamiento conocido:** si alguien
+    cambia el nivel de una cuenta, los meses pasados se recalculan con el
+    nivel nuevo (no hay historia del nivel).
+  - Lo privado no se muestra: su monto va en una línea por dueño,
+    "🔒 Movimientos privados de [nombre]".
+- **H1 — fuga de privacidad (rama `fix/privacidad-movimientos-hogar`)**.
+  Auditoría de lo que devuelve movimientos o rubros con alcance hogar:
+
+  | Endpoint | Antes | Ahora |
+  |---|---|---|
+  | `GET /usuarios/me/resumen-financiero?alcance=hogar` (Inicio y Movimientos "Del hogar", ¿En qué gastaron?, gastos por categoría) | detalle de todas las cuentas de todos | sin el detalle de lo privado; `privados` por dueño y moneda |
+  | `GET /presupuestos/:id/desviacion` (FAMILIAR) | rubros con lo privado | sin rubro para lo privado; `privados` por dueño |
+  | `GET /hogares/:id/eventos-financieros` | incluía cuentas que suman con movimientos privados ("Que vean el saldo") | solo lo propio y lo consolidado con movimientos visibles |
+  | `GET /usuarios/me/resumen-anual` | solo totales por mes | sin cambio (no da detalle) |
+  | `GET /eventos-financieros?elemento=` · `/eventos-financieros/:id` · `transferencias-hogar` · `foto-mes` | ya respetaban §B1 o son solo del actor | sin cambio |
+
+  Los **totales no cambian** en H1. `ElementoService.conMovimientosVisibles`
+  reutiliza la regla de `#puedeVer`. e2e `api/test/privacidad-hogar.e2e-spec.ts`
+  (falla contra `main`, pasa con el fix). App: la línea 🔒 en Movimientos
+  "Del hogar" (rubro aparte en "¿En qué gastaron?", sin abrir detalle, y arriba
+  de la lista) y en el detalle del presupuesto. Capturas en
+  `Docs/usabilidad/capturas/h1/`. Sin migraciones. Rollback: `git revert` del merge.
+- **H2 — un solo universo del hogar (pendiente, rama `feat/hogar-universo-unico`)**:
+  reporte y presupuesto FAMILIAR solo con cuentas que suman al hogar; aportes
+  (de una cuenta que no suma a una que suma) como "Entró al hogar" y la
+  inversa como "Salió del hogar". No se despliega sin que Juan y Zoily revisen
+  "Qué compartes" con sus datos reales.
 
 ### Tema D · Deuda / Crédito
 
@@ -1420,7 +1464,7 @@ ya cerrados en Fases 50–51).
 - **Cómo se resolvió**: líneas de ahorro por meta en el presupuesto (migración
   019, Fase 41, P6).
 
-#### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ RESUELTO (Fase 45 — moneda como etiqueta, sin conversión, P11)
+#### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ RESUELTO (Fase 45 — moneda como etiqueta, sin conversión, P11)  🔄 REABIERTO por G45 (2026-10-10)
 - Decisiones de alcance/agregación tomadas en Fase 6. Moneda del presupuesto:
   resuelta en la Fase 45 (P11). "Ahorro real" desde reservas: no se volvió a
   pedir; sigue ingresos − gastos.
@@ -1444,6 +1488,9 @@ ya cerrados en Fases 50–51).
 - **Cómo se resolvió**: moneda como etiqueta, sin conversión (migración 022, Fase
   45, P11). El ahorro sigue siendo ingresos − gastos y las transferencias siguen
   fuera; nadie pidió cambiarlo.
+- **Reabierto (Juan, 2026-10-10, G45)**: el alcance del FAMILIAR pasa a ser
+  solo las cuentas que suman al hogar (regla del hogar), y lo privado de otros
+  miembros no se desglosa (H1). Se implementa en G45 H2.
 
 #### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO (Fase 15d; línea de ahorro por objetivo, Fase 41/P6)
 - Líneas por categoría de gasto: ✅. Líneas de ahorro por objetivo: ✅ (Fase 41,
