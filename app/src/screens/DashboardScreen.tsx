@@ -66,6 +66,9 @@ import {
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
+import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
+import { cargarCuentasHogar } from '../cuentasHogar';
+import { FilaEntreRow } from './EntreMiembrosScreen';
 import { useToast } from '../ui/Toast';
 import { fechaCorta, tituloProgramado } from './MovimientosProgramadosScreen';
 import {
@@ -110,6 +113,10 @@ export function DashboardScreen() {
   const [metricas, setMetricas] = useState<MetricasHogarDTO | null>(null);
   const [consolidado, setConsolidado] = useState<PatrimonioConsolidadoDTO | null>(null);
   const [errorHogar, setErrorHogar] = useState<string | null>(null);
+  // L1 (S04): lo que era propio de la pestaña Hogar — "Entre [miembro] y tú" y
+  // las cuentas de los otros miembros a las que puedes transferir.
+  const [entre, setEntre] = useState<EntreMiembros | null>(null);
+  const [paraTransferir, setParaTransferir] = useState<ElementoPatrimonialDTO[]>([]);
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
@@ -169,12 +176,16 @@ export function DashboardScreen() {
       if (alcance === 'hogar') {
         // G33 BUG-HOG: un fallo se informa (no se muestra un 0 falso) y no
         // arrastra a la otra consulta.
-        const [m, cons] = await Promise.allSettled([
+        const [m, cons, en, ch] = await Promise.allSettled([
           api.get<MetricasHogarDTO>(`/hogares/${activo}/metricas`, token),
           api.get<PatrimonioConsolidadoDTO>(`/hogares/${activo}/patrimonio-consolidado`, token),
+          cargarEntreMiembros(token, usuario.id, activo),
+          cargarCuentasHogar(token),
         ]);
         setMetricas(m.status === 'fulfilled' ? m.value : null);
         setConsolidado(cons.status === 'fulfilled' ? cons.value : null);
+        setEntre(en.status === 'fulfilled' ? en.value : null);
+        setParaTransferir(ch.status === 'fulfilled' ? ch.value.paraTransferir : []);
         setErrorHogar(
           cons.status === 'rejected'
             ? cons.reason instanceof ApiError
@@ -290,7 +301,7 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav, claveHogar, claveOnb, alcance, preferencias.mes, preferencias.monedaPreferida]);
+  }, [token, usuario.id, nav, claveHogar, claveOnb, alcance, preferencias.mes, preferencias.monedaPreferida]);
 
   useCargaAlEnfocar(cargar);
 
@@ -483,6 +494,23 @@ export function DashboardScreen() {
   const rotuloMes = rotuloCiclo(mesHoy.anio, mesHoy.mes, ciclo);
   const mesNombre = MESES_LARGO[mesHoy.mes].charAt(0).toUpperCase() + MESES_LARGO[mesHoy.mes].slice(1);
   const nombre = usuario.nombre.split(' ')[0];
+  // L1 (S04): en "Del hogar", el atajo "Transferirle a [miembro]" reemplaza a "Tu plata"
+  // (va a su primera cuenta para transferir); con más de un miembro, abre Moví plata.
+  const otroUnico = entre?.otros.length === 1 ? entre.otros[0] : null;
+  const atajoPlata =
+    alcance === 'hogar'
+      ? {
+          icon: 'swap-horizontal-outline' as const,
+          label: otroUnico ? `Transferirle a ${otroUnico.nombre}` : 'Moví plata',
+          onPress: () =>
+            nav.go(
+              'RegistrarMovimiento',
+              otroUnico && paraTransferir[0]
+                ? { tipo: 'TRANSFERENCIA', destinoId: paraTransferir[0].id }
+                : { tipo: 'TRANSFERENCIA' },
+            ),
+        }
+      : { icon: 'wallet-outline' as const, label: 'Tu plata', onPress: verPatrimonio };
 
   return (
     <Screen
@@ -527,6 +555,20 @@ export function DashboardScreen() {
             <TxRow title={`Ver todos los avisos (${alertas.length})`} amount="" logo={{ emoji: '🔔' }} onPress={() => nav.go('Notificaciones')} />
           )}
         </ListCard>
+      )}
+      {/* L1 (S04): "Entre [miembro] y tú", debajo de las alertas; lo pendiente va arriba. */}
+      {alcance === 'hogar' && entre && entre.otros.length > 0 && entre.filas.length > 0 && (
+        <Section
+          title={`🤝 ${entre.titulo}`}
+          accion={`Ver todo (${entre.filas.length})`}
+          onAccion={() => nav.go('EntreMiembros', { hogarId })}
+        >
+          <ListCard>
+            {entre.filas.slice(0, 4).map((f) => (
+              <FilaEntreRow key={f.key} f={f} />
+            ))}
+          </ListCard>
+        </Section>
       )}
       <Pressable
         onPress={verPatrimonio}
@@ -743,7 +785,7 @@ export function DashboardScreen() {
               { icon: 'add-circle-outline', label: 'Anotar', onPress: anotar.abrir },
               { icon: 'flag-outline', label: 'Metas', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
-              { icon: 'wallet-outline', label: 'Tu plata', onPress: verPatrimonio },
+              atajoPlata,
             ]}
           />
         </Section>
