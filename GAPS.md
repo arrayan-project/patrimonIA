@@ -42,14 +42,14 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
-| **B** · Hogar, membresías y consolidación | G45 (🟡 H1 hecho, H2 en revisión) | G3, G5, G12, G19, G30, G37 |
+| **B** · Hogar, membresías y consolidación | — | G3, G5, G12, G19, G30, G37, G45 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38, G41, G42, G43 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloque 1 hecho, Bloque 2 en revisión) | G25, G32, G35, G39 |
+| **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloques 1 y 2 hechos; falta el 3) | G25, G32, G35, G39 |
 
 ---
 
@@ -67,8 +67,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
-| — | **G45** | "Del hogar" respeta lo que cada uno comparte. **H1 (fuga de privacidad)** mergeado y con push (8cb95bf, 2026-10-10). **H2** (un solo universo del hogar, reabre G16) implementado en la rama `feat/hogar-universo-unico`, sin merge. **Falta:** que Juan y Zoily revisen "Qué compartes" con sus datos reales antes de desplegar H2. | 🟡 H2 en revisión |
-| — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Bloque 2** (Inicio responde las dos preguntas) implementado en la rama `feat/L2-inicio-dos-preguntas` (sobre H2 y S), sin merge. **Falta:** prueba de Juan del Bloque 2 y su merge (después de H2 y S); Bloque 3 (la historia del mes). | 🟡 |
+| — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Bloque 2** (Inicio responde las dos preguntas) probado por Juan y mergeado (adbe15d, 2026-10-11). **Falta:** Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
@@ -94,91 +93,6 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 - **Pendiente**: el captcha / verificación anti-bot antes de emitir el token
   (rate-limit + email ya reducen el abuso; el captcha necesita elegir proveedor).
   Rate-limit en memoria → para varias instancias haría falta un store compartido.
-
-### Tema B · Hogar, membresías y consolidación
-
-#### G45 — "Del hogar" respeta lo que cada uno comparte  🟡 H1 HECHO (8cb95bf, 2026-10-10); H2 IMPLEMENTADO, EN REVISIÓN (rama `feat/hogar-universo-unico`)
-- **Qué se encontró** (diagnóstico de "Llevas gastado", 2026-10-10): el
-  resumen del mes "Del hogar", el presupuesto FAMILIAR y los eventos del hogar
-  sumaban **todas** las cuentas de todos los miembros y devolvían el detalle
-  (glosa, categoría, fila) de cuentas cuyos movimientos su dueño no comparte.
-  En la app, Demo veía en Movimientos "Del hogar" un gasto de la Cuenta sueldo
-  de Pareja (nivel "Que pueda transferirte"). Estaba en producción.
-- **Decisiones (Juan, 2026-10-10)**:
-  - **Regla del hogar**: "Del hogar" cuenta solo lo que **suma al hogar**
-    (`participa_consolidacion`), en el patrimonio, el mes, el resumen anual y
-    el presupuesto FAMILIAR. **Reabre G16** (que tomaba todos los miembros
-    ACTIVA).
-  - El nivel de compartir de cada cuenta es el acuerdo de los miembros; la
-    regla usa el **nivel actual**. **Comportamiento conocido:** si alguien
-    cambia el nivel de una cuenta, los meses pasados se recalculan con el
-    nivel nuevo (no hay historia del nivel).
-  - Lo privado no se muestra: su monto va en una línea por dueño,
-    "🔒 Movimientos privados de [nombre]".
-- **H1 — fuga de privacidad (rama `fix/privacidad-movimientos-hogar`)**.
-  Auditoría de lo que devuelve movimientos o rubros con alcance hogar:
-
-  | Endpoint | Antes | Ahora |
-  |---|---|---|
-  | `GET /usuarios/me/resumen-financiero?alcance=hogar` (Inicio y Movimientos "Del hogar", ¿En qué gastaron?, gastos por categoría) | detalle de todas las cuentas de todos | sin el detalle de lo privado; `privados` por dueño y moneda |
-  | `GET /presupuestos/:id/desviacion` (FAMILIAR) | rubros con lo privado | sin rubro para lo privado; `privados` por dueño |
-  | `GET /hogares/:id/eventos-financieros` | incluía cuentas que suman con movimientos privados ("Que vean el saldo") | solo lo propio y lo consolidado con movimientos visibles |
-  | `GET /usuarios/me/resumen-anual` | solo totales por mes | sin cambio (no da detalle) |
-  | `GET /eventos-financieros?elemento=` · `/eventos-financieros/:id` · `transferencias-hogar` · `foto-mes` | ya respetaban §B1 o son solo del actor | sin cambio |
-
-  Los **totales no cambian** en H1. `ElementoService.conMovimientosVisibles`
-  reutiliza la regla de `#puedeVer`. e2e `api/test/privacidad-hogar.e2e-spec.ts`
-  (falla contra `main`, pasa con el fix). App: la línea 🔒 en Movimientos
-  "Del hogar" (rubro aparte en "¿En qué gastaron?", sin abrir detalle, y arriba
-  de la lista) y en el detalle del presupuesto. Capturas en
-  `Docs/usabilidad/capturas/h1/`. Sin migraciones. Rollback: `git revert` del merge.
-- **H2 — un solo universo del hogar (rama `feat/hogar-universo-unico`, sin merge)**:
-  - API: `resumen-financiero` y `resumen-anual` con alcance hogar y la
-    `desviacion` del FAMILIAR usan solo cuentas con `participa_consolidacion`
-    de los miembros activos (las mismas del patrimonio del hogar).
-  - Aportes: una transferencia de una cuenta que no suma a una que suma es
-    "Entró al hogar" y la inversa "Salió del hogar"; van en `aportes` (por
-    persona: la dueña de la cuenta de afuera) y cada movimiento trae
-    `ladoAfuera`. En el FAMILIAR, el aporte es ingreso y la salida no es gasto.
-  - App: en "Del hogar", Movimientos y la tarjeta del mes de Inicio muestran
-    "🏠 Entró al hogar · [nombre]" / "🚪 Salió del hogar · [nombre]" como líneas
-    propias que entran en "Les queda" (mismo mecanismo que los pases de G39);
-    nota "Solo cuentan las cuentas que suman al hogar"; los 4 niveles de "Qué
-    compartes" dicen si la cuenta cuenta en el hogar.
-  - **Con G41/G42 no choca**: la foto del mes de "Lo mío" mira el borde de tus
-    cuentas del día a día; el mes del hogar, el borde de las cuentas que suman.
-    Una misma transferencia puede ser "👤 Le pasaste a Pareja" en "Lo mío" y
-    "🚪 Salió del hogar · Pareja" en "Del hogar": cada vista con su borde.
-  - **A tener en cuenta**: cuando Pareja devuelve su parte de un gasto
-    compartido desde una cuenta que no suma, entra al hogar como aporte y, en
-    el FAMILIAR, como ingreso (el gasto completo sigue como gasto).
-  - e2e `api/test/hogar-universo.e2e-spec.ts`: cuenta en "Nada" fuera, cuenta
-    en "Que vean el saldo" dentro con 🔒, aporte como "Entró al hogar", y el
-    patrimonio y el mes del hogar con las mismas cuentas. Se ajustaron a la
-    regla `privacidad-hogar`, `presupuesto` y `transferencia-entre-miembros`.
-  - No se despliega sin que Juan y Zoily revisen "Qué compartes" con sus datos
-    reales (los totales "Del hogar" cambian: salen las cuentas que no suman).
-- **S — compartir en dos preguntas (rama `feat/compartir-dos-preguntas`, creada
-  desde la de H2; sin merge)**. Objetivo: que Zoily lo entienda sin que nadie
-  le explique. Los 4 niveles de D-2 pasan a ser:
-  "🏠 ¿Esta plata es del hogar?" · solo si es Sí, "👀 ¿[Nombre] puede ver los
-  movimientos?" · solo en las cuentas del día a día (G42) o si ya está en Sí,
-  "🔁 ¿Te pueden transferir a esta cuenta?". Se guardan en los campos de
-  siempre, sin migración (`app/src/compartirPreguntas.ts`); equivalencias:
-  Nada = No · Que puedan transferirte = No + transferir Sí · Que vean el saldo
-  y sume = Sí + movimientos No · Todo = Sí + movimientos Sí (test unitario y
-  e2e `api/test/compartir-equivalencias.e2e-spec.ts`). Debajo, la tarjeta en
-  vivo "👀 Así lo ve [Nombre]" (qué número ve, movimientos o línea 🔒, si suma
-  a "Plata del hogar"). En Agregar cuenta, Ajustes de la cuenta y Qué compartes
-  (fila con respuesta corta: "🏠 Del hogar · 🔒 movimientos privados"). Con un
-  solo miembro, no se muestran. Una combinación hecha en "Más opciones" se
-  avisa como "a tu medida" y se reemplaza al cambiar una respuesta. Capturas en
-  `Docs/usabilidad/capturas/s/`.
-  **Falta (señal real, la hace Juan sin dar pistas):** Zoily, sola, (a) hace que
-  su cuenta sueldo no cuente para el hogar, (b) deja la cuenta común con todo
-  visible y (c) explica con sus palabras qué ve Juan de una cuenta suya. Lo que
-  la trabe se anota y se ajusta antes del merge. Después: merge de H2 y de S a
-  `main`, en ese orden, y deploy.
 
 ### Tema D · Deuda / Crédito
 
@@ -736,7 +650,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
-#### G44 — Lente del hogar: las dos preguntas sin acertijos  🟡 PARCIAL (Bloque 1 mergeado, 2026-10-10; Bloque 2 implementado en `feat/L2-inicio-dos-preguntas`, en revisión; Bloque 3 pendiente)
+#### G44 — Lente del hogar: las dos preguntas sin acertijos  🟡 PARCIAL (Bloque 1 mergeado, 2026-10-10; Bloque 2 probado por Juan y mergeado, adbe15d, 2026-10-11; Bloque 3 pendiente)
 - **Fuente de verdad**: [`Docs/usabilidad/LENTE_HOGAR_S04.md`](Docs/usabilidad/LENTE_HOGAR_S04.md)
   (diagnóstico, decisiones L-1 a L-8 y pasos por bloque).
 - **Pregunta original** (Juan, 2026-10-10): la app conserva todo lo que tiene,
@@ -781,7 +695,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   si el ciclo anterior dejó sobrante; cualquiera de sus tres acciones la oculta
   para ese ciclo (`preferencias.visualizacion.mes.cierreVisto`); Ahorrar acepta
   `monto`. Tests de `cierreCiclo.ts`; capturas en `Docs/usabilidad/capturas/l2/`.
-- **Falta**: prueba de Juan del Bloque 2 y merge (orden: H2 → S → L2); Bloque 3.
+- **Falta**: Bloque 3 (la historia del mes).
 
 ---
 
@@ -1085,6 +999,89 @@ ya cerrados en Fases 50–51).
   Deben y subtotales incluyen lo oculto) y la barra dice "Plata del hogar".
   `alcance=hogar` de `/elementos-patrimoniales` sigue igual (lo usan los
   formularios para elegir cuentas de otros miembros).
+
+#### G45 — "Del hogar" respeta lo que cada uno comparte  ✅ RESUELTO (H1 8cb95bf, 2026-10-10; H2 05f4fe6 y S a336c82, 2026-10-11 — Zoily completó sola las 3 tareas de S)
+- **Qué se encontró** (diagnóstico de "Llevas gastado", 2026-10-10): el
+  resumen del mes "Del hogar", el presupuesto FAMILIAR y los eventos del hogar
+  sumaban **todas** las cuentas de todos los miembros y devolvían el detalle
+  (glosa, categoría, fila) de cuentas cuyos movimientos su dueño no comparte.
+  En la app, Demo veía en Movimientos "Del hogar" un gasto de la Cuenta sueldo
+  de Pareja (nivel "Que pueda transferirte"). Estaba en producción.
+- **Decisiones (Juan, 2026-10-10)**:
+  - **Regla del hogar**: "Del hogar" cuenta solo lo que **suma al hogar**
+    (`participa_consolidacion`), en el patrimonio, el mes, el resumen anual y
+    el presupuesto FAMILIAR. **Reabre G16** (que tomaba todos los miembros
+    ACTIVA).
+  - El nivel de compartir de cada cuenta es el acuerdo de los miembros; la
+    regla usa el **nivel actual**. **Comportamiento conocido:** si alguien
+    cambia el nivel de una cuenta, los meses pasados se recalculan con el
+    nivel nuevo (no hay historia del nivel).
+  - Lo privado no se muestra: su monto va en una línea por dueño,
+    "🔒 Movimientos privados de [nombre]".
+- **H1 — fuga de privacidad (rama `fix/privacidad-movimientos-hogar`)**.
+  Auditoría de lo que devuelve movimientos o rubros con alcance hogar:
+
+  | Endpoint | Antes | Ahora |
+  |---|---|---|
+  | `GET /usuarios/me/resumen-financiero?alcance=hogar` (Inicio y Movimientos "Del hogar", ¿En qué gastaron?, gastos por categoría) | detalle de todas las cuentas de todos | sin el detalle de lo privado; `privados` por dueño y moneda |
+  | `GET /presupuestos/:id/desviacion` (FAMILIAR) | rubros con lo privado | sin rubro para lo privado; `privados` por dueño |
+  | `GET /hogares/:id/eventos-financieros` | incluía cuentas que suman con movimientos privados ("Que vean el saldo") | solo lo propio y lo consolidado con movimientos visibles |
+  | `GET /usuarios/me/resumen-anual` | solo totales por mes | sin cambio (no da detalle) |
+  | `GET /eventos-financieros?elemento=` · `/eventos-financieros/:id` · `transferencias-hogar` · `foto-mes` | ya respetaban §B1 o son solo del actor | sin cambio |
+
+  Los **totales no cambian** en H1. `ElementoService.conMovimientosVisibles`
+  reutiliza la regla de `#puedeVer`. e2e `api/test/privacidad-hogar.e2e-spec.ts`
+  (falla contra `main`, pasa con el fix). App: la línea 🔒 en Movimientos
+  "Del hogar" (rubro aparte en "¿En qué gastaron?", sin abrir detalle, y arriba
+  de la lista) y en el detalle del presupuesto. Capturas en
+  `Docs/usabilidad/capturas/h1/`. Sin migraciones. Rollback: `git revert` del merge.
+- **H2 — un solo universo del hogar (rama `feat/hogar-universo-unico`, sin merge)**:
+  - API: `resumen-financiero` y `resumen-anual` con alcance hogar y la
+    `desviacion` del FAMILIAR usan solo cuentas con `participa_consolidacion`
+    de los miembros activos (las mismas del patrimonio del hogar).
+  - Aportes: una transferencia de una cuenta que no suma a una que suma es
+    "Entró al hogar" y la inversa "Salió del hogar"; van en `aportes` (por
+    persona: la dueña de la cuenta de afuera) y cada movimiento trae
+    `ladoAfuera`. En el FAMILIAR, el aporte es ingreso y la salida no es gasto.
+  - App: en "Del hogar", Movimientos y la tarjeta del mes de Inicio muestran
+    "🏠 Entró al hogar · [nombre]" / "🚪 Salió del hogar · [nombre]" como líneas
+    propias que entran en "Les queda" (mismo mecanismo que los pases de G39);
+    nota "Solo cuentan las cuentas que suman al hogar"; los 4 niveles de "Qué
+    compartes" dicen si la cuenta cuenta en el hogar.
+  - **Con G41/G42 no choca**: la foto del mes de "Lo mío" mira el borde de tus
+    cuentas del día a día; el mes del hogar, el borde de las cuentas que suman.
+    Una misma transferencia puede ser "👤 Le pasaste a Pareja" en "Lo mío" y
+    "🚪 Salió del hogar · Pareja" en "Del hogar": cada vista con su borde.
+  - **A tener en cuenta**: cuando Pareja devuelve su parte de un gasto
+    compartido desde una cuenta que no suma, entra al hogar como aporte y, en
+    el FAMILIAR, como ingreso (el gasto completo sigue como gasto).
+  - e2e `api/test/hogar-universo.e2e-spec.ts`: cuenta en "Nada" fuera, cuenta
+    en "Que vean el saldo" dentro con 🔒, aporte como "Entró al hogar", y el
+    patrimonio y el mes del hogar con las mismas cuentas. Se ajustaron a la
+    regla `privacidad-hogar`, `presupuesto` y `transferencia-entre-miembros`.
+  - No se despliega sin que Juan y Zoily revisen "Qué compartes" con sus datos
+    reales (los totales "Del hogar" cambian: salen las cuentas que no suman).
+- **S — compartir en dos preguntas (rama `feat/compartir-dos-preguntas`, creada
+  desde la de H2; sin merge)**. Objetivo: que Zoily lo entienda sin que nadie
+  le explique. Los 4 niveles de D-2 pasan a ser:
+  "🏠 ¿Esta plata es del hogar?" · solo si es Sí, "👀 ¿[Nombre] puede ver los
+  movimientos?" · solo en las cuentas del día a día (G42) o si ya está en Sí,
+  "🔁 ¿Te pueden transferir a esta cuenta?". Se guardan en los campos de
+  siempre, sin migración (`app/src/compartirPreguntas.ts`); equivalencias:
+  Nada = No · Que puedan transferirte = No + transferir Sí · Que vean el saldo
+  y sume = Sí + movimientos No · Todo = Sí + movimientos Sí (test unitario y
+  e2e `api/test/compartir-equivalencias.e2e-spec.ts`). Debajo, la tarjeta en
+  vivo "👀 Así lo ve [Nombre]" (qué número ve, movimientos o línea 🔒, si suma
+  a "Plata del hogar"). En Agregar cuenta, Ajustes de la cuenta y Qué compartes
+  (fila con respuesta corta: "🏠 Del hogar · 🔒 movimientos privados"). Con un
+  solo miembro, no se muestran. Una combinación hecha en "Más opciones" se
+  avisa como "a tu medida" y se reemplaza al cambiar una respuesta. Capturas en
+  `Docs/usabilidad/capturas/s/`.
+  **Falta (señal real, la hace Juan sin dar pistas):** Zoily, sola, (a) hace que
+  su cuenta sueldo no cuente para el hogar, (b) deja la cuenta común con todo
+  visible y (c) explica con sus palabras qué ve Juan de una cuenta suya. Lo que
+  la trabe se anota y se ajusta antes del merge. Después: merge de H2 y de S a
+  `main`, en ese orden, y deploy.
 
 ### Tema C · Elementos patrimoniales y visibilidad
 
