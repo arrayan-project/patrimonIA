@@ -50,7 +50,7 @@ const MESES = [
 export function PlanificarScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
-  const { alcance, setAlcance } = useAlcance();
+  const { alcance, setAlcance, lente } = useAlcance();
   const hogar = alcance === 'hogar';
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
 
@@ -157,14 +157,16 @@ export function PlanificarScreen() {
           </>
         }
       />
-      <View style={{ alignSelf: 'flex-start' }}>
-        <PillToggle
-          options={['mios', 'hogar'] as const}
-          value={alcance}
-          onChange={setAlcance}
-          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
-        />
-      </View>
+      {lente && (
+        <View style={{ alignSelf: 'flex-start' }}>
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={setAlcance}
+            format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+          />
+        </View>
+      )}
       {/* Plantilla Resumen: una cifra — cuánto llevas guardado en tus metas activas
           (G35: debajo, la resta que la explica; otras monedas en su propia línea). */}
       {porMoneda.length > 0 && (

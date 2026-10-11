@@ -22,7 +22,6 @@ import { InvitacionesScreen } from '../screens/InvitacionesScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MovimientosScreen } from '../screens/MovimientosScreen';
 import { PlanificarScreen } from '../screens/PlanificarScreen';
-import { HogarScreen } from '../screens/HogarScreen';
 import { AgregarElementoScreen } from '../screens/AgregarElementoScreen';
 import { RegistrarMovimientoScreen } from '../screens/RegistrarMovimientoScreen';
 import { ElementoDetalleScreen } from '../screens/ElementoDetalleScreen';
@@ -124,11 +123,6 @@ function Tabs() {
         name="Planificar"
         component={PlanificarScreen}
         options={{ tabBarLabel: 'Planificar', tabBarIcon: icono('flag-outline') }}
-      />
-      <Tab.Screen
-        name="Hogar"
-        component={HogarScreen}
-        options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('people-outline') }}
       />
     </Tab.Navigator>
   );

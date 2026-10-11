@@ -45,6 +45,7 @@ import {
   Hero,
   IconButton,
   ListCard,
+  MenuList,
   Panel,
   panelDe,
   tinte,
@@ -69,6 +70,7 @@ import type { SolicitudDTO } from '../solicitudes';
 import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
 import { cargarCuentasHogar } from '../cuentasHogar';
 import { FilaEntreRow } from './EntreMiembrosScreen';
+import { invitarAlHogar } from './GestionHogarScreen';
 import { useToast } from '../ui/Toast';
 import { fechaCorta, tituloProgramado } from './MovimientosProgramadosScreen';
 import {
@@ -101,7 +103,7 @@ export function DashboardScreen() {
   const { token, usuario } = useSession();
   const anotar = useAnotar();
   const nav = useNav();
-  const { alcance, setAlcance } = useAlcance();
+  const { alcance, setAlcance, lente, setSoloUnMiembro } = useAlcance();
   const { preferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
@@ -170,6 +172,8 @@ export function DashboardScreen() {
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       ]);
       setHogar(h);
+      // L-4: con un solo miembro no hay lente (Movimientos y Planificar lo leen de aquí).
+      if (h.miembros) setSoloUnMiembro(h.miembros.length === 1);
       setPatrimonio(p);
       setElementos(els);
 
@@ -301,7 +305,7 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, usuario.id, nav, claveHogar, claveOnb, alcance, preferencias.mes, preferencias.monedaPreferida]);
+  }, [token, usuario.id, nav, claveHogar, claveOnb, alcance, setSoloUnMiembro, preferencias.mes, preferencias.monedaPreferida]);
 
   useCargaAlEnfocar(cargar);
 
@@ -538,14 +542,28 @@ export function DashboardScreen() {
           </>
         }
       />
-      <View style={{ alignSelf: 'flex-start' }}>
-        <PillToggle
-          options={['mios', 'hogar'] as const}
-          value={alcance}
-          onChange={setAlcance}
-          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+      {lente ? (
+        <View style={{ alignSelf: 'flex-start' }}>
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={setAlcance}
+            format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+          />
+        </View>
+      ) : (
+        // L-4: solo en el hogar, en el lugar del lente, invitar a quien vive contigo.
+        <MenuList
+          items={[
+            {
+              title: 'Invita a quien vive contigo',
+              subtitle: 'Le llega un correo para unirse a tu hogar',
+              emoji: '👥',
+              onPress: () => invitarAlHogar(nav, hogar.id),
+            },
+          ]}
         />
-      </View>
+      )}
       {alertas.length > 0 && (
         <ListCard>
           {alertas.slice(0, 3).map((a, i) => (
@@ -683,9 +701,9 @@ export function DashboardScreen() {
           <Paso hecho={pasos.movimiento} texto="Anota un gasto o un ingreso" onPress={anotar.abrir} c={c} styles={styles} />
           <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('MetaForm')} c={c} styles={styles} />
           <Text style={styles.muted}>
-            Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
-            sale), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
-            compartes con tu familia).
+            Abajo tienes 3 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
+            sale) y Planificar (metas, presupuesto y pagos futuros). Arriba eliges si ves
+            lo tuyo o lo del hogar.
           </Text>
         </Panel>
       )}

@@ -360,14 +360,17 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
               </>
             }
           />
-          <View style={styles.controles}>
-            <PillToggle
-              options={['mios', 'hogar'] as const}
-              value={alcance}
-              onChange={ctxAlcance.setAlcance}
-              format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
-            />
-          </View>
+          {/* L-4: con un solo miembro en el hogar, no hay lente. */}
+          {ctxAlcance.lente && (
+            <View style={styles.controles}>
+              <PillToggle
+                options={['mios', 'hogar'] as const}
+                value={alcance}
+                onChange={ctxAlcance.setAlcance}
+                format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+              />
+            </View>
+          )}
         </>
       )}
 

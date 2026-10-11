@@ -19,7 +19,6 @@ export type RouteName =
   | 'Dashboard'
   | 'Movimientos'
   | 'Planificar'
-  | 'Hogar'
   | 'AgregarElemento'
   | 'RegistrarMovimiento'
   | 'ElementoDetalle'
