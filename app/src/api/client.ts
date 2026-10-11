@@ -352,6 +352,15 @@ export interface ObjetivoFinancieroDTO {
   /** P11: etiqueta de moneda (sin conversión). */
   moneda: string;
   createdAt: string;
+  /** Bloque M: lo apartado fijo y el valor de las cuentas dedicadas (suman `progreso`). */
+  progresoApartado?: number;
+  progresoCuentas?: number;
+  /** Bloque M: "🏦 Cuentas de esta meta", con su valor de hoy. */
+  cuentasDedicadas?: { elementoId: string; nombre: string; valor: number; moneda: string }[];
+  /** Bloque M: cuánto cambió este mes el valor de sus cuentas. */
+  cambioMesCuentas?: number;
+  /** Bloque M §2.3: cuentas apartadas casi enteras para la meta (solo en el detalle). */
+  sugerenciasCuentaCompleta?: { elementoId: string; nombre: string }[];
 }
 
 export interface ReservaDTO {

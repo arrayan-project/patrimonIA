@@ -9,6 +9,7 @@ import {
   type ElementoPatrimonialDTO,
   type EventoFinancieroDTO,
   type HogarDTO,
+  type ObjetivoFinancieroDTO,
   type ReservaDeElementoDTO,
   type ValorizacionDTO,
 } from '../api/client';
@@ -32,6 +33,7 @@ import {
   MenuList,
   Nota,
   Panel,
+  Pastilla,
   ProgressBar,
   Screen,
   Section,
@@ -75,6 +77,8 @@ export function ElementoDetalleScreen() {
   const [valorizaciones, setValorizaciones] = useState<ValorizacionDTO[]>([]);
   const [ajustes, setAjustes] = useState<AjustePatrimonialDTO[]>([]);
   const [reservas, setReservas] = useState<ReservaDeElementoDTO[]>([]);
+  // Bloque M: la meta a la que está dedicada toda la cuenta (M-4), si alguna.
+  const [esPara, setEsPara] = useState<{ id: string; nombre: string } | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
   const [verTodos, setVerTodos] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +107,9 @@ export function ElementoDetalleScreen() {
           .get<ReservaDeElementoDTO[]>(`/elementos-patrimoniales/${elementoId}/reservas`, token)
           .catch(() => []),
       );
+      const metas = await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []);
+      const m = metas.find((o) => (o.cuentasDedicadas ?? []).some((d) => d.elementoId === elementoId));
+      setEsPara(m ? { id: m.id, nombre: m.nombre } : null);
       if (el.admiteValorizacion) {
         setValorizaciones(
           await api.get<ValorizacionDTO[]>(
@@ -326,6 +333,12 @@ export function ElementoDetalleScreen() {
           texto={`📦 Cerrada${el.fechaBaja ? ` desde el ${fechaLegible(el.fechaBaja)}` : ''}: no suma en tu plata.`}
         />
       )}
+      {/* Bloque M (M-4): la cuenta dice para qué meta es. */}
+      {esPara && (
+        <View style={{ flexDirection: 'row' }}>
+          <Pastilla label={`🎯 Es para: ${esPara.nombre}`} onPress={() => nav.go('ObjetivoDetalle', { objetivoId: esPara.id })} />
+        </View>
+      )}
       <BandaDetalle
         color={color}
         titulo={`${emoji} ${verbo}`}
@@ -340,7 +353,11 @@ export function ElementoDetalleScreen() {
             />
           </Datos>
         ) : null}
-        {!el.valorOculto && reservado > 0 ? (
+        {esPara ? (
+          <Datos plano>
+            <Dato etiqueta={`🎯 Toda la cuenta es para ${esPara.nombre}`} valor="" />
+          </Datos>
+        ) : !el.valorOculto && reservado > 0 ? (
           // La misma resta del Inicio: lo que tiene, menos lo guardado para metas.
           <Datos plano>
             <Dato etiqueta="🐷 Guardado para metas" valor={`− ${money(reservado, el.moneda)}`} />

@@ -39,6 +39,8 @@ export interface PreferenciasVisualizacion {
    * L-8 (S04): `cierreVisto`, el ciclo (`AAAA-MM`) cuya tarjeta de cierre ya se tocó.
    */
   mes: { dia: number; nombre: NombreMes; cuentas: string[] | null; cierreVisto: string | null };
+  /** Bloque M §2.3: cuentas a las que se respondió "No" a "¿Toda la cuenta es para esta meta?". */
+  noPreguntarCuentaCompleta: string[];
 }
 
 export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
@@ -47,6 +49,7 @@ export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
   dashboard: { composicion: true, disponibilidad: true, flujo: true, objetivos: true, accesos: true },
   emojis: { elementos: {}, metas: {} },
   mes: { dia: 1, nombre: 'termina', cuentas: null, cierreVisto: null },
+  noPreguntarCuentaCompleta: [],
 };
 
 /** Las preferencias con el emoji de una cuenta (`elementos`) o una meta (`metas`) cambiado. */
@@ -85,6 +88,9 @@ function leerVisualizacion(u: UsuarioDTO | null): PreferenciasVisualizacion {
       cuentas: Array.isArray(v.mes?.cuentas) ? v.mes!.cuentas.filter((x): x is string => typeof x === 'string') : null,
       cierreVisto: typeof v.mes?.cierreVisto === 'string' && /^\d{4}-\d{2}$/.test(v.mes.cierreVisto) ? v.mes.cierreVisto : null,
     },
+    noPreguntarCuentaCompleta: Array.isArray(v.noPreguntarCuentaCompleta)
+      ? v.noPreguntarCuentaCompleta.filter((x): x is string => typeof x === 'string')
+      : [],
   };
 }
 
