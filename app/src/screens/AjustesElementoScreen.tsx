@@ -181,7 +181,7 @@ export function AjustesElementoScreen() {
         <Section title="🎯 Para una meta">
           <Elegir
             label="🎯 ¿Esta cuenta es para una meta?"
-            value={metaActual?.id ?? NINGUNA}
+            value={cambioMeta ?? metaActual?.id ?? NINGUNA}
             options={[
               { value: NINGUNA, label: 'No, es para cualquier cosa' },
               ...metasPosibles.map((m) => ({ value: m.id, label: `🎯 ${m.nombre}`, sub: 'Toda la cuenta es para esta meta' })),
