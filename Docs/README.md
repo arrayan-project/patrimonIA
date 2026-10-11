@@ -72,6 +72,7 @@ estos seis.
 | [usabilidad/MEJORA_VISUAL_S02.md](usabilidad/MEJORA_VISUAL_S02.md) | G35 | Las 60 pantallas, sus acciones y la ficha visual de cada una. | **Vigente: referencia visual** |
 | [usabilidad/FLUJOS_SIMPLES_S03.md](usabilidad/FLUJOS_SIMPLES_S03.md) | G39 | Los 33 escenarios paso a paso, con el flujo actual de cada uno y sus patrones F-1 a F-19. | **Vigente: cómo se hace cada cosa en la app** |
 | [usabilidad/LENTE_HOGAR_S04.md](usabilidad/LENTE_HOGAR_S04.md) | G44 | Un solo lente "Lo mío · Del hogar" y sin pestaña Hogar (Bloque 1); Inicio responde "¿cómo va el mes?" y "¿cómo va el patrimonio?" (Bloque 2). Decisiones L-1 a L-8. | **Vigente: en curso** (Bloque 1 en prueba) |
+| [usabilidad/METAS_CUENTAS_S04.md](usabilidad/METAS_CUENTAS_S04.md) | — | Metas con cuentas dedicadas: diagnóstico (el progreso no sigue el valor de una cuenta apartada entera) y propuesta "🏦 Esta cuenta es para esta meta". | Propuesta (espera decisión) |
 
 **Prototipos y reglas de pantalla** ([usabilidad/prototipo/](usabilidad/prototipo/)):
 
