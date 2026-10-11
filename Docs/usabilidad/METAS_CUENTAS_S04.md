@@ -1,7 +1,7 @@
 # Metas con cuentas dedicadas — Sesión 04
 
 **Ubicación en el repo:** `Docs/usabilidad/METAS_CUENTAS_S04.md`
-**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** implementado en `feat/metas-cuentas-dedicadas` con la migración 030 (2026-10-11), sin merge; GAPS G46. Diferencia con §2.2: la cuenta no trae `dedicadaA` en su DTO; la app lo deriva de las metas (`cuentasDedicadas`).
+**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** implementado y mergeado (2026-10-11), migración 030 aplicada en Neon; GAPS G46, en prueba. Diferencia con §2.2: la cuenta no trae `dedicadaA` en su DTO; la app lo deriva de las metas (`cuentasDedicadas`).
 
 ## 0. Problema
 
