@@ -756,6 +756,7 @@ export function TxRow({
   tag,
   accesorio,
   eliminado,
+  destacado,
   onPress,
 }: {
   title: string;
@@ -771,10 +772,15 @@ export function TxRow({
   accesorio?: ReactNode;
   /** Ya no cuenta: texto gris, monto tachado y la marca "🗑️ Eliminado" (sin rojo, que es gasto o deuda). */
   eliminado?: boolean;
+  /** Pide algo (p. ej. una solicitud pendiente): fondo lila suave a todo el ancho, barra a la izquierda y subtítulo en lila. */
+  destacado?: boolean;
   onPress?: () => void;
 }) {
   const c = useC();
   const styles = useEstilos();
+  const filaDestacada = destacado
+    ? { backgroundColor: c.acentoSuave, marginHorizontal: -14, paddingLeft: 10, paddingRight: 14, borderLeftWidth: 4, borderLeftColor: c.primary }
+    : null;
   // Sobre un color propio, el ícono va en blanco; sobre el gris de la fila, en el color del texto.
   const tinta = virtual ? c.muted : logo?.color ? '#fff' : c.text;
   const cuerpo = (
@@ -804,7 +810,7 @@ export function TxRow({
           {title}
         </Text>
         {subtitle || tag || eliminado ? (
-          <Text style={styles.txSub} numberOfLines={1}>
+          <Text style={[styles.txSub, destacado && { color: c.primary, fontWeight: '700' }]} numberOfLines={1}>
             {eliminado ? <Text style={styles.txEliminado}>🗑️ Eliminado</Text> : null}
             {eliminado && (tag || subtitle) ? ' · ' : ''}
             {tag ? <Text style={styles.txTag}>{tag}</Text> : null}
@@ -835,13 +841,13 @@ export function TxRow({
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        style={({ pressed }) => [styles.txRow, pressed && { opacity: 0.6 }]}
+        style={({ pressed }) => [styles.txRow, filaDestacada, pressed && { opacity: 0.6 }]}
       >
         {cuerpo}
       </Pressable>
     );
   }
-  return <View style={styles.txRow}>{cuerpo}</View>;
+  return <View style={[styles.txRow, filaDestacada]}>{cuerpo}</View>;
 }
 
 /**

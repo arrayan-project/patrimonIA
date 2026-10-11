@@ -57,7 +57,11 @@ export function PresupuestoFormScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const [tipo, setTipo] = useState<'INDIVIDUAL' | 'FAMILIAR'>('INDIVIDUAL');
+  // L-3 (S04): Planificar en "Del hogar" lo abre ya como FAMILIAR del hogar activo.
+  const [tipo, setTipo] = useState<'INDIVIDUAL' | 'FAMILIAR'>(
+    nav.route.params?.tipo === 'FAMILIAR' ? 'FAMILIAR' : 'INDIVIDUAL',
+  );
+  const hogarParam = nav.route.params?.hogarId as string | undefined;
   const [periodicidad, setPeriodicidad] = useState<'PERIODICO' | 'ESPECIFICO'>('PERIODICO');
   const [intervalo, setIntervalo] = useState<(typeof INTERVALOS)[number]>('MENSUAL');
   const [fechaInicio, setFechaInicio] = useState('');
@@ -73,11 +77,12 @@ export function PresupuestoFormScreen() {
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
       .then((hs) => {
-        setHogarId(hs[0]?.id ?? null);
-        setDiaHogar(hs[0]?.diaInicioMes ?? 1);
+        const h = hs.find((x) => x.id === hogarParam) ?? hs[0];
+        setHogarId(h?.id ?? null);
+        setDiaHogar(h?.diaInicioMes ?? 1);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : 'Error'));
-  }, [token]);
+  }, [token, hogarParam]);
 
   const num = (s: string) => (s.trim() === '' ? undefined : Number(s));
 

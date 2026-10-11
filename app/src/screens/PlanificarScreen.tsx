@@ -1,16 +1,20 @@
 import { useCallback, useState } from 'react';
+import { View } from 'react-native';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import {
   api,
   ApiError,
   type AsignacionDTO,
   type DesviacionPresupuestariaDTO,
+  type HogarDTO,
   type MovimientoProgramadoDTO,
   type ObjetivoFinancieroDTO,
   type PresupuestoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
+import { leer } from '../auth/secureStorage';
 import { useNav } from '../navigation/navigator';
+import { useAlcance } from '../ui/alcance';
 import { money, porcentaje } from '../format';
 import { TarjetaMeta } from './ObjetivosScreen';
 import {
@@ -23,6 +27,7 @@ import {
   ListCard,
   MenuList,
   Hero,
+  PillToggle,
   ProgressBar,
   Screen,
   Section,
@@ -37,11 +42,19 @@ const MESES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
 
-/** Tab "Planificar": sólo lo prospectivo — objetivos, lo apartado, presupuesto. */
+/**
+ * Tab "Planificar": sólo lo prospectivo — objetivos, lo apartado, presupuesto.
+ * L-3 (S04): obedece al lente — en "Lo mío", metas personales y presupuesto
+ * INDIVIDUAL; en "Del hogar", los del hogar activo y presupuesto FAMILIAR.
+ */
 export function PlanificarScreen() {
-  const { token } = useSession();
+  const { token, usuario } = useSession();
   const nav = useNav();
+  const { alcance, setAlcance, lente } = useAlcance();
+  const hogar = alcance === 'hogar';
+  const claveHogar = `patrimonia.hogar.${usuario.id}`;
 
+  const [hogarId, setHogarId] = useState<string | null>(null);
   const [objetivos, setObjetivos] = useState<ObjetivoFinancieroDTO[] | null>(null);
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
   const [presupuesto, setPresupuesto] = useState<PresupuestoDTO | null>(null);
@@ -53,10 +66,15 @@ export function PlanificarScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [objs, asgs] = await Promise.all([
+      const [objs, asgs, hogares, guardado] = await Promise.all([
         api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token),
         api.get<AsignacionDTO[]>('/asignaciones', token).catch(() => []),
+        api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => [] as HogarDTO[]),
+        leer(claveHogar),
       ]);
+      // El hogar activo es el mismo que eligió Inicio.
+      const activo = hogares.find((h) => h.id === guardado)?.id ?? hogares[0]?.id ?? null;
+      setHogarId(activo);
       setObjetivos(objs);
       setAsignaciones(asgs);
       api
@@ -65,7 +83,13 @@ export function PlanificarScreen() {
         .catch(() => setProgramados([]));
       try {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
-        const vig = presus.find((p) => p.vigente && p.estado !== 'CERRADO') ?? null;
+        const vig =
+          presus.find(
+            (p) =>
+              p.vigente &&
+              p.estado !== 'CERRADO' &&
+              (hogar ? p.tipo === 'FAMILIAR' && p.hogarId === activo : p.tipo === 'INDIVIDUAL'),
+          ) ?? null;
         setPresupuesto(vig);
         setDesv(
           vig ? await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token) : null,
@@ -86,11 +110,13 @@ export function PlanificarScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token]);
+  }, [token, claveHogar, hogar]);
 
   useCargaAlEnfocar(cargar);
 
-  const enProgreso = (objetivos ?? []).filter((o) => o.estado === 'EN_PROGRESO');
+  // L-3: en "Lo mío", las metas personales; en "Del hogar", las del hogar activo.
+  const delAlcance = (objetivos ?? []).filter((o) => (hogar ? o.hogarId === hogarId : o.hogarId === null));
+  const enProgreso = delAlcance.filter((o) => o.estado === 'EN_PROGRESO');
   // Una cifra por moneda (no se convierten); arriba la que tiene más metas.
   const porMoneda = [...new Set(enProgreso.map((o) => o.moneda))]
     .map((moneda) => {
@@ -103,11 +129,12 @@ export function PlanificarScreen() {
       };
     })
     .sort((a, b) => b.n - a.n);
-  const completados = (objetivos ?? []).filter((o) => o.estado === 'COMPLETADO').length;
+  const completados = delAlcance.filter((o) => o.estado === 'COMPLETADO').length;
   const hoy = new Date();
 
   // D-4: lo ahorrado en metas ya se ve en cada meta; aquí solo el ahorro sin meta.
-  const sinMeta = asignaciones.filter((a) => !a.objetivoId);
+  // Es tuyo (no tiene hogar): solo en "Lo mío".
+  const sinMeta = hogar ? [] : asignaciones.filter((a) => !a.objetivoId);
   const totalSinMeta = sinMeta.reduce((s, a) => s + a.totalReservado, 0);
   const monedaSinMeta = sinMeta[0]?.moneda ?? 'CLP';
   const gastoPct =
@@ -130,6 +157,16 @@ export function PlanificarScreen() {
           </>
         }
       />
+      {lente && (
+        <View style={{ alignSelf: 'flex-start' }}>
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={setAlcance}
+            format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+          />
+        </View>
+      )}
       {/* Plantilla Resumen: una cifra — cuánto llevas guardado en tus metas activas
           (G35: debajo, la resta que la explica; otras monedas en su propia línea). */}
       {porMoneda.length > 0 && (
@@ -164,7 +201,7 @@ export function PlanificarScreen() {
         <Skeleton filas={2} />
       ) : (
         <>
-          <Section title="Metas" accion="Ver todas" onAccion={() => nav.go('Objetivos')}>
+          <Section title={hogar ? 'Metas del hogar' : 'Tus metas'} accion="Ver todas" onAccion={() => nav.go('Objetivos')}>
             {enProgreso.length === 0 ? (
               <EmptyState
                 icon="flag-outline"
@@ -194,7 +231,7 @@ export function PlanificarScreen() {
 
           {desv && presupuesto ? (
             <Section
-              title={`Presupuesto de ${MESES[hoy.getMonth()]}`}
+              title={`${hogar ? 'Presupuesto del hogar' : 'Tu presupuesto'} de ${MESES[hoy.getMonth()]}`}
               accion="Ver todos"
               onAccion={() => nav.go('Presupuestos')}
             >
@@ -214,15 +251,19 @@ export function PlanificarScreen() {
               />
             </Section>
           ) : (
-            <Section title="Presupuesto">
+            <Section title={hogar ? 'Presupuesto del hogar' : 'Tu presupuesto'}>
               <ListCard>
                 {/* G39 (P1): abre directo el formulario (sin pasar por la lista vacía). */}
                 <TxRow
-                  title="Ponte un presupuesto del mes"
-                  subtitle="Para ver si te pasas de lo que piensas gastar"
+                  title={hogar ? 'Pónganse un presupuesto del mes' : 'Ponte un presupuesto del mes'}
+                  subtitle={
+                    hogar ? 'Para ver si se pasan de lo que piensan gastar' : 'Para ver si te pasas de lo que piensas gastar'
+                  }
                   amount=""
                   logo={{ emoji: '🧾' }}
-                  onPress={() => nav.go('PresupuestoForm')}
+                  onPress={() =>
+                    nav.go('PresupuestoForm', hogar ? { tipo: 'FAMILIAR', hogarId: hogarId ?? undefined } : { tipo: 'INDIVIDUAL' })
+                  }
                 />
               </ListCard>
             </Section>

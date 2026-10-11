@@ -45,6 +45,7 @@ import {
   Hero,
   IconButton,
   ListCard,
+  MenuList,
   Panel,
   panelDe,
   tinte,
@@ -66,6 +67,10 @@ import {
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
+import { cargarEntreMiembros, type EntreMiembros } from '../entreMiembros';
+import { cargarCuentasHogar } from '../cuentasHogar';
+import { FilaEntreRow } from './EntreMiembrosScreen';
+import { invitarAlHogar } from './GestionHogarScreen';
 import { useToast } from '../ui/Toast';
 import { fechaCorta, tituloProgramado } from './MovimientosProgramadosScreen';
 import {
@@ -98,7 +103,7 @@ export function DashboardScreen() {
   const { token, usuario } = useSession();
   const anotar = useAnotar();
   const nav = useNav();
-  const { alcance, setAlcance } = useAlcance();
+  const { alcance, setAlcance, lente, setSoloUnMiembro } = useAlcance();
   const { preferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
@@ -110,6 +115,10 @@ export function DashboardScreen() {
   const [metricas, setMetricas] = useState<MetricasHogarDTO | null>(null);
   const [consolidado, setConsolidado] = useState<PatrimonioConsolidadoDTO | null>(null);
   const [errorHogar, setErrorHogar] = useState<string | null>(null);
+  // L1 (S04): lo que era propio de la pestaña Hogar — "Entre [miembro] y tú" y
+  // las cuentas de los otros miembros a las que puedes transferir.
+  const [entre, setEntre] = useState<EntreMiembros | null>(null);
+  const [paraTransferir, setParaTransferir] = useState<ElementoPatrimonialDTO[]>([]);
   const [variacion, setVariacion] = useState<VariacionPatrimonialDTO | null>(null);
   const [serie, setSerie] = useState<SeriePatrimonialDTO | null>(null);
   const [elementos, setElementos] = useState<ElementoPatrimonialDTO[]>([]);
@@ -163,18 +172,24 @@ export function DashboardScreen() {
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       ]);
       setHogar(h);
+      // L-4: con un solo miembro no hay lente (Movimientos y Planificar lo leen de aquí).
+      if (h.miembros) setSoloUnMiembro(h.miembros.length === 1);
       setPatrimonio(p);
       setElementos(els);
 
       if (alcance === 'hogar') {
         // G33 BUG-HOG: un fallo se informa (no se muestra un 0 falso) y no
         // arrastra a la otra consulta.
-        const [m, cons] = await Promise.allSettled([
+        const [m, cons, en, ch] = await Promise.allSettled([
           api.get<MetricasHogarDTO>(`/hogares/${activo}/metricas`, token),
           api.get<PatrimonioConsolidadoDTO>(`/hogares/${activo}/patrimonio-consolidado`, token),
+          cargarEntreMiembros(token, usuario.id, activo),
+          cargarCuentasHogar(token),
         ]);
         setMetricas(m.status === 'fulfilled' ? m.value : null);
         setConsolidado(cons.status === 'fulfilled' ? cons.value : null);
+        setEntre(en.status === 'fulfilled' ? en.value : null);
+        setParaTransferir(ch.status === 'fulfilled' ? ch.value.paraTransferir : []);
         setErrorHogar(
           cons.status === 'rejected'
             ? cons.reason instanceof ApiError
@@ -229,7 +244,13 @@ export function DashboardScreen() {
 
       try {
         const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
-        const vig = presus.find((x) => x.vigente && x.estado !== 'CERRADO');
+        // L-12: el presupuesto del lente — INDIVIDUAL en "Lo mío"; FAMILIAR del hogar activo en "Del hogar".
+        const vig = presus.find(
+          (x) =>
+            x.vigente &&
+            x.estado !== 'CERRADO' &&
+            (alcance === 'hogar' ? x.tipo === 'FAMILIAR' && x.hogarId === activo : x.tipo === 'INDIVIDUAL'),
+        );
         if (vig) {
           const d = await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token);
           setPresuExcedido(d.real.gastos > d.esperado.gastos && d.esperado.gastos > 0 ? vig : null);
@@ -290,7 +311,7 @@ export function DashboardScreen() {
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
-  }, [token, nav, claveHogar, claveOnb, alcance, preferencias.mes, preferencias.monedaPreferida]);
+  }, [token, usuario.id, nav, claveHogar, claveOnb, alcance, setSoloUnMiembro, preferencias.mes, preferencias.monedaPreferida]);
 
   useCargaAlEnfocar(cargar);
 
@@ -372,9 +393,9 @@ export function DashboardScreen() {
   }
 
   // ── Objetivos ──────────────────────────────────────────────────────────
-  // En "Del hogar", solo las metas compartidas con el hogar.
+  // L-12: en "Lo mío", solo las metas personales; en "Del hogar", las del hogar activo.
   const enProgreso = objetivos.filter(
-    (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' || o.hogarId === hogarId),
+    (o) => o.estado === 'EN_PROGRESO' && (alcance === 'mios' ? o.hogarId === null : o.hogarId === hogarId),
   );
 
   /** G39 (F-3): "✅ Sí": se anota con el monto y la fecha previstos, como "Sí, se pagó" del Programado. */
@@ -399,7 +420,10 @@ export function DashboardScreen() {
   const enMora = elementos.filter(
     (e) => e.estadoOperativo === 'EN_MORA' || e.estadoOperativo === 'INCOBRABLE',
   );
-  const alertas: { texto: string; sub?: string; emoji: string; onPress: () => void; accesorio?: ReactNode }[] = porPagar.map((x) => ({
+  // L-9: en "Del hogar" lo que te piden ya encabeza "Entre [miembro] y tú"; como alerta, solo en "Lo mío".
+  const alertas: { texto: string; sub?: string; emoji: string; onPress: () => void; accesorio?: ReactNode }[] = (
+    alcance === 'mios' ? porPagar : []
+  ).map((x) => ({
     texto:
       x.motivo === 'GASTO_COMPARTIDO'
         ? `${x.solicitante.nombre} te pide tu parte: ${money(x.monto, x.moneda)}${x.glosa ? ` · ${x.glosa}` : ''}`
@@ -483,6 +507,23 @@ export function DashboardScreen() {
   const rotuloMes = rotuloCiclo(mesHoy.anio, mesHoy.mes, ciclo);
   const mesNombre = MESES_LARGO[mesHoy.mes].charAt(0).toUpperCase() + MESES_LARGO[mesHoy.mes].slice(1);
   const nombre = usuario.nombre.split(' ')[0];
+  // L1 (S04): en "Del hogar", el atajo "Transferirle a [miembro]" reemplaza a "Tu plata"
+  // (va a su primera cuenta para transferir); con más de un miembro, abre Moví plata.
+  const otroUnico = entre?.otros.length === 1 ? entre.otros[0] : null;
+  const atajoPlata =
+    alcance === 'hogar'
+      ? {
+          icon: 'swap-horizontal-outline' as const,
+          label: otroUnico ? `Transferirle a ${otroUnico.nombre}` : 'Moví plata',
+          onPress: () =>
+            nav.go(
+              'RegistrarMovimiento',
+              otroUnico && paraTransferir[0]
+                ? { tipo: 'TRANSFERENCIA', destinoId: paraTransferir[0].id }
+                : { tipo: 'TRANSFERENCIA' },
+            ),
+        }
+      : { icon: 'wallet-outline' as const, label: 'Tu plata', onPress: verPatrimonio };
 
   return (
     <Screen
@@ -510,14 +551,28 @@ export function DashboardScreen() {
           </>
         }
       />
-      <View style={{ alignSelf: 'flex-start' }}>
-        <PillToggle
-          options={['mios', 'hogar'] as const}
-          value={alcance}
-          onChange={setAlcance}
-          format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+      {lente ? (
+        <View style={{ alignSelf: 'flex-start' }}>
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={setAlcance}
+            format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
+          />
+        </View>
+      ) : (
+        // L-4: solo en el hogar, en el lugar del lente, invitar a quien vive contigo.
+        <MenuList
+          items={[
+            {
+              title: 'Invita a quien vive contigo',
+              subtitle: 'Le llega un correo para unirse a tu hogar',
+              emoji: '👥',
+              onPress: () => invitarAlHogar(nav, hogar.id),
+            },
+          ]}
         />
-      </View>
+      )}
       {alertas.length > 0 && (
         <ListCard>
           {alertas.slice(0, 3).map((a, i) => (
@@ -527,6 +582,20 @@ export function DashboardScreen() {
             <TxRow title={`Ver todos los avisos (${alertas.length})`} amount="" logo={{ emoji: '🔔' }} onPress={() => nav.go('Notificaciones')} />
           )}
         </ListCard>
+      )}
+      {/* L1 (S04): "Entre [miembro] y tú", debajo de las alertas; lo pendiente va arriba. */}
+      {alcance === 'hogar' && entre && entre.otros.length > 0 && entre.filas.length > 0 && (
+        <Section
+          title={`🤝 ${entre.titulo}`}
+          accion={`Ver todo (${entre.filas.length})`}
+          onAccion={() => nav.go('EntreMiembros', { hogarId })}
+        >
+          <ListCard>
+            {entre.filas.slice(0, 4).map((f) => (
+              <FilaEntreRow key={f.key} f={f} />
+            ))}
+          </ListCard>
+        </Section>
       )}
       <Pressable
         onPress={verPatrimonio}
@@ -641,9 +710,10 @@ export function DashboardScreen() {
           <Paso hecho={pasos.movimiento} texto="Anota un gasto o un ingreso" onPress={anotar.abrir} c={c} styles={styles} />
           <Paso hecho={pasos.objetivo} texto="Crea una meta" onPress={() => nav.go('MetaForm')} c={c} styles={styles} />
           <Text style={styles.muted}>
-            Abajo tienes 4 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
-            sale), Planificar (metas, presupuesto y pagos futuros) y Hogar (lo que
-            compartes con tu familia).
+            Abajo tienes 3 secciones: Inicio (cuánto tienes), Movimientos (lo que entra y
+            sale) y Planificar (metas, presupuesto y pagos futuros).
+            {/* L-11: la frase del lente, solo si hay lente. */}
+            {lente ? ' Arriba eliges si ves lo tuyo o lo del hogar.' : ''}
           </Text>
         </Panel>
       )}
@@ -743,7 +813,7 @@ export function DashboardScreen() {
               { icon: 'add-circle-outline', label: 'Anotar', onPress: anotar.abrir },
               { icon: 'flag-outline', label: 'Metas', onPress: () => nav.go('Objetivos') },
               { icon: 'calendar-outline', label: 'Programados', onPress: () => nav.go('MovimientosProgramados') },
-              { icon: 'wallet-outline', label: 'Tu plata', onPress: verPatrimonio },
+              atajoPlata,
             ]}
           />
         </Section>

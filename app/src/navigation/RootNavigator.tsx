@@ -22,7 +22,6 @@ import { InvitacionesScreen } from '../screens/InvitacionesScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MovimientosScreen } from '../screens/MovimientosScreen';
 import { PlanificarScreen } from '../screens/PlanificarScreen';
-import { HogarScreen } from '../screens/HogarScreen';
 import { AgregarElementoScreen } from '../screens/AgregarElementoScreen';
 import { RegistrarMovimientoScreen } from '../screens/RegistrarMovimientoScreen';
 import { ElementoDetalleScreen } from '../screens/ElementoDetalleScreen';
@@ -49,7 +48,6 @@ import { PlantillasScreen } from '../screens/PlantillasScreen';
 import { MovimientoProgramadoDetalleScreen } from '../screens/MovimientoProgramadoDetalleScreen';
 import { EvolucionPatrimonioScreen } from '../screens/EvolucionPatrimonioScreen';
 import { HogarConsolidadoScreen } from '../screens/HogarConsolidadoScreen';
-import { MovimientosHogarScreen } from '../screens/MovimientosHogarScreen';
 import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
@@ -125,11 +123,6 @@ function Tabs() {
         component={PlanificarScreen}
         options={{ tabBarLabel: 'Planificar', tabBarIcon: icono('flag-outline') }}
       />
-      <Tab.Screen
-        name="Hogar"
-        component={HogarScreen}
-        options={{ tabBarLabel: 'Hogar', tabBarIcon: icono('people-outline') }}
-      />
     </Tab.Navigator>
   );
 }
@@ -165,7 +158,6 @@ const TITULOS: Record<string, string> = {
   Plantillas: 'Frecuentes',
   EvolucionPatrimonio: '¿Cómo ha cambiado tu plata?',
   HogarConsolidado: 'Patrimonio del hogar',
-  MovimientosHogar: 'Movimientos del hogar',
   Notificaciones: 'Notificaciones',
   TiposCambio: 'Tipos de cambio',
   Ajustes: 'Ajustes',
@@ -225,7 +217,6 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Plantillas', PlantillasScreen],
   ['EvolucionPatrimonio', EvolucionPatrimonioScreen],
   ['HogarConsolidado', HogarConsolidadoScreen],
-  ['MovimientosHogar', MovimientosHogarScreen],
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
   ['Ajustes', AjustesScreen],

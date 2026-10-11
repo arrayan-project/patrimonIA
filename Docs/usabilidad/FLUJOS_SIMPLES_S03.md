@@ -154,7 +154,13 @@ mensual · T2 = ocasional · T3 = raro o avanzado.
   (tarjetas grandes) · 🐷 Ahorrar para una meta · 💳 Pagar tarjeta (si hay
   tarjetas) · ➕ Agregar cuenta. Abrir la hoja y elegir: 2 toques.
 - **Atajos del Inicio:** Anotar (abre la hoja "+") · Metas · Programados ·
-  Tu plata.
+  Tu plata (en "Del hogar", **Transferirle a [miembro]**; L1, `LENTE_HOGAR_S04.md`).
+- **Sin pestaña Hogar (L1, 2026-10-10):** la barra tiene 3 pestañas (Inicio ·
+  Movimientos · Planificar) y arriba de las tres va el lente "Lo mío · Del
+  hogar". Lo que era propio de la pestaña Hogar quedó en Inicio "Del hogar"
+  (🤝 Entre [miembro] y tú, el atajo para transferirle) y en ⚙️ Ajustes › Hogar
+  (Personas del hogar · Qué compartes · Invitar a alguien · Invitaciones). Las
+  rutas de H1, H4, H6, M4, M7, M9 y A7 de abajo ya están reescritas.
 
 **Anatomía de Gasté / Recibí / Moví plata** (`RegistrarMovimientoScreen`, se
 usa en 15 escenarios). Una pantalla, en este orden:
@@ -171,7 +177,8 @@ usa en 15 escenarios). Una pantalla, en este orden:
 | 8 | Pie: resumen + "Anotar …" | — | — |
 
 La cuenta solo viene elegida si se entra desde el detalle de una cuenta, un
-Frecuente, la Meta o el Hogar; desde la hoja "+", nunca.
+Frecuente, la Meta o el atajo "Transferirle a [miembro]" del Inicio; desde la
+hoja "+", nunca.
 
 **Formato de cada escenario:** tabla de pasos (dónde está · qué hace ·
 toques), conteo (pantallas · toques · campos), lo que todavía cuesta y el
@@ -276,7 +283,7 @@ distintas, pasa solo a cambio de moneda: bien resuelto.)
 
 #### M4 — Le transfiero a mi pareja para que pague Netflix
 
-**Actual (ruta más corta, desde Hogar)**
+**Actual (ruta más corta, desde Hogar; antes de L1)**
 
 | # | Dónde | Qué hace | Toques |
 |---|-------|----------|--------|
@@ -312,12 +319,22 @@ lista: "**Pareja todavía no te deja ver sus cuentas.** Pídele que, en su
 teléfono, abra su cuenta › ⚙️ Ajustes de la cuenta › 👥 Con el hogar." y el
 botón queda desactivado.
 
-*Desde Hogar › "🔁 Para transferirles"* (atajo que ya existe): la cuenta de
-Pareja viene elegida y ahora también la de salida (la de la última vez):
-Hogar · cuenta de Pareja · monto · Anotar = **3 toques + monto**.
+*Desde el atajo del Inicio (L1, `LENTE_HOGAR_S04.md`; reemplaza a Hogar ›
+"🔁 Para transferirles")*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Inicio | Lente en "Del hogar" (si estaba en "Lo mío") | Toca "Del hogar" | 0 o 1 |
+| 2 | Inicio "Del hogar" | Atajos: **"Transferirle a Pareja"** (en el lugar de "Tu plata") | Lo toca | 1 |
+| 3 | Moví plata | 👤 A Pareja y su primera cuenta para transferir, ya elegidas; "¿Desde qué cuenta?", la de la última vez | Escribe 15.000 | campo |
+| 4 | Moví plata | Pie como arriba | "Anotar movimiento" | 1 |
+
+Con más de un miembro en el hogar, el atajo se llama "Moví plata" y abre el
+formulario sin destino (como desde el "+").
 
 **Conteo objetivo:** desde el "+" **4 toques + monto** (meta ✅, antes 7);
-desde Hogar 3 + monto (antes 5).
+desde el atajo del Inicio **2 toques + monto** (3 si el lente estaba en "Lo
+mío"; antes, desde Hogar, 3 + monto).
 
 #### M5 — Pago cuentas fijas (luz, Spotify) todos los meses
 
@@ -478,6 +495,10 @@ pantallas · 2 a 4 toques.
 **Conteo objetivo:** quien pagó **5 toques + monto** (4 sin categoría; antes
 9); la pareja **2 toques** (antes 2 a 4).
 
+*Después (L1):* lo que se pidieron y se transfirieron queda en Inicio "Del
+hogar" › **🤝 Entre [pareja] y tú**, debajo de las alertas (lo pendiente
+arriba; "Ver todo" abre Entre ustedes). Antes estaba en la pestaña Hogar.
+
 #### M8 — Noira me transfiere 30.000 para que le compre un labial y se lo compro
 
 **Actual — llega la plata**
@@ -567,7 +588,9 @@ persona" no acepta a un miembro del hogar *(verificar si hay otra vía)*
 §3): el gasto de 200.000 queda en Zoily, como hoy; lo que cambia es que la
 app le dice claramente qué hacer y no le pide a Juan una plata que ya pasó.
 
-*Juan:* como M4 (👤 A Zoily), 4 toques + monto.
+*Juan:* como M4 (👤 A Zoily), 4 toques + monto; o desde el atajo
+"Transferirle a Zoily" del Inicio "Del hogar", 2 toques + monto (L1). Lo que
+Juan le pasó se ve después en Inicio "Del hogar" › 🤝 Entre Zoily y tú.
 
 *Zoily*
 
@@ -965,9 +988,18 @@ pareja ve la meta pero no puede aportar.
 | 5 | Nueva meta | "¿Cuánto quieres juntar?" | Escribe el monto | campo |
 | 6 | Nueva meta | — | "Guardar" | 1 |
 
-*La pareja, cada aporte:* Hogar → 🎯 Metas del hogar → 🐷 Ahorrar → como A1
-desde la meta (cuenta de la última vez, "Todo lo libre" o monto) → Guardar:
-**4 toques + monto**.
+*La pareja, cada aporte (ruta de L1, `LENTE_HOGAR_S04.md`; la pestaña Hogar ya no existe)*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Cualquier pestaña | — | Toca la pestaña Planificar | 1 |
+| 2 | Planificar | Lente en "Del hogar" (si estaba en "Lo mío"); "Metas del hogar" | Toca "Del hogar" | 0 o 1 |
+| 3 | Planificar "Del hogar" | La meta en "Metas del hogar" | Toca la meta | 1 |
+| 4 | Meta | 🐷 Ahorrar | Lo toca | 1 |
+| 5 | Ahorrar (meta elegida) | Como A1 desde la meta: cuenta de la última vez, "Todo lo libre" o monto | Escribe el monto y "Guardar" | campo + 1 |
+
+**4 toques + monto** (5 si el lente estaba en "Lo mío"); antes, desde la
+pestaña Hogar, 4 + monto.
 Si una meta del hogar no la deja ahorrar, la Meta dice "👀 [quien la creó]
 no te agregó para ahorrar en esta meta" en vez de no mostrar el botón.
 
@@ -1006,15 +1038,16 @@ al completarse.
 **Lo que cuesta:** el número es correcto solo si cada cuenta "suma al hogar"
 (se pregunta al crearla o en Ajustes de la cuenta, ver H4).
 
-**Objetivo (aprobado por Juan, 2026-10-10)**
+**Objetivo (aprobado por Juan, 2026-10-10; ruta de L1, `LENTE_HOGAR_S04.md`)**
 
 | # | Dónde | Qué ve | Toques |
 |---|-------|--------|--------|
-| 1 | Hogar | "🏠 Plata del hogar" y debajo **"🔐 De lo tuyo suman 2 de 7 · Revisa qué compartes ›"** | 1 |
-| 2 | (opcional) | La fila abre "Qué compartes" (H4) | 1 |
+| 1 | Inicio | Toca "Del hogar" en el lente; ve "Plata del hogar" (💰 Tienen · 💳 Deben) y "Dónde está la plata del hogar" | 0 o 1 |
+| 2 | (opcional) | Toca la cifra; ve la resta por cuentas, bienes y deudas | 1 |
+| 3 | (opcional) | ⚙️ Ajustes › Hogar › 🔐 Qué compartes, con **"De lo tuyo suman 2 de 7"** de subtítulo (H4) | 2 |
 
-**Conteo:** 1 pantalla · 1 toque; queda a la vista qué parte de lo tuyo
-entra en la cifra. Implementado en §17.
+**Conteo:** 1 pantalla · 0 o 1 toque (el lente se recuerda). "De lo tuyo
+suman X de Y" pasó de la pestaña Hogar a Ajustes › Hogar (L1); antes, en §17.
 
 #### H2 — ¿Cuánto gastamos este mes, yo y el hogar?
 
@@ -1090,13 +1123,14 @@ toque** (meta ✅). Antes: 8 a 10 y 3.
 
 | # | Dónde | Qué ve / qué hace | Toques |
 |---|-------|-------------------|--------|
-| 1 | Cualquier pestaña | Toca la pestaña Hogar | 1 |
-| 2 | Hogar | "De lo tuyo suman…" o Más del hogar › 🔐 Qué compartes (también en Ajustes) | 1 |
+| 1 | Cualquier pestaña | Toca ⚙️ (Ajustes) | 1 |
+| 2 | Ajustes › Hogar | 🔐 Qué compartes ("De lo tuyo suman X de Y") | 1 |
 | 3 | Qué compartes con [pareja] | Tus cuentas en dos grupos: "🏠 Suman a la plata del hogar (N)" y "🙋 Solo tuyas (N)", cada una con lo que ve el hogar (🔒 Solo tú la ves · 🔁 Puede transferirte · 👀 Ve el saldo · 👀 Ve todo · ⚙️ A tu medida) | 0 |
 | 4 | Qué compartes | Toca la cuenta → la hoja con los 4 niveles de siempre → se guarda al instante y la cuenta cambia de grupo | 2 por cuenta |
 
 **Conteo:** 2 pantallas · 2 toques + 2 por cuenta (antes 3 pantallas y 4 a
-6 toques por cuenta). Implementado en §17.
+6 toques por cuenta). Implementado en §17; desde L1 se entra por Ajustes (la
+pestaña Hogar ya no existe).
 
 #### H5 — Tenemos una deuda juntos (hipotecario o auto) y la pagamos
 
@@ -1177,16 +1211,18 @@ entrando por el detalle de la deuda); con "Se repite", 1 toque al mes.
 
 | # | Dónde | Qué hace | Toques |
 |---|-------|----------|--------|
-| 1 | Cualquier pestaña | Toca la pestaña Hogar | 1 |
-| 2 | Hogar | Solo en el hogar: "👥 Invita a quien vive contigo" bajo la cifra. Con más personas: Más del hogar › ➕ Invitar a alguien | 1 |
-| 3 | Invitar a alguien | Escribe el correo | campo |
-| 4 | Invitar a alguien | Enviar invitación | 1 |
+| 1 | Inicio | Solo en el hogar (L-4): **"👥 Invita a quien vive contigo"** en el lugar del lente | 1 |
+| 1′ | Cualquier pestaña | Con más personas: ⚙️ Ajustes › Hogar › ➕ Invitar a alguien | 2 |
+| 2 | Invitar a alguien | Escribe el correo | campo |
+| 3 | Invitar a alguien | Enviar invitación | 1 |
 
 **Aceptar:** sin hogar, Bienvenido muestra la invitación con
 "✅ Unirme a [hogar]" y "No, gracias" (y "Me invitaron" desaparece mientras
-haya una): 1 toque. Con hogar, sigue la fila 📩 del Hogar.
-**Conteo:** invitar 2 pantallas · 3 toques · 1 campo; aceptar 1 pantalla ·
-1 toque. Implementado en §17.
+haya una): 1 toque. Con hogar, ⚙️ Ajustes › Hogar › ✉️ Invitaciones (la fila
+aparece solo si hay alguna).
+**Conteo:** invitar 2 pantallas · 2 toques · 1 campo solo en el hogar (3
+toques con más personas); aceptar 1 pantalla · 1 toque. Implementado en §17;
+ruta de L1 (`LENTE_HOGAR_S04.md`).
 
 ### 5.4 Cuentas y bienes
 

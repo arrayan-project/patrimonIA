@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { api, type HogarDTO, type InvitacionDTO, type UsuarioDTO } from '../api/client';
+import { api, type ElementoPatrimonialDTO, type HogarDTO, type InvitacionDTO, type UsuarioDTO } from '../api/client';
 import { useAuth, useSession } from '../auth/AuthContext';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
 import { MONEDAS_FRECUENTES } from '../labels';
 import { useNav } from '../navigation/navigator';
+import { invitarAlHogar } from './GestionHogarScreen';
 import { usePreferencias } from '../preferencias';
 import { confirmar } from '../ui/confirmar';
 import { Text } from '../ui/Text';
@@ -62,13 +63,17 @@ export function AjustesScreen() {
   const [hogar, setHogar] = useState<HogarDTO | null>(null);
   const [pendientes, setPendientes] = useState(0);
   const [avisos, setAvisos] = useState<Record<string, boolean>>({});
+  // L1 (S04): "De lo tuyo suman X de Y", que estaba en la pestaña Hogar (G39 H1).
+  const [mias, setMias] = useState<ElementoPatrimonialDTO[] | null>(null);
 
   const cargar = useCallback(async () => {
-    const [hs, invs, me] = await Promise.all([
+    const [hs, invs, me, els] = await Promise.all([
       api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []),
       api.get<InvitacionDTO[]>('/usuarios/me/invitaciones?estado=PENDIENTE', token).catch(() => []),
       api.get<UsuarioDTO>('/usuarios/me', token).catch(() => null),
+      api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token).catch(() => null),
     ]);
+    setMias(els ? els.filter((e) => e.estado === 'ACTIVO' && e.naturaleza !== 'CUSTODIA_INFORMAL') : null);
     setHogar(hs[0] ? await api.get<HogarDTO>(`/hogares/${hs[0].id}`, token).catch(() => hs[0]) : null);
     setPendientes(invs.length);
     setAvisos(avisosDe(me));
@@ -141,19 +146,33 @@ export function AjustesScreen() {
                   },
                   {
                     title: 'Qué compartes',
-                    subtitle: 'Qué ve el hogar de cada cuenta tuya y qué suma',
+                    subtitle:
+                      mias && mias.length > 0
+                        ? `De lo tuyo suman ${mias.filter((e) => e.participaConsolidacion).length} de ${mias.length}`
+                        : 'Qué ve el hogar de cada cuenta tuya y qué suma',
                     emoji: '🔐',
                     onPress: () => nav.go('QueCompartes'),
                   },
+                  {
+                    title: 'Invitar a alguien',
+                    subtitle: 'Le llega un correo para unirse',
+                    emoji: '➕',
+                    onPress: () => invitarAlHogar(nav, hogar.id),
+                  },
                 ]
               : []),
-            {
-              title: 'Invitaciones',
-              subtitle: pendientes > 0 ? `${pendientes} pendiente${pendientes === 1 ? '' : 's'}` : 'Ninguna pendiente',
-              badge: pendientes || undefined,
-              emoji: '✉️',
-              onPress: () => nav.go('Invitaciones'),
-            },
+            // L1 (S04): las invitaciones que te hicieron, solo si hay.
+            ...(pendientes > 0
+              ? [
+                  {
+                    title: 'Invitaciones',
+                    subtitle: `${pendientes} pendiente${pendientes === 1 ? '' : 's'}`,
+                    badge: pendientes,
+                    emoji: '✉️',
+                    onPress: () => nav.go('Invitaciones'),
+                  },
+                ]
+              : []),
           ]}
         />
       </Section>
