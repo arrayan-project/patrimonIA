@@ -86,18 +86,15 @@ export function nombreDia(fecha: string, hoy: Date): string {
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }
 
-/**
- * Pestaña Movimientos. Con `soloHogar` es "Movimientos del hogar" abierto desde
- * el Hogar (encima, con atrás): la misma lista en "Del hogar", sin el selector.
- */
-export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean } = {}) {
+/** Pestaña Movimientos: obedece al lente "Lo mío · Del hogar" (L-1). */
+export function MovimientosScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
   const { token } = useSession();
   const nav = useNav();
   const anotar = useAnotar();
   const ctxAlcance = useAlcance();
-  const alcance = soloHogar ? 'hogar' : ctxAlcance.alcance;
+  const alcance = ctxAlcance.alcance;
 
   const hoy = useMemo(() => new Date(), []);
   const { preferencias, guardarPreferencias } = usePreferencias();
@@ -343,35 +340,31 @@ export function MovimientosScreen({ soloHogar = false }: { soloHogar?: boolean }
   };
 
   return (
-    <Screen onRefresh={cargar} fab={soloHogar ? undefined : <FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
-      {!soloHogar && (
-        <>
-          <TopRow
-            left={<Title>Movimientos</Title>}
-            right={
-              <>
-                <IconButton
-                  icon="notifications-outline"
-                  badge={noLeidas || undefined}
-                  accessibilityLabel="Notificaciones"
-                  onPress={() => nav.go('Notificaciones')}
-                />
-                <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
-              </>
-            }
+    <Screen onRefresh={cargar} fab={<FabMenu titulo={TITULO_ANOTAR} actions={anotar.acciones} />}>
+      <TopRow
+        left={<Title>Movimientos</Title>}
+        right={
+          <>
+            <IconButton
+              icon="notifications-outline"
+              badge={noLeidas || undefined}
+              accessibilityLabel="Notificaciones"
+              onPress={() => nav.go('Notificaciones')}
+            />
+            <IconButton icon="settings-outline" accessibilityLabel="Ajustes" onPress={() => nav.go('Ajustes')} />
+          </>
+        }
+      />
+      {/* L-4: con un solo miembro en el hogar, no hay lente. */}
+      {ctxAlcance.lente && (
+        <View style={styles.controles}>
+          <PillToggle
+            options={['mios', 'hogar'] as const}
+            value={alcance}
+            onChange={ctxAlcance.setAlcance}
+            format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
           />
-          {/* L-4: con un solo miembro en el hogar, no hay lente. */}
-          {ctxAlcance.lente && (
-            <View style={styles.controles}>
-              <PillToggle
-                options={['mios', 'hogar'] as const}
-                value={alcance}
-                onChange={ctxAlcance.setAlcance}
-                format={(x) => (x === 'mios' ? 'Lo mío' : 'Del hogar')}
-              />
-            </View>
-          )}
-        </>
+        </View>
       )}
 
       <View style={styles.selectorFila}>

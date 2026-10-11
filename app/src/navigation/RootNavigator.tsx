@@ -48,7 +48,6 @@ import { PlantillasScreen } from '../screens/PlantillasScreen';
 import { MovimientoProgramadoDetalleScreen } from '../screens/MovimientoProgramadoDetalleScreen';
 import { EvolucionPatrimonioScreen } from '../screens/EvolucionPatrimonioScreen';
 import { HogarConsolidadoScreen } from '../screens/HogarConsolidadoScreen';
-import { MovimientosHogarScreen } from '../screens/MovimientosHogarScreen';
 import { NotificacionesScreen } from '../screens/NotificacionesScreen';
 import { TiposCambioScreen } from '../screens/TiposCambioScreen';
 import { AjustesScreen } from '../screens/AjustesScreen';
@@ -159,7 +158,6 @@ const TITULOS: Record<string, string> = {
   Plantillas: 'Frecuentes',
   EvolucionPatrimonio: '¿Cómo ha cambiado tu plata?',
   HogarConsolidado: 'Patrimonio del hogar',
-  MovimientosHogar: 'Movimientos del hogar',
   Notificaciones: 'Notificaciones',
   TiposCambio: 'Tipos de cambio',
   Ajustes: 'Ajustes',
@@ -219,7 +217,6 @@ const PANTALLAS_STACK: [string, React.ComponentType][] = [
   ['Plantillas', PlantillasScreen],
   ['EvolucionPatrimonio', EvolucionPatrimonioScreen],
   ['HogarConsolidado', HogarConsolidadoScreen],
-  ['MovimientosHogar', MovimientosHogarScreen],
   ['Notificaciones', NotificacionesScreen],
   ['TiposCambio', TiposCambioScreen],
   ['Ajustes', AjustesScreen],
