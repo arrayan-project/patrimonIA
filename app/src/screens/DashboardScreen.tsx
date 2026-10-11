@@ -24,7 +24,7 @@ import {
   type VariacionPatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { pasesConPersonas, quedaDelMes } from '../flujoMes';
+import { aportesComoPases, pasesConPersonas, quedaDelMes, type AporteHogar } from '../flujoMes';
 import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
 import { agruparFoto, cuentasDelDia } from '../fotoMes';
 import { useNav } from '../navigation/navigator';
@@ -125,6 +125,8 @@ export function DashboardScreen() {
   const [flujo, setFlujo] = useState<{ ingresos: number; gastos: number; moneda: string } | null>(null);
   // G35: los movimientos del mes (todas tus cuentas) y las categorías, para sus emojis.
   const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
+  // G45 H2: en "Del hogar", lo que entró al hogar y salió de él (aportes), por persona.
+  const [aportesMes, setAportesMes] = useState<AporteHogar[]>([]);
   // G41: en "Lo mío", la foto del mes de tus cuentas del día a día (G42).
   const [fotoMes, setFotoMes] = useState<{ entro: number; salio: number; moneda: string } | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
@@ -214,6 +216,7 @@ export function DashboardScreen() {
         const pm = r.porMoneda[0];
         setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
         setMovsMes(r.movimientos);
+        setAportesMes(r.aportes ?? []);
         const fm =
           f?.porMoneda.find((x) => x.moneda === preferencias.monedaPreferida) ??
           [...(f?.porMoneda ?? [])].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0];
@@ -226,6 +229,7 @@ export function DashboardScreen() {
       } catch {
         setFlujo(null);
         setMovsMes([]);
+        setAportesMes([]);
         setFotoMes(null);
       }
       setCategorias(
@@ -496,7 +500,7 @@ export function DashboardScreen() {
   // Movimientos); en "Del hogar", lo que entró y gastaron (G39).
   const enFoto = alcance === 'mios' && fotoMes !== null;
   const monedaMes = enFoto ? fotoMes.moneda : (flujo?.moneda ?? monedaPrin);
-  const pases = alcance === 'mios' ? pasesConPersonas(movsMes, monedaMes) : [];
+  const pases = alcance === 'mios' ? pasesConPersonas(movsMes, monedaMes) : aportesComoPases(aportesMes, monedaMes);
   const balance = enFoto ? fotoMes.entro - fotoMes.salio : quedaDelMes(flujo?.ingresos ?? 0, flujo?.gastos ?? 0, pases);
   const entro = enFoto ? fotoMes.entro : (flujo?.ingresos ?? 0) + pases.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
   const salio = enFoto ? fotoMes.salio : (flujo?.gastos ?? 0) - pases.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);

@@ -439,6 +439,21 @@ export class PresupuestoService {
     }));
   }
 
+  /** G45 H2 — la dueña de la cuenta de afuera de una transferencia que entra al hogar. */
+  async #duenoDeAfuera(eventoId: string, delHogar: string[]): Promise<{ usuarioId: string; nombre: string }> {
+    const afuera = await this.prisma.impacto_patrimonial.findFirst({
+      where: { origen_tipo: 'EVENTO_FINANCIERO', origen_id: eventoId, elemento_id: { notIn: delHogar } },
+      select: { elemento_id: true },
+    });
+    const dueno = afuera
+      ? await this.prisma.elemento_propietario.findFirst({
+          where: { elemento_id: afuera.elemento_id },
+          select: { usuario: { select: { id: true, nombre: true } } },
+        })
+      : null;
+    return dueno ? { usuarioId: dueno.usuario.id, nombre: dueno.usuario.nombre } : { usuarioId: '', nombre: 'otra persona' };
+  }
+
   /** Usuarios cuyos hechos entran en el alcance del presupuesto (ver desviacion). */
   async #usuariosDelPresupuesto(p: PresupuestoRow, actorId: string): Promise<string[]> {
     if (!p.hogar_id) return [p.usuario_id ?? actorId];
@@ -572,7 +587,17 @@ export class PresupuestoService {
       where: { usuario_id: { in: usuarioIds } },
       select: { elemento_id: true },
     });
-    const elementoIds = [...new Set(props.map((x) => x.elemento_id))];
+    let elementoIds = [...new Set(props.map((x) => x.elemento_id))];
+    // G45 H2 — regla del hogar: un FAMILIAR cuenta solo las cuentas que suman al hogar.
+    if (p.hogar_id) {
+      elementoIds = (
+        await this.prisma.elemento_patrimonial.findMany({
+          where: { id: { in: elementoIds }, participa_consolidacion: true },
+          select: { id: true },
+        })
+      ).map((e) => e.id);
+    }
+    const aportes = new Map<string, { usuarioId: string; nombre: string; monto: number }>();
 
     const real = { ingresos: 0, gastos: 0, ahorro: 0 };
     // real por categoría (categoria_id o null = sin clasificar) separado ingreso/gasto.
@@ -587,7 +612,7 @@ export class PresupuestoService {
     if (elementoIds.length > 0) {
       const impactos = await this.prisma.impacto_patrimonial.findMany({
         where: { elemento_id: { in: elementoIds }, origen_tipo: 'EVENTO_FINANCIERO' },
-        select: { origen_id: true, elemento_id: true },
+        select: { origen_id: true, elemento_id: true, monto: true },
       });
       const visibles = p.hogar_id ? await this.elementos.conMovimientosVisibles(elementoIds, actorId) : null;
       const cuentasDe = new Map<string, string[]>();
@@ -642,7 +667,19 @@ export class PresupuestoService {
           if (!sumarPrivado(e.id, 'gastos', Number(e.monto))) sumarCat(e.categoria_id, 'gastos', Number(e.monto));
         }
         // TRANSFERENCIA / CONVERSION / PRESTAMO: no cuentan como
-        // ingreso ni gasto del presupuesto del período.
+        // ingreso ni gasto del presupuesto del período…
+        else if (e.tipo === 'TRANSFERENCIA' && p.hogar_id) {
+          // …salvo en un FAMILIAR (G45 H2): lo que entra al hogar desde una cuenta
+          // que no suma es ingreso (aporte); lo que sale no es gasto.
+          const neto = impactos.filter((i) => i.origen_id === e.id).reduce((s, i) => s + Number(i.monto), 0);
+          if (neto > 0) {
+            real.ingresos += neto;
+            const quien = await this.#duenoDeAfuera(e.id, elementoIds);
+            const fila = aportes.get(quien.usuarioId) ?? { ...quien, monto: 0 };
+            fila.monto += neto;
+            aportes.set(quien.usuarioId, fila);
+          }
+        }
       }
       real.ahorro = real.ingresos - real.gastos;
     }
@@ -674,6 +711,7 @@ export class PresupuestoService {
       porObjetivo,
       sinClasificar: { ingresos: sinCat.ingresos, gastos: sinCat.gastos },
       privados: [...privados.values()],
+      aportes: [...aportes.values()],
     };
   }
 

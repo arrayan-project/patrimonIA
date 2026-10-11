@@ -42,7 +42,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | Tema | Pendiente | Implementado / decisión cerrada |
 |---|---|---|
 | **A** · Cuenta y autenticación | G4 (captcha) | G31, G34 |
-| **B** · Hogar, membresías y consolidación | G45 (🟡 H1 en prueba) | G3, G5, G12, G19, G30, G37 |
+| **B** · Hogar, membresías y consolidación | G45 (🟡 H1 hecho, H2 en revisión) | G3, G5, G12, G19, G30, G37 |
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
@@ -67,7 +67,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
-| — | **G45** | "Del hogar" respeta lo que cada uno comparte. **H1 (fuga de privacidad)** implementado en la rama `fix/privacidad-movimientos-hogar` (2026-10-10). **Falta:** aprobación de Juan, merge y deploy; después H2 (un solo universo del hogar, reabre G16). | 🟡 H1 en prueba |
+| — | **G45** | "Del hogar" respeta lo que cada uno comparte. **H1 (fuga de privacidad)** mergeado y con push (8cb95bf, 2026-10-10). **H2** (un solo universo del hogar, reabre G16) implementado en la rama `feat/hogar-universo-unico`, sin merge. **Falta:** que Juan y Zoily revisen "Qué compartes" con sus datos reales antes de desplegar H2. | 🟡 H2 en revisión |
 | — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Falta:** Bloque 2 (Inicio responde las dos preguntas) y Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
@@ -97,7 +97,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 
 ### Tema B · Hogar, membresías y consolidación
 
-#### G45 — "Del hogar" respeta lo que cada uno comparte  🟡 H1 IMPLEMENTADO, EN PRUEBA (rama `fix/privacidad-movimientos-hogar`, 2026-10-10); H2 PENDIENTE
+#### G45 — "Del hogar" respeta lo que cada uno comparte  🟡 H1 HECHO (8cb95bf, 2026-10-10); H2 IMPLEMENTADO, EN REVISIÓN (rama `feat/hogar-universo-unico`)
 - **Qué se encontró** (diagnóstico de "Llevas gastado", 2026-10-10): el
   resumen del mes "Del hogar", el presupuesto FAMILIAR y los eventos del hogar
   sumaban **todas** las cuentas de todos los miembros y devolvían el detalle
@@ -132,11 +132,32 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   "Del hogar" (rubro aparte en "¿En qué gastaron?", sin abrir detalle, y arriba
   de la lista) y en el detalle del presupuesto. Capturas en
   `Docs/usabilidad/capturas/h1/`. Sin migraciones. Rollback: `git revert` del merge.
-- **H2 — un solo universo del hogar (pendiente, rama `feat/hogar-universo-unico`)**:
-  reporte y presupuesto FAMILIAR solo con cuentas que suman al hogar; aportes
-  (de una cuenta que no suma a una que suma) como "Entró al hogar" y la
-  inversa como "Salió del hogar". No se despliega sin que Juan y Zoily revisen
-  "Qué compartes" con sus datos reales.
+- **H2 — un solo universo del hogar (rama `feat/hogar-universo-unico`, sin merge)**:
+  - API: `resumen-financiero` y `resumen-anual` con alcance hogar y la
+    `desviacion` del FAMILIAR usan solo cuentas con `participa_consolidacion`
+    de los miembros activos (las mismas del patrimonio del hogar).
+  - Aportes: una transferencia de una cuenta que no suma a una que suma es
+    "Entró al hogar" y la inversa "Salió del hogar"; van en `aportes` (por
+    persona: la dueña de la cuenta de afuera) y cada movimiento trae
+    `ladoAfuera`. En el FAMILIAR, el aporte es ingreso y la salida no es gasto.
+  - App: en "Del hogar", Movimientos y la tarjeta del mes de Inicio muestran
+    "🏠 Entró al hogar · [nombre]" / "🚪 Salió del hogar · [nombre]" como líneas
+    propias que entran en "Les queda" (mismo mecanismo que los pases de G39);
+    nota "Solo cuentan las cuentas que suman al hogar"; los 4 niveles de "Qué
+    compartes" dicen si la cuenta cuenta en el hogar.
+  - **Con G41/G42 no choca**: la foto del mes de "Lo mío" mira el borde de tus
+    cuentas del día a día; el mes del hogar, el borde de las cuentas que suman.
+    Una misma transferencia puede ser "👤 Le pasaste a Pareja" en "Lo mío" y
+    "🚪 Salió del hogar · Pareja" en "Del hogar": cada vista con su borde.
+  - **A tener en cuenta**: cuando Pareja devuelve su parte de un gasto
+    compartido desde una cuenta que no suma, entra al hogar como aporte y, en
+    el FAMILIAR, como ingreso (el gasto completo sigue como gasto).
+  - e2e `api/test/hogar-universo.e2e-spec.ts`: cuenta en "Nada" fuera, cuenta
+    en "Que vean el saldo" dentro con 🔒, aporte como "Entró al hogar", y el
+    patrimonio y el mes del hogar con las mismas cuentas. Se ajustaron a la
+    regla `privacidad-hogar`, `presupuesto` y `transferencia-entre-miembros`.
+  - No se despliega sin que Juan y Zoily revisen "Qué compartes" con sus datos
+    reales (los totales "Del hogar" cambian: salen las cuentas que no suman).
 
 ### Tema D · Deuda / Crédito
 

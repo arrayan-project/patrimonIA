@@ -15,7 +15,7 @@ import {
   type ResumenFinancieroDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { pasesConPersonas, quedaDelMes } from '../flujoMes';
+import { aportesComoPases, pasesConPersonas, quedaDelMes } from '../flujoMes';
 import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
 import { agruparFoto, cuentasDelDia, elegiblesDelDia, rotuloLinea } from '../fotoMes';
 import { usePreferencias } from '../preferencias';
@@ -35,6 +35,7 @@ import {
   Field,
   IconButton,
   ListCard,
+  Nota,
   Panel,
   Pastilla,
   PillToggle,
@@ -320,7 +321,10 @@ export function MovimientosScreen() {
     : null;
   const monedaPrincipal = resumen?.porMoneda[0]?.moneda ?? 'CLP';
   // G39 (claridad): lo que pasaste o te pasaron personas del hogar también cuenta en el mes.
-  const pases = hogar ? [] : pasesConPersonas(resumen?.movimientos ?? [], monedaPrincipal);
+  // G45 H2: en "Del hogar", lo que entró al hogar y salió de él, por persona.
+  const pases = hogar
+    ? aportesComoPases(resumen?.aportes ?? [], monedaPrincipal)
+    : pasesConPersonas(resumen?.movimientos ?? [], monedaPrincipal);
   const balance = totales ? quedaDelMes(totales.ingresos, totales.gastos, pases) : 0;
   const multiMoneda = (resumen?.porMoneda.length ?? 0) > 1;
   const mesAnterior = MESES_LARGO[anchor.mes === 0 ? 11 : anchor.mes - 1];
@@ -444,7 +448,15 @@ export function MovimientosScreen() {
               {pases.map((p) => (
                 <Row
                   key={`${p.usuarioId}${p.monto < 0 ? '-' : '+'}`}
-                  left={p.monto < 0 ? `👤 Le pasaste a ${p.nombre}` : `👤 Te pasó ${p.nombre}`}
+                  left={
+                    hogar
+                      ? p.monto < 0
+                        ? `🚪 Salió del hogar · ${p.nombre}`
+                        : `🏠 Entró al hogar · ${p.nombre}`
+                      : p.monto < 0
+                        ? `👤 Le pasaste a ${p.nombre}`
+                        : `👤 Te pasó ${p.nombre}`
+                  }
                   right={`${p.monto < 0 ? '−' : '+'} ${money(Math.abs(p.monto), monedaPrincipal)}`}
                 />
               ))}
@@ -461,6 +473,8 @@ export function MovimientosScreen() {
                 }
               />
             </Panel>
+            {/* G45 H2: qué entra en "Del hogar". */}
+            {hogar && <Nota>🏠 Solo cuentan las cuentas que suman al hogar (⚙️ Ajustes › Qué compartes).</Nota>}
             {contraAnterior != null && contraAnterior !== 0 && (
               <Text style={styles.muted}>
                 {`${contraAnterior > 0 ? '▲' : '▼'} ${money(Math.abs(contraAnterior), monedaPrincipal)} ${
@@ -767,8 +781,9 @@ function FilaMovimiento({
   if (interno) {
     const e = m.efectoPropio ?? 0;
     // G39 (claridad): con alguien del hogar, se dice con quién.
+    const quien = m.ladoAfuera ? ` · ${m.ladoAfuera.nombre}` : '';
     sub = hogar
-      ? e === 0 ? 'Entre cuentas del hogar' : e < 0 ? 'Salió del hogar' : 'Entró al hogar'
+      ? e === 0 ? 'Entre cuentas del hogar' : e < 0 ? `Salió del hogar${quien}` : `Entró al hogar${quien}`
       : m.contraparte
         ? e < 0 ? `👤 Le pasaste a ${m.contraparte.nombre}` : `👤 Te pasó ${m.contraparte.nombre}`
         : // G42: "tus cuentas" son las del día a día; el otro lado es otra cuenta tuya.

@@ -8,6 +8,7 @@ import type {
   LineaFotoMesDTO,
   MovimientoReporteDTO,
   MovimientosPrivadosDTO,
+  AporteHogarDTO,
   ResumenAnualDTO,
   ResumenFinancieroDTO,
   RubroReporteDTO,
@@ -31,6 +32,8 @@ interface MovimientoInterno {
   contraparte: { usuarioId: string; nombre: string } | null;
   /** H1: el actor no puede ver los movimientos de ninguna cuenta del evento; el dueño, para la línea 🔒. */
   privadoDe: { usuarioId: string; nombre: string } | null;
+  /** G45 H2: en una transferencia que cruza el borde del alcance, la dueña de la cuenta de afuera (también el actor). */
+  ladoAfuera: { usuarioId: string; nombre: string } | null;
 }
 
 /**
@@ -115,10 +118,30 @@ export class ReporteService {
           elementoDestinoId: m.elementoDestinoId,
           registradoEn: m.registradoEn,
           contraparte: m.contraparte,
+          ladoAfuera: m.ladoAfuera,
         }),
       ),
       privados: this.#privados(todos),
+      aportes: alcance === 'hogar' ? this.#aportes(todos) : [],
     };
+  }
+
+  /**
+   * G45 H2 — lo que entró al hogar o salió de él (transferencias que cruzan el
+   * borde de las cuentas que suman), por persona: la dueña de la cuenta de
+   * afuera. Sin detalle: sirve también para lo privado.
+   */
+  #aportes(movs: MovimientoInterno[]): AporteHogarDTO[] {
+    const acc = new Map<string, AporteHogarDTO>();
+    for (const m of movs) {
+      if (m.tipo !== 'TRANSFERENCIA' || !m.efectoPropio || !m.ladoAfuera) continue;
+      const key = `${m.ladoAfuera.usuarioId}|${m.moneda}`;
+      const fila = acc.get(key) ?? { ...m.ladoAfuera, moneda: m.moneda, entro: 0, salio: 0 };
+      if (m.efectoPropio > 0) fila.entro += m.efectoPropio;
+      else fila.salio += -m.efectoPropio;
+      acc.set(key, fila);
+    }
+    return [...acc.values()];
   }
 
   /** H1 — lo privado, sumado por dueño y moneda (solo lo que cuenta en los totales). */
@@ -361,6 +384,11 @@ export class ReporteService {
     // G42: con las cuentas del día a día, la cuenta del otro lado puede ser tuya
     // (o compartida contigo): eso no es pasarle plata a alguien.
     const tuyas = new Set(duenos.filter((d) => d.usuario.id === actorId).map((d) => d.elemento_id));
+    // G45 H2: la dueña de la cuenta de afuera, sea quien sea (para "Entró al hogar · de Demo").
+    const duenoAfuera = new Map<string, { usuarioId: string; nombre: string }>();
+    for (const d of duenos) {
+      if (!duenoAfuera.has(d.elemento_id)) duenoAfuera.set(d.elemento_id, { usuarioId: d.usuario.id, nombre: d.usuario.nombre });
+    }
     const duenoDe = new Map<string, { usuarioId: string; nombre: string }>();
     for (const d of duenos) {
       if (tuyas.has(d.elemento_id)) continue;
@@ -422,6 +450,10 @@ export class ReporteService {
         contraparte: esInterno(e.tipo)
           ? (propiosDelEvento.map((i) => !propios.has(i.elemento_id) && duenoDe.get(i.elemento_id)).find(Boolean) || null)
           : null,
+        ladoAfuera:
+          esInterno(e.tipo) && efectoPropio
+            ? (propiosDelEvento.map((i) => !propios.has(i.elemento_id) && duenoAfuera.get(i.elemento_id)).find(Boolean) || null)
+            : null,
         privadoDe: privado
           ? (propiosDelEvento.map((i) => duenoPrivado.get(i.elemento_id)).find(Boolean) ?? { usuarioId: '', nombre: 'otra persona' })
           : null,
@@ -478,7 +510,16 @@ export class ReporteService {
       where: { usuario_id: { in: usuarioIds } },
       select: { elemento_id: true },
     });
-    return [...new Set(props.map((p) => p.elemento_id))];
+    const ids = [...new Set(props.map((p) => p.elemento_id))];
+    if (alcance !== 'hogar') return ids;
+    // G45 H2 — regla del hogar: "Del hogar" cuenta solo lo que suma al hogar
+    // (participa_consolidacion), como el patrimonio consolidado. Nivel actual:
+    // si cambia, los meses pasados se recalculan (comportamiento conocido).
+    const suman = await this.prisma.elemento_patrimonial.findMany({
+      where: { id: { in: ids }, participa_consolidacion: true },
+      select: { id: true },
+    });
+    return suman.map((e) => e.id);
   }
 
   async #categorias(ids: (string | null)[]) {
