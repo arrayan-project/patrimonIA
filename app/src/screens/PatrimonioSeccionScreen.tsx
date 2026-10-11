@@ -8,6 +8,7 @@ import {
   type AgrupacionDTO,
   type ElementoPatrimonialDTO,
   type ElementosDelHogarDTO,
+  type PatrimonioIndividualDTO,
   type SeriePatrimonialDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -28,6 +29,7 @@ import {
   Hero,
   ListCard,
   MenuList,
+  Nota,
   Panel,
   Pastilla,
   PillToggle,
@@ -72,6 +74,8 @@ export function PatrimonioSeccionScreen() {
   // G35: "Mis grupos" (agrupaciones, personales) como otra forma de ver Tu plata.
   const [grupos, setGrupos] = useState<AgrupacionDTO[]>([]);
   const [vista, setVista] = useState<'tipo' | 'grupos'>('tipo');
+  // L-7 (S04): "Libre en tus cuentas", la resta que salió del Inicio.
+  const [individual, setIndividual] = useState<PatrimonioIndividualDTO | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
@@ -94,6 +98,7 @@ export function PatrimonioSeccionScreen() {
             (a, b) => a.orden - b.orden,
           ),
         );
+        setIndividual(await api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token).catch(() => null));
         const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
         setSerie(
           await api
@@ -238,6 +243,8 @@ export function PatrimonioSeccionScreen() {
   );
 
   if (!categoria) {
+    const libre =
+      individual?.porMoneda.find((m) => m.moneda === monedaPrin) ?? individual?.porMoneda[0] ?? null;
     const puntos = (serie?.puntos ?? []).map((p) => ({
       etiqueta: fechaLegible(p.fecha),
       valor: p.porMoneda.find((m) => m.moneda === monedaPrin)?.patrimonio ?? 0,
@@ -253,6 +260,34 @@ export function PatrimonioSeccionScreen() {
           ]}
           debajo={ademas || undefined}
         />
+
+        {/* L-7 (S04): la resta que estaba en el Inicio ("Puedes gastar hoy"), con su nombre nuevo. */}
+        {!hogar && libre && (
+          <Panel>
+            <Datos plano>
+              {libre.reservadoEnLiquidez > 0 || libre.plataAjena > 0 ? (
+                <Dato etiqueta="💵 Plata disponible" valor={money(libre.valorLiquido, libre.moneda)} />
+              ) : null}
+              {libre.reservadoEnLiquidez > 0 ? (
+                <Dato
+                  etiqueta="🐷 Guardado para metas"
+                  valor={<Text style={{ color: c.muted }}>{`− ${money(libre.reservadoEnLiquidez, libre.moneda)}`}</Text>}
+                />
+              ) : null}
+              {libre.plataAjena > 0 ? (
+                <Dato
+                  etiqueta="👥 De otras personas"
+                  valor={<Text style={{ color: c.muted }}>{`− ${money(libre.plataAjena, libre.moneda)}`}</Text>}
+                />
+              ) : null}
+              <Dato
+                etiqueta="✅ Libre en tus cuentas"
+                valor={<Text style={{ fontWeight: '800', color: c.ok }}>{money(libre.valorLibre, libre.moneda)}</Text>}
+              />
+            </Datos>
+            <Nota>Incluye lo que sobró de otros meses.</Nota>
+          </Panel>
+        )}
 
         {puntos.length >= 2 && (
           <Section title="📈 Cómo ha cambiado" accion="Ver más" onAccion={() => nav.go('EvolucionPatrimonio')}>

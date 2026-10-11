@@ -4,10 +4,11 @@ import { Interruptor, ListCard, Nota, Pastilla, Screen, useGuardarAlInstante } f
 
 /** G35: cada sección con su emoji y qué muestra, en el orden en que aparecen en el Inicio. */
 const SECCIONES: { k: SeccionDashboard; emoji: string; titulo: string; sub: string }[] = [
-  { k: 'disponibilidad', emoji: '✅', titulo: 'Puedes gastar', sub: 'Debajo del total' },
+  // L-7 (S04): "Puedes gastar" salió del Inicio (ahora es "Libre en tus cuentas", en Tu plata);
+  // la clave `disponibilidad` sigue en preferencias.tsx, sin uso, para no romper lo guardado.
+  { k: 'flujo', emoji: '📅', titulo: 'El mes', sub: 'Lo que te queda de lo que entró este mes' },
   { k: 'composicion', emoji: '🏦', titulo: 'Tus cuentas', sub: 'Cada cuenta con su saldo' },
   { k: 'objetivos', emoji: '🎯', titulo: 'Tus metas', sub: 'Cuánto llevas de cada una' },
-  { k: 'flujo', emoji: '📅', titulo: 'El mes', sub: 'Lo que entró y salió este mes' },
   { k: 'accesos', emoji: '⚡', titulo: 'Atajos', sub: 'Lo que más usas, a un toque' },
 ];
 
