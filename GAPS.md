@@ -155,6 +155,15 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     con los mismos números. "Del hogar" sigue con Les entró / Gastaron / Les queda.
   - Si las cuentas elegidas tienen otra moneda, se muestra la preferida (o la de
     más plata) y una nota con las otras.
+  - **Ajuste (Juan, 2026-10-10): el mes se cuenta como un flujo propio**. Va
+    desde lo que te entró (el sueldo) hasta el último peso: Te entró − Salió = Te
+    queda de octubre (o "Te sobró de septiembre" en un mes cerrado). Lo que sobró
+    de meses anteriores se registra en una nota aparte ("Aparte, de meses
+    anteriores te quedaban X. Hoy tienes Y en estas cuentas"), sin mezclarse con
+    el mes. La tarjeta del Inicio ya no muestra saldos: Salió en rojo, Entró en
+    verde y "Te queda de octubre"; el hogar dice "Les queda". Revisión de
+    claridad R1–R8: "¿En qué gastaste?", "Pasaste a otra moneda", "¿Qué cuentas
+    entran en los cálculos?" y "Cuentas que entran en tu mes".
 
  Cuentas "del día a día" en la foto del mes  🟡 IMPLEMENTADO, EN PRUEBA (rama `feat/G41-43-foto-del-mes`, 2026-10-10)
 - **Qué falta** (Juan, 2026-10-10): mucha gente opera con 1 o 2 cuentas y
