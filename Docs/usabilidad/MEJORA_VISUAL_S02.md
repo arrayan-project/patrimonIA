@@ -66,8 +66,10 @@ Pasarlos a la escala se hace dentro del Paso 0, cuando se toquen esas piezas.
 - **Botón "+" (Inicio y Movimientos):** hoja "¿Qué quieres anotar?" con Gasté ·
   Recibí · Moví plata · Ahorrar para una meta · Pagar tarjeta (si hay
   tarjetas) · Agregar cuenta.
-- **Pantallas apiladas:** 49, con barra superior (título + atrás).
-- **Total: 60 pantallas** (más la hoja del "+", que es una pieza común).
+- **Pantallas apiladas:** 48, con barra superior (título + atrás).
+- **Total: 58 pantallas** (más la hoja del "+", que es una pieza común). Con
+  L1 (`LENTE_HOGAR_S04.md`) salieron Hogar (38, la pestaña) y Movimientos del
+  hogar (40); el inventario de §5 conserva su numeración original.
 
 ## 4. Decisiones del frente
 
