@@ -1,7 +1,7 @@
 # Metas con cuentas dedicadas — Sesión 04
 
 **Ubicación en el repo:** `Docs/usabilidad/METAS_CUENTAS_S04.md`
-**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** propuesta, espera la decisión de Juan. Sin código.
+**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** propuesta; Juan respondió 2 de las 5 preguntas (§3), faltan 3. Sin código.
 
 ## 0. Problema
 
@@ -132,7 +132,15 @@ intención). Propuesta:
 
 ## 3. Preguntas para Juan
 
-1. ¿Tabla propia (recomendada) o columna en la cuenta?
+**Respondidas (Juan, 2026-10-11):**
+- **Tabla propia**, no columna en la cuenta, con restricción única por cuenta
+  (una cuenta se dedica a una sola meta) — §2.2 tal como está.
+- Los apartados de "cuenta completa" **no se convierten solos**: la app
+  pregunta una vez en la meta — §2.3 tal como está.
+
+**Pendientes:**
+
+1. ~~¿Tabla propia o columna en la cuenta?~~ Respondida.
 2. ¿Se pueden dedicar bienes (`ACTIVO`, p. ej. el auto para "Cambiar de auto")?
    La propuesta dice que no (M-5), como "Ahorrar".
 3. Al quitar una cuenta de una meta, ¿por defecto se conserva lo que tiene como
