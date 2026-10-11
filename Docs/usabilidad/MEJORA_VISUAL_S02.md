@@ -94,6 +94,15 @@ común **Confirmar** (`AccionForm`), que pide el motivo cuando corresponde.
    alertas (presupuesto excedido, deudas en mora, solicitudes por pagar);
    estado vacío "Agrega tu primera cuenta o bien"; botón "+"; campana;
    engranaje.
+   **L2 (`LENTE_HOGAR_S04.md` §5):** en dos bloques, uno por pregunta —
+   **📅 El mes** arriba ("Te queda / Les queda de [mes]" como cifra principal,
+   barra Entró / Salió; en "Del hogar", las líneas 🏠 Entró / 🚪 Salió del
+   hogar; los primeros 7 días del ciclo, en "Lo mío", la tarjeta de cierre
+   "📦 Te sobraron…") y **🏦 El patrimonio** después ("🏦 Tu plata hoy" /
+   "🏦 Plata del hogar", sin la resta). "Puedes gastar" pasó a Tu plata como
+   "✅ Libre en tus cuentas". Orden: saludo y lente · alertas · 🤝 Entre ustedes
+   (hogar) · El mes · El patrimonio · Tus cuentas / Dónde está la plata del
+   hogar · Metas · Atajos.
 2. ✅ **Hoja "¿Qué quieres anotar?"** (`hooks/useAnotar`, §6) — botón "+". Gasté ·
    Recibí · Moví plata · Ahorrar para una meta · Pagar tarjeta · Agregar
    cuenta.
@@ -1117,7 +1126,8 @@ eso entran las 6 listas y sus formularios de crear y editar.
     nuevo por ahora".
   - **Secciones del Inicio:** en el orden del Inicio, con emoji y qué
     muestra: ✅ Puedes gastar (Debajo del total) · 🏦 Tus cuentas · 🎯 Tus
-    metas · 📊 Así va el mes · ⚡ Atajos. "👀 Mostrar todas" como pastilla,
+    metas · 📊 Así va el mes · ⚡ Atajos. *(L2: sin "Puedes gastar"; orden 📅 El
+    mes · 🏦 Tus cuentas · 🎯 Tus metas · ⚡ Atajos.)* "👀 Mostrar todas" como pastilla,
     solo si hay alguna oculta; nota "📱 Se ve igual en todos tus teléfonos.".
   - **Mi perfil:** tarjeta con la inicial, el nombre y el correo; "✏️ ¿Cómo
     te llamamos?" (se guarda al salir); "📧 Tu correo"; botón "👋 Desactivar

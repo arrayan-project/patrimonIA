@@ -161,6 +161,11 @@ de API.
 
 ### 5.3 Instrucciones para Claude Code — Bloque 2
 
+> **Estado (2026-10-11):** pasos 1 a 4 hechos en `feat/L2-inicio-dos-preguntas`
+> (creada desde `feat/compartir-dos-preguntas`, por H2 y S de G45). Ajuste por
+> H2: en "Del hogar", la tarjeta del mes incluye "🏠 Entró / 🚪 Salió del hogar"
+> dentro de "Les queda". Falta el paso 5 (prueba de Juan y merge).
+
 Rama `feat/L2-inicio-dos-preguntas`, sobre `main` con el Bloque 1 mergeado.
 
 **Paso 1 — Reordenar Inicio en dos bloques (L-5, L-6).**

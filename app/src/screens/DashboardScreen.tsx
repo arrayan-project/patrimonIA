@@ -27,6 +27,7 @@ import { useSession } from '../auth/AuthContext';
 import { aportesComoPases, pasesConPersonas, quedaDelMes, type AporteHogar } from '../flujoMes';
 import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
 import { agruparFoto, cuentasDelDia } from '../fotoMes';
+import { cicloAnterior, claveCiclo, enDiasDeCierre, mostrarCierre } from '../cierreCiclo';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
@@ -62,8 +63,7 @@ import {
   useC,
   type Paleta,
   tipoDe,
-  Dato,
-  Datos,
+  tipografia,
 } from '../ui';
 import { Sparkline } from '../ui/charts';
 import type { SolicitudDTO } from '../solicitudes';
@@ -104,7 +104,7 @@ export function DashboardScreen() {
   const anotar = useAnotar();
   const nav = useNav();
   const { alcance, setAlcance, lente, setSoloUnMiembro } = useAlcance();
-  const { preferencias } = usePreferencias();
+  const { preferencias, guardarPreferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
 
@@ -127,6 +127,8 @@ export function DashboardScreen() {
   const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
   // G45 H2: en "Del hogar", lo que entró al hogar y salió de él (aportes), por persona.
   const [aportesMes, setAportesMes] = useState<AporteHogar[]>([]);
+  // L-8 (S04): lo que sobró del ciclo anterior, si toca mostrar la tarjeta de cierre.
+  const [cierre, setCierre] = useState<{ monto: number; moneda: string; mes: string; clave: string } | null>(null);
   // G41: en "Lo mío", la foto del mes de tus cuentas del día a día (G42).
   const [fotoMes, setFotoMes] = useState<{ entro: number; salio: number; moneda: string } | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
@@ -226,11 +228,31 @@ export function DashboardScreen() {
         } else {
           setFotoMes(null);
         }
+        // L-8: solo en "Lo mío", en los primeros 7 días del ciclo y si no se tocó ya.
+        const clave = claveCiclo(m.anio, m.mes);
+        if (alcance === 'mios' && fm && enDiasDeCierre(aISO(hoy), desde) && preferencias.mes.cierreVisto !== clave) {
+          const ant = cicloAnterior(m.anio, m.mes);
+          const va = ventanaCiclo(ant.anio, ant.mes, ciclo);
+          const fa = await api
+            .get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${va.desde}&hasta=${va.hasta}&cuentas=${cuentas}`, token)
+            .catch(() => null);
+          const pa = fa?.porMoneda.find((x) => x.moneda === fm.moneda);
+          const ga = pa ? agruparFoto(pa.lineas) : null;
+          const sobrante = ga ? ga.entro - ga.salio : 0;
+          setCierre(
+            mostrarCierre({ hoyISO: aISO(hoy), desdeISO: desde, sobrante, clave, cierreVisto: preferencias.mes.cierreVisto })
+              ? { monto: sobrante, moneda: fm.moneda, mes: MESES_LARGO[ant.mes], clave }
+              : null,
+          );
+        } else {
+          setCierre(null);
+        }
       } catch {
         setFlujo(null);
         setMovsMes([]);
         setAportesMes([]);
         setFotoMes(null);
+        setCierre(null);
       }
       setCategorias(
         await api
@@ -486,6 +508,15 @@ export function DashboardScreen() {
   // G32 H-03/H-08 — una sola entrada a "Mi patrimonio" (todas las cuentas y bienes + evolución).
   const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin, hogarId });
 
+  // L-8: tocar cualquiera de las tres acciones oculta la tarjeta para este ciclo.
+  const marcarCierre = () => {
+    if (!cierre) return;
+    setCierre(null);
+    void guardarPreferencias({ ...preferencias, mes: { ...preferencias.mes, cierreVisto: cierre.clave } }).catch(
+      () => undefined,
+    );
+  };
+
   const cerrarOnboarding = () => {
     setOnbOculto(true);
     void guardar(claveOnb, 'ok');
@@ -502,8 +533,12 @@ export function DashboardScreen() {
   const monedaMes = enFoto ? fotoMes.moneda : (flujo?.moneda ?? monedaPrin);
   const pases = alcance === 'mios' ? pasesConPersonas(movsMes, monedaMes) : aportesComoPases(aportesMes, monedaMes);
   const balance = enFoto ? fotoMes.entro - fotoMes.salio : quedaDelMes(flujo?.ingresos ?? 0, flujo?.gastos ?? 0, pases);
-  const entro = enFoto ? fotoMes.entro : (flujo?.ingresos ?? 0) + pases.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
-  const salio = enFoto ? fotoMes.salio : (flujo?.gastos ?? 0) - pases.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);
+  // L2 (S04): en "Del hogar", lo que entró al hogar y salió de él va en líneas
+  // propias de la tarjeta (H2), no dentro de Entró / Salió; en "Lo mío", como antes.
+  const lineasHogar = alcance === 'hogar' ? pases : [];
+  const pasesEnBarra = alcance === 'hogar' ? [] : pases;
+  const entro = enFoto ? fotoMes.entro : (flujo?.ingresos ?? 0) + pasesEnBarra.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0);
+  const salio = enFoto ? fotoMes.salio : (flujo?.gastos ?? 0) - pasesEnBarra.filter((p) => p.monto < 0).reduce((s, p) => s + p.monto, 0);
   const pctSalio = entro > 0 ? Math.min(1, salio / entro) : salio > 0 ? 1 : 0;
   const ciclo = cicloDeAlcance(alcance, hogar, preferencias.mes);
   const mesHoy = cicloDe(hoy, ciclo);
@@ -601,13 +636,86 @@ export function DashboardScreen() {
           </ListCard>
         </Section>
       )}
+      {/* L-5/L-6 (S04): primero el mes — "Te queda de [mes]" es la cifra principal. */}
+      {ver.flujo && (
+        <Pressable
+          onPress={() => nav.go('Movimientos')}
+          accessibilityRole="button"
+          accessibilityLabel={`${mesNombre}: ${balance >= 0 ? `${alcance === 'hogar' ? 'les' : 'te'} queda ${money(balance, monedaMes)}` : `salió ${money(-balance, monedaMes)} más de lo que entró`}. Ver movimientos`}
+          style={({ pressed }) => [styles.mes, pressed && { opacity: 0.75 }]}
+        >
+          <View style={styles.headRow}>
+            <Text style={styles.mesTitulo}>
+              {`📅 ${mesNombre}`}
+              {rotuloMes ? <Text style={styles.muted}>{`  ${rotuloMes}`}</Text> : null}
+            </Text>
+            <Text style={styles.mesFlecha}>›</Text>
+          </View>
+          {entro === 0 && salio === 0 && lineasHogar.length === 0 ? (
+            <Text style={styles.muted}>Todavía no entra ni sale nada este mes.</Text>
+          ) : (
+            <>
+              {/* G41: lo que queda de lo que entró este mes (lo de meses anteriores va en Tu plata, aparte). */}
+              <Text style={styles.mesQueda}>
+                {balance >= 0 ? `🧮 ${alcance === 'hogar' ? 'Les' : 'Te'} queda de ${MESES_LARGO[mesHoy.mes]}` : '⚠️ Salió más de lo que entró'}
+              </Text>
+              <Text style={[styles.mesCifra, { color: balance >= 0 ? c.text : c.danger }]}>
+                {money(Math.abs(balance), monedaMes)}
+              </Text>
+              <View style={[styles.mesBarra, { backgroundColor: tinte(c.ok, 0.25) }]}>
+                <View style={[styles.mesBarraSalio, { width: `${pctSalio * 100}%`, backgroundColor: c.danger }]} />
+              </View>
+              <View style={styles.headRow}>
+                {/* La barra es lo que entró; la parte llena, lo que ya salió (rojo, como en Movimientos). */}
+                <Text style={[styles.mesDato, { color: c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
+                <Text style={[styles.mesDato, { color: c.ok }]}>{`📥 Entró ${money(entro, monedaMes)}`}</Text>
+              </View>
+              {/* H2: en "Del hogar", lo que entró al hogar y salió de él, por persona (entra en "Les queda"). */}
+              {lineasHogar.map((p) => (
+                <View key={`${p.usuarioId}${p.monto < 0 ? '-' : '+'}`} style={styles.headRow}>
+                  <Text style={[styles.mesDato, { color: c.text }]}>{p.monto < 0 ? `🚪 Salió del hogar · ${p.nombre}` : `🏠 Entró al hogar · ${p.nombre}`}</Text>
+                  <Text style={[styles.mesDato, { color: p.monto < 0 ? c.danger : c.ok }]}>
+                    {`${p.monto < 0 ? '−' : '+'} ${money(Math.abs(p.monto), monedaMes)}`}
+                  </Text>
+                </View>
+              ))}
+            </>
+          )}
+        </Pressable>
+      )}
+      {/* L-8 (S04): al empezar un ciclo, qué hacer con lo que sobró del anterior (solo "Lo mío"). */}
+      {/* "Ya vista" se mira al dibujar: las preferencias pueden llegar después de la carga. */}
+      {alcance === 'mios' && cierre && preferencias.mes.cierreVisto !== cierre.clave && (
+        <Panel>
+          <Text style={styles.mesTitulo}>
+            {`📦 Te sobraron ${money(cierre.monto, cierre.moneda)} de ${cierre.mes}. ¿Qué hacemos con eso?`}
+          </Text>
+          <View style={styles.cierreAcciones}>
+            <Pastilla
+              label="🐷 Apartar para una meta"
+              onPress={() => {
+                marcarCierre();
+                nav.go('Ahorrar', { monto: cierre.monto });
+              }}
+            />
+            <Pastilla
+              label="🔁 Pasarlo a otra cuenta"
+              onPress={() => {
+                marcarCierre();
+                nav.go('RegistrarMovimiento', { tipo: 'TRANSFERENCIA', monto: cierre.monto });
+              }}
+            />
+            <Pastilla label="Ya lo hice" onPress={marcarCierre} />
+          </View>
+        </Panel>
+      )}
       <Pressable
         onPress={verPatrimonio}
         accessibilityRole="button"
         accessibilityLabel="Ver dónde está tu plata"
       >
         <Hero
-          label={alcance === 'hogar' ? 'Plata del hogar' : 'Tu plata hoy'}
+          label={alcance === 'hogar' ? '🏦 Plata del hogar' : '🏦 Tu plata hoy'}
           ver
           value={heroValor}
           change={
@@ -628,76 +736,10 @@ export function DashboardScreen() {
                 ]
               : undefined
           }
-          debajo={
-            ver.disponibilidad && alcance === 'mios' && principal ? (
-              // Puedes gastar como una resta que cuadra: parte de la plata disponible
-              // y descuenta lo que no se puede gastar.
-              <Datos plano>
-                {principal.reservadoEnLiquidez > 0 || principal.plataAjena > 0 ? (
-                  <Dato etiqueta="💵 Plata disponible" valor={money(principal.valorLiquido, principal.moneda)} />
-                ) : null}
-                {principal.reservadoEnLiquidez > 0 ? (
-                  <Dato
-                    etiqueta="🐷 Guardado para metas"
-                    valor={<Text style={styles.resta}>{`− ${money(principal.reservadoEnLiquidez, principal.moneda)}`}</Text>}
-                  />
-                ) : null}
-                {principal.plataAjena > 0 ? (
-                  <Dato
-                    etiqueta="👥 De otras personas"
-                    valor={<Text style={styles.resta}>{`− ${money(principal.plataAjena, principal.moneda)}`}</Text>}
-                  />
-                ) : null}
-                <Dato
-                  etiqueta="✅ Puedes gastar hoy"
-                  valor={<Text style={styles.libre}>{money(principal.valorLibre, principal.moneda)}</Text>}
-                />
-              </Datos>
-            ) : undefined
-          }
         >
           {alcance === 'mios' && puntos.length >= 2 ? <Sparkline valores={puntos} alto={44} color={c.primary} /> : null}
         </Hero>
       </Pressable>
-      {ver.flujo && (
-        <Pressable
-          onPress={() => nav.go('Movimientos')}
-          accessibilityRole="button"
-          accessibilityLabel={`${mesNombre}: entró ${money(entro, monedaMes)}, salió ${money(salio, monedaMes)}. Ver movimientos`}
-          style={({ pressed }) => [styles.mes, pressed && { opacity: 0.75 }]}
-        >
-          <View style={styles.headRow}>
-            <Text style={styles.mesTitulo}>
-              {`📅 ${mesNombre}`}
-              {rotuloMes ? <Text style={styles.muted}>{`  ${rotuloMes}`}</Text> : null}
-            </Text>
-            <Text style={styles.mesFlecha}>›</Text>
-          </View>
-          {entro === 0 && salio === 0 ? (
-            <Text style={styles.muted}>Todavía no entra ni sale nada este mes.</Text>
-          ) : (
-            <>
-              <View style={[styles.mesBarra, { backgroundColor: tinte(c.ok, 0.25) }]}>
-                <View style={[styles.mesBarraSalio, { width: `${pctSalio * 100}%`, backgroundColor: c.danger }]} />
-              </View>
-              <View style={styles.headRow}>
-                {/* La barra es lo que entró; la parte llena, lo que ya salió (rojo, como en Movimientos). */}
-                <Text style={[styles.mesDato, { color: c.danger }]}>{`📤 Salió ${money(salio, monedaMes)}`}</Text>
-                <Text style={[styles.mesDato, { color: c.ok }]}>{`📥 Entró ${money(entro, monedaMes)}`}</Text>
-              </View>
-              {/* G41: lo que queda de lo que entró este mes (lo de meses anteriores va en Movimientos, aparte). */}
-              <View style={styles.headRow}>
-                <Text style={styles.mesQueda}>
-                  {balance >= 0 ? `🧮 ${alcance === 'hogar' ? 'Les' : 'Te'} queda de ${MESES_LARGO[mesHoy.mes]}` : '⚠️ Salió más de lo que entró'}
-                </Text>
-                <Text style={[styles.balance, { color: balance >= 0 ? c.ok : c.danger }]}>
-                  {`${balance >= 0 ? '+' : '−'} ${money(Math.abs(balance), monedaMes)}`}
-                </Text>
-              </View>
-            </>
-          )}
-        </Pressable>
-      )}
       {hh?.tipo === 'error' && <ErrorText>{hh.mensaje}</ErrorText>}
       {hh?.tipo === 'parcial' && (
         <ErrorText>{`Este total no incluye la plata en ${hh.faltantes.join(', ')}: falta su valor en ${hh.moneda}.`}</ErrorText>
@@ -1077,9 +1119,9 @@ const crearEstilos = (c: Paleta) =>
     mesBarra: { height: 10, borderRadius: 5, overflow: 'hidden' },
     mesBarraSalio: { height: 10, borderRadius: 5 },
     mesDato: { fontSize: 13, fontWeight: '600' },
-    mesQueda: { fontSize: 14, fontWeight: '700', color: c.text },
-    resta: { fontSize: 14, color: c.muted, textAlign: 'right' },
-    libre: { fontSize: 15, fontWeight: '800', color: c.ok, textAlign: 'right' },
+    mesQueda: { fontSize: 14, fontWeight: '700', color: c.muted },
+    mesCifra: { ...tipografia.hero },
+    cierreAcciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     pasoTxt: { fontSize: 14, color: c.text },
     carrusel: { marginHorizontal: -16 },

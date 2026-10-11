@@ -36,8 +36,9 @@ export interface PreferenciasVisualizacion {
    * G43: el día en que parte tu mes (1–28) y si se llama como el mes en que
    * termina (el que vives) o en que empieza. G42: las cuentas del día a día que
    * entran en la foto del mes; null = las de siempre (`cuentasDelDia`).
+   * L-8 (S04): `cierreVisto`, el ciclo (`AAAA-MM`) cuya tarjeta de cierre ya se tocó.
    */
-  mes: { dia: number; nombre: NombreMes; cuentas: string[] | null };
+  mes: { dia: number; nombre: NombreMes; cuentas: string[] | null; cierreVisto: string | null };
 }
 
 export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
@@ -45,7 +46,7 @@ export const PREFERENCIAS_DEFAULT: PreferenciasVisualizacion = {
   monedaPreferida: null,
   dashboard: { composicion: true, disponibilidad: true, flujo: true, objetivos: true, accesos: true },
   emojis: { elementos: {}, metas: {} },
-  mes: { dia: 1, nombre: 'termina', cuentas: null },
+  mes: { dia: 1, nombre: 'termina', cuentas: null, cierreVisto: null },
 };
 
 /** Las preferencias con el emoji de una cuenta (`elementos`) o una meta (`metas`) cambiado. */
@@ -82,6 +83,7 @@ function leerVisualizacion(u: UsuarioDTO | null): PreferenciasVisualizacion {
       dia: Number.isInteger(v.mes?.dia) && v.mes!.dia >= 1 && v.mes!.dia <= 28 ? v.mes!.dia : 1,
       nombre: v.mes?.nombre === 'empieza' ? 'empieza' : 'termina',
       cuentas: Array.isArray(v.mes?.cuentas) ? v.mes!.cuentas.filter((x): x is string => typeof x === 'string') : null,
+      cierreVisto: typeof v.mes?.cierreVisto === 'string' && /^\d{4}-\d{2}$/.test(v.mes.cierreVisto) ? v.mes.cierreVisto : null,
     },
   };
 }
