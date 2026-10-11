@@ -47,7 +47,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36, G46 |
-| **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38, G41, G42, G43 |
+| **G** · Monedas, proyecciones y reportes | G47 (💡 a futuro) | G7, G21, G27, G38, G41, G42, G43 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloques 1 y 2 hechos; falta el 3) | G25, G32, G35, G39 |
 
@@ -69,6 +69,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
 | — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Bloque 2** (Inicio responde las dos preguntas) probado por Juan y mergeado (adbe15d, 2026-10-11). **Falta:** Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
+| — | **G47** | "📌 Lo que llama la atención": observaciones del mes basadas en reglas, sin IA. Se diseña junto con el Bloque 3 de G44, después de la prueba real. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
 
@@ -107,6 +108,24 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   el que la tarjeta mostraría "Cupo disponible = cupo − lo que debes".
 - **Decisión (Juan, 2026-10-10)**: queda anotado a futuro; se abre si un
   usuario lo pide. Origen: `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`, C2.
+
+### Tema G · Monedas, proyecciones y reportes
+
+#### G47 — Lo que llama la atención: análisis del mes  💡 A FUTURO (anotado 2026-10-11)
+- **Idea (Juan, 2026-10-11)**: observaciones del mes basadas en reglas, sin IA:
+  - **Gastos hormiga**: muchos gastos chicos en una categoría.
+  - **Compras repetidas**: cantidad de gastos por categoría.
+  - **Gastos fuera de lo normal**: este mes contra el promedio de los meses
+    anteriores, en cantidad y en monto.
+  - **Cuánto quedaría** si una categoría volviera a su promedio o al
+    presupuesto.
+- **Dónde va**: el capítulo "📌 Lo que llama la atención" de la historia del
+  mes (Bloque 3 de G44, `Docs/usabilidad/LENTE_HOGAR_S04.md`), con máximo 3
+  observaciones, en los dos lentes ("Lo mío" y "Del hogar").
+- **Requisitos**: al menos 2 o 3 meses de historia y categorías usadas de
+  forma consistente.
+- **Cuándo**: se diseña junto con el Bloque 3 de G44, después de la prueba
+  real (la interfaz está congelada del 11 al 25 de octubre por G33).
 
 ### Tema H · Notificaciones
 
