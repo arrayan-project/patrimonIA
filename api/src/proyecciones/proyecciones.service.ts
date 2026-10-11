@@ -102,6 +102,21 @@ export class ProyeccionesService {
       if (liquidos.has(r.elemento_origen_id)) cur.reservadoLiquido = cur.reservadoLiquido.plus(r.monto);
       acc.set(moneda, cur);
     }
+    // Bloque M (M-3): una cuenta dedicada a una meta es toda "Guardado para metas"
+    // (tu parte de ella), y no suma a lo libre.
+    const dedicadas = await this.prisma.objetivo_cuenta_dedicada.findMany({
+      where: { elemento_id: { in: [...monedaPorElemento.keys()] } },
+      select: { elemento_id: true },
+    });
+    for (const d of dedicadas) {
+      const f = activos.find((x) => x.elemento_id === d.elemento_id);
+      if (!f) continue;
+      const parte = new Prisma.Decimal(f.elemento_patrimonial.valor_vigente).times(f.porcentaje).dividedBy(100);
+      const cur = acc.get(f.elemento_patrimonial.moneda) ?? nueva();
+      cur.reservado = cur.reservado.plus(parte);
+      if (liquidos.has(d.elemento_id)) cur.reservadoLiquido = cur.reservadoLiquido.plus(parte);
+      acc.set(f.elemento_patrimonial.moneda, cur);
+    }
 
     return {
       usuarioId,

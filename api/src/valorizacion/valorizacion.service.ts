@@ -13,12 +13,14 @@ import type { RegistrarValorizacionDto } from './dto/registrar-valorizacion.dto.
 import type { AnularValorizacionDto } from './dto/anular-valorizacion.dto.js';
 import type { CorregirValorizacionDto } from './dto/corregir-valorizacion.dto.js';
 import { errorConCodigo } from '../common/errores.js';
+import { ProgresoService } from '../planificacion/progreso.service.js';
 
 @Injectable()
 export class ValorizacionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly progreso: ProgresoService,
   ) {}
 
   /**
@@ -67,7 +69,7 @@ export class ValorizacionService {
         data: { valor_vigente: valorNuevo },
       });
 
-      await this.auditoria.registrar(tx, {
+      const entradaId = await this.auditoria.registrar(tx, {
         comando: 'RegistrarValorizacion',
         usuarioId: actorId,
         entidadTipo: 'VALORIZACION',
@@ -77,6 +79,8 @@ export class ValorizacionService {
         entidadRelacionadaTipo: 'ELEMENTO_PATRIMONIAL',
         entidadRelacionadaId: elemento.id,
       });
+      // Bloque M (M-2): si la cuenta es de una meta, su avance cambia con el valor.
+      await this.progreso.completarPorCuentas(tx, [elemento.id], actorId, entradaId);
 
       return creada;
     });
@@ -187,7 +191,7 @@ export class ValorizacionService {
       });
       await this.#propagar(tx, original.elemento_id, siguiente, delta);
 
-      await this.auditoria.registrar(tx, {
+      const entradaCorr = await this.auditoria.registrar(tx, {
         comando: 'CorregirValorizacion',
         usuarioId: actorId,
         entidadTipo: 'VALORIZACION',
@@ -201,6 +205,7 @@ export class ValorizacionService {
         entidadRelacionadaTipo: 'VALORIZACION',
         entidadRelacionadaId: creada.id,
       });
+      await this.progreso.completarPorCuentas(tx, [original.elemento_id], actorId, entradaCorr);
 
       return creada;
     });

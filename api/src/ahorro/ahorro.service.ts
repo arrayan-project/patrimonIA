@@ -18,7 +18,8 @@ export interface ResultadoAhorroDTO {
   objetivoId: string;
   asignacionId: string;
   destinoId: string;
-  reservaId: string;
+  /** null si el destino es una cuenta dedicada a la meta (solo se transfiere, Bloque M). */
+  reservaId: string | null;
   transferenciaIds: string[];
   total: number;
   /** Progreso de la meta después de ahorrar. */
@@ -67,6 +68,21 @@ export class AhorroService {
     }
 
     const destino = await this.#cuentaPropia(destinoId, actorId);
+    // Bloque M: de una cuenta dedicada no se saca para ahorrar (M-3); si el destino
+    // es una cuenta dedicada, tiene que ser de esta meta (y entonces solo se transfiere).
+    const dedicadas = await this.prisma.objetivo_cuenta_dedicada.findMany({
+      where: { elemento_id: { in: [...ids, destinoId] } },
+    });
+    const destinoDedicado = dedicadas.find((d) => d.elemento_id === destinoId);
+    if (destinoDedicado && destinoDedicado.objetivo_id !== objetivo.id) {
+      throw errorConCodigo(ConflictException, 'CUENTA_DEDICADA', 'La cuenta de destino es de otra meta');
+    }
+    if (dedicadas.some((d) => d.elemento_id !== destinoId && ids.includes(d.elemento_id))) {
+      throw errorConCodigo(ConflictException, 'CUENTA_DEDICADA', 'Una de las cuentas de origen es toda de una meta');
+    }
+    if (destinoDedicado && ids.includes(destinoId)) {
+      throw errorConCodigo(ConflictException, 'CUENTA_DEDICADA', 'Esa cuenta ya es toda de la meta');
+    }
     for (const id of ids) {
       const origen = id === destinoId ? destino : await this.#cuentaPropia(id, actorId);
       if (origen.moneda !== destino.moneda) {
@@ -133,18 +149,22 @@ export class AhorroService {
         transferenciaIds.push(ev.id);
       }
 
-      const reserva = await this.reservas.crearEnTx(
-        tx,
-        actorId,
-        { asignacionId, elementoOrigenId: destinoId, monto: total },
-        { encadenadaDeId: raizId },
-      );
+      // Bloque M: a una cuenta dedicada basta con transferir; su valor ya cuenta para la meta.
+      const reserva = destinoDedicado
+        ? null
+        : await this.reservas.crearEnTx(
+            tx,
+            actorId,
+            { asignacionId, elementoOrigenId: destinoId, monto: total },
+            { encadenadaDeId: raizId },
+          );
+      if (destinoDedicado) await this.progreso.recalcularYCompletar(tx, objetivo.id, actorId, raizId);
 
       return {
         objetivoId: objetivo.id,
         asignacionId,
         destinoId,
-        reservaId: reserva.id,
+        reservaId: reserva?.id ?? null,
         transferenciaIds,
         total,
         progreso: await this.progreso.progresoDeObjetivo(objetivo.id, tx),
@@ -157,6 +177,15 @@ export class AhorroService {
    * más plata ahorrada en la meta. `null` si aún no hay ninguna.
    */
   async cuentaDeLaMeta(objetivoId: string, actorId: string): Promise<string | null> {
+    // Bloque M: si la meta tiene una cuenta dedicada del actor, esa es la cuenta de la meta.
+    const dedicada = await this.prisma.objetivo_cuenta_dedicada.findFirst({
+      where: {
+        objetivo_id: objetivoId,
+        elemento_patrimonial: { estado: 'ACTIVO', elemento_propietario: { some: { usuario_id: actorId } } },
+      },
+      orderBy: { created_at: 'asc' },
+    });
+    if (dedicada) return dedicada.elemento_id;
     const reservas = await this.prisma.reserva.findMany({
       where: {
         estado: 'ACTIVA',

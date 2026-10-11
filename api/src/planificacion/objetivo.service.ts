@@ -247,10 +247,68 @@ export class ObjetivoService {
 
   async obtener(objetivoId: string, actorId: string): Promise<ObjetivoFinancieroDTO> {
     const o = await this.#cargarVisible(objetivoId, actorId);
-    return toObjetivoDTO(o, await this.progreso.progresoDeObjetivo(o.id), {
+    const desglose = await this.#desglose(o.id);
+    return toObjetivoDTO(o, desglose.apartado + desglose.cuentas.reduce((s, c) => s + c.valor, 0), {
       actorId,
       designados: await this.#designadosDe(o.id),
+      desglose: { ...desglose, sugerencias: await this.#sugerenciasCuentaCompleta(o.id, actorId) },
     });
+  }
+
+  /** Bloque M — apartado fijo + cuentas dedicadas + cambio del mes de esas cuentas. */
+  async #desglose(objetivoId: string) {
+    const [apartado, cuentas, cambioMes] = await Promise.all([
+      this.progreso.apartadoDeObjetivo(objetivoId),
+      this.progreso.cuentasDedicadas(objetivoId),
+      this.progreso.cambioMesCuentas(objetivoId),
+    ]);
+    return { apartado, cuentas, cambioMes };
+  }
+
+  /**
+   * Bloque M §2.3 — cuentas del actor (cuenta, ahorro o inversión, sin dedicar)
+   * con reservas ACTIVAS solo de esta meta que cubren ≥ 95 % de su valor, o lo
+   * superan (libre negativo). No se convierten solas: la app pregunta.
+   */
+  async #sugerenciasCuentaCompleta(objetivoId: string, actorId: string) {
+    const reservas = await this.prisma.reserva.findMany({
+      where: {
+        estado: 'ACTIVA',
+        asignacion: { objetivo_financiero_id: objetivoId },
+        elemento_patrimonial: {
+          estado: 'ACTIVO',
+          categoria_funcional: { in: ['LIQUIDEZ', 'RESERVA', 'INVERSION'] },
+          elemento_propietario: { some: { usuario_id: actorId } },
+          objetivo_cuenta_dedicada: null,
+        },
+      },
+      include: { elemento_patrimonial: true },
+    });
+    const porCuenta = new Map<string, { nombre: string; valor: number; apartado: number }>();
+    for (const r of reservas) {
+      const c = porCuenta.get(r.elemento_origen_id) ?? {
+        nombre: r.elemento_patrimonial.nombre,
+        valor: Number(r.elemento_patrimonial.valor_vigente),
+        apartado: 0,
+      };
+      c.apartado += Number(r.monto);
+      porCuenta.set(r.elemento_origen_id, c);
+    }
+    const out: { elementoId: string; nombre: string }[] = [];
+    for (const [elementoId, c] of porCuenta) {
+      if (c.apartado <= 0) continue;
+      // Solo esta meta: si la cuenta también tiene plata de otra, no es "cuenta completa".
+      const otras = await this.prisma.reserva.count({
+        where: {
+          elemento_origen_id: elementoId,
+          estado: 'ACTIVA',
+          // También los ahorros sin meta (objetivo null): NOT (x = y) los dejaría fuera.
+          asignacion: { OR: [{ objetivo_financiero_id: null }, { objetivo_financiero_id: { not: objetivoId } }] },
+        },
+      });
+      if (otras === 0 && c.apartado >= 0.95 * c.valor) out.push({ elementoId, nombre: c.nombre });
+    }
+    return out;
   }
 
   async listar(actorId: string, estado?: string): Promise<ObjetivoFinancieroDTO[]> {
@@ -269,12 +327,14 @@ export class ObjetivoService {
       orderBy: { created_at: 'desc' },
     });
     return Promise.all(
-      objetivos.map(async (o) =>
-        toObjetivoDTO(o, await this.progreso.progresoDeObjetivo(o.id), {
+      objetivos.map(async (o) => {
+        const desglose = await this.#desglose(o.id);
+        return toObjetivoDTO(o, desglose.apartado + desglose.cuentas.reduce((s, c) => s + c.valor, 0), {
           actorId,
           designados: await this.#designadosDe(o.id),
-        }),
-      ),
+          desglose,
+        });
+      }),
     );
   }
 

@@ -14,6 +14,7 @@ import type { RegistrarAjusteDto } from './dto/registrar-ajuste.dto.js';
 import type { AnularAjusteDto } from './dto/anular-ajuste.dto.js';
 import type { CorregirAjusteDto } from './dto/corregir-ajuste.dto.js';
 import { errorConCodigo } from '../common/errores.js';
+import { ProgresoService } from '../planificacion/progreso.service.js';
 
 /**
  * Ajuste Patrimonial: mecanismo de EXCEPCIÓN para conciliar el patrimonio
@@ -25,6 +26,7 @@ export class AjustePatrimonialService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly progreso: ProgresoService,
   ) {}
 
   /** AS #20 — RegistrarAjustePatrimonial. Auditoría: Creación — monto, elemento, motivo. */
@@ -52,7 +54,7 @@ export class AjustePatrimonialService {
         data: { valor_vigente: new Prisma.Decimal(elemento.valor_vigente).plus(monto) },
       });
       await derivarValorPendiente(tx, elemento.id);
-      await this.auditoria.registrar(tx, {
+      const entradaId = await this.auditoria.registrar(tx, {
         comando: 'RegistrarAjustePatrimonial',
         usuarioId: actorId,
         entidadTipo: 'AJUSTE_PATRIMONIAL',
@@ -62,6 +64,8 @@ export class AjustePatrimonialService {
         entidadRelacionadaTipo: 'ELEMENTO_PATRIMONIAL',
         entidadRelacionadaId: elemento.id,
       });
+      // Bloque M (M-2): un ajuste a una cuenta dedicada mueve el avance de su meta.
+      await this.progreso.completarPorCuentas(tx, [elemento.id], actorId, entradaId);
       return creado;
     });
 

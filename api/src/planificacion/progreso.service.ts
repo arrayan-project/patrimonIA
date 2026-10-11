@@ -16,8 +16,23 @@ export class ProgresoService {
     private readonly notificaciones: NotificacionService,
   ) {}
 
-  /** Suma de reservas ACTIVAS de las asignaciones asociadas al objetivo. */
+  /**
+   * Progreso = apartados fijos (reservas ACTIVAS de sus asignaciones) + valor
+   * actual de sus cuentas dedicadas (Bloque M, M-2).
+   */
   async progresoDeObjetivo(
+    objetivoId: string,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<number> {
+    const [apartado, cuentas] = await Promise.all([
+      this.apartadoDeObjetivo(objetivoId, client),
+      this.cuentasDedicadas(objetivoId, client),
+    ]);
+    return apartado + cuentas.reduce((s, c) => s + c.valor, 0);
+  }
+
+  /** Suma de reservas ACTIVAS de las asignaciones asociadas al objetivo (lo apartado fijo). */
+  async apartadoDeObjetivo(
     objetivoId: string,
     client: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<number> {
@@ -33,8 +48,78 @@ export class ProgresoService {
     return reservas.reduce((acc, r) => acc + Number(r.monto), 0);
   }
 
+  /** Bloque M — las cuentas dedicadas (activas) del objetivo, con su valor de hoy. */
+  async cuentasDedicadas(
+    objetivoId: string,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<{ elementoId: string; nombre: string; valor: number; moneda: string }[]> {
+    const filas = await client.objetivo_cuenta_dedicada.findMany({
+      where: { objetivo_id: objetivoId, elemento_patrimonial: { estado: 'ACTIVO' } },
+      include: { elemento_patrimonial: true },
+      orderBy: { created_at: 'asc' },
+    });
+    return filas.map((f) => ({
+      elementoId: f.elemento_id,
+      nombre: f.elemento_patrimonial.nombre,
+      valor: Number(f.elemento_patrimonial.valor_vigente),
+      moneda: f.elemento_patrimonial.moneda,
+    }));
+  }
+
   /**
-   * Valor libre de un elemento = valor_vigente − reservas ACTIVAS sobre él.
+   * Bloque M — cuánto cambió este mes (calendario) el valor de las cuentas
+   * dedicadas: valor de hoy − valor al cierre del mes anterior (impactos vivos
+   * posteriores, como ReconstruccionService). "📉 −X este mes" en la meta.
+   */
+  async cambioMesCuentas(objetivoId: string, hoy = new Date()): Promise<number> {
+    const filas = await this.prisma.objetivo_cuenta_dedicada.findMany({
+      where: { objetivo_id: objetivoId, elemento_patrimonial: { estado: 'ACTIVO' } },
+      select: { elemento_id: true },
+    });
+    if (filas.length === 0) return 0;
+    const inicioMes = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), 1));
+    const impactos = await this.prisma.impacto_patrimonial.findMany({
+      where: { elemento_id: { in: filas.map((f) => f.elemento_id) }, fecha: { gte: inicioMes } },
+    });
+    const anulados = new Set(
+      (
+        await this.prisma.evento_financiero.findMany({
+          where: {
+            id: { in: impactos.filter((i) => i.origen_tipo === 'EVENTO_FINANCIERO').map((i) => i.origen_id) },
+            anulado: true,
+          },
+          select: { id: true },
+        })
+      ).map((e) => e.id),
+    );
+    return impactos
+      .filter((i) => !(i.origen_tipo === 'EVENTO_FINANCIERO' && anulados.has(i.origen_id)))
+      .reduce((s, i) => s + Number(i.monto), 0);
+  }
+
+  /**
+   * Bloque M (M-2) — después de mover o valorizar estas cuentas: si alguna es
+   * dedicada, recalcula su meta y evalúa "Completar objetivo" (solo completa).
+   */
+  async completarPorCuentas(
+    tx: Prisma.TransactionClient,
+    elementoIds: string[],
+    usuarioId: string,
+    entradaComandoRaizId: string,
+  ): Promise<void> {
+    if (elementoIds.length === 0) return;
+    const dedicadas = await tx.objetivo_cuenta_dedicada.findMany({
+      where: { elemento_id: { in: elementoIds } },
+      select: { objetivo_id: true },
+    });
+    for (const objetivoId of new Set(dedicadas.map((d) => d.objetivo_id))) {
+      await this.recalcularYCompletar(tx, objetivoId, usuarioId, entradaComandoRaizId);
+    }
+  }
+
+  /**
+   * Valor libre de un elemento = valor_vigente − reservas ACTIVAS sobre él
+   * (0 si está dedicada a una meta, Bloque M).
    * `excluirReservaId` permite re-validar una reserva que se está ajustando.
    */
   async disponibilidad(
@@ -45,6 +130,9 @@ export class ProgresoService {
     const elemento = await client.elemento_patrimonial.findUniqueOrThrow({
       where: { id: elementoId },
     });
+    // Bloque M (M-3): una cuenta dedicada es toda de su meta; no queda nada libre.
+    const dedicada = await client.objetivo_cuenta_dedicada.findUnique({ where: { elemento_id: elementoId } });
+    if (dedicada) return 0;
     const reservas = await client.reserva.findMany({
       where: {
         elemento_origen_id: elementoId,

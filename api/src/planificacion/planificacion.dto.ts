@@ -23,6 +23,19 @@ export interface ObjetivoFinancieroDTO {
   esMio: boolean;
   /** true si el actor puede modificar (dueño o designado). */
   puedoModificar: boolean;
+  /** Bloque M — lo apartado fijo (reservas) y el valor de las cuentas dedicadas; suman `progreso`. */
+  progresoApartado: number;
+  progresoCuentas: number;
+  /** Bloque M — "🏦 Cuentas de esta meta", con su valor de hoy. */
+  cuentasDedicadas: { elementoId: string; nombre: string; valor: number; moneda: string }[];
+  /** Bloque M — cuánto cambió este mes el valor de sus cuentas ("📉 −X este mes"). */
+  cambioMesCuentas: number;
+  /**
+   * Bloque M §2.3 — solo en el detalle (GET /objetivos-financieros/:id): cuentas
+   * apartadas casi enteras para esta meta (≥ 95 % de su valor o más), para
+   * preguntar una vez "🏦 ¿Toda la cuenta es para esta meta?". Vacío en la lista.
+   */
+  sugerenciasCuentaCompleta: { elementoId: string; nombre: string }[];
 }
 
 export interface ReservaDTO {
@@ -60,8 +73,19 @@ export interface ReservaDeElementoDTO {
 export function toObjetivoDTO(
   o: ObjetivoRow,
   progreso: number,
-  extra: { designados?: string[]; actorId?: string } = {},
+  extra: {
+    designados?: string[];
+    actorId?: string;
+    desglose?: {
+      apartado: number;
+      cuentas: ObjetivoFinancieroDTO['cuentasDedicadas'];
+      cambioMes: number;
+      sugerencias?: ObjetivoFinancieroDTO['sugerenciasCuentaCompleta'];
+    };
+  } = {},
 ): ObjetivoFinancieroDTO {
+  const cuentas = extra.desglose?.cuentas ?? [];
+  const progresoCuentas = cuentas.reduce((s, c) => s + c.valor, 0);
   const monto = Number(o.monto_objetivo);
   const designados = extra.designados ?? [];
   const esMio = extra.actorId !== undefined && o.usuario_id === extra.actorId;
@@ -79,6 +103,11 @@ export function toObjetivoDTO(
     designados,
     esMio,
     puedoModificar: esMio || (extra.actorId !== undefined && designados.includes(extra.actorId)),
+    progresoApartado: extra.desglose?.apartado ?? progreso - progresoCuentas,
+    progresoCuentas,
+    cuentasDedicadas: cuentas,
+    cambioMesCuentas: extra.desglose?.cambioMes ?? 0,
+    sugerenciasCuentaCompleta: extra.desglose?.sugerencias ?? [],
   };
 }
 

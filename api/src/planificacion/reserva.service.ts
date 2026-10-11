@@ -51,6 +51,10 @@ export class ReservaService {
   ): Promise<ReservaDTO> {
     const asignacion = await this.#asignacionPropia(dto.asignacionId, actorId, tx);
     await this.#exigirPropietarioElemento(dto.elementoOrigenId, actorId);
+    // Bloque M (M-3): una cuenta dedicada es toda de su meta; no se aparta de ella.
+    if (await tx.objetivo_cuenta_dedicada.findUnique({ where: { elemento_id: dto.elementoOrigenId } })) {
+      throw errorConCodigo(ConflictException, 'CUENTA_DEDICADA', 'Esa cuenta ya es toda de una meta');
+    }
 
     const libre = await this.progreso.disponibilidad(dto.elementoOrigenId, tx);
     if (dto.monto > libre + 1e-9) {
