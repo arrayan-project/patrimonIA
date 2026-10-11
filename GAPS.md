@@ -1514,7 +1514,7 @@ ya cerrados en Fases 50–51).
 - **Cómo se resolvió**: líneas de ahorro por meta en el presupuesto (migración
   019, Fase 41, P6).
 
-#### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ RESUELTO (Fase 45 — moneda como etiqueta, sin conversión, P11)  🔄 REABIERTO por G45 (2026-10-10)
+#### G16 — Proyección desviacion_presupuestaria: alcance y moneda (Fase 6)  ✅ RESUELTO (Fase 45 — moneda como etiqueta, sin conversión, P11)  ✅ alcance del FAMILIAR actualizado por G45 H2 (2026-10-11)
 - Decisiones de alcance/agregación tomadas en Fase 6. Moneda del presupuesto:
   resuelta en la Fase 45 (P11). "Ahorro real" desde reservas: no se volvió a
   pedir; sigue ingresos − gastos.
@@ -1540,7 +1540,7 @@ ya cerrados en Fases 50–51).
   fuera; nadie pidió cambiarlo.
 - **Reabierto (Juan, 2026-10-10, G45)**: el alcance del FAMILIAR pasa a ser
   solo las cuentas que suman al hogar (regla del hogar), y lo privado de otros
-  miembros no se desglosa (H1). Se implementa en G45 H2.
+  miembros no se desglosa (H1). Implementado en G45 H2 (05f4fe6).
 
 #### G26 — Presupuesto por rubro (línea de presupuesto) (Fase 15d)  ✅ RESUELTO (Fase 15d; línea de ahorro por objetivo, Fase 41/P6)
 - Líneas por categoría de gasto: ✅. Líneas de ahorro por objetivo: ✅ (Fase 41,
