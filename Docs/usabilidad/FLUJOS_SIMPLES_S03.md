@@ -1126,7 +1126,7 @@ toque** (meta ✅). Antes: 8 a 10 y 3.
 | 1 | Cualquier pestaña | Toca ⚙️ (Ajustes) | 1 |
 | 2 | Ajustes › Hogar | 🔐 Qué compartes ("De lo tuyo suman X de Y") | 1 |
 | 3 | Qué compartes con [pareja] | Tus cuentas en dos grupos: "🏠 Suman a la plata del hogar (N)" y "🙋 Solo tuyas (N)", cada una con lo que ve el hogar (🔒 Solo tú la ves · 🔁 Puede transferirte · 👀 Ve el saldo · 👀 Ve todo · ⚙️ A tu medida) | 0 |
-| 4 | Qué compartes | Toca la cuenta → la hoja con los 4 niveles de siempre → se guarda al instante y la cuenta cambia de grupo | 2 por cuenta |
+| 4 | Qué compartes | Toca la cuenta → debajo, "🏠 ¿Esta plata es del hogar?" y, si es Sí, "👀 ¿[pareja] puede ver los movimientos?" (G45, Bloque S; reemplazan los 4 niveles), con la tarjeta "Así lo ve [pareja]" → se guarda al instante y la cuenta cambia de grupo | 2 por cuenta |
 
 **Conteo:** 2 pantallas · 2 toques + 2 por cuenta (antes 3 pantallas y 4 a
 6 toques por cuenta). Implementado en §17; desde L1 se entra por Ajustes (la
