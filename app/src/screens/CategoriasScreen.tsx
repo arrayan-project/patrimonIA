@@ -69,10 +69,15 @@ export function CategoriasScreen() {
     [orden[ia], orden[ib]] = [orden[ib], orden[ia]];
     // orden espera TODAS las categorías del hogar — raíces reordenadas + sus hijos.
     const ids = orden.flatMap((r) => [r.id, ...hijosDe(r.id).map((h) => h.id)]);
+    // Al instante: la lista se reordena ya; si falla, se recarga lo guardado.
+    const porId = new Map((lista ?? []).map((x) => [x.id, x]));
+    setLista(ids.map((id) => porId.get(id)).filter((x): x is CategoriaMovimientoDTO => !!x));
     api
       .post('/comandos/ReordenarCategoriasMovimiento', { hogarId, orden: ids }, token)
-      .then(cargar)
-      .catch((e) => setError(e instanceof ApiError ? e.message : 'Error inesperado'));
+      .catch((e) => {
+        setError(e instanceof ApiError ? e.message : 'Error inesperado');
+        void cargar();
+      });
   };
 
   const fila = (cat: CategoriaMovimientoDTO, padre?: CategoriaMovimientoDTO, accesorio?: ReactNode) => {

@@ -83,28 +83,37 @@ export function PatrimonioSeccionScreen() {
     try {
       // G37: en el hogar, lo mismo que suma su total (de todos, también lo tuyo);
       // lo que no puedes ver llega sumado aparte, para que la lista cuadre.
+      const delHogar = alcance === 'hogar' && !!hogarId;
+      const resumen = !categoria && alcance === 'mios';
+      const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
+      // En paralelo y se aplica de una vez.
+      const [lista, grupos, individual, serie] = await Promise.all([
+        delHogar
+          ? api.get<ElementosDelHogarDTO>(`/hogares/${hogarId}/elementos`, token)
+          : api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me&incluirInactivos=true', token),
+        resumen ? api.get<AgrupacionDTO[]>('/usuarios/me/agrupaciones', token).catch(() => []) : null,
+        resumen ? api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token).catch(() => null) : null,
+        resumen
+          ? api
+              .get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(haceUnAnio)}&pasos=12`, token)
+              .catch(() => null)
+          : null,
+      ]);
+      // G37: en el hogar, lo mismo que suma su total (de todos, también lo tuyo);
+      // lo que no puedes ver llega sumado aparte, para que la lista cuadre.
       let els: ElementoPatrimonialDTO[];
-      if (alcance === 'hogar' && hogarId) {
-        const r = await api.get<ElementosDelHogarDTO>(`/hogares/${hogarId}/elementos`, token);
+      if (delHogar) {
+        const r = lista as ElementosDelHogarDTO;
         els = r.elementos;
         setOcultos(categoria ? r.ocultos.filter((o) => o.categoriaFuncional === categoria) : r.ocultos);
       } else {
-        els = await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me&incluirInactivos=true', token);
+        els = lista as ElementoPatrimonialDTO[];
       }
       setElementos(categoria ? els.filter((e) => e.categoriaFuncional === categoria) : els);
-      if (!categoria && alcance === 'mios') {
-        setGrupos(
-          (await api.get<AgrupacionDTO[]>('/usuarios/me/agrupaciones', token).catch(() => [])).sort(
-            (a, b) => a.orden - b.orden,
-          ),
-        );
-        setIndividual(await api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token).catch(() => null));
-        const haceUnAnio = new Date(Date.now() - 365 * 86_400_000);
-        setSerie(
-          await api
-            .get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(haceUnAnio)}&pasos=12`, token)
-            .catch(() => null),
-        );
+      if (resumen) {
+        setGrupos((grupos ?? []).sort((a, b) => a.orden - b.orden));
+        setIndividual(individual);
+        setSerie(serie);
       }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');

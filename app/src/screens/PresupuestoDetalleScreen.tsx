@@ -61,21 +61,23 @@ export function PresupuestoDetalleScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const [presu, desviacion] = await Promise.all([
-        api.get<PresupuestoDTO>(`/presupuestos/${presupuestoId}`, token),
+      const pPresu = api.get<PresupuestoDTO>(`/presupuestos/${presupuestoId}`, token);
+      const pHogares = api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => [] as HogarDTO[]);
+      const [presu, desviacion, cats] = await Promise.all([
+        pPresu,
         api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${presupuestoId}/desviacion`, token),
+        // Solo para el emoji de cada categoría.
+        pPresu
+          .then(async (x) => x.hogarId ?? (await pHogares)[0]?.id ?? null)
+          .then((hogarId) =>
+            hogarId
+              ? api.get<CategoriaMovimientoDTO[]>(`/hogares/${hogarId}/categorias-movimiento`, token).catch(() => [])
+              : null,
+          ),
       ]);
       setP(presu);
       setDesv(desviacion);
-      // Solo para el emoji de cada categoría.
-      const hogarId =
-        presu.hogarId ??
-        (await api.get<HogarDTO[]>('/usuarios/me/hogares', token).catch(() => []))[0]?.id ??
-        null;
-      if (hogarId)
-        setCats(
-          await api.get<CategoriaMovimientoDTO[]>(`/hogares/${hogarId}/categorias-movimiento`, token).catch(() => []),
-        );
+      if (cats) setCats(cats);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }

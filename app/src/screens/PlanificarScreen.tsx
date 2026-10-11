@@ -81,32 +81,34 @@ export function PlanificarScreen() {
         .get<MovimientoProgramadoDTO[]>('/movimientos-programados', token)
         .then(setProgramados)
         .catch(() => setProgramados([]));
-      try {
-        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
-        const vig =
-          presus.find(
-            (p) =>
-              p.vigente &&
-              p.estado !== 'CERRADO' &&
-              (hogar ? p.tipo === 'FAMILIAR' && p.hogarId === activo : p.tipo === 'INDIVIDUAL'),
-          ) ?? null;
-        setPresupuesto(vig);
-        setDesv(
-          vig ? await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token) : null,
-        );
-      } catch {
-        setPresupuesto(null);
-        setDesv(null);
-      }
-      try {
-        const { noLeidas: n } = await api.get<{ noLeidas: number }>(
-          '/usuarios/me/notificaciones/no-leidas',
-          token,
-        );
-        setNoLeidas(n);
-      } catch {
-        setNoLeidas(0);
-      }
+      // El presupuesto y las notificaciones, en paralelo (y se aplican juntos).
+      const [presuYDesv, n] = await Promise.all([
+        (async () => {
+          try {
+            const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
+            const vig =
+              presus.find(
+                (p) =>
+                  p.vigente &&
+                  p.estado !== 'CERRADO' &&
+                  (hogar ? p.tipo === 'FAMILIAR' && p.hogarId === activo : p.tipo === 'INDIVIDUAL'),
+              ) ?? null;
+            const d = vig
+              ? await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token)
+              : null;
+            return { vig, d };
+          } catch {
+            return { vig: null, d: null };
+          }
+        })(),
+        api
+          .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
+          .then((x) => x.noLeidas)
+          .catch(() => 0),
+      ]);
+      setPresupuesto(presuYDesv.vig);
+      setDesv(presuYDesv.d);
+      setNoLeidas(n);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }

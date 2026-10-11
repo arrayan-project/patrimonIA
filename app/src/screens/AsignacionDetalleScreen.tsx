@@ -43,17 +43,20 @@ export function AsignacionDetalleScreen() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const a = await api.get<AsignacionDTO>(`/asignaciones/${asignacionId}`, token);
+      const pA = api.get<AsignacionDTO>(`/asignaciones/${asignacionId}`, token);
+      const [a, meta, els] = await Promise.all([
+        pA,
+        // G35: la banda dice de qué meta es (antes, una miga con el contexto).
+        pA.then((x) =>
+          x.objetivoId
+            ? api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${x.objetivoId}`, token).catch(() => null)
+            : null,
+        ),
+        api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
+      ]);
       setAsg(a);
-      // G35: la banda dice de qué meta es (antes, una miga con el contexto).
-      setMeta(
-        a.objetivoId
-          ? await api.get<ObjetivoFinancieroDTO>(`/objetivos-financieros/${a.objetivoId}`, token).catch(() => null)
-          : null,
-      );
-      setElementos(
-        await api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
-      );
+      setMeta(meta);
+      setElementos(els);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error');
     }

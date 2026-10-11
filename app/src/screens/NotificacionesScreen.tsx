@@ -50,21 +50,24 @@ export function NotificacionesScreen() {
 
   useCargaAlEnfocar(cargar);
 
+  // Al instante: se marca ya; si falla, se recarga lo guardado.
   const leer = async (id: string) => {
+    setLista((l) => l?.map((n) => (n.id === id ? { ...n, leida: true } : n)) ?? l);
     try {
       await api.post(`/usuarios/me/notificaciones/${id}/leer`, undefined, token);
-      await cargar();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
+      await cargar();
     }
   };
 
   const leerTodas = async () => {
+    setLista((l) => l?.map((n) => ({ ...n, leida: true })) ?? l);
     try {
       await api.post('/usuarios/me/notificaciones/leer-todas', undefined, token);
-      await cargar();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
+      await cargar();
     }
   };
 

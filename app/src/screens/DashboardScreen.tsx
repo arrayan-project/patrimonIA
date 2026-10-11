@@ -170,18 +170,17 @@ export function DashboardScreen() {
       const hace90 = new Date(Date.now() - 90 * 86_400_000);
       const q = alcance === 'hogar' ? `&alcance=hogar&hogarId=${activo}` : '&alcance=mios';
 
-      const [h, p, els] = await Promise.all([
+      // Todo en paralelo y se aplica de una vez: la pantalla cambia cuando llega
+      // lo más lento (no la suma de todo) y las cifras cambian juntas.
+      const pBase = Promise.all([
         api.get<HogarDTO>(`/hogares/${activo}`, token),
         api.get<PatrimonioIndividualDTO>('/usuarios/me/patrimonio-individual', token),
         api.get<ElementoPatrimonialDTO[]>('/elementos-patrimoniales?propietario=me', token),
       ]);
-      setHogar(h);
-      // L-4: con un solo miembro no hay lente (Movimientos y Planificar lo leen de aquí).
-      if (h.miembros) setSoloUnMiembro(h.miembros.length === 1);
-      setPatrimonio(p);
-      setElementos(els);
+      const pObjs = api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => null);
 
-      if (alcance === 'hogar') {
+      const pHogar = async (): Promise<() => void> => {
+        if (alcance !== 'hogar') return () => undefined;
         // G33 BUG-HOG: un fallo se informa (no se muestra un 0 falso) y no
         // arrastra a la otra consulta.
         const [m, cons, en, ch] = await Promise.allSettled([
@@ -190,142 +189,147 @@ export function DashboardScreen() {
           cargarEntreMiembros(token, usuario.id, activo),
           cargarCuentasHogar(token),
         ]);
-        setMetricas(m.status === 'fulfilled' ? m.value : null);
-        setConsolidado(cons.status === 'fulfilled' ? cons.value : null);
-        setEntre(en.status === 'fulfilled' ? en.value : null);
-        setParaTransferir(ch.status === 'fulfilled' ? ch.value.paraTransferir : []);
-        setErrorHogar(
-          cons.status === 'rejected'
-            ? cons.reason instanceof ApiError
-              ? cons.reason.message
-              : 'Error inesperado'
-            : null,
-        );
-      }
-
-      try {
-        // G43: el mes de hoy según el día en que parte (el tuyo o el del hogar).
-        const ciclo = cicloDeAlcance(alcance, h, preferencias.mes);
-        const m = cicloDe(hoy, ciclo);
-        const { desde, hasta } = ventanaCiclo(m.anio, m.mes, ciclo);
-        const cuentas = cuentasDelDia(els, preferencias.mes.cuentas).join(',');
-        const [r, f] = await Promise.all([
-          api.get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`, token),
-          alcance === 'mios'
-            ? api.get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${desde}&hasta=${hasta}&cuentas=${cuentas}`, token).catch(() => null)
-            : Promise.resolve(null),
-        ]);
-        const pm = r.porMoneda[0];
-        setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
-        setMovsMes(r.movimientos);
-        setAportesMes(r.aportes ?? []);
-        const fm =
-          f?.porMoneda.find((x) => x.moneda === preferencias.monedaPreferida) ??
-          [...(f?.porMoneda ?? [])].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0];
-        if (fm) {
-          const g = agruparFoto(fm.lineas);
-          setFotoMes({ entro: g.entro, salio: g.salio, moneda: fm.moneda });
-        } else {
-          setFotoMes(null);
-        }
-        // L-8: solo en "Lo mío", en los primeros 7 días del ciclo y si no se tocó ya.
-        const clave = claveCiclo(m.anio, m.mes);
-        if (alcance === 'mios' && fm && enDiasDeCierre(aISO(hoy), desde) && preferencias.mes.cierreVisto !== clave) {
-          const ant = cicloAnterior(m.anio, m.mes);
-          const va = ventanaCiclo(ant.anio, ant.mes, ciclo);
-          const fa = await api
-            .get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${va.desde}&hasta=${va.hasta}&cuentas=${cuentas}`, token)
-            .catch(() => null);
-          const pa = fa?.porMoneda.find((x) => x.moneda === fm.moneda);
-          const ga = pa ? agruparFoto(pa.lineas) : null;
-          const sobrante = ga ? ga.entro - ga.salio : 0;
-          setCierre(
-            mostrarCierre({ hoyISO: aISO(hoy), desdeISO: desde, sobrante, clave, cierreVisto: preferencias.mes.cierreVisto })
-              ? { monto: sobrante, moneda: fm.moneda, mes: MESES_LARGO[ant.mes], clave }
+        return () => {
+          setMetricas(m.status === 'fulfilled' ? m.value : null);
+          setConsolidado(cons.status === 'fulfilled' ? cons.value : null);
+          setEntre(en.status === 'fulfilled' ? en.value : null);
+          setParaTransferir(ch.status === 'fulfilled' ? ch.value.paraTransferir : []);
+          setErrorHogar(
+            cons.status === 'rejected'
+              ? cons.reason instanceof ApiError
+                ? cons.reason.message
+                : 'Error inesperado'
               : null,
           );
-        } else {
-          setCierre(null);
+        };
+      };
+
+      const pMes = async (): Promise<() => void> => {
+        try {
+          const [h, , els] = await pBase;
+          // G43: el mes de hoy según el día en que parte (el tuyo o el del hogar).
+          const ciclo = cicloDeAlcance(alcance, h, preferencias.mes);
+          const m = cicloDe(hoy, ciclo);
+          const { desde, hasta } = ventanaCiclo(m.anio, m.mes, ciclo);
+          const cuentas = cuentasDelDia(els, preferencias.mes.cuentas).join(',');
+          // L-8: solo en "Lo mío", en los primeros 7 días del ciclo y si no se tocó ya.
+          const clave = claveCiclo(m.anio, m.mes);
+          const ant = cicloAnterior(m.anio, m.mes);
+          const va = ventanaCiclo(ant.anio, ant.mes, ciclo);
+          const quizasCierre =
+            alcance === 'mios' && enDiasDeCierre(aISO(hoy), desde) && preferencias.mes.cierreVisto !== clave;
+          const [r, f, fa] = await Promise.all([
+            api.get<ResumenFinancieroDTO>(`/usuarios/me/resumen-financiero?desde=${desde}&hasta=${hasta}${q}`, token),
+            alcance === 'mios'
+              ? api.get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${desde}&hasta=${hasta}&cuentas=${cuentas}`, token).catch(() => null)
+              : Promise.resolve(null),
+            quizasCierre
+              ? api
+                  .get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${va.desde}&hasta=${va.hasta}&cuentas=${cuentas}`, token)
+                  .catch(() => null)
+              : Promise.resolve(null),
+          ]);
+          const pm = r.porMoneda[0];
+          const fm =
+            f?.porMoneda.find((x) => x.moneda === preferencias.monedaPreferida) ??
+            [...(f?.porMoneda ?? [])].sort((a, b) => Math.abs(b.tienes) - Math.abs(a.tienes))[0];
+          const g = fm ? agruparFoto(fm.lineas) : null;
+          let cierre: { monto: number; moneda: string; mes: string; clave: string } | null = null;
+          if (quizasCierre && fm) {
+            const pa = fa?.porMoneda.find((x) => x.moneda === fm.moneda);
+            const ga = pa ? agruparFoto(pa.lineas) : null;
+            const sobrante = ga ? ga.entro - ga.salio : 0;
+            cierre = mostrarCierre({ hoyISO: aISO(hoy), desdeISO: desde, sobrante, clave, cierreVisto: preferencias.mes.cierreVisto })
+              ? { monto: sobrante, moneda: fm.moneda, mes: MESES_LARGO[ant.mes], clave }
+              : null;
+          }
+          return () => {
+            setFlujo(pm ? { ingresos: pm.ingresos, gastos: pm.gastos, moneda: pm.moneda } : null);
+            setMovsMes(r.movimientos);
+            setAportesMes(r.aportes ?? []);
+            setFotoMes(fm && g ? { entro: g.entro, salio: g.salio, moneda: fm.moneda } : null);
+            setCierre(cierre);
+          };
+        } catch {
+          return () => {
+            setFlujo(null);
+            setMovsMes([]);
+            setAportesMes([]);
+            setFotoMes(null);
+            setCierre(null);
+          };
         }
-      } catch {
-        setFlujo(null);
-        setMovsMes([]);
-        setAportesMes([]);
-        setFotoMes(null);
-        setCierre(null);
-      }
-      setCategorias(
-        await api
-          .get<CategoriaMovimientoDTO[]>(`/hogares/${activo}/categorias-movimiento`, token)
-          .catch(() => []),
-      );
+      };
 
-      let objs: ObjetivoFinancieroDTO[] = [];
-      try {
-        objs = await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token);
-        setObjetivos(objs);
-      } catch {
-        setObjetivos([]);
-      }
-
-      try {
-        const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
-        // L-12: el presupuesto del lente — INDIVIDUAL en "Lo mío"; FAMILIAR del hogar activo en "Del hogar".
-        const vig = presus.find(
-          (x) =>
-            x.vigente &&
-            x.estado !== 'CERRADO' &&
-            (alcance === 'hogar' ? x.tipo === 'FAMILIAR' && x.hogarId === activo : x.tipo === 'INDIVIDUAL'),
-        );
-        if (vig) {
+      const pPresu = async (): Promise<() => void> => {
+        try {
+          const presus = await api.get<PresupuestoDTO[]>('/presupuestos', token);
+          // L-12: el presupuesto del lente — INDIVIDUAL en "Lo mío"; FAMILIAR del hogar activo en "Del hogar".
+          const vig = presus.find(
+            (x) =>
+              x.vigente &&
+              x.estado !== 'CERRADO' &&
+              (alcance === 'hogar' ? x.tipo === 'FAMILIAR' && x.hogarId === activo : x.tipo === 'INDIVIDUAL'),
+          );
+          if (!vig) return () => setPresuExcedido(null);
           const d = await api.get<DesviacionPresupuestariaDTO>(`/presupuestos/${vig.id}/desviacion`, token);
-          setPresuExcedido(d.real.gastos > d.esperado.gastos && d.esperado.gastos > 0 ? vig : null);
-        } else {
-          setPresuExcedido(null);
+          return () => setPresuExcedido(d.real.gastos > d.esperado.gastos && d.esperado.gastos > 0 ? vig : null);
+        } catch {
+          return () => setPresuExcedido(null);
         }
-      } catch {
-        setPresuExcedido(null);
-      }
+      };
 
-      try {
-        const onbHecho = (await leer(claveOnb)) === 'ok';
-        const evs = await api.get<unknown[]>(`/hogares/${activo}/eventos-financieros`, token).catch(() => []);
-        const p3 = { cuenta: els.length > 0, movimiento: evs.length > 0, objetivo: objs.length > 0 };
-        setPasos(p3);
-        setOnbOculto(onbHecho || (p3.cuenta && p3.movimiento && p3.objetivo));
-      } catch {
-        setOnbOculto(true);
-      }
+      const pOnb = async (): Promise<() => void> => {
+        try {
+          const [onbHecho, evs, [, , els], objs] = await Promise.all([
+            leer(claveOnb).then((v) => v === 'ok'),
+            api.get<unknown[]>(`/hogares/${activo}/eventos-financieros`, token).catch(() => []),
+            pBase,
+            pObjs,
+          ]);
+          const p3 = { cuenta: els.length > 0, movimiento: evs.length > 0, objetivo: (objs ?? []).length > 0 };
+          return () => {
+            setPasos(p3);
+            setOnbOculto(onbHecho || (p3.cuenta && p3.movimiento && p3.objetivo));
+          };
+        } catch {
+          return () => setOnbOculto(true);
+        }
+      };
 
-      try {
-        setVariacion(
-          await api.get<VariacionPatrimonialDTO>(`/usuarios/me/variacion-patrimonial?desde=${iso(hace90)}`, token),
-        );
-        setSerie(
-          await api.get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(hace90)}&pasos=8`, token),
-        );
-      } catch {
-        setVariacion(null);
-        setSerie(null);
-      }
-      try {
-        const { noLeidas: n } = await api.get<{ noLeidas: number }>(
-          '/usuarios/me/notificaciones/no-leidas',
-          token,
-        );
-        setNoLeidas(n);
-      } catch {
-        setNoLeidas(0);
-      }
-      setPorPagar(
-        await api
+      const pPatrimonio90 = async (): Promise<() => void> => {
+        try {
+          const [v, se] = await Promise.all([
+            api.get<VariacionPatrimonialDTO>(`/usuarios/me/variacion-patrimonial?desde=${iso(hace90)}`, token),
+            api.get<SeriePatrimonialDTO>(`/usuarios/me/serie-patrimonial?desde=${iso(hace90)}&pasos=8`, token),
+          ]);
+          return () => {
+            setVariacion(v);
+            setSerie(se);
+          };
+        } catch {
+          return () => {
+            setVariacion(null);
+            setSerie(null);
+          };
+        }
+      };
+
+      const hoyISO = aISO(new Date());
+      const [[h, p, els], aplicar, cats, objs, noLeidasN, solicitudes, programados] = await Promise.all([
+        pBase,
+        Promise.all([pHogar(), pMes(), pPresu(), pOnb(), pPatrimonio90()]),
+        api.get<CategoriaMovimientoDTO[]>(`/hogares/${activo}/categorias-movimiento`, token).catch(() => []),
+        pObjs,
+        api
+          .get<{ noLeidas: number }>('/usuarios/me/notificaciones/no-leidas', token)
+          .then((x) => x.noLeidas)
+          .catch(() => 0),
+        api
           .get<SolicitudDTO[]>('/usuarios/me/solicitudes', token)
           .then((ss) => ss.filter((x) => x.direccion === 'RECIBIDA' && x.estado === 'PENDIENTE'))
           .catch(() => []),
-      );
-      const hoyISO = aISO(new Date());
-      setPorConfirmar(
-        await api
+        api
           .get<MovimientoProgramadoDTO[]>('/movimientos-programados', token)
           .then((ms) =>
             ms
@@ -333,7 +337,18 @@ export function DashboardScreen() {
               .sort((a, b) => a.fechaProgramada.localeCompare(b.fechaProgramada)),
           )
           .catch(() => []),
-      );
+      ]);
+      setHogar(h);
+      // L-4: con un solo miembro no hay lente (Movimientos y Planificar lo leen de aquí).
+      if (h.miembros) setSoloUnMiembro(h.miembros.length === 1);
+      setPatrimonio(p);
+      setElementos(els);
+      aplicar.forEach((fn) => fn());
+      setCategorias(cats);
+      setObjetivos(objs ?? []);
+      setNoLeidas(noLeidasN);
+      setPorPagar(solicitudes);
+      setPorConfirmar(programados);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
