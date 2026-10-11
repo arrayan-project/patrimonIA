@@ -206,6 +206,16 @@ CREATE TABLE reserva (
 );
 
 CREATE INDEX ix_reserva_asignacion ON reserva (asignacion_id);
+
+-- Migración 030 (Bloque M): cuentas dedicadas a una meta. Progreso = reservas
+-- + valor actual de sus cuentas dedicadas; una cuenta, una sola meta.
+CREATE TABLE objetivo_cuenta_dedicada (
+    objetivo_id UUID NOT NULL REFERENCES objetivo_financiero(id) ON DELETE CASCADE,
+    elemento_id UUID NOT NULL REFERENCES elemento_patrimonial(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (objetivo_id, elemento_id),
+    CONSTRAINT uq_objetivo_cuenta_dedicada_elemento UNIQUE (elemento_id)
+);
 CREATE INDEX ix_reserva_elemento_activa ON reserva (elemento_origen_id) WHERE estado = 'ACTIVA';
 
 -- Nota: "suma reservada no excede disponibilidad" no es CHECK de fila —

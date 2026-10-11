@@ -117,6 +117,7 @@ model elemento_patrimonial {
   reserva                                                                              reserva[]
   valorizacion                                                                         valorizacion[]
   solicitud_transferencia                                                              solicitud_transferencia[]
+  objetivo_cuenta_dedicada                                                             objetivo_cuenta_dedicada?
 
   @@index([categoria_funcional], map: "ix_elemento_categoria")
   @@index([estado], map: "ix_elemento_estado")
@@ -249,9 +250,9 @@ model movimiento_programado {
   elemento_patrimonial                                                                elemento_patrimonial? @relation(fields: [elemento_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   elemento_patrimonial_movimiento_programado_elemento_origen_idToelemento_patrimonial elemento_patrimonial? @relation("movimiento_programado_elemento_origen_idToelemento_patrimonial", fields: [elemento_origen_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([serie_id, fecha_programada], map: "ux_movimiento_programado_serie_fecha")
   @@index([fecha_programada], map: "ix_movimiento_programado_pendiente", where: raw("(estado = 'PENDIENTE'::text)"))
   @@index([elemento_origen_id], map: "ix_movimiento_programado_origen", where: raw("(elemento_origen_id IS NOT NULL)"))
-  @@unique([serie_id, fecha_programada], map: "ux_movimiento_programado_serie_fecha")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -270,6 +271,7 @@ model objetivo_financiero {
   hogar                    hogar?                     @relation(fields: [hogar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuario                  usuario?                   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   presupuesto_linea_ahorro presupuesto_linea_ahorro[]
+  objetivo_cuenta_dedicada objetivo_cuenta_dedicada[]
 
   @@index([estado], map: "ix_objetivo_estado")
   @@index([usuario_id], map: "ix_objetivo_usuario")
@@ -607,4 +609,14 @@ model solicitud_transferencia {
 
   @@index([destinatario_id, created_at(sort: Desc)], map: "ix_solicitud_destinatario")
   @@index([solicitante_id, created_at(sort: Desc)], map: "ix_solicitud_solicitante")
+}
+
+model objetivo_cuenta_dedicada {
+  objetivo_id          String               @db.Uuid
+  elemento_id          String               @unique(map: "uq_objetivo_cuenta_dedicada_elemento") @db.Uuid
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  elemento_patrimonial elemento_patrimonial @relation(fields: [elemento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  objetivo_financiero  objetivo_financiero  @relation(fields: [objetivo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([objetivo_id, elemento_id])
 }
