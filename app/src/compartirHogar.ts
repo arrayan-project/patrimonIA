@@ -1,5 +1,6 @@
 import { api, type ElementoPatrimonialDTO } from './api/client';
 import type { OpcionSelect } from './ui';
+import { guardadoDe, type Respuestas } from './compartirPreguntas';
 
 /**
  * D-2 — "¿Qué compartes de esta cuenta con el hogar?": una pregunta con 4
@@ -62,6 +63,28 @@ export function nivelDe(el: ElementoPatrimonialDTO): NivelHogar | 'personalizado
       DEF[k].niveles.MOVIMIENTOS === vpt.MOVIMIENTOS,
   );
   return n ?? 'personalizado';
+}
+
+/**
+ * Bloque S — guarda las respuestas de las preguntas (compartirPreguntas.ts) con
+ * los mismos dos comandos de siempre: visibilidad por tipo y, si cambia, si
+ * suma al hogar.
+ */
+export async function aplicarRespuestas(
+  token: string,
+  elementoId: string,
+  r: Respuestas,
+  consolidaAntes: boolean,
+): Promise<void> {
+  const g = guardadoDe(r);
+  await api.post(
+    '/comandos/DefinirVisibilidadElementoPatrimonial',
+    { elementoId, niveles: g.niveles, compartidoCon: [] },
+    token,
+  );
+  if (g.consolida !== consolidaAntes) {
+    await api.post('/comandos/CambiarParticipacionEnConsolidacion', { elementoId, participa: g.consolida }, token);
+  }
 }
 
 /**
