@@ -109,4 +109,10 @@ export interface DesviacionPresupuestariaDTO {
   porObjetivo: DesviacionObjetivoDTO[];
   /** Ingreso y gasto real del período sin categoría asignada. */
   sinClasificar: { ingresos: number; gastos: number };
+  /**
+   * H1 — FAMILIAR: lo de cuentas cuyos movimientos el actor no puede ver (§B1)
+   * no entra en `porRubro` ni en `sinClasificar`; va acá, una línea por dueño.
+   * `real` lo sigue sumando. Vacío en un INDIVIDUAL.
+   */
+  privados: { usuarioId: string; nombre: string; ingresos: number; gastos: number }[];
 }

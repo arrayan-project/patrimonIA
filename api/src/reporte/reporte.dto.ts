@@ -60,6 +60,21 @@ export interface ResumenFinancieroDTO {
   /** Un rubro por (categoría, tipo); "Sin clasificar" para los eventos sin categoría. */
   porRubro: RubroReporteDTO[];
   movimientos: MovimientoReporteDTO[];
+  /**
+   * H1 — "Del hogar": lo de cuentas cuyos movimientos el actor no puede ver
+   * (§B1) no va en `movimientos` ni en `porRubro`; su monto va acá, una línea
+   * por dueño y moneda ("🔒 Movimientos privados de [nombre]"). `porMoneda`
+   * sigue sumándolo. Vacío en "Lo mío".
+   */
+  privados: MovimientosPrivadosDTO[];
+}
+
+export interface MovimientosPrivadosDTO {
+  usuarioId: string;
+  nombre: string;
+  moneda: string;
+  ingresos: number;
+  gastos: number;
 }
 
 export interface ResumenAnualDTO {

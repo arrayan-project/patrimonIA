@@ -436,6 +436,8 @@ export interface DesviacionPresupuestariaDTO {
   porRubro: DesviacionRubroDTO[];
   porObjetivo: DesviacionObjetivoDTO[];
   sinClasificar: { ingresos: number; gastos: number };
+  /** H1: FAMILIAR — lo de cuentas cuyos movimientos no puedes ver, por dueño (sin desglose). */
+  privados?: { usuarioId: string; nombre: string; ingresos: number; gastos: number }[];
 }
 
 export interface NotificacionDTO {
@@ -616,6 +618,16 @@ export interface ResumenFinancieroDTO {
   porMoneda: TotalesPorMoneda[];
   porRubro: RubroReporteDTO[];
   movimientos: MovimientoReporteDTO[];
+  /** H1: "Del hogar" — lo de cuentas cuyos movimientos no puedes ver, por dueño y moneda (sin detalle). */
+  privados?: MovimientosPrivadosDTO[];
+}
+
+export interface MovimientosPrivadosDTO {
+  usuarioId: string;
+  nombre: string;
+  moneda: string;
+  ingresos: number;
+  gastos: number;
 }
 
 export interface ResumenAnualDTO {

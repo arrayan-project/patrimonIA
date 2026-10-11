@@ -1,11 +1,13 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import type {
   AlcanceReporte,
   FotoMesDTO,
   FotoMesPorMonedaDTO,
   LineaFotoMesDTO,
   MovimientoReporteDTO,
+  MovimientosPrivadosDTO,
   ResumenAnualDTO,
   ResumenFinancieroDTO,
   RubroReporteDTO,
@@ -27,6 +29,8 @@ interface MovimientoInterno {
   elementoDestinoId: string | null;
   registradoEn: string;
   contraparte: { usuarioId: string; nombre: string } | null;
+  /** H1: el actor no puede ver los movimientos de ninguna cuenta del evento; el dueño, para la línea 🔒. */
+  privadoDe: { usuarioId: string; nombre: string } | null;
 }
 
 /**
@@ -38,7 +42,10 @@ interface MovimientoInterno {
  */
 @Injectable()
 export class ReporteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly elementos: ElementoService,
+  ) {}
 
   async resumenPeriodo(
     actorId: string,
@@ -55,12 +62,14 @@ export class ReporteService {
     // G42: en "Lo mío", solo las cuentas del día a día que se pidan.
     let elementoIds = await this.#elementosEnAlcance(actorId, alcance, hogarId);
     if (cuentas && alcance === 'mios') elementoIds = elementoIds.filter((id) => cuentas.includes(id));
-    const movs = await this.#movimientosDelPeriodo(elementoIds, desde, hasta, actorId);
+    const todos = await this.#movimientosDelPeriodo(elementoIds, desde, hasta, actorId, alcance === 'hogar');
+    // H1: los totales suman todo; el detalle, solo lo que el actor puede ver.
+    const movs = todos.filter((m) => !m.privadoDe);
 
     const etiquetasPorEvento = await this.#etiquetasPorEvento(movs.map((m) => m.eventoId));
     const categorias = await this.#categorias(movs.map((m) => m.categoriaId));
 
-    const porMoneda = this.#totalesPorMoneda(movs);
+    const porMoneda = this.#totalesPorMoneda(todos);
 
     // porRubro: (categoriaId | null, tipo) → total. SALDO_INICIAL entra como un
     // rubro de ingreso propio ("Saldo inicial"); las transferencias no.
@@ -108,7 +117,23 @@ export class ReporteService {
           contraparte: m.contraparte,
         }),
       ),
+      privados: this.#privados(todos),
     };
+  }
+
+  /** H1 — lo privado, sumado por dueño y moneda (solo lo que cuenta en los totales). */
+  #privados(movs: MovimientoInterno[]): MovimientosPrivadosDTO[] {
+    const acc = new Map<string, MovimientosPrivadosDTO>();
+    for (const m of movs) {
+      if (!m.privadoDe) continue;
+      if (m.tipo !== 'INGRESO' && m.tipo !== 'GASTO' && m.tipo !== 'SALDO_INICIAL') continue;
+      const key = `${m.privadoDe.usuarioId}|${m.moneda}`;
+      const fila = acc.get(key) ?? { ...m.privadoDe, moneda: m.moneda, ingresos: 0, gastos: 0 };
+      if (m.tipo === 'GASTO') fila.gastos += m.monto;
+      else fila.ingresos += m.monto;
+      acc.set(key, fila);
+    }
+    return [...acc.values()];
   }
 
   async resumenAnual(
@@ -280,6 +305,8 @@ export class ReporteService {
     desde: Date,
     hasta: Date,
     actorId: string,
+    /** H1: en "Del hogar", marcar lo que el actor no puede ver (§B1). */
+    conPrivacidad = false,
   ): Promise<MovimientoInterno[]> {
     if (elementoIds.length === 0) return [];
 
@@ -340,6 +367,27 @@ export class ReporteService {
       if (!duenoDe.has(d.elemento_id)) duenoDe.set(d.elemento_id, { usuarioId: d.usuario.id, nombre: d.usuario.nombre });
     }
 
+    // H1: cuentas cuyos movimientos ve el actor, y el dueño de las que no.
+    const visibles = conPrivacidad
+      ? await this.elementos.conMovimientosVisibles(
+          todosLosImpactos.map((i) => i.elemento_id),
+          actorId,
+        )
+      : null;
+    const noVisibles = visibles
+      ? [...new Set(todosLosImpactos.map((i) => i.elemento_id))].filter((id) => !visibles.has(id))
+      : [];
+    const duenoPrivado = new Map<string, { usuarioId: string; nombre: string }>();
+    if (noVisibles.length > 0) {
+      const ps = await this.prisma.elemento_propietario.findMany({
+        where: { elemento_id: { in: noVisibles } },
+        select: { elemento_id: true, usuario: { select: { id: true, nombre: true } } },
+      });
+      for (const p of ps) {
+        if (!duenoPrivado.has(p.elemento_id)) duenoPrivado.set(p.elemento_id, { usuarioId: p.usuario.id, nombre: p.usuario.nombre });
+      }
+    }
+
     const filas: MovimientoInterno[] = [];
     for (const e of eventos) {
       if (e.correccion_de_id) continue; // el compensatorio se pliega en su raíz
@@ -354,6 +402,8 @@ export class ReporteService {
         : null;
       // G39: la cuenta de donde salió (impacto negativo) y a donde llegó (positivo).
       const propiosDelEvento = todosLosImpactos.filter((i) => i.origen_id === e.id);
+      // Privado: ninguna cuenta del evento le muestra sus movimientos al actor.
+      const privado = visibles !== null && !propiosDelEvento.some((i) => visibles.has(i.elemento_id));
       const origen = propiosDelEvento.find((i) => Number(i.monto) < 0);
       const destino = propiosDelEvento.find((i) => Number(i.monto) > 0);
       filas.push({
@@ -371,6 +421,9 @@ export class ReporteService {
         registradoEn: e.created_at.toISOString(),
         contraparte: esInterno(e.tipo)
           ? (propiosDelEvento.map((i) => !propios.has(i.elemento_id) && duenoDe.get(i.elemento_id)).find(Boolean) || null)
+          : null,
+        privadoDe: privado
+          ? (propiosDelEvento.map((i) => duenoPrivado.get(i.elemento_id)).find(Boolean) ?? { usuarioId: '', nombre: 'otra persona' })
           : null,
       });
     }

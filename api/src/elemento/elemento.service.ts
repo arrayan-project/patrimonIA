@@ -897,6 +897,30 @@ export class ElementoService {
     return hogaresProp.some((m) => setActor.has(m.hogar_id));
   }
 
+  /**
+   * H1 (privacidad del hogar) — de estos elementos, los que muestran sus
+   * MOVIMIENTOS al actor: los propios y los de co-miembros con visibilidad de
+   * movimientos (§B1). Lo usan las vistas "Del hogar" (reportes, presupuesto
+   * FAMILIAR, eventos del hogar) para no devolver el detalle de lo privado.
+   */
+  async conMovimientosVisibles(elementoIds: string[], actorId: string): Promise<Set<string>> {
+    const ids = [...new Set(elementoIds)];
+    if (ids.length === 0) return new Set();
+    const [els, props] = await Promise.all([
+      this.prisma.elemento_patrimonial.findMany({ where: { id: { in: ids } } }),
+      this.prisma.elemento_propietario.findMany({
+        where: { elemento_id: { in: ids } },
+        select: { elemento_id: true, usuario_id: true },
+      }),
+    ]);
+    const visibles = new Set<string>();
+    for (const el of els) {
+      const propIds = props.filter((p) => p.elemento_id === el.id).map((p) => p.usuario_id);
+      if (await this.#puedeVer(el, actorId, 'MOVIMIENTOS', propIds)) visibles.add(el.id);
+    }
+    return visibles;
+  }
+
   /** ¿El actor puede ver los MOVIMIENTOS del elemento? (usado por evento.service) */
   async puedeVerMovimientos(elementoId: string, actorId: string): Promise<boolean> {
     const el = await this.prisma.elemento_patrimonial.findUnique({ where: { id: elementoId } });
