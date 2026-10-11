@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { View } from 'react-native';
 import { api, ApiError, type ElementoPatrimonialDTO, type HogarDTO, type MiembroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
 import { useCargaAlEnfocar } from '../hooks/useCargaAlEnfocar';
@@ -6,13 +7,17 @@ import { useTitulo } from '../navigation/navigator';
 import { money } from '../format';
 import { emojiElemento } from '../emojis';
 import { usePreferencias } from '../preferencias';
-import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
-import { Elegir, ErrorText, ListCard, Nota, Screen, Section, Skeleton, TxRow, useGuardarAlInstante } from '../ui';
+import { aplicarRespuestas } from '../compartirHogar';
+import { guardadoDe, respuestaCorta, respuestasDe, type Respuestas } from '../compartirPreguntas';
+import { cuentasDelDia } from '../fotoMes';
+import { ErrorText, ListCard, Nota, Screen, Section, Skeleton, TxRow, useGuardarAlInstante } from '../ui';
+import { PreguntasCompartir } from './CompartirConHogar';
 
 /**
  * G39 (H4): todas tus cuentas en una lista, ordenadas en lo que suma al hogar
- * y lo que no, con lo que ve el hogar de cada una. Tocar una abre la hoja con
- * los 4 niveles de Ajustes de la cuenta y se guarda al instante.
+ * y lo que no, con su respuesta corta ("🏠 Del hogar · 🔒 movimientos
+ * privados"). Bloque S: tocar una abre debajo las mismas preguntas y la
+ * tarjeta "Así lo ve" de Ajustes de la cuenta; se guarda al instante.
  */
 export function QueCompartesScreen() {
   const { token, usuario } = useSession();
@@ -21,6 +26,7 @@ export function QueCompartesScreen() {
   const [cuentas, setCuentas] = useState<ElementoPatrimonialDTO[] | null>(null);
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
   const [error, setError] = useState('');
+  const [abierta, setAbierta] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setError('');
@@ -38,17 +44,6 @@ export function QueCompartesScreen() {
 
   const pareja = miembros.length === 1 ? miembros[0].nombre : undefined;
   useTitulo(`Qué compartes con ${pareja ?? 'el hogar'}`);
-  // Corto, para que quepa en la fila junto al saldo.
-  const ve = pareja ? 'Ve' : 'Ven';
-  const corto = (el: ElementoPatrimonialDTO) =>
-    ({
-      nada: '🔒 Solo tú la ves',
-      transferir: pareja ? '🔁 Puede transferirte' : '🔁 Pueden transferirte',
-      saldo: `👀 ${ve} el saldo`,
-      todo: `👀 ${ve} todo`,
-      personalizado: '⚙️ A tu medida',
-    })[nivelDe(el)];
-
   if (!cuentas) {
     return (
       <Screen>
@@ -58,32 +53,44 @@ export function QueCompartesScreen() {
     );
   }
 
-  const cambiar = (el: ElementoPatrimonialDTO, v: string | null) => {
-    if (!v || v === nivelDe(el)) return;
+  // Optimista: la fila cambia de grupo al tiro; si falla, se recarga lo guardado.
+  const responder = (el: ElementoPatrimonialDTO, r: Respuestas) => {
+    const g = guardadoDe(r);
+    setCuentas((cs) =>
+      (cs ?? []).map((x) => (x.id === el.id ? { ...x, participaConsolidacion: g.consolida, visibilidadPorTipo: g.niveles } : x)),
+    );
     void guardar(
-      () => aplicarNivel(token, el.id, v as NivelHogar, el.participaConsolidacion),
+      () => aplicarRespuestas(token, el.id, r, el.participaConsolidacion),
       () => undefined,
     ).then(() => cargar());
   };
 
   const fila = (el: ElementoPatrimonialDTO) => (
-    <Elegir
-      key={el.id}
-      label={`¿Qué compartes de ${el.nombre}?`}
-      value={nivelDe(el) === 'personalizado' ? null : nivelDe(el)}
-      options={opcionesNivel(pareja)}
-      onChange={(v) => cambiar(el, v)}
-      boton={(abrir) => (
-        <TxRow
-          title={el.nombre}
-          subtitle={corto(el)}
-          amount={money(el.valorVigente, el.moneda)}
-          negativo={el.valorVigente < 0}
-          logo={{ emoji: emojiElemento(el, preferencias.emojis.elementos) }}
-          onPress={abrir}
-        />
+    <View key={el.id}>
+      <TxRow
+        title={el.nombre}
+        subtitle={respuestaCorta(respuestasDe(el))}
+        lineasSubtitulo={2}
+        amount={money(el.valorVigente, el.moneda)}
+        negativo={el.valorVigente < 0}
+        logo={{ emoji: emojiElemento(el, preferencias.emojis.elementos) }}
+        onPress={() => setAbierta((a) => (a === el.id ? null : el.id))}
+      />
+      {abierta === el.id && (
+        <View style={{ gap: 12, paddingVertical: 12 }}>
+          <PreguntasCompartir
+            categoriaFuncional={el.categoriaFuncional}
+            respuestas={respuestasDe(el)}
+            onChange={(r) => responder(el, r)}
+            pareja={pareja}
+            delDiaADia={cuentasDelDia([el], preferencias.mes.cuentas).includes(el.id)}
+            cuentaActual={el}
+            cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
+            yo={usuario.nombre.split(' ')[0]}
+          />
+        </View>
       )}
-    />
+    </View>
   );
 
   const suman = cuentas.filter((e) => e.participaConsolidacion);

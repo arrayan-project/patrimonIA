@@ -15,7 +15,7 @@ import {
 import { useSession } from '../auth/AuthContext';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { money } from '../format';
-import { etiquetaNivel } from '../compartirHogar';
+import { respuestaCorta, respuestasDe } from '../compartirPreguntas';
 import { emojiCategoria, emojiElemento, emojiMeta, emojiTipoMovimiento } from '../emojis';
 import { usePreferencias } from '../preferencias';
 import { irAAccion } from './AccionFormScreen';
@@ -245,7 +245,7 @@ export function ElementoDetalleScreen() {
               {
                 title: 'Ajustes de la cuenta',
                 emoji: '⚙️',
-                subtitle: `Con el hogar: ${etiquetaNivel(el).toLowerCase()}`,
+                subtitle: respuestaCorta(respuestasDe(el)),
                 onPress: () => nav.go('AjustesElemento', { elementoId }),
               },
               ...(el.admiteValorizacion && secundaria?.onPress !== registrarValorizacion

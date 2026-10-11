@@ -10,7 +10,6 @@ import { emojiElemento } from '../emojis';
 import { money } from '../format';
 import { conEmoji, usePreferencias } from '../preferencias';
 import {
-  Elegir,
   ElegirEmoji,
   ElegirVarios,
   ErrorText,
