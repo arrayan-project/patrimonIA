@@ -40,6 +40,10 @@ mismo archivo.
 | L-2 | La pestaña Hogar desaparece y se reparte su contenido. **No se pierde ninguna función.** | ✅ Juan, 2026-10-10 |
 | L-3 | Planificar obedece al lente. En "Lo mío": metas personales (`hogarId === null`) y presupuesto `INDIVIDUAL` vigente. En "Del hogar": metas con `hogarId` del hogar activo y presupuesto `FAMILIAR` vigente de ese hogar. | ✅ Juan, 2026-10-10 |
 | L-4 | Si el hogar activo tiene un solo miembro, el lente no se muestra y la app queda en "Lo mío". | ✅ Juan, 2026-10-10 |
+| L-9 | En "Del hogar", las solicitudes pendientes entre miembros no van en las alertas de Inicio: ya encabezan "Entre ustedes". En "Lo mío" siguen como alerta. | ✅ Juan, 2026-10-10 |
+| L-10 | "Ahorro sin meta" (Planificar) solo en "Lo mío": es plata personal. | ✅ Juan, 2026-10-10 |
+| L-11 | La frase del lente en "Primeros pasos" ("Arriba eliges si ves lo tuyo o lo del hogar") solo aparece cuando hay lente. | ✅ Juan, 2026-10-10 |
+| L-12 | Inicio obedece al lente igual que Planificar (L-3): en "Lo mío", "Tus metas" muestra solo metas personales (`hogarId === null`) y la alerta de presupuesto excedido usa el `INDIVIDUAL` vigente; en "Del hogar", el `FAMILIAR` del hogar activo. | ✅ Juan, 2026-10-10 |
 
 ## 3. Adónde va cada pieza de la pestaña Hogar
 

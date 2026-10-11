@@ -160,7 +160,7 @@ mensual · T2 = ocasional · T3 = raro o avanzado.
   hogar". Lo que era propio de la pestaña Hogar quedó en Inicio "Del hogar"
   (🤝 Entre [miembro] y tú, el atajo para transferirle) y en ⚙️ Ajustes › Hogar
   (Personas del hogar · Qué compartes · Invitar a alguien · Invitaciones). Las
-  rutas de H1, H4, H6, M4, M7 y M9 de abajo ya están reescritas.
+  rutas de H1, H4, H6, M4, M7, M9 y A7 de abajo ya están reescritas.
 
 **Anatomía de Gasté / Recibí / Moví plata** (`RegistrarMovimientoScreen`, se
 usa en 15 escenarios). Una pantalla, en este orden:
@@ -988,9 +988,18 @@ pareja ve la meta pero no puede aportar.
 | 5 | Nueva meta | "¿Cuánto quieres juntar?" | Escribe el monto | campo |
 | 6 | Nueva meta | — | "Guardar" | 1 |
 
-*La pareja, cada aporte:* Hogar → 🎯 Metas del hogar → 🐷 Ahorrar → como A1
-desde la meta (cuenta de la última vez, "Todo lo libre" o monto) → Guardar:
-**4 toques + monto**.
+*La pareja, cada aporte (ruta de L1, `LENTE_HOGAR_S04.md`; la pestaña Hogar ya no existe)*
+
+| # | Dónde | Qué ve | Qué hace | Toques |
+|---|-------|--------|----------|--------|
+| 1 | Cualquier pestaña | — | Toca la pestaña Planificar | 1 |
+| 2 | Planificar | Lente en "Del hogar" (si estaba en "Lo mío"); "Metas del hogar" | Toca "Del hogar" | 0 o 1 |
+| 3 | Planificar "Del hogar" | La meta en "Metas del hogar" | Toca la meta | 1 |
+| 4 | Meta | 🐷 Ahorrar | Lo toca | 1 |
+| 5 | Ahorrar (meta elegida) | Como A1 desde la meta: cuenta de la última vez, "Todo lo libre" o monto | Escribe el monto y "Guardar" | campo + 1 |
+
+**4 toques + monto** (5 si el lente estaba en "Lo mío"); antes, desde la
+pestaña Hogar, 4 + monto.
 Si una meta del hogar no la deja ahorrar, la Meta dice "👀 [quien la creó]
 no te agregó para ahorrar en esta meta" en vez de no mostrar el botón.
 
