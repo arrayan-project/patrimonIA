@@ -1,7 +1,7 @@
 # Metas con cuentas dedicadas — Sesión 04
 
 **Ubicación en el repo:** `Docs/usabilidad/METAS_CUENTAS_S04.md`
-**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** propuesta; Juan respondió 2 de las 5 preguntas (§3), faltan 3. Sin código.
+**Fecha:** 2026-10-10 · **Línea base:** `main` en `8cb95bf` · **Estado:** propuesta aprobada (las 5 preguntas de §3 respondidas, 2026-10-11). Se implementa después del Bloque 2 de `LENTE_HOGAR_S04.md`.
 
 ## 0. Problema
 
@@ -138,14 +138,17 @@ intención). Propuesta:
 - Los apartados de "cuenta completa" **no se convierten solos**: la app
   pregunta una vez en la meta — §2.3 tal como está.
 
-**Pendientes:**
+**Respondidas (Juan, 2026-10-11, segunda tanda):**
+- **No se dedican bienes (`ACTIVO`).** M-5 queda igual.
+- **Al quitar una cuenta de una meta**, se pregunta si conservar lo que tiene
+  como apartado, **sin opción preelegida** (`QuitarCuentaDeObjetivo` exige
+  `conservarComoApartado` explícito; la pantalla no marca ninguna).
+- **Ahorro real en el presupuesto** (`porObjetivo`): lo **transferido** a las
+  cuentas dedicadas en el período, **neto de retiros**; la valorización no
+  cuenta. Se suma a las reservas creadas en el período, como hoy.
+- **Sin aviso** cuando una cuenta dedicada baja de valor. La meta muestra el
+  cambio del mes por el valor de sus cuentas: "📉 −X este mes" (o "📈 +X este
+  mes"), junto a "🏦 Cuentas de esta meta".
 
-1. ~~¿Tabla propia o columna en la cuenta?~~ Respondida.
-2. ¿Se pueden dedicar bienes (`ACTIVO`, p. ej. el auto para "Cambiar de auto")?
-   La propuesta dice que no (M-5), como "Ahorrar".
-3. Al quitar una cuenta de una meta, ¿por defecto se conserva lo que tiene como
-   apartado fijo?
-4. En el presupuesto, "ahorro real hacia una meta" hoy son las reservas creadas
-   en el período. Con cuentas dedicadas, ¿cuenta lo que se transfirió a ellas
-   en el período (y no su valorización)?
-5. ¿Se avisa cuando una cuenta dedicada baja de valor y la meta retrocede?
+Con esto no quedan preguntas abiertas: M se implementa después del Bloque 2
+de `LENTE_HOGAR_S04.md`, en su propia rama, con la migración 030.
