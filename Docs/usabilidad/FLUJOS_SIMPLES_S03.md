@@ -869,6 +869,17 @@ que no llega a 4: junta dos cuentas en una sola operación.
 **Lo que cuesta:** nada relevante.
 **Objetivo (✅ se mantiene):** ya se ve en el Inicio sin tocar nada.
 
+*Ruta desde L2 (`LENTE_HOGAR_S04.md` §5, L-7):* "Puedes gastar hoy" salió del
+Inicio, porque sumaba lo que sobró de meses anteriores. El avance de cada meta
+sigue en "Tus metas" del Inicio (0 toques); cuánto queda libre está en Tu plata:
+
+| # | Dónde | Qué ve | Toques |
+|---|-------|--------|--------|
+| 1 | Inicio | En "Tus metas", el avance de cada una | 0 |
+| 2 | Tu plata | Toca "🏦 Tu plata hoy"; arriba, 💵 Plata disponible − 🐷 Guardado para metas − 👥 De otras personas = **✅ Libre en tus cuentas** ("Incluye lo que sobró de otros meses") | 1 |
+
+**Conteo L2:** 2 pantallas · 1 toque.
+
 #### A4 — Mi Fintual rentó; actualizo cuánto vale
 
 **Actual**

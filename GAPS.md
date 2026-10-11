@@ -49,7 +49,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38, G41, G42, G43 |
 | **H** · Notificaciones | G20 | — |
-| **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloque 1 hecho) | G25, G32, G35, G39 |
+| **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloque 1 hecho, Bloque 2 en revisión) | G25, G32, G35, G39 |
 
 ---
 
@@ -68,7 +68,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
 | — | **G45** | "Del hogar" respeta lo que cada uno comparte. **H1 (fuga de privacidad)** mergeado y con push (8cb95bf, 2026-10-10). **H2** (un solo universo del hogar, reabre G16) implementado en la rama `feat/hogar-universo-unico`, sin merge. **Falta:** que Juan y Zoily revisen "Qué compartes" con sus datos reales antes de desplegar H2. | 🟡 H2 en revisión |
-| — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Falta:** Bloque 2 (Inicio responde las dos preguntas) y Bloque 3 (la historia del mes). | 🟡 |
+| — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Bloque 2** (Inicio responde las dos preguntas) implementado en la rama `feat/L2-inicio-dos-preguntas` (sobre H2 y S), sin merge. **Falta:** prueba de Juan del Bloque 2 y su merge (después de H2 y S); Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
 ## 1.2 Detalle por tema
@@ -736,7 +736,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   Juan reportan que sus números personales no calzan (camino barato: etiqueta
   informativa sin tocar saldos). Ver [`Docs/usabilidad/DECISIONES_FASE_D_S01.md`](Docs/usabilidad/DECISIONES_FASE_D_S01.md) §3.
 
-#### G44 — Lente del hogar: las dos preguntas sin acertijos  🟡 PARCIAL (Bloque 1 aprobado por Juan y mergeado desde `feat/L1-lente-hogar`, 2026-10-10; Bloques 2 y 3 pendientes)
+#### G44 — Lente del hogar: las dos preguntas sin acertijos  🟡 PARCIAL (Bloque 1 mergeado, 2026-10-10; Bloque 2 implementado en `feat/L2-inicio-dos-preguntas`, en revisión; Bloque 3 pendiente)
 - **Fuente de verdad**: [`Docs/usabilidad/LENTE_HOGAR_S04.md`](Docs/usabilidad/LENTE_HOGAR_S04.md)
   (diagnóstico, decisiones L-1 a L-8 y pasos por bloque).
 - **Pregunta original** (Juan, 2026-10-10): la app conserva todo lo que tiene,
@@ -770,7 +770,18 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   es la pantalla de entrada, así que siempre ocurre; si algún día se entra
   directo a Movimientos o Planificar, el lente se vería hasta que Inicio
   cargue.
-- **Falta**: Bloques 2 y 3.
+- **Bloque 2 (rama `feat/L2-inicio-dos-preguntas`, creada desde
+  `feat/compartir-dos-preguntas`; sin merge, 2026-10-11)**: L-5/L-6 Inicio en
+  dos bloques, primero 📅 El mes con "Te queda / Les queda de [mes]" como cifra
+  principal y la barra Entró / Salió (en "Del hogar", con las líneas 🏠 Entró /
+  🚪 Salió del hogar de G45 H2 dentro de "Les queda"), después 🏦 El patrimonio
+  sin la resta · L-7 "✅ Libre en tus cuentas" en Tu plata (Secciones del
+  Inicio sin "Puedes gastar"; la clave `dashboard.disponibilidad` queda sin
+  uso) · L-8 tarjeta de cierre del ciclo, solo en "Lo mío", los primeros 7 días,
+  si el ciclo anterior dejó sobrante; cualquiera de sus tres acciones la oculta
+  para ese ciclo (`preferencias.visualizacion.mes.cierreVisto`); Ahorrar acepta
+  `monto`. Tests de `cierreCiclo.ts`; capturas en `Docs/usabilidad/capturas/l2/`.
+- **Falta**: prueba de Juan del Bloque 2 y merge (orden: H2 → S → L2); Bloque 3.
 
 ---
 
