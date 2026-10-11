@@ -247,7 +247,7 @@ objetivo_financiero
   created_at TIMESTAMPTZ NOT NULL
 ```
 
-Nota: `progreso_acumulado` no es columna — es una proyección calculada (Sección M/N del DDD: “resultado derivado”, “no se persiste como entidad de negocio”). Se calcula en tiempo de consulta sumando `reserva.monto WHERE estado = 'ACTIVA'` para las asignaciones asociadas a este objetivo, o se materializa en una tabla de proyección de lectura separada (ver sección 11) si el cálculo en vivo resulta costoso.
+Nota: `progreso_acumulado` no es columna — es una proyección calculada (Sección M/N del DDD: “resultado derivado”, “no se persiste como entidad de negocio”). Se calcula en tiempo de consulta sumando `reserva.monto WHERE estado = 'ACTIVA'` para las asignaciones asociadas a este objetivo, o se materializa en una tabla de proyección de lectura separada (ver sección 11) si el cálculo en vivo resulta costoso. Desde la migración 030 (G46) suma además el `valor_vigente` de las cuentas dedicadas (`objetivo_cuenta_dedicada`).
 
 # 10. Presupuesto (Agregado K)
 
@@ -362,6 +362,7 @@ Cada migración cita el gap de `GAPS.md` que la motivó.
 | 002 | `presupuesto.usuario_id` + `presupuesto.hogar_id` (FK) + CHECK `ck_presupuesto_propietario` | GAPS G15. INDIVIDUAL → `usuario_id` = creador, `hogar_id` NULL; FAMILIAR → ambos. |
 | 021 | `objetivo_financiero.hogar_id` (FK, nullable) + tabla **`objetivo_designado`** (`objetivo_id`, `usuario_id`) | GAPS G13/P9. Un objetivo puede compartirse con un hogar: todos los miembros lo ven, los **designados** lo modifican, el admin asigna. |
 | 022 | `moneda` en `objetivo_financiero` (NOT NULL DEFAULT 'CLP'), `asignacion` (nullable — hereda del elemento origen), `presupuesto` (NOT NULL DEFAULT 'CLP') | GAPS G16/P11. **Etiqueta**, sin conversión: solo afecta a esa entidad, no se ramifica. |
+| 030 | Tabla **`objetivo_cuenta_dedicada`** (`objetivo_id` FK ON DELETE CASCADE, `elemento_id` FK, `created_at`; PK compuesta y `UNIQUE (elemento_id)`) | GAPS G46. "🏦 Esta cuenta es para esta meta": el progreso suma el valor actual de la cuenta. Tabla del agregado Objetivo (no columna en la cuenta); una cuenta, una sola meta. |
 
 ## Reconstrucción histórica
 
@@ -431,6 +432,7 @@ Cada migración cita el gap de `GAPS.md` que la motivó.
 | Visibilidad granular | `elemento_visibilidad`, `elemento_comparticion` | 016 |
 | Línea de presupuesto (por rubro / por objetivo) | `presupuesto_linea`, `presupuesto_linea_ahorro` | 010, 019 |
 | Objetivo compartido por hogar | `objetivo_designado` (+ `objetivo_financiero.hogar_id`) | 021 |
+| Cuenta dedicada a una meta | `objetivo_cuenta_dedicada` | 030 |
 | Plantilla de movimiento (personal) | `plantilla_movimiento` | 011 |
 | Tipo de cambio (global, inmutable) | `tipo_cambio` | 007 |
 | Notificación / push (infraestructura) | `notificacion`, `dispositivo_push` | 005, 008 |

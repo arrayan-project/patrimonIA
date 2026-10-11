@@ -162,7 +162,7 @@ de una ocurrencia vencida es una notificación `PROGRAMADO_VENCIDO` con
 
 | Endpoint | Devuelve |
 | --- | --- |
-| `GET /objetivos-financieros/{id}` | ObjetivoFinancieroDTO con progreso calculado (proyección `progreso_objetivo`, DB design sección 12) |
+| `GET /objetivos-financieros/{id}` | ObjetivoFinancieroDTO con progreso calculado (proyección `progreso_objetivo`, DB design sección 12). G46: `progresoApartado`, `progresoCuentas`, `cuentasDedicadas[]` (elementoId, nombre, valor, moneda), `cambioMesCuentas` y, solo aquí, `sugerenciasCuentaCompleta[]` |
 | `GET /objetivos-financieros?estado=EN_PROGRESO` | Objetivos activos del usuario/hogar |
 
 # A. Hogar
@@ -266,7 +266,9 @@ Los de G33 (orquestaciones sobre comandos existentes; errores con `codigo`):
 
 | Endpoint | AS # | Input clave |
 |---|---|---|
-| `POST /comandos/AhorrarParaObjetivo` | #79 | objetivoId, asignacionId?, destinoId?, origenes[] (elementoId, monto), fecha? |
+| `POST /comandos/AhorrarParaObjetivo` | #79 | objetivoId, asignacionId?, destinoId?, origenes[] (elementoId, monto), fecha? — `reservaId` null si el destino es una cuenta dedicada de la meta (G46) |
+| `POST /comandos/DedicarCuentaAObjetivo` | #86 | objetivoId, elementoId — responde 200 (G46) |
+| `POST /comandos/QuitarCuentaDeObjetivo` | #87 | objetivoId, elementoId, conservarComoApartado (obligatorio) — responde 200 (G46) |
 | `POST /comandos/RegistrarPlataDeOtraPersona` | #80 | direccion (ENTRA/SALE), cuentaId, monto, persona, fecha?, glosa?, anularIngresoId?, registrarEntrada? |
 | `POST /comandos/RegistrarGastoCompartido` | #81 | campos de un GASTO + partes[] (usuarioId, monto) + cuentaDestinoId |
 | `POST /comandos/AvisarTransferenciaSinAnotar` | #82 | usuarioId, monto, cuentaDestinoId, fecha? |

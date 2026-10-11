@@ -805,6 +805,17 @@ de intención — no afecta patrimonio ni las reservas asociadas.
 **etiqueta** (sin conversión): solo afecta a esa entidad, no se ramifica. La
 reserva usa la moneda de su elemento origen.
 
+**Cuentas dedicadas** (GAPS G46, `Docs/usabilidad/METAS_CUENTAS_S04.md`). El
+objetivo puede tener cuentas dedicadas ("🏦 Esta cuenta es para esta meta"):
+`DedicarCuentaAObjetivo` / `QuitarCuentaDeObjetivo`. Invariantes: una cuenta
+se dedica a **una sola** meta; solo `LIQUIDEZ`, `RESERVA` o `INVERSION` en la
+moneda de la meta; en una meta del hogar, el hogar ve el saldo de la cuenta.
+**Progreso = Σ reservas ACTIVAS + Σ valor vigente de sus cuentas dedicadas**:
+sube y baja con la cuenta, y "Completar objetivo" se evalúa también al
+valorizar o mover una cuenta dedicada (solo completa). El valor libre de una
+cuenta dedicada es 0 (nada se aparta de ella para otra meta), lo que mantiene
+el invariante de Reserva aunque la cuenta baje de valor.
+
 ## X.6 · Presupuesto (§K)
 
 **Propiedad** (GAPS G15): INDIVIDUAL → del creador; FAMILIAR → del hogar.
@@ -829,7 +840,7 @@ moneda) — GAPS G7.
 | Elemento Patrimonial | `DefinirVisibilidadElementoPatrimonial` |
 | Evento Financiero | `CrearCategoriaMovimiento`, `ActualizarCategoriaMovimiento`, `ArchivarCategoriaMovimiento`, `ReordenarCategoriasMovimiento`, `CrearEtiqueta`, `ActualizarEtiqueta`, `EliminarEtiqueta`, `EtiquetarEvento`, `CrearPlantillaMovimiento`, `ActualizarPlantillaMovimiento`, `EliminarPlantillaMovimiento` |
 | Elemento Patrimonial (visualización) | `CrearAgrupacion`, `ActualizarAgrupacion`, `EliminarAgrupacion`, `DefinirElementosAgrupacion`, `CrearTipoElemento`, `ActualizarTipoElemento`, `ArchivarTipoElemento` |
-| Objetivo Financiero | `CompartirObjetivoConHogar`, `DefinirDesignadosObjetivo` |
+| Objetivo Financiero | `CompartirObjetivoConHogar`, `DefinirDesignadosObjetivo`, `DedicarCuentaAObjetivo`, `QuitarCuentaDeObjetivo` (G46) |
 | Presupuesto | `DefinirLineasPresupuesto`, `DefinirLineasAhorroPresupuesto`, `CambiarAlcancePresupuesto` (G36) |
 | Tipo de Cambio | `RegistrarTipoCambio` |
 | Orquestaciones de G33 (sobre comandos existentes) | `AhorrarParaObjetivo`, `RegistrarPlataDeOtraPersona`, `RegistrarGastoCompartido`, `AvisarTransferenciaSinAnotar`, `PagarSolicitud`, `RechazarSolicitud` |
