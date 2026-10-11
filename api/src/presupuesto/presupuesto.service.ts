@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, type presupuesto as PresupuestoRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ElementoService } from '../elemento/elemento.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import {
   esVigente,
@@ -46,6 +47,7 @@ export class PresupuestoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly elementos: ElementoService,
   ) {}
 
   /** AS #49 — CrearPresupuesto. Auditoría: Creación — usuario/hogar, tipo, período, montos esperados. */
@@ -580,11 +582,39 @@ export class PresupuestoService {
       cur[tipo] += monto;
       realPorCat.set(catId, cur);
     };
+    // H1: en un FAMILIAR, lo privado de otros miembros suma al real pero no se desglosa.
+    const privados = new Map<string, { usuarioId: string; nombre: string; ingresos: number; gastos: number }>();
     if (elementoIds.length > 0) {
       const impactos = await this.prisma.impacto_patrimonial.findMany({
         where: { elemento_id: { in: elementoIds }, origen_tipo: 'EVENTO_FINANCIERO' },
-        select: { origen_id: true },
+        select: { origen_id: true, elemento_id: true },
       });
+      const visibles = p.hogar_id ? await this.elementos.conMovimientosVisibles(elementoIds, actorId) : null;
+      const cuentasDe = new Map<string, string[]>();
+      for (const i of impactos) cuentasDe.set(i.origen_id, [...(cuentasDe.get(i.origen_id) ?? []), i.elemento_id]);
+      const noVisibles = visibles ? elementoIds.filter((id) => !visibles.has(id)) : [];
+      const duenoDe = new Map<string, { usuarioId: string; nombre: string }>();
+      if (noVisibles.length > 0) {
+        const ps = await this.prisma.elemento_propietario.findMany({
+          where: { elemento_id: { in: noVisibles } },
+          select: { elemento_id: true, usuario: { select: { id: true, nombre: true } } },
+        });
+        for (const x of ps) if (!duenoDe.has(x.elemento_id)) duenoDe.set(x.elemento_id, { usuarioId: x.usuario.id, nombre: x.usuario.nombre });
+      }
+      const privadoDe = (eventoId: string) => {
+        if (!visibles) return null;
+        const cuentas = cuentasDe.get(eventoId) ?? [];
+        if (cuentas.some((id) => visibles.has(id))) return null;
+        return cuentas.map((id) => duenoDe.get(id)).find(Boolean) ?? { usuarioId: '', nombre: 'otra persona' };
+      };
+      const sumarPrivado = (eventoId: string, tipo: 'ingresos' | 'gastos', monto: number) => {
+        const d = privadoDe(eventoId);
+        if (!d) return false;
+        const fila = privados.get(d.usuarioId) ?? { ...d, ingresos: 0, gastos: 0 };
+        fila[tipo] += monto;
+        privados.set(d.usuarioId, fila);
+        return true;
+      };
       const eventoIds = [...new Set(impactos.map((i) => i.origen_id))];
       const eventos = await this.prisma.evento_financiero.findMany({
         where: {
@@ -606,10 +636,10 @@ export class PresupuestoService {
         // en el resumen del mes (§G29), para que el Presupuesto y el Inicio cuadren.
         if (e.tipo === 'INGRESO' || e.tipo === 'SALDO_INICIAL') {
           real.ingresos += Number(e.monto);
-          sumarCat(e.categoria_id, 'ingresos', Number(e.monto));
+          if (!sumarPrivado(e.id, 'ingresos', Number(e.monto))) sumarCat(e.categoria_id, 'ingresos', Number(e.monto));
         } else if (e.tipo === 'GASTO') {
           real.gastos += Number(e.monto);
-          sumarCat(e.categoria_id, 'gastos', Number(e.monto));
+          if (!sumarPrivado(e.id, 'gastos', Number(e.monto))) sumarCat(e.categoria_id, 'gastos', Number(e.monto));
         }
         // TRANSFERENCIA / CONVERSION / PRESTAMO: no cuentan como
         // ingreso ni gasto del presupuesto del período.
@@ -643,6 +673,7 @@ export class PresupuestoService {
       porRubro,
       porObjetivo,
       sinClasificar: { ingresos: sinCat.ingresos, gastos: sinCat.gastos },
+      privados: [...privados.values()],
     };
   }
 

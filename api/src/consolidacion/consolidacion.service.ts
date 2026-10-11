@@ -234,9 +234,14 @@ export class ConsolidacionService {
     });
     const nombrePorId = new Map(elementosDelHogar.map((e) => [e.id, e.nombre]));
     // §M — el actor solo ve eventos que tocan un elemento consolidado del hogar
-    // o de su propiedad; los movimientos privados de otros miembros no se filtran.
+    // o de su propiedad. H1: de los consolidados de otros, solo los que le
+    // muestran sus MOVIMIENTOS (§B1); "Que vean el saldo" suma, pero su detalle es privado.
+    const visibles = await this.elementosSvc.conMovimientosVisibles(
+      elementosDelHogar.map((e) => e.id),
+      actorId,
+    );
     const elementoIds = elementosDelHogar
-      .filter((e) => e.participa_consolidacion || propiosDelActor.has(e.id))
+      .filter((e) => propiosDelActor.has(e.id) || (e.participa_consolidacion && visibles.has(e.id)))
       .map((e) => e.id);
 
     const impactosDelHogar = await this.prisma.impacto_patrimonial.findMany({
