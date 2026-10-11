@@ -7,6 +7,7 @@ import { cuentasDelDia } from '../fotoMes';
 import { PreguntasCompartir } from './CompartirConHogar';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { emojiElemento } from '../emojis';
+import { money } from '../format';
 import { conEmoji, usePreferencias } from '../preferencias';
 import {
   Elegir,
@@ -125,6 +126,8 @@ export function AjustesElementoScreen() {
           pareja={pareja}
           delDiaADia={cuentasDelDia([el], preferencias.mes.cuentas).includes(el.id)}
           cuentaActual={el}
+          cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
+          yo={usuario.nombre.split(' ')[0]}
         />
       </Section>
 

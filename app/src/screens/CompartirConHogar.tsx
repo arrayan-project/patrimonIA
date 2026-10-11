@@ -1,6 +1,8 @@
+import { View } from 'react-native';
 import type { Respuestas } from '../compartirPreguntas';
-import { esAMedida, preguntaHogar, preguntaTransferir, type CuentaCompartible } from '../compartirPreguntas';
-import { Nota, Segmented } from '../ui';
+import { asiLoVe, esAMedida, preguntaHogar, preguntaTransferir, type CuentaCompartible } from '../compartirPreguntas';
+import { Nota, Panel, Segmented, useC } from '../ui';
+import { Text } from '../ui/Text';
 
 const SI_NO = ['Sí', 'No'] as const;
 const sn = (b: boolean) => (b ? 'Sí' : 'No');
@@ -18,6 +20,8 @@ export function PreguntasCompartir({
   pareja,
   delDiaADia,
   cuentaActual,
+  cuenta,
+  yo,
 }: {
   categoriaFuncional: string;
   respuestas: Respuestas;
@@ -27,7 +31,13 @@ export function PreguntasCompartir({
   delDiaADia: boolean;
   /** La cuenta tal como está guardada (para avisar si tiene un ajuste a tu medida). */
   cuentaActual?: CuentaCompartible;
+  /** Para la tarjeta "Así lo ve": el nombre de la cuenta y su saldo ya formateado. */
+  cuenta: { nombre: string; saldo: string };
+  /** Tu nombre (para "Movimientos privados de [tú]"). */
+  yo: string;
 }) {
+  const c = useC();
+  const quien = pareja ?? 'el hogar';
   return (
     <>
       <Segmented
@@ -58,6 +68,16 @@ export function PreguntasCompartir({
       {cuentaActual && esAMedida(cuentaActual) && (
         <Nota>⚙️ Hoy tiene un ajuste a tu medida (en Más opciones); al cambiar una respuesta, se reemplaza.</Nota>
       )}
+      {/* La tarjeta es la explicación: cambia al tocar una respuesta. */}
+      <Panel style={{ backgroundColor: c.acentoSuave, borderColor: c.acentoSuave }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: c.text }}>{`👀 Así lo ve ${quien}`}</Text>
+        {asiLoVe(r, cuenta, yo).map((l) => (
+          <View key={l.emoji} style={{ flexDirection: 'row', gap: 8 }}>
+            <Text style={{ fontSize: 14 }}>{l.emoji}</Text>
+            <Text style={{ fontSize: 14, color: c.text, flex: 1 }}>{l.texto}</Text>
+          </View>
+        ))}
+      </Panel>
     </>
   );
 }
