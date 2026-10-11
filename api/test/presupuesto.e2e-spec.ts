@@ -51,6 +51,8 @@ describe('Presupuesto (e2e)', () => {
           categoriaFuncional: 'LIQUIDEZ',
           valorInicial: 1_000_000,
           moneda: 'CLP',
+          // G45 H2: los FAMILIAR de este spec la usan como cuenta del hogar (solo cuenta lo que suma).
+          participaConsolidacion: true,
         })
         .expect(201)
     ).body.id;

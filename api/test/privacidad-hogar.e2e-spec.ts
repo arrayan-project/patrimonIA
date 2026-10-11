@@ -113,7 +113,8 @@ describe('Privacidad de movimientos en "Del hogar" (e2e)', () => {
     expect(glosas).toContain('Público de Pareja');
     expect(glosas).not.toContain('Secreto del sueldo');
     expect(glosas).not.toContain('Secreto de la común');
-    expect(r.privados).toEqual([{ usuarioId: idB, nombre: 'Pareja', moneda: 'CLP', ingresos: 0, gastos: 47_000 }]);
+    // G45 H2: el sueldo de Pareja no suma al hogar (no entra); la común suma con movimientos privados (🔒).
+    expect(r.privados).toEqual([{ usuarioId: idB, nombre: 'Pareja', moneda: 'CLP', ingresos: 0, gastos: 7_000 }]);
     // La categoría del gasto privado tampoco aparece como rubro.
     expect((r.porRubro as { nombre: string }[]).map((x) => x.nombre)).not.toContain('Mercado');
   });
@@ -123,7 +124,7 @@ describe('Privacidad de movimientos en "Del hogar" (e2e)', () => {
     const b = (await resumen(tokenB)).body;
     expect(b.privados).toEqual([]);
     expect(a.porMoneda).toEqual(b.porMoneda);
-    expect(a.porMoneda[0].gastos).toBe(62_000);
+    expect(a.porMoneda[0].gastos).toBe(22_000);
     // Lo desglosado + lo privado cuadra con el total.
     const rubros = (a.porRubro as { tipo: string; total: number }[]).filter((x) => x.tipo === 'GASTO').reduce((s, x) => s + x.total, 0);
     expect(rubros + a.privados[0].gastos).toBe(a.porMoneda[0].gastos);
@@ -132,14 +133,14 @@ describe('Privacidad de movimientos en "Del hogar" (e2e)', () => {
   it('presupuesto FAMILIAR: el real no cambia; lo privado no se desglosa por rubro', async () => {
     const a = (await como(tokenA)(request(http).get(`/presupuestos/${presupuestoId}/desviacion`)).expect(200)).body;
     const b = (await como(tokenB)(request(http).get(`/presupuestos/${presupuestoId}/desviacion`)).expect(200)).body;
-    expect(a.real.gastos).toBe(62_000);
+    expect(a.real.gastos).toBe(22_000);
     expect(b.real).toEqual(a.real);
-    expect(a.privados).toEqual([{ usuarioId: idB, nombre: 'Pareja', ingresos: 0, gastos: 47_000 }]);
+    expect(a.privados).toEqual([{ usuarioId: idB, nombre: 'Pareja', ingresos: 0, gastos: 7_000 }]);
     expect(b.privados).toEqual([]);
     expect(a.sinClasificar.gastos).toBe(15_000); // Demo 10.000 + Público 5.000
-    // Mercado (el gasto privado del sueldo) no aparece como rubro para Demo; para Pareja, sí.
+    // Mercado (gasto del sueldo, que no suma al hogar) no aparece como rubro para nadie (G45 H2).
     expect((a.porRubro as { nombre: string }[]).map((x) => x.nombre)).not.toContain('Mercado');
-    expect((b.porRubro as { nombre: string; real: number }[]).find((x) => x.nombre === 'Mercado')?.real).toBe(40_000);
+    expect((b.porRubro as { nombre: string }[]).map((x) => x.nombre)).not.toContain('Mercado');
   });
 
   it('eventos del hogar: sin los de la cuenta que suma pero tiene los movimientos privados', async () => {

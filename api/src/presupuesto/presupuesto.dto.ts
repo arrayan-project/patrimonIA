@@ -115,4 +115,9 @@ export interface DesviacionPresupuestariaDTO {
    * `real` lo sigue sumando. Vacío en un INDIVIDUAL.
    */
   privados: { usuarioId: string; nombre: string; ingresos: number; gastos: number }[];
+  /**
+   * G45 H2 — FAMILIAR: lo que entró al hogar desde cuentas que no suman, por
+   * persona. Cuenta en `real.ingresos`; lo que sale del hogar no es gasto.
+   */
+  aportes: { usuarioId: string; nombre: string; monto: number }[];
 }

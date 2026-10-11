@@ -2,6 +2,8 @@
 export type AlcanceReporte = 'mios' | 'hogar';
 
 export interface MovimientoReporteDTO {
+  /** G45 H2: en "Del hogar", una transferencia que entra o sale del hogar: la dueña de la cuenta de afuera. */
+  ladoAfuera: { usuarioId: string; nombre: string } | null;
   eventoId: string;
   fecha: string;
   /** INGRESO · GASTO · TRANSFERENCIA · CONVERSION. */
@@ -67,6 +69,21 @@ export interface ResumenFinancieroDTO {
    * sigue sumándolo. Vacío en "Lo mío".
    */
   privados: MovimientosPrivadosDTO[];
+  /**
+   * G45 H2 — "Del hogar": plata que cruzó el borde del hogar, por persona y
+   * moneda. `entro`: de una cuenta que no suma a una que suma ("Entró al
+   * hogar", aporte de esa persona); `salio`: la inversa ("Salió del hogar").
+   * No está en `porMoneda` (son transferencias). Vacío en "Lo mío".
+   */
+  aportes: AporteHogarDTO[];
+}
+
+export interface AporteHogarDTO {
+  usuarioId: string;
+  nombre: string;
+  moneda: string;
+  entro: number;
+  salio: number;
 }
 
 export interface MovimientosPrivadosDTO {

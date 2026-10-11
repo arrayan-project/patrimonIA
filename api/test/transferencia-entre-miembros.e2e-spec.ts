@@ -93,6 +93,8 @@ describe('Transferencia entre miembros del hogar (e2e)', () => {
           .send({
             nombre, tipo: 'cuenta_corriente', categoriaFuncional: 'LIQUIDEZ', valorInicial: 1_000_000, moneda: 'CLP', fechaAlta: '2024-01-01',
             visibilidadPorTipo: { EXISTENCIA: 'FAMILIAR', VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' },
+            // G45 H2: "Del hogar" cuenta solo lo que suma; las dos cuentas son del hogar.
+            participaConsolidacion: true,
           })
           .expect(201)
       ).body.id as string;
