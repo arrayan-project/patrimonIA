@@ -158,6 +158,27 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
     regla `privacidad-hogar`, `presupuesto` y `transferencia-entre-miembros`.
   - No se despliega sin que Juan y Zoily revisen "Qué compartes" con sus datos
     reales (los totales "Del hogar" cambian: salen las cuentas que no suman).
+- **S — compartir en dos preguntas (rama `feat/compartir-dos-preguntas`, creada
+  desde la de H2; sin merge)**. Objetivo: que Zoily lo entienda sin que nadie
+  le explique. Los 4 niveles de D-2 pasan a ser:
+  "🏠 ¿Esta plata es del hogar?" · solo si es Sí, "👀 ¿[Nombre] puede ver los
+  movimientos?" · solo en las cuentas del día a día (G42) o si ya está en Sí,
+  "🔁 ¿Te pueden transferir a esta cuenta?". Se guardan en los campos de
+  siempre, sin migración (`app/src/compartirPreguntas.ts`); equivalencias:
+  Nada = No · Que puedan transferirte = No + transferir Sí · Que vean el saldo
+  y sume = Sí + movimientos No · Todo = Sí + movimientos Sí (test unitario y
+  e2e `api/test/compartir-equivalencias.e2e-spec.ts`). Debajo, la tarjeta en
+  vivo "👀 Así lo ve [Nombre]" (qué número ve, movimientos o línea 🔒, si suma
+  a "Plata del hogar"). En Agregar cuenta, Ajustes de la cuenta y Qué compartes
+  (fila con respuesta corta: "🏠 Del hogar · 🔒 movimientos privados"). Con un
+  solo miembro, no se muestran. Una combinación hecha en "Más opciones" se
+  avisa como "a tu medida" y se reemplaza al cambiar una respuesta. Capturas en
+  `Docs/usabilidad/capturas/s/`.
+  **Falta (señal real, la hace Juan sin dar pistas):** Zoily, sola, (a) hace que
+  su cuenta sueldo no cuente para el hogar, (b) deja la cuenta común con todo
+  visible y (c) explica con sus palabras qué ve Juan de una cuenta suya. Lo que
+  la trabe se anota y se ajusta antes del merge. Después: merge de H2 y de S a
+  `main`, en ese orden, y deploy.
 
 ### Tema D · Deuda / Crédito
 

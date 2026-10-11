@@ -1,101 +1,40 @@
-import { api, type ElementoPatrimonialDTO } from './api/client';
-import type { OpcionSelect } from './ui';
+import { api } from './api/client';
+import { guardadoDe, type Respuestas } from './compartirPreguntas';
 
 /**
- * D-2 — "¿Qué compartes de esta cuenta con el hogar?": una pregunta con 4
- * niveles que fija a la vez la visibilidad por tipo de información (§M) y si
- * la cuenta suma al patrimonio del hogar. El dominio sigue separando las dos
- * ideas; las combinaciones que no calzan con un nivel son "Personalizado" y se
- * editan en "Avanzado".
+ * Bloque S (G45) — qué compartes de una cuenta con el hogar, en preguntas
+ * (compartirPreguntas.ts). Reemplaza los 4 niveles de D-2; se guarda en los
+ * mismos campos: la visibilidad por tipo de información (§M) y si la cuenta
+ * suma al patrimonio del hogar. El dominio sigue separando las dos ideas.
  */
-export type NivelHogar = 'nada' | 'transferir' | 'saldo' | 'todo';
 
-type Niveles = { EXISTENCIA: string; VALOR: string; MOVIMIENTOS: string };
-
-const DEF: Record<NivelHogar, { niveles: Niveles; consolida: boolean }> = {
-  nada: { niveles: { EXISTENCIA: 'PRIVADA', VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' }, consolida: false },
-  transferir: { niveles: { EXISTENCIA: 'FAMILIAR', VALOR: 'PRIVADA', MOVIMIENTOS: 'PRIVADA' }, consolida: false },
-  saldo: { niveles: { EXISTENCIA: 'FAMILIAR', VALOR: 'FAMILIAR', MOVIMIENTOS: 'PRIVADA' }, consolida: true },
-  todo: { niveles: { EXISTENCIA: 'FAMILIAR', VALOR: 'FAMILIAR', MOVIMIENTOS: 'FAMILIAR' }, consolida: true },
+/**
+ * Lo que se envía en el alta: no es del hogar, pero te pueden transferir
+ * (D-2: "Que puedan transferirte" por defecto). Después del alta, las
+ * preguntas lo cambian si hace falta.
+ */
+export const altaPorDefecto = () => {
+  const g = guardadoDe({ hogar: false, movimientos: false, transferir: true });
+  return { visibilidadPorTipo: g.niveles, participaConsolidacion: g.consolida };
 };
 
-/** Nivel por defecto al crear (D-2). */
-export const NIVEL_POR_DEFECTO: NivelHogar = 'transferir';
-
-/** Lo que se envía en el alta para el nivel por defecto. */
-export const altaPorDefecto = () => ({
-  visibilidadPorTipo: DEF[NIVEL_POR_DEFECTO].niveles,
-  participaConsolidacion: DEF[NIVEL_POR_DEFECTO].consolida,
-});
-
-/** Las 4 opciones; `pareja` personaliza el texto si el hogar tiene un solo otro miembro. */
-export function opcionesNivel(pareja?: string): OpcionSelect[] {
-  const ven = pareja ? 'Ve' : 'Ven';
-  return [
-    { value: 'nada', label: 'Nada', sub: 'Solo tú la ves. No cuenta en el hogar.' },
-    {
-      value: 'transferir',
-      label: pareja ? `Que ${pareja} pueda transferirte` : 'Que puedan transferirte',
-      sub: `${ven} el nombre de la cuenta, no cuánto tiene. No cuenta en el hogar.`,
-    },
-    {
-      value: 'saldo',
-      label: pareja ? `Que ${pareja} vea el saldo y sume al hogar` : 'Que vean el saldo y sume al hogar',
-      sub: 'Cuenta en la plata y en el mes del hogar; sus movimientos quedan en 🔒.',
-    },
-    { value: 'todo', label: 'Todo, también los movimientos', sub: `${ven} el saldo y lo que entra y sale. Cuenta en el hogar.` },
-  ];
-}
-
-/** El nivel que corresponde a la configuración actual, o 'personalizado'. */
-export function nivelDe(el: ElementoPatrimonialDTO): NivelHogar | 'personalizado' {
-  const vpt = el.visibilidadPorTipo ?? {
-    EXISTENCIA: el.visibilidad,
-    VALOR: el.visibilidad,
-    MOVIMIENTOS: el.visibilidad,
-  };
-  const n = (Object.keys(DEF) as NivelHogar[]).find(
-    (k) =>
-      DEF[k].consolida === el.participaConsolidacion &&
-      DEF[k].niveles.EXISTENCIA === vpt.EXISTENCIA &&
-      DEF[k].niveles.VALOR === vpt.VALOR &&
-      DEF[k].niveles.MOVIMIENTOS === vpt.MOVIMIENTOS,
-  );
-  return n ?? 'personalizado';
-}
-
 /**
- * Aplica un nivel: define la visibilidad y, si cambia, la participación en el
- * patrimonio del hogar. Son dos comandos existentes (sin dominio nuevo).
+ * Guarda las respuestas con los dos comandos de siempre: la visibilidad por
+ * tipo y, si cambia, si suma al hogar.
  */
-export async function aplicarNivel(
+export async function aplicarRespuestas(
   token: string,
   elementoId: string,
-  nivel: NivelHogar,
+  r: Respuestas,
   consolidaAntes: boolean,
 ): Promise<void> {
-  const d = DEF[nivel];
+  const g = guardadoDe(r);
   await api.post(
     '/comandos/DefinirVisibilidadElementoPatrimonial',
-    { elementoId, niveles: d.niveles, compartidoCon: [] },
+    { elementoId, niveles: g.niveles, compartidoCon: [] },
     token,
   );
-  if (d.consolida !== consolidaAntes) {
-    await api.post(
-      '/comandos/CambiarParticipacionEnConsolidacion',
-      { elementoId, participa: d.consolida },
-      token,
-    );
+  if (g.consolida !== consolidaAntes) {
+    await api.post('/comandos/CambiarParticipacionEnConsolidacion', { elementoId, participa: g.consolida }, token);
   }
-}
-
-/** Texto corto del nivel actual, para el detalle de la cuenta. */
-export function etiquetaNivel(el: ElementoPatrimonialDTO): string {
-  return {
-    nada: 'Nada',
-    transferir: 'Pueden transferirte',
-    saldo: 'Ven el saldo y suma al hogar',
-    todo: 'Todo, también los movimientos',
-    personalizado: 'Personalizado',
-  }[nivelDe(el)];
 }

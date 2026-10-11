@@ -757,10 +757,13 @@ export function TxRow({
   accesorio,
   eliminado,
   destacado,
+  lineasSubtitulo = 1,
   onPress,
 }: {
   title: string;
   subtitle?: string;
+  /** Líneas del subtítulo antes de cortarlo (por defecto, 1). */
+  lineasSubtitulo?: number;
   amount: string;
   positivo?: boolean;
   /** Monto en rojo (deuda, saldo en contra). */
@@ -810,7 +813,7 @@ export function TxRow({
           {title}
         </Text>
         {subtitle || tag || eliminado ? (
-          <Text style={[styles.txSub, destacado && { color: c.primary, fontWeight: '700' }]} numberOfLines={1}>
+          <Text style={[styles.txSub, destacado && { color: c.primary, fontWeight: '700' }]} numberOfLines={lineasSubtitulo}>
             {eliminado ? <Text style={styles.txEliminado}>🗑️ Eliminado</Text> : null}
             {eliminado && (tag || subtitle) ? ' · ' : ''}
             {tag ? <Text style={styles.txTag}>{tag}</Text> : null}

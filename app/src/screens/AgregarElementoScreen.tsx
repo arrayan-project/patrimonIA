@@ -18,18 +18,14 @@ import { money } from '../format';
 import { usePreferencias } from '../preferencias';
 import { EMOJI_CATEGORIA_FUNCIONAL, emojiElemento, emojiMoneda, emojiTipoElemento } from '../emojis';
 import { radio } from '../ui/tema';
-import {
-  altaPorDefecto,
-  aplicarNivel,
-  NIVEL_POR_DEFECTO,
-  opcionesNivel,
-  type NivelHogar,
-} from '../compartirHogar';
+import { altaPorDefecto, aplicarRespuestas } from '../compartirHogar';
+import { respuestasDe, type Respuestas } from '../compartirPreguntas';
+import { cuentasDelDia } from '../fotoMes';
+import { PreguntasCompartir } from './CompartirConHogar';
 import {
   Ayuda,
   Button,
   DateField,
-  Elegir,
   ErrorText,
   Field,
   MoneyField,
@@ -161,7 +157,8 @@ export function AgregarElementoScreen() {
 
   // D-2: tras crear, la pregunta del hogar.
   const [creado, setCreado] = useState<ElementoPatrimonialDTO | null>(null);
-  const [nivel, setNivel] = useState<NivelHogar>(NIVEL_POR_DEFECTO);
+  // Bloque S: las preguntas de compartir (parten de lo que quedó al crear).
+  const [respuestas, setRespuestas] = useState<Respuestas | null>(null);
 
   // ── Co-propietarios (B8) ──────────────────────────────────────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
@@ -350,6 +347,7 @@ export function AgregarElementoScreen() {
       permitirSalida();
       if (hayComiembros) {
         setCreado(el);
+        setRespuestas(respuestasDe(el));
       } else {
         toast.mostrar(`${el.nombre} quedó agregada`);
         nav.back();
@@ -362,8 +360,13 @@ export function AgregarElementoScreen() {
   };
 
   const guardarNivel = async () => {
-    if (!creado) return;
-    if (nivel === NIVEL_POR_DEFECTO) {
+    if (!creado || !respuestas) return;
+    const antes = respuestasDe(creado);
+    if (
+      respuestas.hogar === antes.hogar &&
+      respuestas.movimientos === antes.movimientos &&
+      respuestas.transferir === antes.transferir
+    ) {
       toast.mostrar('Guardado');
       nav.back();
       return;
@@ -371,7 +374,7 @@ export function AgregarElementoScreen() {
     setError('');
     setLoading(true);
     try {
-      await aplicarNivel(token, creado.id, nivel, creado.participaConsolidacion);
+      await aplicarRespuestas(token, creado.id, respuestas, creado.participaConsolidacion);
       toast.mostrar('Guardado');
       nav.back();
     } catch (e) {
@@ -404,12 +407,17 @@ export function AgregarElementoScreen() {
             {money(valor, creado.moneda)}.
           </Text>
         </Panel>
-        <Elegir
-          label={`¿Qué compartes de ${creado.nombre} con ${pareja ?? 'el hogar'}?`}
-          value={nivel}
-          options={opcionesNivel(pareja)}
-          onChange={(v) => v && setNivel(v as NivelHogar)}
-        />
+        {respuestas && (
+          <PreguntasCompartir
+            categoriaFuncional={creado.categoriaFuncional}
+            respuestas={respuestas}
+            onChange={setRespuestas}
+            pareja={pareja}
+            delDiaADia={cuentasDelDia([creado], preferencias.mes.cuentas).includes(creado.id)}
+            cuenta={{ nombre: creado.nombre, saldo: money(valor, creado.moneda) }}
+            yo={usuario.nombre.split(' ')[0]}
+          />
+        )}
         <Nota>Puedes cambiarlo cuando quieras desde la cuenta.</Nota>
         <ErrorText>{error}</ErrorText>
       </Screen>

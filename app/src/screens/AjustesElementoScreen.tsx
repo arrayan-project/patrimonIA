@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type ElementoPatrimonialDTO, type HogarDTO, type MiembroDTO } from '../api/client';
 import { useSession } from '../auth/AuthContext';
-import { aplicarNivel, nivelDe, opcionesNivel, type NivelHogar } from '../compartirHogar';
+import { aplicarRespuestas } from '../compartirHogar';
+import { esAMedida, guardadoDe, respuestasDe, type Respuestas } from '../compartirPreguntas';
+import { cuentasDelDia } from '../fotoMes';
+import { PreguntasCompartir } from './CompartirConHogar';
 import { useNav, useTitulo } from '../navigation/navigator';
 import { emojiElemento } from '../emojis';
+import { money } from '../format';
 import { conEmoji, usePreferencias } from '../preferencias';
 import {
-  Elegir,
   ElegirEmoji,
   ElegirVarios,
   ErrorText,
@@ -81,7 +84,14 @@ export function AjustesElementoScreen() {
   }
 
   const pareja = miembros.length === 1 ? miembros[0].nombre : undefined;
-  const nivel = nivelDe(el);
+  const respuestas = respuestasDe(el);
+  // Bloque S: guardar las respuestas (optimista: la pantalla ya muestra lo nuevo).
+  const responder = (r: Respuestas) => {
+    const g = guardadoDe(r);
+    void aplicar({ ...el, participaConsolidacion: g.consolida, visibilidadPorTipo: g.niveles }, () =>
+      aplicarRespuestas(token, elementoId, r, el.participaConsolidacion),
+    );
+  };
   const vpt = (el.visibilidadPorTipo ?? {
     EXISTENCIA: el.visibilidad,
     VALOR: el.visibilidad,
@@ -107,22 +117,21 @@ export function AjustesElementoScreen() {
           />
         </ListCard>
       </Section>
-      <Section title="👥 Con el hogar">
-        <Elegir
-          label={`¿Qué compartes con ${pareja ?? 'el hogar'}?`}
-          value={nivel}
-          options={[
-            ...opcionesNivel(pareja),
-            ...(nivel === 'personalizado'
-              ? [{ value: 'personalizado', label: 'Personalizado', sub: 'Una combinación hecha en Avanzado.', deshabilitada: true }]
-              : []),
-          ]}
-          onChange={(v) => {
-            if (!v || v === nivel || v === 'personalizado') return;
-            void aplicar(el, () => aplicarNivel(token, elementoId, v as NivelHogar, el.participaConsolidacion));
-          }}
-        />
-      </Section>
+      {/* Bloque S: con un solo miembro en el hogar, no hay con quién compartir. */}
+      {miembros.length > 0 && (
+        <Section title="👥 Con el hogar">
+          <PreguntasCompartir
+            categoriaFuncional={el.categoriaFuncional}
+            respuestas={respuestas}
+            onChange={responder}
+            pareja={pareja}
+            delDiaADia={cuentasDelDia([el], preferencias.mes.cuentas).includes(el.id)}
+            cuentaActual={el}
+            cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
+            yo={usuario.nombre.split(' ')[0]}
+          />
+        </Section>
+      )}
 
       {!esDeudaOCredito && (
         <Section title="📈 Su valor">
@@ -141,7 +150,7 @@ export function AjustesElementoScreen() {
         </Section>
       )}
 
-      <Opcional emoji="⚙️" titulo="Más opciones" abierto={nivel === 'personalizado'}>
+      <Opcional emoji="⚙️" titulo="Más opciones" abierto={esAMedida(el)}>
         <Section title="⚙️ Más opciones">
           {TIPOS_INFO.map(([k, pregunta]) => (
             <Segmented
