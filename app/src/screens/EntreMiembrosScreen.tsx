@@ -22,6 +22,8 @@ export function FilaEntreRow({ f }: { f: FilaEntre }) {
       amount={f.monto}
       positivo={f.positivo}
       logo={{ emoji: f.emoji }}
+      // Lo pendiente (te toca o esperas) se destaca; lo resuelto, no.
+      destacado={f.grupo !== 'resuelto'}
       onPress={onPress}
     />
   );
