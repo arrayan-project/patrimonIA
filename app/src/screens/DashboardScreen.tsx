@@ -27,6 +27,7 @@ import { useSession } from '../auth/AuthContext';
 import { aportesComoPases, pasesConPersonas, quedaDelMes, type AporteHogar } from '../flujoMes';
 import { cicloDe, MESES_LARGO, rotuloCiclo, ventanaCiclo, type CicloMes } from '../cicloMes';
 import { agruparFoto, cuentasDelDia } from '../fotoMes';
+import { cicloAnterior, claveCiclo, enDiasDeCierre, mostrarCierre } from '../cierreCiclo';
 import { useNav } from '../navigation/navigator';
 import { guardar, leer } from '../auth/secureStorage';
 import { money } from '../format';
@@ -103,7 +104,7 @@ export function DashboardScreen() {
   const anotar = useAnotar();
   const nav = useNav();
   const { alcance, setAlcance, lente, setSoloUnMiembro } = useAlcance();
-  const { preferencias } = usePreferencias();
+  const { preferencias, guardarPreferencias } = usePreferencias();
   const claveHogar = `patrimonia.hogar.${usuario.id}`;
   const claveOnb = `patrimonia.onboarding.${usuario.id}`;
 
@@ -126,6 +127,8 @@ export function DashboardScreen() {
   const [movsMes, setMovsMes] = useState<MovimientoReporteDTO[]>([]);
   // G45 H2: en "Del hogar", lo que entró al hogar y salió de él (aportes), por persona.
   const [aportesMes, setAportesMes] = useState<AporteHogar[]>([]);
+  // L-8 (S04): lo que sobró del ciclo anterior, si toca mostrar la tarjeta de cierre.
+  const [cierre, setCierre] = useState<{ monto: number; moneda: string; mes: string; clave: string } | null>(null);
   // G41: en "Lo mío", la foto del mes de tus cuentas del día a día (G42).
   const [fotoMes, setFotoMes] = useState<{ entro: number; salio: number; moneda: string } | null>(null);
   const [categorias, setCategorias] = useState<CategoriaMovimientoDTO[]>([]);
@@ -225,11 +228,31 @@ export function DashboardScreen() {
         } else {
           setFotoMes(null);
         }
+        // L-8: solo en "Lo mío", en los primeros 7 días del ciclo y si no se tocó ya.
+        const clave = claveCiclo(m.anio, m.mes);
+        if (alcance === 'mios' && fm && enDiasDeCierre(aISO(hoy), desde) && preferencias.mes.cierreVisto !== clave) {
+          const ant = cicloAnterior(m.anio, m.mes);
+          const va = ventanaCiclo(ant.anio, ant.mes, ciclo);
+          const fa = await api
+            .get<FotoMesDTO>(`/usuarios/me/foto-mes?desde=${va.desde}&hasta=${va.hasta}&cuentas=${cuentas}`, token)
+            .catch(() => null);
+          const pa = fa?.porMoneda.find((x) => x.moneda === fm.moneda);
+          const ga = pa ? agruparFoto(pa.lineas) : null;
+          const sobrante = ga ? ga.entro - ga.salio : 0;
+          setCierre(
+            mostrarCierre({ hoyISO: aISO(hoy), desdeISO: desde, sobrante, clave, cierreVisto: preferencias.mes.cierreVisto })
+              ? { monto: sobrante, moneda: fm.moneda, mes: MESES_LARGO[ant.mes], clave }
+              : null,
+          );
+        } else {
+          setCierre(null);
+        }
       } catch {
         setFlujo(null);
         setMovsMes([]);
         setAportesMes([]);
         setFotoMes(null);
+        setCierre(null);
       }
       setCategorias(
         await api
@@ -485,6 +508,15 @@ export function DashboardScreen() {
   // G32 H-03/H-08 — una sola entrada a "Mi patrimonio" (todas las cuentas y bienes + evolución).
   const verPatrimonio = () => nav.go('PatrimonioSeccion', { alcance, moneda: monedaPrin, hogarId });
 
+  // L-8: tocar cualquiera de las tres acciones oculta la tarjeta para este ciclo.
+  const marcarCierre = () => {
+    if (!cierre) return;
+    setCierre(null);
+    void guardarPreferencias({ ...preferencias, mes: { ...preferencias.mes, cierreVisto: cierre.clave } }).catch(
+      () => undefined,
+    );
+  };
+
   const cerrarOnboarding = () => {
     setOnbOculto(true);
     void guardar(claveOnb, 'ok');
@@ -650,6 +682,32 @@ export function DashboardScreen() {
             </>
           )}
         </Pressable>
+      )}
+      {/* L-8 (S04): al empezar un ciclo, qué hacer con lo que sobró del anterior (solo "Lo mío"). */}
+      {/* "Ya vista" se mira al dibujar: las preferencias pueden llegar después de la carga. */}
+      {alcance === 'mios' && cierre && preferencias.mes.cierreVisto !== cierre.clave && (
+        <Panel>
+          <Text style={styles.mesTitulo}>
+            {`📦 Te sobraron ${money(cierre.monto, cierre.moneda)} de ${cierre.mes}. ¿Qué hacemos con eso?`}
+          </Text>
+          <View style={styles.cierreAcciones}>
+            <Pastilla
+              label="🐷 Apartar para una meta"
+              onPress={() => {
+                marcarCierre();
+                nav.go('Ahorrar', { monto: cierre.monto });
+              }}
+            />
+            <Pastilla
+              label="🔁 Pasarlo a otra cuenta"
+              onPress={() => {
+                marcarCierre();
+                nav.go('RegistrarMovimiento', { tipo: 'TRANSFERENCIA', monto: cierre.monto });
+              }}
+            />
+            <Pastilla label="Ya lo hice" onPress={marcarCierre} />
+          </View>
+        </Panel>
       )}
       <Pressable
         onPress={verPatrimonio}
@@ -1063,6 +1121,7 @@ const crearEstilos = (c: Paleta) =>
     mesDato: { fontSize: 13, fontWeight: '600' },
     mesQueda: { fontSize: 14, fontWeight: '700', color: c.muted },
     mesCifra: { ...tipografia.hero },
+    cierreAcciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     paso: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
     pasoTxt: { fontSize: 14, color: c.text },
     carrusel: { marginHorizontal: -16 },

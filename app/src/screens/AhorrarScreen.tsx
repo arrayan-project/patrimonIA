@@ -82,7 +82,9 @@ export function AhorrarScreen() {
   // La cuenta de la meta derivada de sus reservas (null = aún no tiene).
   const [cuentaMeta, setCuentaMeta] = useState<string | null>(null);
   const [destinoElegido, setDestinoElegido] = useState<string | null>(null);
-  const [origenes, setOrigenes] = useState<Origen[]>([{ cuentaId: null, monto: '' }]);
+  // L-8 (S04): desde la tarjeta de cierre llega el monto que sobró.
+  const montoInicial = nav.route.params?.monto != null ? String(nav.route.params.monto) : '';
+  const [origenes, setOrigenes] = useState<Origen[]>([{ cuentaId: null, monto: montoInicial }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   // G39 (F-16): los movimientos recientes dicen de qué cuenta ahorraste la última vez.
@@ -91,7 +93,7 @@ export function AhorrarScreen() {
   // G39 (F-15): las metas que había antes de ir a "Nueva meta", para elegir la nueva al volver.
   const idsAntes = useRef<Set<string> | null>(null);
 
-  const sucio = origenes.some((o) => o.cuentaId || o.monto);
+  const sucio = origenes.some((o) => o.cuentaId || (o.monto && o.monto !== montoInicial));
   const permitirSalida = useConfirmarDescarte(sucio && !loading);
 
   // Se recarga al volver (p. ej. de "Nueva meta"): la meta nueva queda elegida.
