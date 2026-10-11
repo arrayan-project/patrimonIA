@@ -1,4 +1,5 @@
 import { traducirError } from './errores';
+import type { AporteHogar } from '../flujoMes';
 import { API_URL } from '../config';
 
 export class ApiError extends Error {
@@ -564,6 +565,8 @@ export interface RubroReporteDTO {
 }
 
 export interface MovimientoReporteDTO {
+  /** G45 H2: en "Del hogar", si entró o salió del hogar, la dueña de la cuenta de afuera. */
+  ladoAfuera?: { usuarioId: string; nombre: string } | null;
   eventoId: string;
   /** INGRESO · GASTO · TRANSFERENCIA · CONVERSION. */
   tipo: string;
@@ -620,6 +623,8 @@ export interface ResumenFinancieroDTO {
   movimientos: MovimientoReporteDTO[];
   /** H1: "Del hogar" — lo de cuentas cuyos movimientos no puedes ver, por dueño y moneda (sin detalle). */
   privados?: MovimientosPrivadosDTO[];
+  /** G45 H2: "Del hogar" — lo que entró al hogar (aportes) o salió de él, por persona y moneda. */
+  aportes?: AporteHogar[];
 }
 
 export interface MovimientosPrivadosDTO {

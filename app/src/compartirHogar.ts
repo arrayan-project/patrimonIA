@@ -32,18 +32,18 @@ export const altaPorDefecto = () => ({
 export function opcionesNivel(pareja?: string): OpcionSelect[] {
   const ven = pareja ? 'Ve' : 'Ven';
   return [
-    { value: 'nada', label: 'Nada', sub: 'Solo tú la ves.' },
+    { value: 'nada', label: 'Nada', sub: 'Solo tú la ves. No cuenta en el hogar.' },
     {
       value: 'transferir',
       label: pareja ? `Que ${pareja} pueda transferirte` : 'Que puedan transferirte',
-      sub: `${ven} el nombre de la cuenta, no cuánto tiene.`,
+      sub: `${ven} el nombre de la cuenta, no cuánto tiene. No cuenta en el hogar.`,
     },
     {
       value: 'saldo',
       label: pareja ? `Que ${pareja} vea el saldo y sume al hogar` : 'Que vean el saldo y sume al hogar',
-      sub: 'Cuenta en el total de la plata del hogar.',
+      sub: 'Cuenta en la plata y en el mes del hogar; sus movimientos quedan en 🔒.',
     },
-    { value: 'todo', label: 'Todo, también los movimientos', sub: `${ven} el saldo y lo que entra y sale.` },
+    { value: 'todo', label: 'Todo, también los movimientos', sub: `${ven} el saldo y lo que entra y sale. Cuenta en el hogar.` },
   ];
 }
 
