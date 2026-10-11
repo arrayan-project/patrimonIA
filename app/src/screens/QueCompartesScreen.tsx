@@ -74,9 +74,10 @@ export function QueCompartesScreen() {
         amount={money(el.valorVigente, el.moneda)}
         negativo={el.valorVigente < 0}
         logo={{ emoji: emojiElemento(el, preferencias.emojis.elementos) }}
-        onPress={() => setAbierta((a) => (a === el.id ? null : el.id))}
+        // Bloque S: con un solo miembro en el hogar, no se abren las preguntas.
+        onPress={miembros.length > 0 ? () => setAbierta((a) => (a === el.id ? null : el.id)) : undefined}
       />
-      {abierta === el.id && (
+      {abierta === el.id && miembros.length > 0 && (
         <View style={{ gap: 12, paddingVertical: 12 }}>
           <PreguntasCompartir
             categoriaFuncional={el.categoriaFuncional}
@@ -97,6 +98,7 @@ export function QueCompartesScreen() {
   const noSuman = cuentas.filter((e) => !e.participaConsolidacion);
   return (
     <Screen onRefresh={cargar}>
+      {miembros.length === 0 && <Nota>👥 Cuando alguien se una a tu hogar, aquí eliges qué compartes con esa persona.</Nota>}
       <Section title={`🏠 Suman a la plata del hogar (${suman.length})`}>
         {suman.length === 0 ? (
           <Nota>Ninguna todavía.</Nota>

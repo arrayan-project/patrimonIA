@@ -117,18 +117,21 @@ export function AjustesElementoScreen() {
           />
         </ListCard>
       </Section>
-      <Section title="👥 Con el hogar">
-        <PreguntasCompartir
-          categoriaFuncional={el.categoriaFuncional}
-          respuestas={respuestas}
-          onChange={responder}
-          pareja={pareja}
-          delDiaADia={cuentasDelDia([el], preferencias.mes.cuentas).includes(el.id)}
-          cuentaActual={el}
-          cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
-          yo={usuario.nombre.split(' ')[0]}
-        />
-      </Section>
+      {/* Bloque S: con un solo miembro en el hogar, no hay con quién compartir. */}
+      {miembros.length > 0 && (
+        <Section title="👥 Con el hogar">
+          <PreguntasCompartir
+            categoriaFuncional={el.categoriaFuncional}
+            respuestas={respuestas}
+            onChange={responder}
+            pareja={pareja}
+            delDiaADia={cuentasDelDia([el], preferencias.mes.cuentas).includes(el.id)}
+            cuentaActual={el}
+            cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
+            yo={usuario.nombre.split(' ')[0]}
+          />
+        </Section>
+      )}
 
       {!esDeudaOCredito && (
         <Section title="📈 Su valor">
