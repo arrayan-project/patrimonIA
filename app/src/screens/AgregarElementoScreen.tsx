@@ -7,6 +7,7 @@ import {
   type ElementoPatrimonialDTO,
   type HogarDTO,
   type MiembroDTO,
+  type ObjetivoFinancieroDTO,
   type TipoElementoDTO,
 } from '../api/client';
 import { useSession } from '../auth/AuthContext';
@@ -26,6 +27,7 @@ import {
   Ayuda,
   Button,
   DateField,
+  Elegir,
   ErrorText,
   Field,
   MoneyField,
@@ -119,6 +121,9 @@ function limpiarPct(t: string): string {
  * como tarjetas, y el resto aparece al elegir. D-2: la pregunta del hogar
  * aparece después de crear; si se omite, queda en "Que puedan transferirte".
  */
+/** Bloque M: valor de "No" en "¿Esta cuenta es para una meta?". */
+const SIN_META = 'no';
+
 export function AgregarElementoScreen() {
   const c = useC();
   const styles = useMemo(() => crearEstilos(c), [c]);
@@ -159,6 +164,14 @@ export function AgregarElementoScreen() {
   const [creado, setCreado] = useState<ElementoPatrimonialDTO | null>(null);
   // Bloque S: las preguntas de compartir (parten de lo que quedó al crear).
   const [respuestas, setRespuestas] = useState<Respuestas | null>(null);
+  // Bloque M (C1, opcional): "🎯 ¿Esta cuenta es para una meta?".
+  const [metas, setMetas] = useState<ObjetivoFinancieroDTO[]>([]);
+  const [metaElegida, setMetaElegida] = useState<string>(SIN_META);
+  // M-5: solo cuentas, ahorros e inversiones, en la moneda de la meta.
+  const metasPara = (el: ElementoPatrimonialDTO) =>
+    ['LIQUIDEZ', 'RESERVA', 'INVERSION'].includes(el.categoriaFuncional)
+      ? metas.filter((m) => m.moneda === el.moneda)
+      : [];
 
   // ── Co-propietarios (B8) ──────────────────────────────────────────────────
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
@@ -166,6 +179,10 @@ export function AgregarElementoScreen() {
   const [pcts, setPcts] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    api
+      .get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token)
+      .then((ms) => setMetas(ms.filter((m) => m.estado === 'EN_PROGRESO' && m.puedoModificar)))
+      .catch(() => setMetas([]));
     api
       .get<HogarDTO[]>('/usuarios/me/hogares', token)
       .then(async (hs) => {
@@ -345,9 +362,9 @@ export function AgregarElementoScreen() {
         key,
       );
       permitirSalida();
-      if (hayComiembros) {
+      if (hayComiembros || metasPara(el).length > 0) {
         setCreado(el);
-        setRespuestas(respuestasDe(el));
+        if (hayComiembros) setRespuestas(respuestasDe(el));
       } else {
         toast.mostrar(`${el.nombre} quedó agregada`);
         nav.back();
@@ -360,13 +377,14 @@ export function AgregarElementoScreen() {
   };
 
   const guardarNivel = async () => {
-    if (!creado || !respuestas) return;
+    if (!creado) return;
     const antes = respuestasDe(creado);
-    if (
-      respuestas.hogar === antes.hogar &&
-      respuestas.movimientos === antes.movimientos &&
-      respuestas.transferir === antes.transferir
-    ) {
+    const cambiaCompartir =
+      !!respuestas &&
+      (respuestas.hogar !== antes.hogar ||
+        respuestas.movimientos !== antes.movimientos ||
+        respuestas.transferir !== antes.transferir);
+    if (!cambiaCompartir && metaElegida === SIN_META) {
       toast.mostrar('Guardado');
       nav.back();
       return;
@@ -374,7 +392,12 @@ export function AgregarElementoScreen() {
     setError('');
     setLoading(true);
     try {
-      await aplicarRespuestas(token, creado.id, respuestas, creado.participaConsolidacion);
+      if (cambiaCompartir && respuestas) {
+        await aplicarRespuestas(token, creado.id, respuestas, creado.participaConsolidacion);
+      }
+      if (metaElegida !== SIN_META) {
+        await api.post('/comandos/DedicarCuentaAObjetivo', { objetivoId: metaElegida, elementoId: creado.id }, token);
+      }
       toast.mostrar('Guardado');
       nav.back();
     } catch (e) {
@@ -416,6 +439,18 @@ export function AgregarElementoScreen() {
             delDiaADia={cuentasDelDia([creado], preferencias.mes.cuentas).includes(creado.id)}
             cuenta={{ nombre: creado.nombre, saldo: money(valor, creado.moneda) }}
             yo={usuario.nombre.split(' ')[0]}
+          />
+        )}
+        {/* Bloque M (C1): opcional, al final, solo si hay metas en camino en esa moneda. */}
+        {metasPara(creado).length > 0 && (
+          <Elegir
+            label="🎯 ¿Esta cuenta es para una meta?"
+            value={metaElegida}
+            options={[
+              { value: SIN_META, label: 'No, es para cualquier cosa' },
+              ...metasPara(creado).map((m) => ({ value: m.id, label: `🎯 ${m.nombre}`, sub: 'Toda la cuenta es para esta meta' })),
+            ]}
+            onChange={(v) => setMetaElegida(v ?? SIN_META)}
           />
         )}
         <Nota>Puedes cambiarlo cuando quieras desde la cuenta.</Nota>

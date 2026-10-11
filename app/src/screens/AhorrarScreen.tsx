@@ -175,12 +175,16 @@ export function AhorrarScreen() {
       }
       let mejor: string | null = null;
       for (const [id, m] of porCuenta) if (mejor === null || m > (porCuenta.get(mejor) ?? 0)) mejor = id;
-      setCuentaMeta(mejor);
+      // Bloque M: si la meta tiene una cuenta tuya dedicada, esa es su cuenta.
+      const dedicada = (metas ?? [])
+        .find((o) => o.id === objetivoId)
+        ?.cuentasDedicadas?.find((d) => propias.has(d.elementoId));
+      setCuentaMeta(dedicada?.elementoId ?? mejor);
     })();
     return () => {
       vigente = false;
     };
-  }, [objetivoId, token, cuentas]);
+  }, [objetivoId, token, cuentas, metas]);
 
   if (!metas) {
     return (
@@ -204,9 +208,17 @@ export function AhorrarScreen() {
   const setOrigen = (i: number, cambio: Partial<Origen>) =>
     setOrigenes((xs) => xs.map((o, j) => (j === i ? { ...o, ...cambio } : o)));
 
+  // Bloque M: cuentas dedicadas (toda la cuenta es de una meta): no son origen.
+  const dedicadaA = new Map<string, string>();
+  for (const o of metas ?? []) for (const d of o.cuentasDedicadas ?? []) dedicadaA.set(d.elementoId, o.nombre);
+  const destinoDedicado = !!destino && dedicadaA.has(destino);
+
   // G35: lo que sube la meta se ve en la banda; aquí solo si la plata cambia de cuenta.
   const resumen = (() => {
     if (!meta || validos.length === 0 || !destino) return '';
+    if (destinoDedicado) {
+      return `🔁 Pasa a ${nombre(destino)}: todo lo que tenga cuenta para ${meta.nombre}. Hazlo también en tu banco; acá queda anotado.`;
+    }
     const movidos = validos.filter((o) => o.cuentaId !== destino);
     // G39 (F-17): si la plata queda en la misma cuenta, se dice que no se mueve.
     if (!movidos.length) return `🐷 La plata se queda en ${nombre(destino)}, separada para ${meta.nombre}: no se mueve.`;
@@ -354,11 +366,16 @@ export function AhorrarScreen() {
                   value={o.cuentaId}
                   options={enMoneda.map((x) => {
                     const fr = libreDe(x.id);
+                    const esPara = dedicadaA.get(x.id);
                     return {
                       value: x.id,
                       label: x.id === destino && origenes.length > 1 ? `${x.nombre} (la cuenta de la meta)` : x.nombre,
-                      sub: fr > 0 ? `Libre para ahorrar ${money(fr, x.moneda)}` : `Libre ${money(0, x.moneda)} · todo está en tus metas`,
-                      deshabilitada: fr <= 0 || usadas.has(x.id),
+                      sub: esPara
+                        ? `🎯 Es para ${esPara}`
+                        : fr > 0
+                          ? `Libre para ahorrar ${money(fr, x.moneda)}`
+                          : `Libre ${money(0, x.moneda)} · todo está en tus metas`,
+                      deshabilitada: !!esPara || fr <= 0 || usadas.has(x.id),
                     };
                   })}
                   onChange={(v) => setOrigen(i, { cuentaId: v })}

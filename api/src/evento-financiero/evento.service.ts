@@ -163,6 +163,13 @@ export class EventoFinancieroService {
           entradaId,
         );
       }
+      // Bloque M (M-2): plata que entra a una cuenta dedicada puede completar su meta.
+      await this.progreso.completarPorCuentas(
+        tx,
+        plan.map((p) => p.elemento.id),
+        actorId,
+        entradaId,
+      );
 
       const etiquetaIds = await this.etiquetas.adjuntarEnTx(
         tx,

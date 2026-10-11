@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError, type ElementoPatrimonialDTO, type HogarDTO, type MiembroDTO } from '../api/client';
+import {
+  api,
+  ApiError,
+  type ElementoPatrimonialDTO,
+  type HogarDTO,
+  type MiembroDTO,
+  type ObjetivoFinancieroDTO,
+} from '../api/client';
+import { View } from 'react-native';
+import { Text } from '../ui/Text';
 import { useSession } from '../auth/AuthContext';
 import { aplicarRespuestas } from '../compartirHogar';
 import { esAMedida, guardadoDe, respuestasDe, type Respuestas } from '../compartirPreguntas';
@@ -10,16 +19,19 @@ import { emojiElemento } from '../emojis';
 import { money } from '../format';
 import { conEmoji, usePreferencias } from '../preferencias';
 import {
+  Elegir,
   ElegirEmoji,
   ElegirVarios,
   ErrorText,
   ListCard,
   Nota,
   Opcional,
+  Pastilla,
   Screen,
   Section,
   Segmented,
   Skeleton,
+  useC,
   useGuardarAlInstante,
 } from '../ui';
 
@@ -41,16 +53,21 @@ export function AjustesElementoScreen() {
   const { token, usuario } = useSession();
   const nav = useNav();
   const guardar = useGuardarAlInstante();
+  const c = useC();
   const { preferencias, guardarPreferencias } = usePreferencias();
   const elementoId = nav.route.params?.elementoId as string;
 
   const [el, setEl] = useState<ElementoPatrimonialDTO | null>(null);
   const [miembros, setMiembros] = useState<MiembroDTO[]>([]);
+  // Bloque M: las metas (para "🎯 ¿Esta cuenta es para una meta?") y el cambio pendiente de confirmar.
+  const [metas, setMetas] = useState<ObjetivoFinancieroDTO[]>([]);
+  const [cambioMeta, setCambioMeta] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
     try {
       setEl(await api.get<ElementoPatrimonialDTO>(`/elementos-patrimoniales/${elementoId}`, token));
+      setMetas(await api.get<ObjetivoFinancieroDTO[]>('/objetivos-financieros', token).catch(() => []));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error inesperado');
     }
@@ -85,6 +102,32 @@ export function AjustesElementoScreen() {
 
   const pareja = miembros.length === 1 ? miembros[0].nombre : undefined;
   const respuestas = respuestasDe(el);
+  // Bloque M (M-5): solo cuentas, ahorros e inversiones activas.
+  const dedicable = ['LIQUIDEZ', 'RESERVA', 'INVERSION'].includes(el.categoriaFuncional) && el.estado === 'ACTIVO';
+  const metaActual = metas.find((m) => (m.cuentasDedicadas ?? []).some((d) => d.elementoId === el.id)) ?? null;
+  const metasPosibles = metas.filter((m) => m.estado === 'EN_PROGRESO' && m.puedoModificar && m.moneda === el.moneda);
+  const NINGUNA = 'ninguna';
+  const dedicarA = (objetivoId: string) =>
+    guardar(
+      () => api.post('/comandos/DedicarCuentaAObjetivo', { objetivoId, elementoId: el.id }, token),
+      () => undefined,
+    ).then(() => cargar());
+  const cambiarDeMeta = async (conservarComoApartado: boolean) => {
+    if (!metaActual || !cambioMeta) return;
+    const destino = cambioMeta;
+    setCambioMeta(null);
+    const ok = await guardar(
+      () =>
+        api.post(
+          '/comandos/QuitarCuentaDeObjetivo',
+          { objetivoId: metaActual.id, elementoId: el.id, conservarComoApartado },
+          token,
+        ),
+      () => undefined,
+    );
+    if (ok && destino !== NINGUNA) await dedicarA(destino);
+    else await cargar();
+  };
   // Bloque S: guardar las respuestas (optimista: la pantalla ya muestra lo nuevo).
   const responder = (r: Respuestas) => {
     const g = guardadoDe(r);
@@ -130,6 +173,38 @@ export function AjustesElementoScreen() {
             cuenta={{ nombre: el.nombre, saldo: money(el.valorPendiente ?? el.valorVigente, el.moneda) }}
             yo={usuario.nombre.split(' ')[0]}
           />
+        </Section>
+      )}
+
+      {/* Bloque M: "🏦 Esta cuenta es para esta meta", también desde la cuenta. */}
+      {dedicable && (metaActual || metasPosibles.length > 0) && (
+        <Section title="🎯 Para una meta">
+          <Elegir
+            label="🎯 ¿Esta cuenta es para una meta?"
+            value={metaActual?.id ?? NINGUNA}
+            options={[
+              { value: NINGUNA, label: 'No, es para cualquier cosa' },
+              ...metasPosibles.map((m) => ({ value: m.id, label: `🎯 ${m.nombre}`, sub: 'Toda la cuenta es para esta meta' })),
+            ]}
+            onChange={(v) => {
+              if (!v || v === (metaActual?.id ?? NINGUNA)) return;
+              if (metaActual) setCambioMeta(v);
+              else void dedicarA(v);
+            }}
+          />
+          {metaActual && cambioMeta && (
+            <View style={{ gap: 10 }}>
+              {/* Juan (2026-10-11): se pregunta, sin opción preelegida. */}
+              <Text style={{ fontSize: 14, fontWeight: '700', color: c.text }}>
+                {`¿Dejar lo que tiene (${money(el.valorVigente, el.moneda)}) apartado para ${metaActual.nombre}?`}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Pastilla label="🐷 Sí, dejarlo apartado" onPress={() => void cambiarDeMeta(true)} />
+                <Pastilla label="No, que quede libre" onPress={() => void cambiarDeMeta(false)} />
+                <Pastilla label="Cancelar" onPress={() => setCambioMeta(null)} />
+              </View>
+            </View>
+          )}
         </Section>
       )}
 

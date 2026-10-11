@@ -569,6 +569,33 @@ durante la implementación, cada uno registrado en `GAPS.md`. Formato abreviado
 - Auditoría: entrada raíz `AhorrarParaObjetivo` (destino, total, orígenes); las de la parte creada, las transferencias y la reserva quedan encadenadas a ella (`encadenada_de_id`).
 - Lectura asociada: `GET /usuarios/me/disponibilidad` → libre para ahorrar por cuenta propia.
 
+## Cuentas dedicadas a una meta — GAPS G46 (Bloque M)
+
+### 86. DedicarCuentaAObjetivo
+
+- Input: objetivoId, elementoId.
+- Validaciones: el actor puede modificar la meta (dueño o designado) y no está CANCELADA · la cuenta es propia y activa, `LIQUIDEZ`/`RESERVA`/`INVERSION` (`CUENTA_NO_DEDICABLE`), en la moneda de la meta (`MONEDA_DISTINTA`) · no está dedicada a otra meta (`CUENTA_DEDICADA_A_OTRA_META`; a esta: `CUENTA_YA_ES_DE_LA_META`) · no tiene reservas ACTIVAS de otras asignaciones (`CUENTA_CON_APARTADOS`) · meta del hogar: el VALOR de la cuenta es FAMILIAR (`CUENTA_SALDO_PRIVADO`).
+- Orquestación (una transacción): crea la fila en `objetivo_cuenta_dedicada` · libera las reservas ACTIVAS de esta meta sobre la cuenta (las cubre el valor) · recalcula el progreso y puede completar la meta (W).
+- Output: objetivoId, elementoId, progreso, reservasLiberadas[], reservaId (null).
+- Auditoría: `DedicarCuentaAObjetivo` sobre el objetivo, con la cuenta relacionada, el valor al dedicar y las reservas liberadas.
+
+### 87. QuitarCuentaDeObjetivo
+
+- Input: objetivoId, elementoId, conservarComoApartado (obligatorio, sin valor por defecto).
+- Validaciones: la cuenta está dedicada a esa meta (`CUENTA_NO_ES_DE_LA_META`) · el actor es dueño de la cuenta o puede modificar la meta.
+- Orquestación (una transacción): borra la fila · si `conservarComoApartado` y la cuenta tiene valor, crea una reserva (#27) por el valor actual en la parte de la meta de quien quita (la crea si no tiene), encadenada al comando.
+- Output: objetivoId, elementoId, progreso, reservasLiberadas[] (vacío), reservaId.
+- Auditoría: `QuitarCuentaDeObjetivo` con el valor al quitar y la decisión.
+
+**Cambios en lo existente (G46):** `CrearReserva` (#27) y `AhorrarParaObjetivo`
+(#79) rechazan una cuenta dedicada como origen (`CUENTA_DEDICADA`); si el destino
+de #79 es la cuenta dedicada de esa meta, solo transfiere (sin reserva, `reservaId`
+null) y es la cuenta de la meta por defecto. `RegistrarValorizacion`,
+`CorregirValorizacion`, `RegistrarEventoFinanciero` y `RegistrarAjustePatrimonial`
+evalúan "Completar objetivo" para la meta de la cuenta dedicada que tocan. En la
+desviación de un presupuesto, el ahorro real por objetivo suma lo transferido a
+sus cuentas dedicadas en el período, neto de retiros (sin valorización).
+
 ## Plata de otra persona — G33 D-3 / D-8
 
 ### 80. RegistrarPlataDeOtraPersona

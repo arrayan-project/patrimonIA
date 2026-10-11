@@ -46,7 +46,7 @@ Deuda/Crédito). Los códigos P/U son los ítems del plan de trabajo.
 | **C** · Elementos patrimoniales y visibilidad | — | G6, G11, G18, G29 |
 | **D** · Deuda / Crédito | G40 (💡 a futuro) | G1, G-J, G17, G28 |
 | **E** · Movimientos financieros | — | G8, G9, G10, G22, G23, G24 |
-| **F** · Planificación: objetivos, reservas, presupuestos y programados | — | G2, G13, G14, G15, G16, G26, G36 |
+| **F** · Planificación: objetivos, reservas, presupuestos y programados | G46 (🟡 en prueba) | G2, G13, G14, G15, G16, G26, G36 |
 | **G** · Monedas, proyecciones y reportes | — | G7, G21, G27, G38, G41, G42, G43 |
 | **H** · Notificaciones | G20 | — |
 | **I** · App: preferencias y usabilidad | G33, G44 (🟡 Bloques 1 y 2 hechos; falta el 3) | G25, G32, G35, G39 |
@@ -67,6 +67,7 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
 | P15 | **G20** + ícono (G35) | Compilar la app propia (development build + `projectId` de EAS; Expo Go SDK 53+ lo limita): destraba el push remoto real y el ícono con el árbol. | ⏸ en pausa (Juan, 2026-10-10) |
 | — | **Fintual** | Integración Fintual (valorización automática): Fase A (backend) hecha en la rama `feature/fintual-integration`, fuera de `main`. **En pausa**: la API de Fintual está deprecada; se conserva por si la próxima ley fintech chilena la revive. | ⏸ en pausa |
 | — | **Integración bancaria** | Rama `feature/banking-integration` (6 commits, con su propia documentación en esa rama). **En pausa** por decisión de Juan; no se mergea a `main`. | ⏸ en pausa |
+| — | **G46** | Metas con cuentas dedicadas ("🏦 Esta cuenta es para esta meta"): mergeado y con push (2026-10-11); migración 030 aplicada en Neon por Juan. **Falta:** que Juan lo pruebe en el teléfono. | 🟡 en prueba |
 | — | **G44** | Lente del hogar, Bloque 1: un solo lente "Lo mío · Del hogar" en Inicio, Movimientos y Planificar; sin pestaña Hogar. Bloque 1 (y 1b) aprobado por Juan y mergeado (rama `feat/L1-lente-hogar`, 2026-10-10). **Bloque 2** (Inicio responde las dos preguntas) probado por Juan y mergeado (adbe15d, 2026-10-11). **Falta:** Bloque 3 (la historia del mes). | 🟡 |
 | — | **G40** | Cupo de la tarjeta de crédito ("te quedan X de cupo"). No se hace hasta que un usuario lo pida. | 💡 a futuro |
 
@@ -107,6 +108,31 @@ Todo lo que sigue abierto, de lo más accionable a lo más bloqueado.
   el que la tarjeta mostraría "Cupo disponible = cupo − lo que debes".
 - **Decisión (Juan, 2026-10-10)**: queda anotado a futuro; se abre si un
   usuario lo pide. Origen: `Docs/usabilidad/FLUJOS_SIMPLES_S03.md`, C2.
+
+### Tema F · Planificación: objetivos, reservas, presupuestos y programados
+
+#### G46 — Metas con cuentas dedicadas  🟡 MERGEADO, EN PRUEBA (rama `feat/metas-cuentas-dedicadas`, migración 030 en Neon, 2026-10-11)
+- **Fuente**: [`Docs/usabilidad/METAS_CUENTAS_S04.md`](Docs/usabilidad/METAS_CUENTAS_S04.md)
+  (diagnóstico, reglas M-1 a M-7 y las 5 respuestas de Juan).
+- **Qué faltaba** (diagnóstico local, 2026-10-10): con toda una cuenta de
+  inversión apartada para una meta, el progreso quedaba congelado en lo
+  apartado al valorizar la cuenta, y lo libre quedaba negativo si bajaba
+  (`progreso = Σ reservas`, `libre = valor − reservas`).
+- **Cómo se resolvió**: "🏦 Esta cuenta es para esta meta". Tabla
+  `objetivo_cuenta_dedicada` (agregado Objetivo, `UNIQUE (elemento_id)`);
+  comandos `DedicarCuentaAObjetivo` (#86) y `QuitarCuentaDeObjetivo` (#87,
+  `conservarComoApartado` obligatorio y sin opción preelegida). Progreso =
+  apartado fijo + valor de las cuentas dedicadas; libre de una cuenta dedicada
+  = 0; "Completar objetivo" también al valorizar o mover la cuenta. No se
+  dedican bienes. Los apartados de "cuenta completa" no se convierten solos: la
+  meta pregunta una vez ("🏦 ¿Toda la cuenta X es para la meta?"). Presupuesto:
+  ahorro real = lo transferido a las cuentas dedicadas, neto de retiros (sin
+  valorización). Sin aviso al bajar: la meta muestra "📉/📈 ±X este mes".
+  App: meta, cuenta ("🎯 Es para"), Ajustes de la cuenta, Ahorrar y Agregar
+  cuenta. e2e `api/test/metas-cuentas-dedicadas.e2e-spec.ts`; capturas en
+  `Docs/usabilidad/capturas/m/`.
+- **Despliegue**: `api/db/migrations/030_objetivo_cuenta_dedicada.sql` aplicada
+  en Neon por Juan antes del push (2026-10-11).
 
 ### Tema H · Notificaciones
 

@@ -760,13 +760,47 @@ export class PresupuestoService {
       realPorAsig.set(r.asignacion_id, (realPorAsig.get(r.asignacion_id) ?? 0) + Number(r.monto));
     }
 
+    // Bloque M (Juan, 2026-10-11): con cuentas dedicadas, el ahorro real es lo
+    // transferido a ellas en el período, neto de retiros (movimientos vivos, sin
+    // saldo inicial); la valorización no cuenta.
+    const realCuentas = new Map<string, number>();
+    const dedicadas = await this.prisma.objetivo_cuenta_dedicada.findMany({
+      where: { objetivo_id: { in: objetivoIds } },
+      select: { objetivo_id: true, elemento_id: true },
+    });
+    if (dedicadas.length > 0) {
+      const impactos = await this.prisma.impacto_patrimonial.findMany({
+        where: {
+          elemento_id: { in: dedicadas.map((d) => d.elemento_id) },
+          origen_tipo: 'EVENTO_FINANCIERO',
+          ...(p.fecha_inicio || p.fecha_fin
+            ? { fecha: { ...(p.fecha_inicio ? { gte: p.fecha_inicio } : {}), ...(p.fecha_fin ? { lte: p.fecha_fin } : {}) } }
+            : {}),
+        },
+        select: { elemento_id: true, monto: true, origen_id: true },
+      });
+      const vivos = new Set(
+        (
+          await this.prisma.evento_financiero.findMany({
+            where: { id: { in: impactos.map((i) => i.origen_id) }, anulado: false, tipo: { not: 'SALDO_INICIAL' } },
+            select: { id: true },
+          })
+        ).map((e) => e.id),
+      );
+      const metaDe = new Map(dedicadas.map((d) => [d.elemento_id, d.objetivo_id]));
+      for (const i of impactos) {
+        if (!vivos.has(i.origen_id)) continue;
+        const o = metaDe.get(i.elemento_id)!;
+        realCuentas.set(o, (realCuentas.get(o) ?? 0) + Number(i.monto));
+      }
+    }
+
     return lineas
       .map((l) => {
         const esperado = Number(l.monto_esperado);
-        const real = (asigPorObjetivo.get(l.objetivo_id) ?? []).reduce(
-          (s, aid) => s + (realPorAsig.get(aid) ?? 0),
-          0,
-        );
+        const real =
+          (asigPorObjetivo.get(l.objetivo_id) ?? []).reduce((s, aid) => s + (realPorAsig.get(aid) ?? 0), 0) +
+          (realCuentas.get(l.objetivo_id) ?? 0);
         return {
           objetivoId: l.objetivo_id,
           nombre: l.objetivo_financiero.nombre,

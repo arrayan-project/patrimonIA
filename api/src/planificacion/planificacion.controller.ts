@@ -19,6 +19,8 @@ import {
   EliminarAsignacionDto,
 } from './dto/asignacion.dto.js';
 import { AjustarMontoReservaDto, CrearReservaDto, LiberarReservaDto } from './dto/reserva.dto.js';
+import { CuentaDedicadaService } from './cuenta-dedicada.service.js';
+import { DedicarCuentaAObjetivoDto, QuitarCuentaDeObjetivoDto } from './dto/cuenta-dedicada.dto.js';
 
 @Controller()
 export class PlanificacionController {
@@ -26,6 +28,7 @@ export class PlanificacionController {
     private readonly objetivos: ObjetivoService,
     private readonly asignaciones: AsignacionService,
     private readonly reservas: ReservaService,
+    private readonly cuentasDedicadas: CuentaDedicadaService,
   ) {}
 
   // ── Objetivo Financiero ──────────────────────────────────────────────────
@@ -133,6 +136,20 @@ export class PlanificacionController {
   }
 
   // ── Reserva ──────────────────────────────────────────────────────────────
+
+  // ── Bloque M: cuentas dedicadas a una meta ──────────────────────────────
+
+  @Post('comandos/DedicarCuentaAObjetivo')
+  @HttpCode(200)
+  dedicarCuenta(@CurrentUser() u: UsuarioAutenticado, @Body() dto: DedicarCuentaAObjetivoDto) {
+    return this.cuentasDedicadas.dedicar(u.id, dto);
+  }
+
+  @Post('comandos/QuitarCuentaDeObjetivo')
+  @HttpCode(200)
+  quitarCuenta(@CurrentUser() u: UsuarioAutenticado, @Body() dto: QuitarCuentaDeObjetivoDto) {
+    return this.cuentasDedicadas.quitar(u.id, dto);
+  }
 
   @Post('comandos/CrearReserva')
   crearReserva(@CurrentUser() u: UsuarioAutenticado, @Body() dto: CrearReservaDto) {

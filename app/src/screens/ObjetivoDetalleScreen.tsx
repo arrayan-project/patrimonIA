@@ -15,13 +15,17 @@ import { cuantoFalta, money, porcentaje } from '../format';
 import { emojiMeta } from '../emojis';
 import { usePreferencias } from '../preferencias';
 import { irAAccion } from './AccionFormScreen';
+import { useToast } from '../ui/Toast';
+import { Text } from '../ui/Text';
 import {
   AvisoDetalle,
   BandaDetalle,
   Button,
   Dato,
   Datos,
+  Elegir,
   ErrorText,
+  Panel,
   fechaLegible,
   ListCard,
   MenuList,
@@ -39,8 +43,12 @@ export function ObjetivoDetalleScreen() {
   const c = useC();
   const { token } = useSession();
   const nav = useNav();
-  const { preferencias } = usePreferencias();
+  const { preferencias, guardarPreferencias } = usePreferencias();
+  const toast = useToast();
   const objetivoId = nav.route.params?.objetivoId as string;
+  // Bloque M: la cuenta dedicada que se está quitando (se pregunta qué hacer con lo que tiene).
+  const [quitando, setQuitando] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
 
   const [obj, setObj] = useState<ObjetivoFinancieroDTO | null>(null);
   const [asignaciones, setAsignaciones] = useState<AsignacionDTO[]>([]);
@@ -94,7 +102,48 @@ export function ObjetivoDetalleScreen() {
   ];
   const nombresCuentas = cuentasConPlata.map((id) => cuentas.find((c) => c.id === id)?.nombre).filter(Boolean);
   const puedeAhorrar = obj.puedoModificar && obj.estado === 'EN_PROGRESO';
-  const puedeUsar = obj.puedoModificar && cuentasConPlata.length > 0;
+  // Bloque M: las cuentas dedicadas a la meta (las propias, para "Usar plata").
+  const dedicadas = obj.cuentasDedicadas ?? [];
+  const dedicadasPropias = dedicadas.filter((d) => cuentas.some((c) => c.id === d.elementoId));
+  const puedeUsar = obj.puedoModificar && (cuentasConPlata.length > 0 || dedicadasPropias.length > 0);
+  const elegibles = cuentas.filter(
+    (e) =>
+      ['LIQUIDEZ', 'RESERVA', 'INVERSION'].includes(e.categoriaFuncional) &&
+      e.estado === 'ACTIVO' &&
+      e.moneda === obj.moneda &&
+      !dedicadas.some((d) => d.elementoId === e.id),
+  );
+  const sugerencias = (obj.sugerenciasCuentaCompleta ?? []).filter(
+    (x) => !preferencias.noPreguntarCuentaCompleta.includes(x.elementoId),
+  );
+  const cambioMes = obj.cambioMesCuentas ?? 0;
+  const comando = async (nombre: string, body: Record<string, unknown>, aviso: string) => {
+    setOcupado(true);
+    setError('');
+    try {
+      await api.post(`/comandos/${nombre}`, body, token);
+      toast.mostrar(aviso);
+      setQuitando(null);
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error');
+    } finally {
+      setOcupado(false);
+    }
+  };
+  const dedicar = (elementoId: string) =>
+    comando('DedicarCuentaAObjetivo', { objetivoId, elementoId }, 'Listo: toda la cuenta es para la meta');
+  const quitar = (elementoId: string, conservarComoApartado: boolean) =>
+    comando(
+      'QuitarCuentaDeObjetivo',
+      { objetivoId, elementoId, conservarComoApartado },
+      conservarComoApartado ? 'La cuenta salió de la meta; lo que tenía quedó apartado' : 'La cuenta salió de la meta',
+    );
+  const noPreguntar = (elementoId: string) =>
+    void guardarPreferencias({
+      ...preferencias,
+      noPreguntarCuentaCompleta: [...preferencias.noPreguntarCuentaCompleta, elementoId],
+    }).catch(() => undefined);
   const faltan = Math.max(obj.montoObjetivo - obj.progreso, 0);
   const lista = obj.estado === 'COMPLETADO' || faltan === 0;
   const agregarParte = () =>
@@ -127,6 +176,10 @@ export function ObjetivoDetalleScreen() {
                     tipo: 'GASTO',
                     objetivoId,
                     ...(cuentasConPlata.length === 1 ? { origenId: cuentasConPlata[0] } : {}),
+                    // Bloque M (M-6): de una cuenta dedicada, el gasto baja la meta solo.
+                    ...(cuentasConPlata.length === 0 && dedicadasPropias.length > 0
+                      ? { objetivoId: undefined, origenId: dedicadasPropias[0].elementoId }
+                      : {}),
                   })
                 }
               />
@@ -152,6 +205,13 @@ export function ObjetivoDetalleScreen() {
           <ProgressBar pct={obj.progresoPorcentaje} />
         </View>
         <Datos plano>
+          {/* Bloque M: el avance como una suma que cuadra (lo apartado + sus cuentas). */}
+          {dedicadas.length > 0 && (obj.progresoApartado ?? 0) > 0 ? (
+            <Dato etiqueta="🐷 Apartado" valor={money(obj.progresoApartado ?? 0, obj.moneda)} />
+          ) : null}
+          {dedicadas.length > 0 && (obj.progresoApartado ?? 0) > 0 ? (
+            <Dato etiqueta="🏦 Sus cuentas" valor={money(obj.progresoCuentas ?? 0, obj.moneda)} />
+          ) : null}
           <Dato etiqueta="🏁 Quieres juntar" valor={money(obj.montoObjetivo, obj.moneda)} />
           {!lista && <Dato etiqueta="⏳ Te faltan" valor={money(faltan, obj.moneda)} />}
         </Datos>
@@ -169,6 +229,73 @@ export function ObjetivoDetalleScreen() {
             />
           ) : null}
         </Datos>
+      )}
+
+      {/* Bloque M §2.3: una vez, si una cuenta parece apartada entera para esta meta. */}
+      {obj.puedoModificar &&
+        sugerencias.map((x) => (
+          <Panel key={x.elementoId}>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: c.text }}>
+              {`🏦 ¿Toda la cuenta ${x.nombre} es para ${obj.nombre}?`}
+            </Text>
+            <Nota>Así la meta sube y baja con lo que valga la cuenta.</Nota>
+            <View style={styles.acciones}>
+              <Pastilla label="Sí, toda" onPress={() => !ocupado && void dedicar(x.elementoId)} />
+              <Pastilla label="No" onPress={() => noPreguntar(x.elementoId)} />
+            </View>
+          </Panel>
+        ))}
+
+      {/* Bloque M: "🏦 Esta cuenta es para esta meta" — la meta suma lo que valga cada una. */}
+      {(dedicadas.length > 0 || (obj.puedoModificar && obj.estado !== 'CANCELADO')) && (
+        <Section title="🏦 Cuentas de esta meta">
+          {dedicadas.length > 0 && (
+            <ListCard>
+              {dedicadas.map((d) => (
+                <View key={d.elementoId}>
+                  <TxRow
+                    title={d.nombre}
+                    subtitle="Toda la cuenta"
+                    amount={money(d.valor, d.moneda)}
+                    logo={{ emoji: '🏦' }}
+                    onPress={
+                      obj.puedoModificar ? () => setQuitando((q) => (q === d.elementoId ? null : d.elementoId)) : undefined
+                    }
+                  />
+                  {quitando === d.elementoId && (
+                    <View style={styles.quitar}>
+                      {/* Juan (2026-10-11): se pregunta, sin opción preelegida. */}
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: c.text }}>
+                        {`¿Quitar ${d.nombre} de la meta? ¿Dejar lo que tiene (${money(d.valor, d.moneda)}) apartado para ella?`}
+                      </Text>
+                      <View style={styles.acciones}>
+                        <Pastilla label="🐷 Sí, dejarlo apartado" onPress={() => !ocupado && void quitar(d.elementoId, true)} />
+                        <Pastilla label="No, que quede libre" onPress={() => !ocupado && void quitar(d.elementoId, false)} />
+                        <Pastilla label="Cancelar" onPress={() => setQuitando(null)} />
+                      </View>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </ListCard>
+          )}
+          {cambioMes !== 0 && (
+            <Nota>{`${cambioMes < 0 ? '📉 −' : '📈 +'}${money(Math.abs(cambioMes), obj.moneda)} este mes`}</Nota>
+          )}
+          {obj.puedoModificar && obj.estado !== 'CANCELADO' && elegibles.length > 0 && (
+            <Elegir
+              label="¿Qué cuenta es para esta meta?"
+              value={null}
+              options={elegibles.map((e) => ({ value: e.id, label: e.nombre, sub: money(e.valorVigente, e.moneda) }))}
+              onChange={(v) => v && void dedicar(v)}
+              boton={(abrir) => (
+                <View style={styles.fila}>
+                  <Pastilla label="➕ Esta cuenta es para esta meta" onPress={abrir} />
+                </View>
+              )}
+            />
+          )}
+        </Section>
       )}
 
       {(asignaciones.length > 0 || obj.puedoModificar) && (
@@ -244,4 +371,6 @@ export function ObjetivoDetalleScreen() {
 const styles = StyleSheet.create({
   barra: { marginTop: 12 },
   fila: { flexDirection: 'row', marginTop: 10 },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  quitar: { gap: 10, paddingBottom: 12 },
 });
